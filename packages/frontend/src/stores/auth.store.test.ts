@@ -8,11 +8,20 @@ vi.mock('vue-router', () => ({
   useRouter: () => ({ push: mockPush }),
 }))
 
-const { mockSignInWithOAuth, mockSignOut, mockGetSession, mockOnAuthStateChange } = vi.hoisted(() => ({
+const {
+  mockSignInWithOAuth,
+  mockSignOut,
+  mockGetSession,
+  mockOnAuthStateChange,
+  mockSignInWithPassword,
+  mockSignUp,
+} = vi.hoisted(() => ({
   mockSignInWithOAuth: vi.fn().mockResolvedValue({ error: null }),
   mockSignOut: vi.fn().mockResolvedValue({ error: null }),
   mockGetSession: vi.fn().mockResolvedValue({ data: { session: null } }),
   mockOnAuthStateChange: vi.fn().mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),
+  mockSignInWithPassword: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
+  mockSignUp: vi.fn().mockResolvedValue({ data: { session: null }, error: null }),
 }))
 
 vi.mock('@/lib/supabase', () => ({
@@ -22,6 +31,8 @@ vi.mock('@/lib/supabase', () => ({
       signOut: mockSignOut,
       getSession: mockGetSession,
       onAuthStateChange: mockOnAuthStateChange,
+      signInWithPassword: mockSignInWithPassword,
+      signUp: mockSignUp,
     },
   },
 }))
@@ -63,6 +74,8 @@ describe('auth.store', () => {
     mockGetSession.mockClear()
     mockOnAuthStateChange.mockClear()
     mockApiAuthMe.mockClear()
+    mockSignInWithPassword.mockClear()
+    mockSignUp.mockClear()
     mockGetSession.mockResolvedValue({ data: { session: null } })
     mockOnAuthStateChange.mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } })
   })
@@ -211,5 +224,47 @@ describe('auth.store', () => {
     const store = useAuthStore()
     await store.restoreSession()
     expect(store.user).toBeNull()
+  })
+
+  // ─── loginWithEmail ──────────────────────────────────────────────────────────
+
+  it('loginWithEmail() siker → api.auth.me hívva, user beállítva', async () => {
+    const mockSession = { access_token: 'email-token', user: { id: 'uid' } }
+    mockSignInWithPassword.mockResolvedValue({ data: { session: mockSession }, error: null })
+    mockApiAuthMe.mockResolvedValue(MOCK_USER)
+    const store = useAuthStore()
+    await store.loginWithEmail('test@example.com', 'password123')
+    expect(mockApiAuthMe).toHaveBeenCalledWith('email-token')
+    expect(store.user).toEqual(MOCK_USER)
+  })
+
+  it('loginWithEmail() Supabase hiba → AuthError dobva', async () => {
+    mockSignInWithPassword.mockResolvedValue({ data: { session: null }, error: { message: 'Invalid credentials' } })
+    const store = useAuthStore()
+    await expect(store.loginWithEmail('bad@example.com', 'wrong')).rejects.toMatchObject({
+      name: 'AuthError',
+      message: 'Invalid credentials',
+    })
+  })
+
+  // ─── registerWithEmail ────────────────────────────────────────────────────────
+
+  it('registerWithEmail() siker → api.auth.me hívva, user beállítva', async () => {
+    const mockSession = { access_token: 'reg-token', user: { id: 'uid2' } }
+    mockSignUp.mockResolvedValue({ data: { session: mockSession }, error: null })
+    mockApiAuthMe.mockResolvedValue(MOCK_USER)
+    const store = useAuthStore()
+    await store.registerWithEmail('new@example.com', 'password123', 'New User')
+    expect(mockApiAuthMe).toHaveBeenCalledWith('reg-token')
+    expect(store.user).toEqual(MOCK_USER)
+  })
+
+  it('registerWithEmail() duplikált email → AuthError dobva', async () => {
+    mockSignUp.mockResolvedValue({ data: { session: null }, error: { message: 'User already registered' } })
+    const store = useAuthStore()
+    await expect(store.registerWithEmail('dup@example.com', 'password123', 'Dup User')).rejects.toMatchObject({
+      name: 'AuthError',
+      message: 'User already registered',
+    })
   })
 })

@@ -17,6 +17,13 @@ const MOCK_USER: User = {
   role: 'admin',
 }
 
+class AuthError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'AuthError'
+  }
+}
+
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
   const router = useRouter()
@@ -73,5 +80,24 @@ export const useAuthStore = defineStore('auth', () => {
     await router.push('/login')
   }
 
-  return { user, isAuthenticated, handleSession, restoreSession, login, logout }
+  async function loginWithEmail(email: string, password: string): Promise<void> {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) throw new AuthError(error.message)
+    await handleSession(data.session as Session)
+    await router.push('/')
+  }
+
+  async function registerWithEmail(email: string, password: string, displayName: string): Promise<void> {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: displayName } },
+    })
+    if (error) throw new AuthError(error.message)
+    await handleSession(data.session as Session)
+    await router.push('/')
+  }
+
+  return { user, isAuthenticated, handleSession, restoreSession, login, logout, loginWithEmail, registerWithEmail }
 })
+

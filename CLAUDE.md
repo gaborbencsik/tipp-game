@@ -97,7 +97,6 @@ src/
 - Ne írj hardcoded konfigot (portok, pontértékek, stb.)
 - Ne adj hozzá nem kért feature-t, kommentet, docstringet
 - Ne hagyj félkész, nem futtatható kódot
-- Ne implementálj email+jelszó auth-ot – ez jövőbeli Should Have (US-304)
 
 ## Tervdokumentumok
 

@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-03-28
+> Utoljára frissítve: 2026-03-28 (US-304)
 
 ## Kész user story-k
 
@@ -11,6 +11,7 @@
 | **US-003** | Tesztelési infrastruktúra | ✅ Kész |
 | **US-301** | Regisztráció és bejelentkezés (Google OAuth) | ✅ Kész |
 | **US-302** | Bejelentkezés / kijelentkezés | ✅ Kész |
+| **US-304** | Email + jelszó auth | ✅ Kész |
 
 ### US-001 – Elfogadási kritériumok teljesítve
 
@@ -58,9 +59,16 @@
 - ✅ Védett route-ok route guard mögött (`router/index.ts` – `requiresAuth: true`)
 - ✅ Dev mode bypass: `VITE_DEV_AUTH_BYPASS=true` → mock userrel azonnali bejelentkezés, nincs Google redirect
 
----
+### US-304 – Elfogadási kritériumok teljesítve
 
-## Folyamatban / következő
+- ✅ Email + jelszó alapú bejelentkezés: `loginWithEmail()` a Supabase `signInWithPassword` API-t használja
+- ✅ Email + jelszó alapú regisztráció: `registerWithEmail()` a Supabase `signUp` API-t használja (`full_name` opción át)
+- ✅ Hiba esetén `AuthError` dobva (pl. hibás jelszó, duplikált email)
+- ✅ LoginView login/register mód váltással, hibakezeléssel (`errorMessage`), loading állapottal
+- ✅ Google OAuth gomb megmarad alternatív belépési módként
+- ✅ 66 teszt (28 backend + 38 frontend), typecheck CLEAN
+
+---
 
 | Story ID | Megnevezés | Prioritás |
 |----------|-----------|-----------|
@@ -88,7 +96,7 @@
 | US-301 | Regisztráció Google OAuth-szal | ✅ Kész | Must Have |
 | US-302 | Bejelentkezés / kijelentkezés | ✅ Kész | Must Have |
 | US-303 | Profil szerkesztése | ⬜ Nem kezdett | Should Have |
-| US-304 | Email + jelszó auth | ⬜ Nem kezdett | Should Have |
+| US-304 | Email + jelszó auth | ✅ Kész | Should Have |
 | US-401 | Automatikus pontszámítás | ⬜ Nem kezdett | Must Have |
 | US-402 | Konfigurálható pontrendszer | ⬜ Nem kezdett | Must Have |
 | US-403 | Pontozás tesztelhetősége | ✅ Kész (US-003 részeként) | Must Have |
@@ -112,4 +120,4 @@
 
 ---
 
-**Haladás: 6 / 33 story kész** (5 + US-403 részeként) — Must Have: 6/25 ✅
+**Haladás: 7 / 33 story kész** (6 + US-403 részeként) — Must Have: 6/25 ✅, Should Have: 1/7 ✅

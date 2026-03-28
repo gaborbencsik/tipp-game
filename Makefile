@@ -70,6 +70,9 @@ db-reset:
 test:
 	npm test
 
+test-coverage:
+	npm run test:coverage
+
 typecheck:
 	npm run typecheck
 
