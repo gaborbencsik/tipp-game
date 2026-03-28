@@ -1,0 +1,57 @@
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: tipp_game
+      POSTGRES_USER: tipp_user
+      POSTGRES_PASSWORD: tipp_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tipp_user -d tipp_game"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: packages/backend/Dockerfile.dev
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_URL: postgresql://tipp_user:tipp_pass@db:5432/tipp_game
+      SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET:-dev_jwt_secret_placeholder}
+      CORS_ORIGIN: http://localhost:5173
+    volumes:
+      - ./packages/backend/src:/app/packages/backend/src
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    build:
+      context: .
+      dockerfile: packages/frontend/Dockerfile.dev
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_DEV_AUTH_BYPASS: "true"
+      VITE_API_URL: http://localhost:3000
+    volumes:
+      - ./packages/frontend/src:/app/packages/frontend/src
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  pg_data:
