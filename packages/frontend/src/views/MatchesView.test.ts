@@ -4,15 +4,18 @@ import { createPinia, setActivePinia } from 'pinia'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import MatchesView from '@/views/MatchesView.vue'
 import { useMatchesStore } from '@/stores/matches.store'
-import type { Match } from '@/types/index'
+import { usePredictionsStore } from '@/stores/predictions.store'
+import type { Match, Prediction } from '@/types/index'
 
 vi.mock('vue-router', async (importOriginal) => {
   const actual = await importOriginal<typeof import('vue-router')>()
   return { ...actual, useRouter: () => ({ push: vi.fn() }) }
 })
 
-const { mockMatchesList } = vi.hoisted(() => ({
+const { mockMatchesList, mockPredictionsMine, mockPredictionsUpsert } = vi.hoisted(() => ({
   mockMatchesList: vi.fn().mockResolvedValue([]),
+  mockPredictionsMine: vi.fn().mockResolvedValue([]),
+  mockPredictionsUpsert: vi.fn().mockResolvedValue(undefined),
 }))
 
 vi.mock('@/lib/supabase', () => ({
@@ -29,8 +32,35 @@ vi.mock('@/api/index', () => ({
     health: vi.fn(),
     auth: { me: vi.fn() },
     matches: { list: mockMatchesList },
+    predictions: { mine: mockPredictionsMine, upsert: mockPredictionsUpsert },
   },
 }))
+
+vi.mock('@/stores/auth.store', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/stores/auth.store')>()
+  return {
+    ...actual,
+    useAuthStore: () => ({
+      user: { id: 'db-user-uuid-001', role: 'user' },
+      isAuthenticated: () => true,
+      logout: vi.fn(),
+    }),
+  }
+})
+
+// scheduled meccs jövőbeli időponttal
+const MATCH_SCHEDULED: Match = {
+  id: 'match-sched',
+  homeTeam: { id: 'ht3', name: 'Brazil', shortCode: 'BRA', flagUrl: null },
+  awayTeam: { id: 'at3', name: 'Argentina', shortCode: 'ARG', flagUrl: null },
+  venue: { name: 'Stadium', city: 'Sao Paulo' },
+  stage: 'final',
+  groupName: null,
+  matchNumber: 64,
+  scheduledAt: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(), // holnap
+  status: 'scheduled',
+  result: null,
+}
 
 const MATCH_LIVE: Match = {
   id: 'match-live',
@@ -58,17 +88,15 @@ const MATCH_FINISHED: Match = {
   result: { homeGoals: 2, awayGoals: 1 },
 }
 
-const MATCH_SCHEDULED: Match = {
-  id: 'match-sched',
-  homeTeam: { id: 'ht3', name: 'Brazil', shortCode: 'BRA', flagUrl: null },
-  awayTeam: { id: 'at3', name: 'Argentina', shortCode: 'ARG', flagUrl: null },
-  venue: { name: 'Stadium', city: 'Sao Paulo' },
-  stage: 'final',
-  groupName: null,
-  matchNumber: 64,
-  scheduledAt: '2026-07-19T18:00:00.000Z',
-  status: 'scheduled',
-  result: null,
+const EXISTING_PREDICTION: Prediction = {
+  id: 'pred-1',
+  userId: 'db-user-uuid-001',
+  matchId: 'match-sched',
+  homeGoals: 1,
+  awayGoals: 0,
+  pointsGlobal: null,
+  createdAt: '2026-06-10T10:00:00.000Z',
+  updatedAt: '2026-06-10T10:00:00.000Z',
 }
 
 function buildRouter() {
@@ -81,21 +109,31 @@ function buildRouter() {
   })
 }
 
-async function mountView(apiMatches: Match[] = []) {
+async function mountView(apiMatches: Match[] = [], apiPredictions: Prediction[] = []) {
   mockMatchesList.mockResolvedValue(apiMatches)
+  mockPredictionsMine.mockResolvedValue(apiPredictions)
   const pinia = createPinia()
   setActivePinia(pinia)
   const wrapper = mount(MatchesView, { global: { plugins: [pinia, buildRouter()] } })
   await flushPromises()
-  return { wrapper, store: useMatchesStore() }
+  return {
+    wrapper,
+    matchesStore: useMatchesStore(),
+    predictionsStore: usePredictionsStore(),
+  }
 }
 
 describe('MatchesView', () => {
   beforeEach(() => {
     mockMatchesList.mockReset()
     mockMatchesList.mockResolvedValue([])
+    mockPredictionsMine.mockReset()
+    mockPredictionsMine.mockResolvedValue([])
+    mockPredictionsUpsert.mockReset()
     setActivePinia(createPinia())
   })
+
+  // ─── Meglévő tesztek ─────────────────────────────────────────────────────────
 
   it('loading állapotban spinner látható', async () => {
     let resolveList!: (v: Match[]) => void
@@ -129,21 +167,21 @@ describe('MatchesView', () => {
   })
 
   it('Csoportkör szűrő gombra kattintva stageFilter=group lesz', async () => {
-    const { wrapper, store } = await mountView()
+    const { wrapper, matchesStore } = await mountView()
     const buttons = wrapper.findAll('button')
     const groupBtn = buttons.find(b => b.text() === 'Csoportkör')
     expect(groupBtn).toBeDefined()
     await groupBtn?.trigger('click')
-    expect(store.stageFilter).toBe('group')
+    expect(matchesStore.stageFilter).toBe('group')
   })
 
   it('Összes gombra kattintva stageFilter null lesz', async () => {
-    const { wrapper, store } = await mountView()
-    store.stageFilter = 'group'
+    const { wrapper, matchesStore } = await mountView()
+    matchesStore.stageFilter = 'group'
     const buttons = wrapper.findAll('button')
     const allBtn = buttons.find(b => b.text() === 'Összes')
     await allBtn?.trigger('click')
-    expect(store.stageFilter).toBeNull()
+    expect(matchesStore.stageFilter).toBeNull()
   })
 
   it('hiba esetén hibaüzenet jelenik meg', async () => {
@@ -158,5 +196,68 @@ describe('MatchesView', () => {
   it('üres lista esetén tájékoztató szöveg jelenik meg', async () => {
     const { wrapper } = await mountView([])
     expect(wrapper.text()).toContain('Nincs megjeleníthető mérkőzés')
+  })
+
+  // ─── Tipp form tesztek ───────────────────────────────────────────────────────
+
+  it('scheduled meccs → tipp form látható (inputok és mentés gomb)', async () => {
+    const { wrapper } = await mountView([MATCH_SCHEDULED])
+    expect(wrapper.find('[data-testid="input-home"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="input-away"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="save-button"]').exists()).toBe(true)
+  })
+
+  it('finished meccs → tipp form nem látható, Tippelés lezárva szöveg igen', async () => {
+    const { wrapper } = await mountView([MATCH_FINISHED])
+    expect(wrapper.find('[data-testid="input-home"]').exists()).toBe(false)
+    expect(wrapper.text()).toContain('Tippelés lezárva')
+  })
+
+  it('live meccs → tipp form nem látható', async () => {
+    const { wrapper } = await mountView([MATCH_LIVE])
+    expect(wrapper.find('[data-testid="input-home"]').exists()).toBe(false)
+    expect(wrapper.text()).toContain('Tippelés lezárva')
+  })
+
+  it('meglévő tipp → inputok előre kitöltve', async () => {
+    const { wrapper } = await mountView([MATCH_SCHEDULED], [EXISTING_PREDICTION])
+    const homeInput = wrapper.find('[data-testid="input-home"]')
+    const awayInput = wrapper.find('[data-testid="input-away"]')
+    expect((homeInput.element as HTMLInputElement).value).toBe('1')
+    expect((awayInput.element as HTMLInputElement).value).toBe('0')
+  })
+
+  it('mentés gombra kattintva upsertPrediction meghívva', async () => {
+    const saved: Prediction = { ...EXISTING_PREDICTION, homeGoals: 2, awayGoals: 1 }
+    mockPredictionsUpsert.mockResolvedValue(saved)
+    const { wrapper, predictionsStore } = await mountView([MATCH_SCHEDULED])
+
+    await wrapper.find('[data-testid="input-home"]').setValue('2')
+    await wrapper.find('[data-testid="input-away"]').setValue('1')
+    const upsertSpy = vi.spyOn(predictionsStore, 'upsertPrediction').mockResolvedValue()
+    await wrapper.find('[data-testid="save-button"]').trigger('click')
+    await flushPromises()
+
+    expect(upsertSpy).toHaveBeenCalledWith({
+      matchId: 'match-sched',
+      homeGoals: 2,
+      awayGoals: 1,
+    })
+  })
+
+  it('saveStatus=saved → Tipp elmentve visszajelzés látható', async () => {
+    const { wrapper, predictionsStore } = await mountView([MATCH_SCHEDULED])
+    predictionsStore.saveStatus = { 'match-sched': 'saved' }
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find('[data-testid="save-success"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Tipp elmentve!')
+  })
+
+  it('saveStatus=saving → mentés gomb disabled', async () => {
+    const { wrapper, predictionsStore } = await mountView([MATCH_SCHEDULED])
+    predictionsStore.saveStatus = { 'match-sched': 'saving' }
+    await wrapper.vm.$nextTick()
+    const btn = wrapper.find('[data-testid="save-button"]')
+    expect((btn.element as HTMLButtonElement).disabled).toBe(true)
   })
 })

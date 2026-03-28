@@ -93,6 +93,82 @@
             <div v-if="match.venue" class="text-xs text-gray-400 text-center mt-1">
               {{ match.venue.city }}
             </div>
+
+            <!-- Tipp szekció -->
+            <div class="mt-3 pt-3 border-t border-gray-100">
+              <!-- Tippelhető meccs -->
+              <template v-if="isTippable(match)">
+                <div class="flex items-center gap-2 justify-center">
+                  <input
+                    :value="draftGoals[match.id]?.home ?? ''"
+                    type="number"
+                    min="0"
+                    max="99"
+                    placeholder="0"
+                    data-testid="input-home"
+                    class="w-14 text-center border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:border-blue-400"
+                    :disabled="predictionsStore.saveStatus[match.id] === 'saving'"
+                    @input="onGoalInput(match.id, 'home', ($event.target as HTMLInputElement).value)"
+                  />
+                  <span class="text-gray-400 text-sm">–</span>
+                  <input
+                    :value="draftGoals[match.id]?.away ?? ''"
+                    type="number"
+                    min="0"
+                    max="99"
+                    placeholder="0"
+                    data-testid="input-away"
+                    class="w-14 text-center border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:border-blue-400"
+                    :disabled="predictionsStore.saveStatus[match.id] === 'saving'"
+                    @input="onGoalInput(match.id, 'away', ($event.target as HTMLInputElement).value)"
+                  />
+                  <button
+                    class="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    :disabled="predictionsStore.saveStatus[match.id] === 'saving'"
+                    data-testid="save-button"
+                    @click="savePrediction(match.id)"
+                  >
+                    {{ predictionsStore.saveStatus[match.id] === 'saving' ? 'Mentés...' : 'Mentés' }}
+                  </button>
+                </div>
+                <div class="text-center mt-1 text-xs">
+                  <span
+                    v-if="predictionsStore.saveStatus[match.id] === 'saved'"
+                    class="text-green-600"
+                    data-testid="save-success"
+                  >
+                    Tipp elmentve! ✓
+                  </span>
+                  <span
+                    v-else-if="predictionsStore.saveStatus[match.id] === 'error'"
+                    class="text-red-500"
+                  >
+                    {{ predictionsStore.error }}
+                  </span>
+                  <span
+                    v-else-if="predictionsStore.predictionByMatchId(match.id)"
+                    class="text-gray-400"
+                  >
+                    Utoljára módosítva: {{ formatDateTime(predictionsStore.predictionByMatchId(match.id)!.updatedAt) }}
+                  </span>
+                </div>
+              </template>
+
+              <!-- Lezárt meccs -->
+              <template v-else>
+                <div class="text-center text-xs text-gray-400">
+                  <span v-if="predictionsStore.predictionByMatchId(match.id)" class="mr-2">
+                    Az én tippem:
+                    <strong class="text-gray-600">
+                      {{ predictionsStore.predictionByMatchId(match.id)!.homeGoals }}
+                      –
+                      {{ predictionsStore.predictionByMatchId(match.id)!.awayGoals }}
+                    </strong>
+                  </span>
+                  <span>Tippelés lezárva</span>
+                </div>
+              </template>
+            </div>
           </div>
         </div>
       </div>
@@ -101,17 +177,53 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useMatchesStore } from '../stores/matches.store.js'
 import { useAuthStore } from '../stores/auth.store.js'
-import type { MatchStage, MatchStatus } from '../types/index.js'
+import { usePredictionsStore } from '../stores/predictions.store.js'
+import type { Match, MatchStage, MatchStatus } from '../types/index.js'
 
 const matchesStore = useMatchesStore()
 const authStore = useAuthStore()
+const predictionsStore = usePredictionsStore()
 
-onMounted(() => {
-  matchesStore.fetchMatches()
+const now = ref(new Date())
+const draftGoals = ref<Record<string, { home: number | null, away: number | null }>>({})
+
+onMounted(async () => {
+  await matchesStore.fetchMatches()
+  await predictionsStore.fetchMyPredictions()
+  initDrafts()
 })
+
+function initDrafts(): void {
+  for (const match of matchesStore.matches) {
+    const existing = predictionsStore.predictionByMatchId(match.id)
+    if (existing) {
+      draftGoals.value[match.id] = { home: existing.homeGoals, away: existing.awayGoals }
+    }
+  }
+}
+
+function isTippable(match: Match): boolean {
+  return match.status === 'scheduled' && new Date(match.scheduledAt) > now.value
+}
+
+function onGoalInput(matchId: string, side: 'home' | 'away', raw: string): void {
+  const val = raw === '' ? null : Math.min(99, Math.max(0, parseInt(raw, 10)))
+  const current = draftGoals.value[matchId] ?? { home: null, away: null }
+  draftGoals.value = { ...draftGoals.value, [matchId]: { ...current, [side]: val } }
+}
+
+async function savePrediction(matchId: string): Promise<void> {
+  const draft = draftGoals.value[matchId]
+  if (draft?.home == null || draft?.away == null) return
+  await predictionsStore.upsertPrediction({
+    matchId,
+    homeGoals: draft.home,
+    awayGoals: draft.away,
+  })
+}
 
 function statusLabel(status: MatchStatus): string {
   switch (status) {
@@ -148,5 +260,14 @@ function formatTime(iso: string): string {
     minute: '2-digit',
     timeZone: 'UTC',
   })
+}
+
+function formatDateTime(iso: string): string {
+  return new Intl.DateTimeFormat('hu-HU', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(iso))
 }
 </script>

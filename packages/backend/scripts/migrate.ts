@@ -1,5 +1,5 @@
 import { migrate } from 'drizzle-orm/node-postgres/migrator'
-import { db } from './client.js'
+import { db } from '../src/db/client.js'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
@@ -8,7 +8,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 async function runMigrations(): Promise<void> {
   console.log('Running migrations...')
   await migrate(db, {
-    migrationsFolder: path.join(__dirname, 'migrations'),
+    migrationsFolder: path.join(__dirname, '../src/db/migrations'),
   })
   console.log('Migrations complete.')
   process.exit(0)

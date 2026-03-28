@@ -79,3 +79,20 @@ export interface MatchesFilters {
   readonly stage?: MatchStage
   readonly status?: MatchStatus
 }
+
+export interface PredictionInput {
+  readonly matchId: string
+  readonly homeGoals: number
+  readonly awayGoals: number
+}
+
+export interface Prediction {
+  readonly id: string
+  readonly userId: string
+  readonly matchId: string
+  readonly homeGoals: number
+  readonly awayGoals: number
+  readonly pointsGlobal: number | null
+  readonly createdAt: string
+  readonly updatedAt: string
+}

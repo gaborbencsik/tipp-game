@@ -1,14 +1,15 @@
-import type { User, Match, MatchesFilters } from '../types/index.js'
+import type { User, Match, MatchesFilters, Prediction, PredictionInput } from '../types/index.js'
 
 const BASE_URL = '/api'
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const { headers: optHeaders, ...restOptions } = options ?? {}
   const response = await fetch(`${BASE_URL}${path}`, {
+    ...restOptions,
     headers: {
       'Content-Type': 'application/json',
-      ...options?.headers,
+      ...optHeaders,
     },
-    ...options,
   })
 
   if (!response.ok) {
@@ -38,5 +39,17 @@ export const api = {
         headers: { Authorization: `Bearer ${token}` },
       })
     },
+  },
+  predictions: {
+    mine: (token: string, userId: string) =>
+      request<Prediction[]>(`/users/${userId}/predictions`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+    upsert: (token: string, input: PredictionInput) =>
+      request<Prediction>('/predictions', {
+        method: 'POST',
+        body: JSON.stringify(input),
+        headers: { Authorization: `Bearer ${token}` },
+      }),
   },
 }

@@ -7,6 +7,7 @@ import { errorMiddleware } from './middleware/error.middleware.js'
 import { healthRouter } from './routes/health.routes.js'
 import { authRouter } from './routes/auth.routes.js'
 import { matchesRouter } from './routes/matches.routes.js'
+import { predictionsRouter } from './routes/predictions.routes.js'
 
 const app = new Koa()
 
@@ -22,6 +23,8 @@ app.use(authRouter.routes())
 app.use(authRouter.allowedMethods())
 app.use(matchesRouter.routes())
 app.use(matchesRouter.allowedMethods())
+app.use(predictionsRouter.routes())
+app.use(predictionsRouter.allowedMethods())
 
 app.on('error', (err: Error, ctx: Koa.Context) => {
   console.error('Unhandled error:', err.message, ctx.url)

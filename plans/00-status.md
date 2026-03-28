@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-03-28 (US-101)
+> Utoljára frissítve: 2026-03-28 (US-201/202)
 
 ## Kész user story-k
 
@@ -13,6 +13,8 @@
 | **US-302** | Bejelentkezés / kijelentkezés | ✅ Kész |
 | **US-304** | Email + jelszó auth | ✅ Kész |
 | **US-101** | Mérkőzések böngészése | ✅ Kész |
+| **US-201** | Tipp leadása | ✅ Kész |
+| **US-202** | Tipp módosítása | ✅ Kész (US-201-gyel együtt) |
 
 ### US-001 – Elfogadási kritériumok teljesítve
 
@@ -84,6 +86,21 @@
 - ✅ Kezdőképernyő (`/`): bejelentkezés után közvetlenül a meccslistát mutatja
 - ✅ 97 teszt (35 backend + 62 frontend), typecheck CLEAN
 
+### US-201/202 – Elfogadási kritériumok teljesítve
+
+- ✅ `POST /api/predictions` endpoint – tipp leadása és módosítása egy route-on (`onConflictDoUpdate`)
+- ✅ `GET /api/users/:userId/predictions` endpoint – saját tippek lekérdezése
+- ✅ Validáció: meccs `scheduled` státusz + `scheduledAt` jövőbeli, különben 409
+- ✅ Jogosultság: saját adatot kér, vagy admin – egyébként 403
+- ✅ Frontend: `predictions.store.ts` – `fetchMyPredictions()`, `upsertPrediction()`, `saveStatus` per-meccs feedback
+- ✅ MatchesView inline tipp form: `scheduled` meccsre input + Mentés gomb; lezárt meccsre "Tippelés lezárva"
+- ✅ Meglévő tipp előtöltése az inputokba (`initDrafts()`)
+- ✅ `saveStatus`: `saving` → disabled gomb, `saved` → "Tipp elmentve!" visszajelzés, `error` → hibaüzenet
+- ✅ Fix: `api/index.ts` request helper – `Content-Type: application/json` már nem íródik felül a headers spread miatt
+- ✅ Backend error message-ek angolra cserélve
+- ✅ `seed.ts` és `migrate.ts` kiszervezve `src/db/`-ből `scripts/` mappába
+- ✅ 128 teszt (47 backend + 81 frontend), typecheck CLEAN
+
 ---
 
 | Story ID | Megnevezés | Prioritás |
@@ -104,8 +121,8 @@
 | US-003 | Tesztelési infrastruktúra | ✅ Kész | Must Have |
 | US-101 | Mérkőzések böngészése | ✅ Kész | Must Have |
 | US-102 | Mérkőzés részletek | ⬜ Nem kezdett | Must Have |
-| US-201 | Tipp leadása | ⬜ Nem kezdett | Must Have |
-| US-202 | Tipp módosítása | ⬜ Nem kezdett | Must Have |
+| US-201 | Tipp leadása | ✅ Kész | Must Have |
+| US-202 | Tipp módosítása | ✅ Kész | Must Have |
 | US-203 | Saját tippek összesítő | ⬜ Nem kezdett | Must Have |
 | US-204 | Mások tippjeinek megtekintése | ⬜ Nem kezdett | Should Have |
 | US-301 | Regisztráció Google OAuth-szal | ✅ Kész | Must Have |
@@ -135,4 +152,4 @@
 
 ---
 
-**Haladás: 8 / 33 story kész** (7 + US-403 részeként) — Must Have: 7/25 ✅, Should Have: 1/7 ✅
+**Haladás: 10 / 33 story kész** (9 + US-403 részeként) — Must Have: 9/25 ✅, Should Have: 1/7 ✅

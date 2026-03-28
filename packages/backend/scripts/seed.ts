@@ -1,7 +1,7 @@
-import { db } from './client.js'
+import { db } from '../src/db/client.js'
 import {
   scoringConfigs, venues, teams, users, matches,
-} from './schema/index.js'
+} from '../src/db/schema/index.js'
 
 async function seed(): Promise<void> {
   console.log('Seeding database...')
