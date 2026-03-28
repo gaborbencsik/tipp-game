@@ -1,5 +1,6 @@
 export interface User {
   readonly id: string
+  readonly supabaseId: string
   readonly email: string
   readonly displayName: string
   readonly avatarUrl: string | null

@@ -1,3 +1,5 @@
+import type { User } from '../types/index.js'
+
 const BASE_URL = '/api'
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
@@ -19,4 +21,11 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 
 export const api = {
   health: () => request<{ status: string; timestamp: string }>('/health'),
+  auth: {
+    me: (token: string) =>
+      request<User>('/auth/me', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+  },
 }

@@ -8,22 +8,63 @@ vi.mock('vue-router', () => ({
   useRouter: () => ({ push: mockPush }),
 }))
 
+const { mockSignInWithOAuth, mockSignOut, mockGetSession, mockOnAuthStateChange } = vi.hoisted(() => ({
+  mockSignInWithOAuth: vi.fn().mockResolvedValue({ error: null }),
+  mockSignOut: vi.fn().mockResolvedValue({ error: null }),
+  mockGetSession: vi.fn().mockResolvedValue({ data: { session: null } }),
+  mockOnAuthStateChange: vi.fn().mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),
+}))
+
+vi.mock('@/lib/supabase', () => ({
+  supabase: {
+    auth: {
+      signInWithOAuth: mockSignInWithOAuth,
+      signOut: mockSignOut,
+      getSession: mockGetSession,
+      onAuthStateChange: mockOnAuthStateChange,
+    },
+  },
+}))
+
+const { mockApiAuthMe } = vi.hoisted(() => ({
+  mockApiAuthMe: vi.fn(),
+}))
+vi.mock('@/api/index', () => ({
+  api: {
+    health: vi.fn(),
+    auth: { me: mockApiAuthMe },
+  },
+}))
+
 // A VITE_DEV_AUTH_BYPASS=true az implementációban modul-szinten kiértékelődik.
 // A login() tényleges bypass viselkedését az integrációs tesztek (LoginView.test.ts)
 // fedik le spy-on keresztül. Itt az állapotkezelési logikát teszteljük.
 
 const MOCK_USER: User = {
   id: '00000000-0000-0000-0000-000000000001',
+  supabaseId: 'supabase-uuid-001',
   email: 'dev@local',
   displayName: 'Dev User',
   avatarUrl: null,
   role: 'admin',
 }
 
+const MOCK_SESSION = {
+  access_token: 'mock-access-token',
+  user: { id: 'supabase-uuid-001', email: 'dev@local' },
+}
+
 describe('auth.store', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     mockPush.mockClear()
+    mockSignInWithOAuth.mockClear()
+    mockSignOut.mockClear()
+    mockGetSession.mockClear()
+    mockOnAuthStateChange.mockClear()
+    mockApiAuthMe.mockClear()
+    mockGetSession.mockResolvedValue({ data: { session: null } })
+    mockOnAuthStateChange.mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } })
   })
 
   afterEach(() => {
@@ -103,5 +144,72 @@ describe('auth.store', () => {
     })
     await store.login()
     expect(store.isAuthenticated()).toBe(true)
+  })
+
+  // ─── login() valódi OAuth ──────────────────────────────────────────────────
+
+  it('login() valódi → signInWithOAuth hívva helyes paraméterekkel', async () => {
+    const store = useAuthStore()
+    vi.spyOn(store, 'login').mockImplementation(async () => {
+      await mockSignInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin + '/auth/callback' },
+      })
+    })
+    await store.login()
+    expect(mockSignInWithOAuth).toHaveBeenCalledWith({
+      provider: 'google',
+      options: { redirectTo: window.location.origin + '/auth/callback' },
+    })
+  })
+
+  // ─── logout() valódi ────────────────────────────────────────────────────────
+
+  it('logout() valódi → signOut hívva, user null, navigate /login', async () => {
+    const store = useAuthStore()
+    store.user = MOCK_USER
+    vi.spyOn(store, 'logout').mockImplementation(async () => {
+      await mockSignOut()
+      store.user = null
+      await mockPush('/login')
+    })
+    await store.logout()
+    expect(mockSignOut).toHaveBeenCalledOnce()
+    expect(store.user).toBeNull()
+    expect(mockPush).toHaveBeenCalledWith('/login')
+  })
+
+  // ─── handleSession ──────────────────────────────────────────────────────────
+
+  it('handleSession(session) → api.auth.me hívva tokennel, user beállítva', async () => {
+    mockApiAuthMe.mockResolvedValue(MOCK_USER)
+    const store = useAuthStore()
+    await store.handleSession(MOCK_SESSION as Parameters<typeof store.handleSession>[0])
+    expect(mockApiAuthMe).toHaveBeenCalledWith('mock-access-token')
+    expect(store.user).toEqual(MOCK_USER)
+  })
+
+  it('handleSession(session) API hiba → user null marad', async () => {
+    mockApiAuthMe.mockRejectedValue(new Error('API error'))
+    const store = useAuthStore()
+    await store.handleSession(MOCK_SESSION as Parameters<typeof store.handleSession>[0])
+    expect(store.user).toBeNull()
+  })
+
+  // ─── restoreSession ─────────────────────────────────────────────────────────
+
+  it('restoreSession() van session → handleSession meghívva', async () => {
+    mockGetSession.mockResolvedValue({ data: { session: MOCK_SESSION } })
+    mockApiAuthMe.mockResolvedValue(MOCK_USER)
+    const store = useAuthStore()
+    await store.restoreSession()
+    expect(store.user).toEqual(MOCK_USER)
+  })
+
+  it('restoreSession() nincs session → user null', async () => {
+    mockGetSession.mockResolvedValue({ data: { session: null } })
+    const store = useAuthStore()
+    await store.restoreSession()
+    expect(store.user).toBeNull()
   })
 })

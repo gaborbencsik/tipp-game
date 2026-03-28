@@ -14,6 +14,24 @@ vi.mock('vue-router', async (importOriginal) => {
   }
 })
 
+vi.mock('@/lib/supabase', () => ({
+  supabase: {
+    auth: {
+      signInWithOAuth: vi.fn().mockResolvedValue({ error: null }),
+      signOut: vi.fn().mockResolvedValue({ error: null }),
+      getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
+      onAuthStateChange: vi.fn().mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),
+    },
+  },
+}))
+
+vi.mock('@/api/index', () => ({
+  api: {
+    health: vi.fn(),
+    auth: { me: vi.fn() },
+  },
+}))
+
 function buildRouter() {
   return createRouter({
     history: createMemoryHistory(),
@@ -66,6 +84,7 @@ describe('LoginView', () => {
     vi.spyOn(store, 'login').mockImplementation(async () => {
       store.user = {
         id: '00000000-0000-0000-0000-000000000001',
+        supabaseId: '00000000-0000-0000-0000-000000000001',
         email: 'dev@local',
         displayName: 'Dev User',
         avatarUrl: null,

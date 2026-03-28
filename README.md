@@ -59,3 +59,35 @@ npm run typecheck      # TypeScript ellenőrzés
 ### Lokális dev auth bypass
 
 A `VITE_DEV_AUTH_BYPASS=true` env-változó beállításával a bejelentkezés gomb Google OAuth helyett azonnal mock userrel lép be – így OAuth redirect nélkül is fejleszthető a védett UI.
+
+---
+
+## Implementációs státusz
+
+### Kész
+
+| Story | Leírás | Tesztek |
+|-------|--------|---------|
+| US-001 | Monorepo, Docker dev környezet, CI | ✅ |
+| US-002 | DB schema (13 tábla), seed adatok | ✅ |
+| US-003 | Vitest infrastruktúra, scoring unit tesztek | ✅ 19 |
+| US-301 | Supabase Auth + Google OAuth flow, JWT validálás, user upsert | ✅ 9 |
+| US-302 | Login / logout (OAuth + dev bypass), session restore, `/auth/callback` | ✅ 6 |
+
+**Összesen: 57 / 57 teszt zöld · typecheck CLEAN (backend + frontend)**
+
+### Következő (javasolt sorrend)
+
+| Story | Leírás | Epic |
+|-------|--------|------|
+| US-701 | Admin middleware, role-check | E7 |
+| US-101 | Mérkőzések listázása (BE route + FE nézet) | E1 |
+| US-102 | Mérkőzés részletek | E1 |
+| US-201 | Tipp leadása | E2 |
+| US-202 | Tipp módosítása | E2 |
+| US-203 | Saját tippek összesítője | E2 |
+| US-401 | Automatikus pontszámítás | E4 |
+| US-402 | Konfigurálható pontrendszer | E4 |
+| US-501 | Globális ranglista | E5 |
+| US-601–605 | Csoportok | E6 |
+| US-801–805 | Admin panel | E8 |

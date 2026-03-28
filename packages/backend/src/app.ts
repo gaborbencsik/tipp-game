@@ -5,6 +5,7 @@ import compress from 'koa-compress'
 import bodyParser from 'koa-bodyparser'
 import { errorMiddleware } from './middleware/error.middleware.js'
 import { healthRouter } from './routes/health.routes.js'
+import { authRouter } from './routes/auth.routes.js'
 
 const app = new Koa()
 
@@ -16,6 +17,8 @@ app.use(bodyParser())
 
 app.use(healthRouter.routes())
 app.use(healthRouter.allowedMethods())
+app.use(authRouter.routes())
+app.use(authRouter.allowedMethods())
 
 app.on('error', (err: Error, ctx: Koa.Context) => {
   console.error('Unhandled error:', err.message, ctx.url)

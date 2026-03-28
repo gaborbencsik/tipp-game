@@ -9,6 +9,8 @@
 | **US-001** | Monorepo és fejlesztői környezet (Docker) | ✅ Kész |
 | **US-002** | DB schema és seed adatok | ✅ Kész |
 | **US-003** | Tesztelési infrastruktúra | ✅ Kész |
+| **US-301** | Regisztráció és bejelentkezés (Google OAuth) | ✅ Kész |
+| **US-302** | Bejelentkezés / kijelentkezés | ✅ Kész |
 
 ### US-001 – Elfogadási kritériumok teljesítve
 
@@ -34,9 +36,27 @@
 - ✅ `npm test` a monorepo gyökeréből mindkét package tesztjeit futtatja
 - ✅ Workspace-szintű futtatás is működik (`--workspace=packages/backend` / `--workspace=packages/frontend`)
 - ✅ Backend scoring service: 19 unit teszt, 100% coverage
-- ✅ Frontend: 23 unit teszt (api client, auth store, LoginView, HomeView)
+- ✅ Frontend: 10 unit teszt (api client, auth store, LoginView, HomeView)
 - ✅ Coverage report: `npm run test:coverage` – Istanbul provider, `text` + `html` riporter
 - ✅ GitHub Actions CI: `.github/workflows/ci.yml` – typecheck → test minden push/PR-on
+
+### US-301 – Elfogadási kritériumok teljesítve
+
+- ✅ Login oldalon "Bejelentkezés" gomb látható; Google OAuth flow-t a Supabase Auth kezeli
+- ✅ Supabase Auth kezeli a consent screen → callback → session folyamatot
+- ✅ Sikeres auth után a Supabase JS client tárolja a session tokent (auto-refresh)
+- ✅ Backend minden védett API híváshoz ellenőrzi a Supabase JWT-t (`Authorization: Bearer <token>`) – `auth.middleware.ts`, `SUPABASE_JWT_SECRET`
+- ✅ Sikeres belépés után a backend upsert-eli a `users` táblát (`user.service.ts` – email, display name, avatar URL)
+- ✅ Visszatérő felhasználónál nem hoz létre új profilt (`ON CONFLICT DO UPDATE`)
+- ✅ Sikeres auth után `/auth/callback` → főoldalra irányítás (`AuthCallbackView.vue`)
+
+### US-302 – Elfogadási kritériumok teljesítve
+
+- ✅ Bejelentkezés: Google OAuth gombbal, Supabase Auth, redirect `/auth/callback`-re
+- ✅ Kijelentkezés: `supabase.auth.signOut()` + `user.value = null` + navigate `/login`
+- ✅ Session restore: `restoreSession()` a mountolás előtt fut (`main.ts`), `onAuthStateChange` feliratkozás token refresh kezeléshez
+- ✅ Védett route-ok route guard mögött (`router/index.ts` – `requiresAuth: true`)
+- ✅ Dev mode bypass: `VITE_DEV_AUTH_BYPASS=true` → mock userrel azonnali bejelentkezés, nincs Google redirect
 
 ---
 
@@ -44,10 +64,11 @@
 
 | Story ID | Megnevezés | Prioritás |
 |----------|-----------|-----------|
-| US-301 | Regisztráció és bejelentkezés (Google OAuth) | Must Have |
-| US-302 | Bejelentkezés / kijelentkezés | Must Have |
+| US-701 | User/Admin szerepkörök (admin middleware) | Must Have |
 | US-101 | Mérkőzések böngészése | Must Have |
 | US-102 | Mérkőzés részletek | Must Have |
+| US-201 | Tipp leadása | Must Have |
+| US-202 | Tipp módosítása | Must Have |
 
 ---
 
@@ -64,8 +85,8 @@
 | US-202 | Tipp módosítása | ⬜ Nem kezdett | Must Have |
 | US-203 | Saját tippek összesítő | ⬜ Nem kezdett | Must Have |
 | US-204 | Mások tippjeinek megtekintése | ⬜ Nem kezdett | Should Have |
-| US-301 | Regisztráció Google OAuth-szal | ⬜ Nem kezdett | Must Have |
-| US-302 | Bejelentkezés / kijelentkezés | ⬜ Nem kezdett | Must Have |
+| US-301 | Regisztráció Google OAuth-szal | ✅ Kész | Must Have |
+| US-302 | Bejelentkezés / kijelentkezés | ✅ Kész | Must Have |
 | US-303 | Profil szerkesztése | ⬜ Nem kezdett | Should Have |
 | US-304 | Email + jelszó auth | ⬜ Nem kezdett | Should Have |
 | US-401 | Automatikus pontszámítás | ⬜ Nem kezdett | Must Have |
@@ -91,4 +112,4 @@
 
 ---
 
-**Haladás: 4 / 33 story kész** (3 + US-403 részeként) — Must Have: 4/25 ✅
+**Haladás: 6 / 33 story kész** (5 + US-403 részeként) — Must Have: 6/25 ✅
