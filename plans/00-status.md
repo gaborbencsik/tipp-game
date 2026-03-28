@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-03-28 (US-304)
+> Utoljára frissítve: 2026-03-28 (US-101)
 
 ## Kész user story-k
 
@@ -12,6 +12,7 @@
 | **US-301** | Regisztráció és bejelentkezés (Google OAuth) | ✅ Kész |
 | **US-302** | Bejelentkezés / kijelentkezés | ✅ Kész |
 | **US-304** | Email + jelszó auth | ✅ Kész |
+| **US-101** | Mérkőzések böngészése | ✅ Kész |
 
 ### US-001 – Elfogadási kritériumok teljesítve
 
@@ -66,14 +67,28 @@
 - ✅ Hiba esetén `AuthError` dobva (pl. hibás jelszó, duplikált email)
 - ✅ LoginView login/register mód váltással, hibakezeléssel (`errorMessage`), loading állapottal
 - ✅ Google OAuth gomb megmarad alternatív belépési módként
+- ✅ `VITE_DEV_AUTH_BYPASS=true` esetén `loginWithEmail()` és `registerWithEmail()` is mock userrel lép be, Supabase nélkül
 - ✅ 66 teszt (28 backend + 38 frontend), typecheck CLEAN
+
+### US-101 – Elfogadási kritériumok teljesítve
+
+- ✅ `GET /api/matches` endpoint – authMiddleware mögött, opcionális `stage` és `status` query filter
+- ✅ Drizzle `alias()` double-join: `home_team` + `away_team` ugyanarra a `teams` táblára
+- ✅ Soft delete szűrés: `isNull(matches.deletedAt)`
+- ✅ Frontend: `MatchesView` – meccsek napok szerint csoportosítva, hu-HU dátum fejléccel
+- ✅ Státusz badge-ek: ÉLŐBEN (piros), Befejezett (szürke), Tervezett (kék)
+- ✅ Szűrő gombok: Összes / Csoportkör / Egyenes kiesés
+- ✅ Pinia store: `fetchMatches()`, `filteredMatches`, `matchesByDate` computed property-k
+- ✅ Dev bypass: `getAccessToken()` helper – bypass módban `dev-bypass-token`-t küld, nem hív Supabase-t
+- ✅ Docker: `VITE_API_URL: http://backend:3000` (Docker hálózaton belüli service név)
+- ✅ Kezdőképernyő (`/`): bejelentkezés után közvetlenül a meccslistát mutatja
+- ✅ 97 teszt (35 backend + 62 frontend), typecheck CLEAN
 
 ---
 
 | Story ID | Megnevezés | Prioritás |
 |----------|-----------|-----------|
 | US-701 | User/Admin szerepkörök (admin middleware) | Must Have |
-| US-101 | Mérkőzések böngészése | Must Have |
 | US-102 | Mérkőzés részletek | Must Have |
 | US-201 | Tipp leadása | Must Have |
 | US-202 | Tipp módosítása | Must Have |
@@ -87,7 +102,7 @@
 | US-001 | Monorepo és dev környezet | ✅ Kész | Must Have |
 | US-002 | DB schema és seed adatok | ✅ Kész | Must Have |
 | US-003 | Tesztelési infrastruktúra | ✅ Kész | Must Have |
-| US-101 | Mérkőzések böngészése | ⬜ Nem kezdett | Must Have |
+| US-101 | Mérkőzések böngészése | ✅ Kész | Must Have |
 | US-102 | Mérkőzés részletek | ⬜ Nem kezdett | Must Have |
 | US-201 | Tipp leadása | ⬜ Nem kezdett | Must Have |
 | US-202 | Tipp módosítása | ⬜ Nem kezdett | Must Have |
@@ -120,4 +135,4 @@
 
 ---
 
-**Haladás: 7 / 33 story kész** (6 + US-403 részeként) — Must Have: 6/25 ✅, Should Have: 1/7 ✅
+**Haladás: 8 / 33 story kész** (7 + US-403 részeként) — Must Have: 7/25 ✅, Should Have: 1/7 ✅
