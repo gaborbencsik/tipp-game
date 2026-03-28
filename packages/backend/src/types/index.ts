@@ -41,3 +41,41 @@ export interface ApiError {
   readonly message: string
   readonly code?: string
 }
+
+export type MatchStatus = 'scheduled' | 'live' | 'finished' | 'cancelled'
+export type MatchStage = 'group' | 'round_of_16' | 'quarter_final' | 'semi_final' | 'third_place' | 'final'
+
+export interface MatchTeam {
+  readonly id: string
+  readonly name: string
+  readonly shortCode: string
+  readonly flagUrl: string | null
+}
+
+export interface MatchVenue {
+  readonly name: string
+  readonly city: string
+}
+
+export interface MatchResult {
+  readonly homeGoals: number
+  readonly awayGoals: number
+}
+
+export interface Match {
+  readonly id: string
+  readonly homeTeam: MatchTeam
+  readonly awayTeam: MatchTeam
+  readonly venue: MatchVenue | null
+  readonly stage: MatchStage
+  readonly groupName: string | null
+  readonly matchNumber: number | null
+  readonly scheduledAt: string
+  readonly status: MatchStatus
+  readonly result: MatchResult | null
+}
+
+export interface MatchesFilters {
+  readonly stage?: MatchStage
+  readonly status?: MatchStatus
+}

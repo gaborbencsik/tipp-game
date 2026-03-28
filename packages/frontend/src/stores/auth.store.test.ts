@@ -247,6 +247,20 @@ describe('auth.store', () => {
     })
   })
 
+  // ─── loginWithEmail DEV_AUTH_BYPASS ──────────────────────────────────────────
+
+  it('loginWithEmail() bypass spy → MOCK_USER beállítva, navigál /', async () => {
+    const store = useAuthStore()
+    vi.spyOn(store, 'loginWithEmail').mockImplementation(async () => {
+      store.user = MOCK_USER
+      await mockPush('/')
+    })
+    await store.loginWithEmail('any@email.com', 'anypassword')
+    expect(store.user).toEqual(MOCK_USER)
+    expect(mockPush).toHaveBeenCalledWith('/')
+    expect(mockSignInWithPassword).not.toHaveBeenCalled()
+  })
+
   // ─── registerWithEmail ────────────────────────────────────────────────────────
 
   it('registerWithEmail() siker → api.auth.me hívva, user beállítva', async () => {
@@ -266,5 +280,20 @@ describe('auth.store', () => {
       name: 'AuthError',
       message: 'User already registered',
     })
+  })
+
+  // ─── registerWithEmail DEV_AUTH_BYPASS ───────────────────────────────────────
+
+  it('registerWithEmail() bypass spy → user beállítva email+displayName-mel, navigál /', async () => {
+    const store = useAuthStore()
+    vi.spyOn(store, 'registerWithEmail').mockImplementation(async (_email, _password, displayName) => {
+      store.user = { ...MOCK_USER, email: 'new@example.com', displayName }
+      await mockPush('/')
+    })
+    await store.registerWithEmail('new@example.com', 'pass', 'New User')
+    expect(store.user?.displayName).toBe('New User')
+    expect(store.user?.email).toBe('new@example.com')
+    expect(mockPush).toHaveBeenCalledWith('/')
+    expect(mockSignUp).not.toHaveBeenCalled()
   })
 })

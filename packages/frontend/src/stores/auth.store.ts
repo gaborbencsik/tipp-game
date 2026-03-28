@@ -81,6 +81,11 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function loginWithEmail(email: string, password: string): Promise<void> {
+    if (DEV_AUTH_BYPASS) {
+      user.value = MOCK_USER
+      await router.push('/')
+      return
+    }
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw new AuthError(error.message)
     await handleSession(data.session as Session)
@@ -88,6 +93,11 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function registerWithEmail(email: string, password: string, displayName: string): Promise<void> {
+    if (DEV_AUTH_BYPASS) {
+      user.value = { ...MOCK_USER, email, displayName }
+      await router.push('/')
+      return
+    }
     const { data, error } = await supabase.auth.signUp({
       email,
       password,

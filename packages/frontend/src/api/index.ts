@@ -1,4 +1,4 @@
-import type { User } from '../types/index.js'
+import type { User, Match, MatchesFilters } from '../types/index.js'
 
 const BASE_URL = '/api'
 
@@ -27,5 +27,16 @@ export const api = {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       }),
+  },
+  matches: {
+    list: (token: string, filters?: MatchesFilters) => {
+      const params = new URLSearchParams()
+      if (filters?.stage) params.set('stage', filters.stage)
+      if (filters?.status) params.set('status', filters.status)
+      const query = params.toString() ? `?${params.toString()}` : ''
+      return request<Match[]>(`/matches${query}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+    },
   },
 }
