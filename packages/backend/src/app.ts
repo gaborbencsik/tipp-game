@@ -34,9 +34,16 @@ app.use(predictionsRouter.routes())
 app.use(predictionsRouter.allowedMethods())
 
 app.on('error', (err: Error, ctx: Koa.Context) => {
-  console.error('Unhandled error:', err.message, ctx.url)
-  if ('cause' in err) console.error('Caused by:', (err as Error & { cause: unknown }).cause)
-  if ('code' in err) console.error('PG error code:', (err as Error & { code: unknown }).code)
+  const entry: Record<string, unknown> = {
+    level: 'error',
+    message: err.message,
+    url: ctx.url,
+    method: ctx.method,
+    stack: err.stack,
+  }
+  if ('cause' in err) entry['cause'] = String((err as Error & { cause: unknown }).cause)
+  if ('code' in err) entry['pgCode'] = (err as Error & { code: unknown }).code
+  console.error(JSON.stringify(entry))
 })
 
 export { app }

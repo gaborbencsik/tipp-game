@@ -1,16 +1,25 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { AuthenticatedUser, DbUser } from '../src/types/index.js'
 
-const { mockInsert, mockValues, mockOnConflictDoUpdate, mockReturning } = vi.hoisted(() => {
+const {
+  mockInsert, mockValues, mockOnConflictDoUpdate, mockReturning,
+  mockUpdate, mockSet, mockWhere, mockUpdateReturning,
+} = vi.hoisted(() => {
+  const mockUpdateReturning = vi.fn()
+  const mockWhere = vi.fn(() => ({ returning: mockUpdateReturning }))
+  const mockSet = vi.fn(() => ({ where: mockWhere }))
+  const mockUpdate = vi.fn(() => ({ set: mockSet }))
+
   const mockReturning = vi.fn()
   const mockOnConflictDoUpdate = vi.fn(() => ({ returning: mockReturning }))
   const mockValues = vi.fn(() => ({ onConflictDoUpdate: mockOnConflictDoUpdate }))
   const mockInsert = vi.fn(() => ({ values: mockValues }))
-  return { mockInsert, mockValues, mockOnConflictDoUpdate, mockReturning }
+
+  return { mockInsert, mockValues, mockOnConflictDoUpdate, mockReturning, mockUpdate, mockSet, mockWhere, mockUpdateReturning }
 })
 
 vi.mock('../src/db/client.js', () => ({
-  db: { insert: mockInsert },
+  db: { insert: mockInsert, update: mockUpdate },
 }))
 
 import { upsertUser } from '../src/services/user.service.js'
@@ -39,6 +48,11 @@ describe('upsertUser', () => {
     mockOnConflictDoUpdate.mockReturnValue({ returning: mockReturning })
     mockValues.mockReturnValue({ onConflictDoUpdate: mockOnConflictDoUpdate })
     mockInsert.mockReturnValue({ values: mockValues })
+
+    mockUpdateReturning.mockResolvedValue([RETURNED_ROW])
+    mockWhere.mockReturnValue({ returning: mockUpdateReturning })
+    mockSet.mockReturnValue({ where: mockWhere })
+    mockUpdate.mockReturnValue({ set: mockSet })
   })
 
   it('new user → inserts and returns DbUser', async () => {
@@ -82,5 +96,32 @@ describe('upsertUser', () => {
     expect(mockValues).toHaveBeenCalledWith(
       expect.objectContaining({ displayName: 'noname' })
     )
+  })
+
+  it('email conflict (23505) → falls back to UPDATE by email and returns DbUser', async () => {
+    const pgError = Object.assign(new Error('duplicate key value violates unique constraint "users_email_unique"'), { code: '23505' })
+    mockReturning.mockRejectedValue(pgError)
+
+    const updatedRow: DbUser = { ...RETURNED_ROW, supabaseId: 'supabase-uuid-abc' }
+    mockUpdateReturning.mockResolvedValue([updatedRow])
+
+    const result = await upsertUser(BASE_USER)
+
+    expect(mockUpdate).toHaveBeenCalledWith(schema.users)
+    expect(mockSet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        supabaseId: 'supabase-uuid-abc',
+        displayName: 'John Doe',
+      })
+    )
+    expect(result).toEqual(updatedRow)
+  })
+
+  it('non-23505 DB error → rethrows the error', async () => {
+    const dbError = Object.assign(new Error('connection refused'), { code: '08006' })
+    mockReturning.mockRejectedValue(dbError)
+
+    await expect(upsertUser(BASE_USER)).rejects.toThrow('connection refused')
+    expect(mockUpdate).not.toHaveBeenCalled()
   })
 })
