@@ -1,6 +1,6 @@
 import type { Context, Next } from 'koa'
 import jwt from 'jsonwebtoken'
-const { verify } = jwt
+import jwksClient from 'jwks-rsa'
 import type { SupabaseUserClaims, AuthenticatedUser } from '../types/index.js'
 
 declare module 'koa' {
@@ -14,6 +14,22 @@ const DEV_BYPASS_USER: AuthenticatedUser = {
   email: 'dev@local',
   displayName: 'Dev User',
   avatarUrl: null,
+}
+
+function makeJwksClient(): jwksClient.JwksClient {
+  const supabaseUrl = process.env['SUPABASE_URL']
+  if (!supabaseUrl) throw new Error('SUPABASE_URL is not set')
+  return jwksClient({
+    jwksUri: `${supabaseUrl}/auth/v1/.well-known/jwks.json`,
+    cache: true,
+    cacheMaxAge: 600000, // 10 min
+  })
+}
+
+async function getSigningKey(kid: string): Promise<string> {
+  const client = makeJwksClient()
+  const key = await client.getSigningKey(kid)
+  return key.getPublicKey()
 }
 
 export async function authMiddleware(ctx: Context, next: Next): Promise<void> {
@@ -33,15 +49,17 @@ export async function authMiddleware(ctx: Context, next: Next): Promise<void> {
     return
   }
 
-  const secret = process.env['SUPABASE_JWT_SECRET']
-  if (!secret) {
-    ctx.status = 401
-    ctx.body = { error: 'Unauthorized' }
-    return
-  }
-
   try {
-    const claims = verify(token, secret) as SupabaseUserClaims
+    const decoded = jwt.decode(token, { complete: true })
+    if (!decoded || typeof decoded === 'string' || !decoded.header.kid) {
+      ctx.status = 401
+      ctx.body = { error: 'Unauthorized' }
+      return
+    }
+
+    const publicKey = await getSigningKey(decoded.header.kid)
+    const claims = jwt.verify(token, publicKey, { algorithms: ['RS256'] }) as SupabaseUserClaims
+
     ctx.state.user = {
       supabaseId: claims.sub,
       email: claims.email,
