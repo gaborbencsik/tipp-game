@@ -202,11 +202,12 @@ describe('auth.store', () => {
     expect(store.user).toEqual(MOCK_USER)
   })
 
-  it('handleSession(session) API error → user remains null', async () => {
+  it('handleSession(session) API error → throws error', async () => {
     mockApiAuthMe.mockRejectedValue(new Error('API error'))
     const store = useAuthStore()
-    await store.handleSession(MOCK_SESSION as Parameters<typeof store.handleSession>[0])
-    expect(store.user).toBeNull()
+    await expect(
+      store.handleSession(MOCK_SESSION as Parameters<typeof store.handleSession>[0])
+    ).rejects.toThrow('API error')
   })
 
   // ─── restoreSession ─────────────────────────────────────────────────────────

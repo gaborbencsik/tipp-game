@@ -67,7 +67,8 @@ export async function authMiddleware(ctx: Context, next: Next): Promise<void> {
       avatarUrl: claims.user_metadata?.avatar_url ?? null,
     }
     await next()
-  } catch {
+  } catch (err) {
+    console.error('[authMiddleware] JWT verification failed:', err instanceof Error ? err.message : err)
     ctx.status = 401
     ctx.body = { error: 'Unauthorized' }
   }

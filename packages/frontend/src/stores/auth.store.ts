@@ -33,11 +33,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function handleSession(session: Session): Promise<void> {
-    try {
-      user.value = await api.auth.me(session.access_token)
-    } catch {
-      user.value = null
-    }
+    user.value = await api.auth.me(session.access_token)
   }
 
   async function restoreSession(): Promise<void> {
@@ -45,12 +41,20 @@ export const useAuthStore = defineStore('auth', () => {
 
     const { data } = await supabase.auth.getSession()
     if (data.session) {
-      await handleSession(data.session)
+      try {
+        await handleSession(data.session)
+      } catch {
+        user.value = null
+      }
     }
 
     supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session) {
-        await handleSession(session)
+        try {
+          await handleSession(session)
+        } catch {
+          user.value = null
+        }
       } else {
         user.value = null
       }
