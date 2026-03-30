@@ -32,6 +32,15 @@ async function getSigningKey(kid: string): Promise<string> {
   return key.getPublicKey()
 }
 
+async function verifyToken(token: string): Promise<SupabaseUserClaims> {
+  const decoded = jwt.decode(token, { complete: true })
+  if (!decoded || typeof decoded === 'string' || !decoded.header.kid) {
+    throw Object.assign(new Error('Missing or invalid kid'), { isAuthError: true })
+  }
+  const publicKey = await getSigningKey(decoded.header.kid)
+  return jwt.verify(token, publicKey, { algorithms: ['RS256', 'ES256'] }) as SupabaseUserClaims
+}
+
 export async function authMiddleware(ctx: Context, next: Next): Promise<void> {
   const authHeader = ctx.headers['authorization']
 
@@ -49,27 +58,22 @@ export async function authMiddleware(ctx: Context, next: Next): Promise<void> {
     return
   }
 
+  let claims: SupabaseUserClaims
   try {
-    const decoded = jwt.decode(token, { complete: true })
-    if (!decoded || typeof decoded === 'string' || !decoded.header.kid) {
-      ctx.status = 401
-      ctx.body = { error: 'Unauthorized' }
-      return
-    }
-
-    const publicKey = await getSigningKey(decoded.header.kid)
-    const claims = jwt.verify(token, publicKey, { algorithms: ['RS256', 'ES256'] }) as SupabaseUserClaims
-
-    ctx.state.user = {
-      supabaseId: claims.sub,
-      email: claims.email,
-      displayName: claims.user_metadata?.full_name ?? claims.email.split('@')[0],
-      avatarUrl: claims.user_metadata?.avatar_url ?? null,
-    }
-    await next()
+    claims = await verifyToken(token)
   } catch (err) {
     console.error('[authMiddleware] JWT verification failed:', err instanceof Error ? err.message : err)
     ctx.status = 401
     ctx.body = { error: 'Unauthorized' }
+    return
   }
+
+  ctx.state.user = {
+    supabaseId: claims.sub,
+    email: claims.email,
+    displayName: claims.user_metadata?.full_name ?? claims.email.split('@')[0],
+    avatarUrl: claims.user_metadata?.avatar_url ?? null,
+  }
+
+  await next()
 }
