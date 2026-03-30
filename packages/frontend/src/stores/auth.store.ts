@@ -101,7 +101,10 @@ export const useAuthStore = defineStore('auth', () => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: displayName } },
+      options: {
+        data: { full_name: displayName },
+        emailRedirectTo: window.location.origin + '/auth/callback',
+      },
     })
     if (error) throw new AuthError(error.message)
     await handleSession(data.session as Session)
