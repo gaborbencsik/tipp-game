@@ -273,6 +273,16 @@ describe('auth.store', () => {
     expect(store.user).toEqual(MOCK_USER)
   })
 
+  it('registerWithEmail() → emailRedirectTo tartalmazza az /auth/callback-et', async () => {
+    const mockSession = { access_token: 'reg-token', user: { id: 'uid2' } }
+    mockSignUp.mockResolvedValue({ data: { session: mockSession }, error: null })
+    mockApiAuthMe.mockResolvedValue(MOCK_USER)
+    const store = useAuthStore()
+    await store.registerWithEmail('new@example.com', 'password123', 'New User')
+    const callOptions = mockSignUp.mock.calls[0]?.[0] as { options?: { emailRedirectTo?: string } }
+    expect(callOptions.options?.emailRedirectTo).toContain('/auth/callback')
+  })
+
   it('registerWithEmail() duplikált email → AuthError dobva', async () => {
     mockSignUp.mockResolvedValue({ data: { session: null }, error: { message: 'User already registered' } })
     const store = useAuthStore()
