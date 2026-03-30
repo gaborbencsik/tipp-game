@@ -39,25 +39,30 @@ export const useAuthStore = defineStore('auth', () => {
   async function restoreSession(): Promise<void> {
     if (DEV_AUTH_BYPASS) return
 
-    const { data } = await supabase.auth.getSession()
-    if (data.session) {
-      try {
-        await handleSession(data.session)
-      } catch {
-        user.value = null
-      }
-    }
-
-    supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session) {
-        try {
-          await handleSession(session)
-        } catch {
+    return new Promise((resolve) => {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'INITIAL_SESSION') {
+          if (session) {
+            try {
+              await handleSession(session)
+            } catch {
+              user.value = null
+            }
+          }
+          resolve()
+        } else if (session) {
+          try {
+            await handleSession(session)
+          } catch {
+            user.value = null
+          }
+        } else {
           user.value = null
         }
-      } else {
-        user.value = null
-      }
+      })
+
+      // keep subscription alive for the lifetime of the app
+      void subscription
     })
   }
 

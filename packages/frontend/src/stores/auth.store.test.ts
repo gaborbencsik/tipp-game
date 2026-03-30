@@ -213,7 +213,10 @@ describe('auth.store', () => {
   // ─── restoreSession ─────────────────────────────────────────────────────────
 
   it('restoreSession() with session → handleSession called', async () => {
-    mockGetSession.mockResolvedValue({ data: { session: MOCK_SESSION } })
+    mockOnAuthStateChange.mockImplementation((cb: (event: string, session: unknown) => void) => {
+      cb('INITIAL_SESSION', MOCK_SESSION)
+      return { data: { subscription: { unsubscribe: vi.fn() } } }
+    })
     mockApiAuthMe.mockResolvedValue(MOCK_USER)
     const store = useAuthStore()
     await store.restoreSession()
@@ -221,7 +224,10 @@ describe('auth.store', () => {
   })
 
   it('restoreSession() no session → user remains null', async () => {
-    mockGetSession.mockResolvedValue({ data: { session: null } })
+    mockOnAuthStateChange.mockImplementation((cb: (event: string, session: unknown) => void) => {
+      cb('INITIAL_SESSION', null)
+      return { data: { subscription: { unsubscribe: vi.fn() } } }
+    })
     const store = useAuthStore()
     await store.restoreSession()
     expect(store.user).toBeNull()
