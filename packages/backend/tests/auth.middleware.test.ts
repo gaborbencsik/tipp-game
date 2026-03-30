@@ -119,4 +119,16 @@ describe('authMiddleware', () => {
     expect(next).not.toHaveBeenCalled()
     process.env['NODE_ENV'] = 'test'
   })
+
+  it('ES256 token → accepted, ctx.state.user filled', async () => {
+    mockDecode.mockReturnValue({ header: { kid: 'es-kid', alg: 'ES256' }, payload: MOCK_CLAIMS })
+    mockVerify.mockReturnValue(MOCK_CLAIMS)
+    const ctx = makeCtx('Bearer es256-token')
+    await authMiddleware(ctx, next)
+    expect(next).toHaveBeenCalledOnce()
+    const user = ctx.state['user'] as AuthenticatedUser
+    expect(user.supabaseId).toBe('supabase-uuid-123')
+    const verifyCall = mockVerify.mock.calls[0] as [string, string, { algorithms: string[] }]
+    expect(verifyCall[2].algorithms).toContain('ES256')
+  })
 })

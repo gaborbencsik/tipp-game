@@ -58,7 +58,7 @@ export async function authMiddleware(ctx: Context, next: Next): Promise<void> {
     }
 
     const publicKey = await getSigningKey(decoded.header.kid)
-    const claims = jwt.verify(token, publicKey, { algorithms: ['RS256'] }) as SupabaseUserClaims
+    const claims = jwt.verify(token, publicKey, { algorithms: ['RS256', 'ES256'] }) as SupabaseUserClaims
 
     ctx.state.user = {
       supabaseId: claims.sub,
