@@ -14,10 +14,23 @@ const authStore = useAuthStore()
 const router = useRouter()
 
 onMounted(async () => {
+  let unsubscribeFn: (() => void) | null = null
+
+  const result = supabase.auth.onAuthStateChange(async (_event, session) => {
+    unsubscribeFn?.()
+    if (session) {
+      await authStore.handleSession(session)
+    }
+    await router.push('/')
+  })
+  unsubscribeFn = () => result.data.subscription.unsubscribe()
+
+  // fallback: ha már van session (pl. frissítéskor)
   const { data } = await supabase.auth.getSession()
   if (data.session) {
+    unsubscribeFn()
     await authStore.handleSession(data.session)
+    await router.push('/')
   }
-  await router.push('/')
 })
 </script>
