@@ -35,6 +35,8 @@ app.use(predictionsRouter.allowedMethods())
 
 app.on('error', (err: Error, ctx: Koa.Context) => {
   console.error('Unhandled error:', err.message, ctx.url)
+  if ('cause' in err) console.error('Caused by:', (err as Error & { cause: unknown }).cause)
+  if ('code' in err) console.error('PG error code:', (err as Error & { code: unknown }).code)
 })
 
 export { app }
