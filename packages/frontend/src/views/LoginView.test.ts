@@ -54,14 +54,14 @@ describe('LoginView', () => {
     vi.restoreAllMocks()
   })
 
-  it('megjeleníti az oldalcímet', () => {
+  it('renders the page title', () => {
     const wrapper = mount(LoginView, {
       global: { plugins: [createPinia(), buildRouter()] },
     })
     expect(wrapper.text()).toContain('VB Tippjáték')
   })
 
-  it('alapból login form látható', () => {
+  it('login form is shown by default', () => {
     const wrapper = mount(LoginView, {
       global: { plugins: [createPinia(), buildRouter()] },
     })
@@ -70,7 +70,7 @@ describe('LoginView', () => {
     expect(wrapper.find('input[type="password"]').exists()).toBe(true)
   })
 
-  it('"Regisztrálj" linkre kattintva register form jelenik meg', async () => {
+  it('clicking "Regisztrálj" link shows register form', async () => {
     const wrapper = mount(LoginView, {
       global: { plugins: [createPinia(), buildRouter()] },
     })
@@ -79,7 +79,7 @@ describe('LoginView', () => {
     expect(wrapper.find('input[type="text"]').exists()).toBe(true)
   })
 
-  it('login submit → loginWithEmail() hívva helyes adatokkal', async () => {
+  it('login submit → loginWithEmail() called with correct data', async () => {
     const wrapper = mount(LoginView, {
       global: { plugins: [createPinia(), buildRouter()] },
     })
@@ -93,7 +93,7 @@ describe('LoginView', () => {
     expect(spy).toHaveBeenCalledWith('user@example.com', 'password123')
   })
 
-  it('register submit → registerWithEmail() hívva helyes adatokkal', async () => {
+  it('register submit → registerWithEmail() called with correct data', async () => {
     const wrapper = mount(LoginView, {
       global: { plugins: [createPinia(), buildRouter()] },
     })
@@ -109,7 +109,7 @@ describe('LoginView', () => {
     expect(spy).toHaveBeenCalledWith('new@example.com', 'password123', 'New User')
   })
 
-  it('loginWithEmail() hiba → errorMessage megjelenik a DOM-ban', async () => {
+  it('loginWithEmail() error → errorMessage shown in DOM', async () => {
     const wrapper = mount(LoginView, {
       global: { plugins: [createPinia(), buildRouter()] },
     })
@@ -124,14 +124,14 @@ describe('LoginView', () => {
     expect(wrapper.text()).toContain('Invalid credentials')
   })
 
-  it('megjeleníti a bejelentkezés gombot (Google)', () => {
+  it('renders the Google sign-in button', () => {
     const wrapper = mount(LoginView, {
       global: { plugins: [createPinia(), buildRouter()] },
     })
     expect(wrapper.text()).toContain('Google')
   })
 
-  it('gombkattintásra meghívja az authStore.login()-t (Google)', async () => {
+  it('clicking Google button calls authStore.login()', async () => {
     const wrapper = mount(LoginView, {
       global: { plugins: [createPinia(), buildRouter()] },
     })
@@ -142,7 +142,7 @@ describe('LoginView', () => {
     expect(loginSpy).toHaveBeenCalledOnce()
   })
 
-  it('sikeres login után a store user-je be van állítva', async () => {
+  it('after successful login the store user is set', async () => {
     const wrapper = mount(LoginView, {
       global: { plugins: [createPinia(), buildRouter()] },
     })
@@ -163,4 +163,3 @@ describe('LoginView', () => {
     expect(store.isAuthenticated()).toBe(true)
   })
 })
-

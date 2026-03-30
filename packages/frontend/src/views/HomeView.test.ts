@@ -63,22 +63,22 @@ describe('HomeView', () => {
     mockPush.mockClear()
   })
 
-  it('megjeleníti a főoldal fejlécet', () => {
+  it('renders the page header', () => {
     const wrapper = mountWithUser()
     expect(wrapper.text()).toContain('VB Tippjáték')
   })
 
-  it('megjeleníti a bejelentkezett user nevét', () => {
+  it('renders the logged-in user name', () => {
     const wrapper = mountWithUser()
     expect(wrapper.text()).toContain('Dev User')
   })
 
-  it('megjelenik a kijelentkezés gomb', () => {
+  it('logout button is visible', () => {
     const wrapper = mountWithUser()
     expect(wrapper.find('button').text()).toBe('Kijelentkezés')
   })
 
-  it('kijelentkezés gombra kattintva meghívja a logout()-ot', async () => {
+  it('clicking logout button calls logout()', async () => {
     const wrapper = mountWithUser()
     const store = useAuthStore()
     const logoutSpy = vi.spyOn(store, 'logout').mockResolvedValue(undefined)
@@ -86,7 +86,7 @@ describe('HomeView', () => {
     expect(logoutSpy).toHaveBeenCalledOnce()
   })
 
-  it('kijelentkezés gombra kattintva navigál a login oldalra (valós logout)', async () => {
+  it('clicking logout button navigates to login page', async () => {
     const wrapper = mountWithUser()
     await wrapper.find('button').trigger('click')
     expect(mockPush).toHaveBeenCalledWith('/login')

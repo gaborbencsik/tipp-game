@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
-import { createPinia, setActivePinia } from 'pinia'
+import { setActivePinia, createPinia } from 'pinia'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import AuthCallbackView from '@/views/AuthCallbackView.vue'
+import { mount, flushPromises } from '@vue/test-utils'
 
 const mockPush = vi.fn().mockResolvedValue(undefined)
 vi.mock('vue-router', async (importOriginal) => {
@@ -56,7 +56,7 @@ describe('AuthCallbackView', () => {
     setActivePinia(createPinia())
   })
 
-  it('onAuthStateChange session → handleSession hívva, navigál /', async () => {
+  it('onAuthStateChange with session → handleSession called, navigates /', async () => {
     const mockSession = { access_token: 'tok', user: { id: 'uid' } }
     const unsubscribe = vi.fn()
     mockOnAuthStateChange.mockImplementation((cb: (event: string, session: unknown) => void) => {
@@ -72,7 +72,7 @@ describe('AuthCallbackView', () => {
     expect(mockPush).toHaveBeenCalledWith('/')
   })
 
-  it('getSession session megvan (fallback) → handleSession hívva, navigál /', async () => {
+  it('getSession session present (fallback) → handleSession called, navigates /', async () => {
     const mockSession = { access_token: 'tok2', user: { id: 'uid2' } }
     const unsubscribe = vi.fn()
     mockOnAuthStateChange.mockReturnValue({ data: { subscription: { unsubscribe } } })
@@ -85,7 +85,7 @@ describe('AuthCallbackView', () => {
     expect(mockPush).toHaveBeenCalledWith('/')
   })
 
-  it('nincs session → handleSession nem hívva, navigál /', async () => {
+  it('no session → handleSession not called, navigates /', async () => {
     const unsubscribe = vi.fn()
     mockOnAuthStateChange.mockImplementation((cb: (event: string, session: unknown) => void) => {
       cb('SIGNED_OUT', null)

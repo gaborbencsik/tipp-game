@@ -71,40 +71,40 @@ describe('predictions.store', () => {
     mockGetSession.mockResolvedValue({ data: { session: { access_token: 'mock-token' } } })
   })
 
-  // ─── Alapállapot ────────────────────────────────────────────────────────────
+  // ─── Initial state ───────────────────────────────────────────────────────────
 
-  it('kezdetben üres predictions tömb', () => {
+  it('initial predictions array is empty', () => {
     const store = usePredictionsStore()
     expect(store.predictions).toEqual([])
   })
 
-  it('kezdetben isLoading false', () => {
+  it('initial isLoading is false', () => {
     const store = usePredictionsStore()
     expect(store.isLoading).toBe(false)
   })
 
-  it('kezdetben error null', () => {
+  it('initial error is null', () => {
     const store = usePredictionsStore()
     expect(store.error).toBeNull()
   })
 
   // ─── fetchMyPredictions ──────────────────────────────────────────────────────
 
-  it('fetchMyPredictions() → predictions beállítva', async () => {
+  it('fetchMyPredictions() → predictions populated', async () => {
     mockPredictionsMine.mockResolvedValue([PREDICTION_1, PREDICTION_2])
     const store = usePredictionsStore()
     await store.fetchMyPredictions()
     expect(store.predictions).toEqual([PREDICTION_1, PREDICTION_2])
   })
 
-  it('fetchMyPredictions() → isLoading false a végén', async () => {
+  it('fetchMyPredictions() → isLoading false after completion', async () => {
     mockPredictionsMine.mockResolvedValue([])
     const store = usePredictionsStore()
     await store.fetchMyPredictions()
     expect(store.isLoading).toBe(false)
   })
 
-  it('fetchMyPredictions() hiba → error beállítva', async () => {
+  it('fetchMyPredictions() error → error set', async () => {
     mockPredictionsMine.mockRejectedValue(new Error('Network error'))
     const store = usePredictionsStore()
     await store.fetchMyPredictions()
@@ -113,13 +113,13 @@ describe('predictions.store', () => {
 
   // ─── predictionByMatchId ─────────────────────────────────────────────────────
 
-  it('predictionByMatchId → helyes Prediction visszaadva', () => {
+  it('predictionByMatchId → correct Prediction returned', () => {
     const store = usePredictionsStore()
     store.predictions = [PREDICTION_1, PREDICTION_2]
     expect(store.predictionByMatchId('match-1')).toEqual(PREDICTION_1)
   })
 
-  it('predictionByMatchId ismeretlen id → undefined', () => {
+  it('predictionByMatchId unknown id → undefined', () => {
     const store = usePredictionsStore()
     store.predictions = [PREDICTION_1]
     expect(store.predictionByMatchId('ismeretlen')).toBeUndefined()
@@ -127,7 +127,7 @@ describe('predictions.store', () => {
 
   // ─── upsertPrediction ────────────────────────────────────────────────────────
 
-  it('upsertPrediction() új tipp → bekerül a predictions tömbbe', async () => {
+  it('upsertPrediction() new prediction → added to predictions array', async () => {
     mockPredictionsUpsert.mockResolvedValue(PREDICTION_1)
     const store = usePredictionsStore()
     await store.upsertPrediction({ matchId: 'match-1', homeGoals: 2, awayGoals: 1 })
@@ -135,14 +135,14 @@ describe('predictions.store', () => {
     expect(store.predictions[0]).toEqual(PREDICTION_1)
   })
 
-  it('upsertPrediction() új tipp → saveStatus saved', async () => {
+  it('upsertPrediction() new prediction → saveStatus saved', async () => {
     mockPredictionsUpsert.mockResolvedValue(PREDICTION_1)
     const store = usePredictionsStore()
     await store.upsertPrediction({ matchId: 'match-1', homeGoals: 2, awayGoals: 1 })
     expect(store.saveStatus['match-1']).toBe('saved')
   })
 
-  it('upsertPrediction() meglévő tipp frissítés → in-place update, tömbméret változatlan', async () => {
+  it('upsertPrediction() existing prediction update → in-place update, array size unchanged', async () => {
     const updated: Prediction = { ...PREDICTION_1, homeGoals: 3, awayGoals: 0 }
     mockPredictionsUpsert.mockResolvedValue(updated)
     const store = usePredictionsStore()
@@ -152,7 +152,7 @@ describe('predictions.store', () => {
     expect(store.predictions[0]?.homeGoals).toBe(3)
   })
 
-  it('upsertPrediction() API hiba → saveStatus error, error beállítva', async () => {
+  it('upsertPrediction() API error → saveStatus error, error set', async () => {
     mockPredictionsUpsert.mockRejectedValue(new Error('Tippelési határidő lejárt'))
     const store = usePredictionsStore()
     await store.upsertPrediction({ matchId: 'match-1', homeGoals: 1, awayGoals: 1 })

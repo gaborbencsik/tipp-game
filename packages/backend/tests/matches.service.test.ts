@@ -88,13 +88,13 @@ describe('getMatches', () => {
     mockSelect.mockReturnValue({ from: mockFrom })
   })
 
-  it('üres DB → [] visszaadva', async () => {
+  it('empty DB → returns []', async () => {
     mockOrderBy.mockResolvedValue([])
     const result = await getMatches()
     expect(result).toEqual([])
   })
 
-  it('2 meccs → 2 elem, helyes Match struktúra', async () => {
+  it('2 matches → 2 items with correct Match structure', async () => {
     const row1 = makeRow()
     const row2 = makeRow({ id: 'match-uuid-2' })
     mockOrderBy.mockResolvedValue([row1, row2])
@@ -120,7 +120,7 @@ describe('getMatches', () => {
     expect(typeof first.scheduledAt).toBe('string')
   })
 
-  it('finished meccs → result kitöltve', async () => {
+  it('finished match → result populated', async () => {
     const row = makeRow({ status: 'finished' })
     row.match_results = {
       id: 'result-uuid',
@@ -138,7 +138,7 @@ describe('getMatches', () => {
     expect(result[0]?.result).toEqual({ homeGoals: 2, awayGoals: 1 })
   })
 
-  it('scheduled meccs → result: null', async () => {
+  it('scheduled match → result: null', async () => {
     const row = makeRow({ status: 'scheduled' })
     mockOrderBy.mockResolvedValue([row])
 
@@ -147,7 +147,7 @@ describe('getMatches', () => {
     expect(result[0]?.result).toBeNull()
   })
 
-  it('status: live filter → where hívva eq feltétellel', async () => {
+  it('status: live filter → where called with eq condition', async () => {
     mockOrderBy.mockResolvedValue([])
 
     await getMatches({ status: 'live' })
@@ -157,7 +157,7 @@ describe('getMatches', () => {
     expect(condition).toBeDefined()
   })
 
-  it('stage filter → where hívva eq feltétellel', async () => {
+  it('stage filter → where called with eq condition', async () => {
     mockOrderBy.mockResolvedValue([])
 
     await getMatches({ stage: 'final' })
@@ -165,7 +165,7 @@ describe('getMatches', () => {
     expect(mockWhere).toHaveBeenCalledOnce()
   })
 
-  it('venue null → match.venue null', async () => {
+  it('venue null → match.venue is null', async () => {
     const row = makeRow()
     row.venues = null as unknown as typeof VENUE
     mockOrderBy.mockResolvedValue([row])

@@ -78,40 +78,40 @@ describe('matches.store', () => {
     mockGetSession.mockResolvedValue({ data: { session: { access_token: 'mock-token' } } })
   })
 
-  // ─── Alapállapot ────────────────────────────────────────────────────────────
+  // ─── Initial state ───────────────────────────────────────────────────────────
 
-  it('kezdetben üres matches tömb', () => {
+  it('initial matches array is empty', () => {
     const store = useMatchesStore()
     expect(store.matches).toEqual([])
   })
 
-  it('kezdetben isLoading false', () => {
+  it('initial isLoading is false', () => {
     const store = useMatchesStore()
     expect(store.isLoading).toBe(false)
   })
 
-  it('kezdetben error null', () => {
+  it('initial error is null', () => {
     const store = useMatchesStore()
     expect(store.error).toBeNull()
   })
 
   // ─── fetchMatches ────────────────────────────────────────────────────────────
 
-  it('fetchMatches() → matches beállítva', async () => {
+  it('fetchMatches() → matches populated', async () => {
     mockMatchesList.mockResolvedValue([MATCH_SCHEDULED, MATCH_LIVE])
     const store = useMatchesStore()
     await store.fetchMatches()
     expect(store.matches).toEqual([MATCH_SCHEDULED, MATCH_LIVE])
   })
 
-  it('fetchMatches() → isLoading false a végén', async () => {
+  it('fetchMatches() → isLoading false after completion', async () => {
     mockMatchesList.mockResolvedValue([])
     const store = useMatchesStore()
     await store.fetchMatches()
     expect(store.isLoading).toBe(false)
   })
 
-  it('fetchMatches() hiba → error beállítva, matches üres marad', async () => {
+  it('fetchMatches() error → error set, matches remain empty', async () => {
     mockMatchesList.mockRejectedValue(new Error('Network error'))
     const store = useMatchesStore()
     await store.fetchMatches()
@@ -119,7 +119,7 @@ describe('matches.store', () => {
     expect(store.matches).toEqual([])
   })
 
-  it('fetchMatches() ismeretlen hiba → generikus hibaüzenet', async () => {
+  it('fetchMatches() unknown error → generic error message', async () => {
     mockMatchesList.mockRejectedValue('unexpected')
     const store = useMatchesStore()
     await store.fetchMatches()
@@ -128,13 +128,13 @@ describe('matches.store', () => {
 
   // ─── filteredMatches ─────────────────────────────────────────────────────────
 
-  it('nincs filter → összes meccs visszaadva', () => {
+  it('no filter → all matches returned', () => {
     const store = useMatchesStore()
     store.matches = [MATCH_SCHEDULED, MATCH_LIVE, MATCH_FINISHED]
     expect(store.filteredMatches).toHaveLength(3)
   })
 
-  it('stageFilter=final → csak final meccsek', () => {
+  it('stageFilter=final → only final matches', () => {
     const store = useMatchesStore()
     store.matches = [MATCH_SCHEDULED, MATCH_LIVE, MATCH_FINISHED]
     store.stageFilter = 'final'
@@ -142,7 +142,7 @@ describe('matches.store', () => {
     expect(store.filteredMatches[0]?.id).toBe('match-3')
   })
 
-  it('statusFilter=live → csak live meccsek', () => {
+  it('statusFilter=live → only live matches', () => {
     const store = useMatchesStore()
     store.matches = [MATCH_SCHEDULED, MATCH_LIVE, MATCH_FINISHED]
     store.statusFilter = 'live'
@@ -150,7 +150,7 @@ describe('matches.store', () => {
     expect(store.filteredMatches[0]?.id).toBe('match-2')
   })
 
-  it('stageFilter=group → csoportkör meccsek', () => {
+  it('stageFilter=group → group stage matches only', () => {
     const store = useMatchesStore()
     store.matches = [MATCH_SCHEDULED, MATCH_LIVE, MATCH_FINISHED]
     store.stageFilter = 'group'
@@ -159,7 +159,7 @@ describe('matches.store', () => {
 
   // ─── matchesByDate ────────────────────────────────────────────────────────────
 
-  it('matchesByDate → meccsek nap szerint csoportosítva', () => {
+  it('matchesByDate → matches grouped by day', () => {
     const store = useMatchesStore()
     store.matches = [MATCH_SCHEDULED, MATCH_LIVE, MATCH_FINISHED]
     const byDate: MatchDateGroup[] = store.matchesByDate
@@ -172,7 +172,7 @@ describe('matches.store', () => {
     expect(secondGroup?.matches).toHaveLength(1)
   })
 
-  it('matchesByDate group label hu-HU formátumú string', () => {
+  it('matchesByDate group label is a non-empty string', () => {
     const store = useMatchesStore()
     store.matches = [MATCH_SCHEDULED]
     const byDate: MatchDateGroup[] = store.matchesByDate
@@ -180,7 +180,7 @@ describe('matches.store', () => {
     expect(typeof byDate[0]?.label).toBe('string')
   })
 
-  it('matchesByDate üres store → üres tömb', () => {
+  it('matchesByDate with empty store → empty array', () => {
     const store = useMatchesStore()
     expect(store.matchesByDate).toEqual([])
   })

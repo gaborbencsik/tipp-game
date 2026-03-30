@@ -48,7 +48,7 @@ vi.mock('@/stores/auth.store', async (importOriginal) => {
   }
 })
 
-// scheduled meccs jövőbeli időponttal
+// scheduled match with future kickoff
 const MATCH_SCHEDULED: Match = {
   id: 'match-sched',
   homeTeam: { id: 'ht3', name: 'Brazil', shortCode: 'BRA', flagUrl: null },
@@ -57,7 +57,7 @@ const MATCH_SCHEDULED: Match = {
   stage: 'final',
   groupName: null,
   matchNumber: 64,
-  scheduledAt: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(), // holnap
+  scheduledAt: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(), // tomorrow
   status: 'scheduled',
   result: null,
 }
@@ -133,9 +133,9 @@ describe('MatchesView', () => {
     setActivePinia(createPinia())
   })
 
-  // ─── Meglévő tesztek ─────────────────────────────────────────────────────────
+  // ─── Loading and rendering ────────────────────────────────────────────────────
 
-  it('loading állapotban spinner látható', async () => {
+  it('spinner visible during loading', async () => {
     let resolveList!: (v: Match[]) => void
     mockMatchesList.mockReturnValue(new Promise<Match[]>(res => { resolveList = res }))
     const pinia = createPinia()
@@ -146,19 +146,19 @@ describe('MatchesView', () => {
     resolveList([])
   })
 
-  it('meccsek betöltve → napcsoportok renderelve', async () => {
+  it('matches loaded → date groups rendered', async () => {
     const { wrapper } = await mountView([MATCH_LIVE, MATCH_FINISHED, MATCH_SCHEDULED])
     expect(wrapper.text()).toContain('Germany')
     expect(wrapper.text()).toContain('France')
     expect(wrapper.text()).toContain('Brazil')
   })
 
-  it('live meccs → ÉLŐBEN szöveg látható', async () => {
+  it('live match → ÉLŐBEN text visible', async () => {
     const { wrapper } = await mountView([MATCH_LIVE])
     expect(wrapper.text()).toContain('ÉLŐBEN')
   })
 
-  it('finished meccs → végeredmény számok és csapatok láthatók', async () => {
+  it('finished match → result scores and teams visible', async () => {
     const { wrapper } = await mountView([MATCH_FINISHED])
     expect(wrapper.text()).toContain('Spain')
     expect(wrapper.text()).toContain('Italy')
@@ -166,7 +166,7 @@ describe('MatchesView', () => {
     expect(wrapper.text()).toContain('2')
   })
 
-  it('Csoportkör szűrő gombra kattintva stageFilter=group lesz', async () => {
+  it('clicking Csoportkör filter button sets stageFilter=group', async () => {
     const { wrapper, matchesStore } = await mountView()
     const buttons = wrapper.findAll('button')
     const groupBtn = buttons.find(b => b.text() === 'Csoportkör')
@@ -175,7 +175,7 @@ describe('MatchesView', () => {
     expect(matchesStore.stageFilter).toBe('group')
   })
 
-  it('Összes gombra kattintva stageFilter null lesz', async () => {
+  it('clicking Összes button sets stageFilter to null', async () => {
     const { wrapper, matchesStore } = await mountView()
     matchesStore.stageFilter = 'group'
     const buttons = wrapper.findAll('button')
@@ -184,7 +184,7 @@ describe('MatchesView', () => {
     expect(matchesStore.stageFilter).toBeNull()
   })
 
-  it('hiba esetén hibaüzenet jelenik meg', async () => {
+  it('error → error message displayed', async () => {
     mockMatchesList.mockRejectedValue(new Error('Hálózati hiba'))
     const pinia = createPinia()
     setActivePinia(pinia)
@@ -193,33 +193,33 @@ describe('MatchesView', () => {
     expect(wrapper.text()).toContain('Hálózati hiba')
   })
 
-  it('üres lista esetén tájékoztató szöveg jelenik meg', async () => {
+  it('empty list → informational text displayed', async () => {
     const { wrapper } = await mountView([])
     expect(wrapper.text()).toContain('Nincs megjeleníthető mérkőzés')
   })
 
-  // ─── Tipp form tesztek ───────────────────────────────────────────────────────
+  // ─── Prediction form ─────────────────────────────────────────────────────────
 
-  it('scheduled meccs → tipp form látható (inputok és mentés gomb)', async () => {
+  it('scheduled match → prediction form visible (inputs and save button)', async () => {
     const { wrapper } = await mountView([MATCH_SCHEDULED])
     expect(wrapper.find('[data-testid="input-home"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="input-away"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="save-button"]').exists()).toBe(true)
   })
 
-  it('finished meccs → tipp form nem látható, Tippelés lezárva szöveg igen', async () => {
+  it('finished match → prediction form hidden, Tippelés lezárva text shown', async () => {
     const { wrapper } = await mountView([MATCH_FINISHED])
     expect(wrapper.find('[data-testid="input-home"]').exists()).toBe(false)
     expect(wrapper.text()).toContain('Tippelés lezárva')
   })
 
-  it('live meccs → tipp form nem látható', async () => {
+  it('live match → prediction form hidden', async () => {
     const { wrapper } = await mountView([MATCH_LIVE])
     expect(wrapper.find('[data-testid="input-home"]').exists()).toBe(false)
     expect(wrapper.text()).toContain('Tippelés lezárva')
   })
 
-  it('meglévő tipp → inputok előre kitöltve', async () => {
+  it('existing prediction → inputs pre-filled', async () => {
     const { wrapper } = await mountView([MATCH_SCHEDULED], [EXISTING_PREDICTION])
     const homeInput = wrapper.find('[data-testid="input-home"]')
     const awayInput = wrapper.find('[data-testid="input-away"]')
@@ -227,7 +227,7 @@ describe('MatchesView', () => {
     expect((awayInput.element as HTMLInputElement).value).toBe('0')
   })
 
-  it('mentés gombra kattintva upsertPrediction meghívva', async () => {
+  it('clicking save button calls upsertPrediction', async () => {
     const saved: Prediction = { ...EXISTING_PREDICTION, homeGoals: 2, awayGoals: 1 }
     mockPredictionsUpsert.mockResolvedValue(saved)
     const { wrapper, predictionsStore } = await mountView([MATCH_SCHEDULED])
@@ -245,7 +245,7 @@ describe('MatchesView', () => {
     })
   })
 
-  it('saveStatus=saved → Tipp elmentve visszajelzés látható', async () => {
+  it('saveStatus=saved → Tipp elmentve feedback visible', async () => {
     const { wrapper, predictionsStore } = await mountView([MATCH_SCHEDULED])
     predictionsStore.saveStatus = { 'match-sched': 'saved' }
     await wrapper.vm.$nextTick()
@@ -253,7 +253,7 @@ describe('MatchesView', () => {
     expect(wrapper.text()).toContain('Tipp elmentve!')
   })
 
-  it('saveStatus=saving → mentés gomb disabled', async () => {
+  it('saveStatus=saving → save button disabled', async () => {
     const { wrapper, predictionsStore } = await mountView([MATCH_SCHEDULED])
     predictionsStore.saveStatus = { 'match-sched': 'saving' }
     await wrapper.vm.$nextTick()

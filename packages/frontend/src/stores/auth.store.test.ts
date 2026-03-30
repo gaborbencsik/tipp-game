@@ -47,9 +47,9 @@ vi.mock('@/api/index', () => ({
   },
 }))
 
-// A VITE_DEV_AUTH_BYPASS=true az implementációban modul-szinten kiértékelődik.
-// A login() tényleges bypass viselkedését az integrációs tesztek (LoginView.test.ts)
-// fedik le spy-on keresztül. Itt az állapotkezelési logikát teszteljük.
+// VITE_DEV_AUTH_BYPASS=true is evaluated at module level in the implementation.
+// The actual bypass behaviour of login() is covered by integration tests (LoginView.test.ts)
+// via spies. Here we test state management logic only.
 
 const MOCK_USER: User = {
   id: '00000000-0000-0000-0000-000000000001',
@@ -84,27 +84,27 @@ describe('auth.store', () => {
     vi.restoreAllMocks()
   })
 
-  // ─── Alapállapot ───────────────────────────────────────────────────────────
+  // ─── Initial state ──────────────────────────────────────────────────────────
 
-  it('kezdetben nincs bejelentkezett user', () => {
+  it('initial user is null', () => {
     const store = useAuthStore()
     expect(store.user).toBeNull()
   })
 
-  it('isAuthenticated() false ha nincs user', () => {
+  it('isAuthenticated() returns false when no user', () => {
     const store = useAuthStore()
     expect(store.isAuthenticated()).toBe(false)
   })
 
-  // ─── User állítás után ─────────────────────────────────────────────────────
+  // ─── After user is set ─────────────────────────────────────────────────────
 
-  it('isAuthenticated() true ha user be van állítva', () => {
+  it('isAuthenticated() returns true when user is set', () => {
     const store = useAuthStore()
     store.user = MOCK_USER
     expect(store.isAuthenticated()).toBe(true)
   })
 
-  it('user mezői helyesek', () => {
+  it('user fields are correct', () => {
     const store = useAuthStore()
     store.user = MOCK_USER
     expect(store.user?.id).toBe('00000000-0000-0000-0000-000000000001')
@@ -116,30 +116,30 @@ describe('auth.store', () => {
 
   // ─── logout ────────────────────────────────────────────────────────────────
 
-  it('logout() törli a usert', async () => {
+  it('logout() clears user', async () => {
     const store = useAuthStore()
     store.user = MOCK_USER
     await store.logout()
     expect(store.user).toBeNull()
   })
 
-  it('logout() navigál a login oldalra', async () => {
+  it('logout() navigates to login page', async () => {
     const store = useAuthStore()
     store.user = MOCK_USER
     await store.logout()
     expect(mockPush).toHaveBeenCalledWith('/login')
   })
 
-  it('logout() után isAuthenticated() false', async () => {
+  it('isAuthenticated() returns false after logout()', async () => {
     const store = useAuthStore()
     store.user = MOCK_USER
     await store.logout()
     expect(store.isAuthenticated()).toBe(false)
   })
 
-  // ─── login bypass tesztelése spy-on keresztül ──────────────────────────────
+  // ─── login bypass tested via spy ──────────────────────────────────────────
 
-  it('login() beállítja a usert és navigál (spy-on keresztül)', async () => {
+  it('login() sets user and navigates (via spy)', async () => {
     const store = useAuthStore()
     vi.spyOn(store, 'login').mockImplementation(async () => {
       store.user = MOCK_USER
@@ -150,7 +150,7 @@ describe('auth.store', () => {
     expect(mockPush).toHaveBeenCalledWith('/')
   })
 
-  it('login() után isAuthenticated() true (spy-on keresztül)', async () => {
+  it('isAuthenticated() returns true after login() (via spy)', async () => {
     const store = useAuthStore()
     vi.spyOn(store, 'login').mockImplementation(async () => {
       store.user = MOCK_USER
@@ -159,9 +159,9 @@ describe('auth.store', () => {
     expect(store.isAuthenticated()).toBe(true)
   })
 
-  // ─── login() valódi OAuth ──────────────────────────────────────────────────
+  // ─── login() real OAuth ────────────────────────────────────────────────────
 
-  it('login() valódi → signInWithOAuth hívva helyes paraméterekkel', async () => {
+  it('login() real → signInWithOAuth called with correct params', async () => {
     const store = useAuthStore()
     vi.spyOn(store, 'login').mockImplementation(async () => {
       await mockSignInWithOAuth({
@@ -176,9 +176,9 @@ describe('auth.store', () => {
     })
   })
 
-  // ─── logout() valódi ────────────────────────────────────────────────────────
+  // ─── logout() real ────────────────────────────────────────────────────────
 
-  it('logout() valódi → signOut hívva, user null, navigate /login', async () => {
+  it('logout() real → signOut called, user null, navigate /login', async () => {
     const store = useAuthStore()
     store.user = MOCK_USER
     vi.spyOn(store, 'logout').mockImplementation(async () => {
@@ -194,7 +194,7 @@ describe('auth.store', () => {
 
   // ─── handleSession ──────────────────────────────────────────────────────────
 
-  it('handleSession(session) → api.auth.me hívva tokennel, user beállítva', async () => {
+  it('handleSession(session) → api.auth.me called with token, user set', async () => {
     mockApiAuthMe.mockResolvedValue(MOCK_USER)
     const store = useAuthStore()
     await store.handleSession(MOCK_SESSION as Parameters<typeof store.handleSession>[0])
@@ -202,7 +202,7 @@ describe('auth.store', () => {
     expect(store.user).toEqual(MOCK_USER)
   })
 
-  it('handleSession(session) API hiba → user null marad', async () => {
+  it('handleSession(session) API error → user remains null', async () => {
     mockApiAuthMe.mockRejectedValue(new Error('API error'))
     const store = useAuthStore()
     await store.handleSession(MOCK_SESSION as Parameters<typeof store.handleSession>[0])
@@ -211,7 +211,7 @@ describe('auth.store', () => {
 
   // ─── restoreSession ─────────────────────────────────────────────────────────
 
-  it('restoreSession() van session → handleSession meghívva', async () => {
+  it('restoreSession() with session → handleSession called', async () => {
     mockGetSession.mockResolvedValue({ data: { session: MOCK_SESSION } })
     mockApiAuthMe.mockResolvedValue(MOCK_USER)
     const store = useAuthStore()
@@ -219,7 +219,7 @@ describe('auth.store', () => {
     expect(store.user).toEqual(MOCK_USER)
   })
 
-  it('restoreSession() nincs session → user null', async () => {
+  it('restoreSession() no session → user remains null', async () => {
     mockGetSession.mockResolvedValue({ data: { session: null } })
     const store = useAuthStore()
     await store.restoreSession()
@@ -228,7 +228,7 @@ describe('auth.store', () => {
 
   // ─── loginWithEmail ──────────────────────────────────────────────────────────
 
-  it('loginWithEmail() siker → api.auth.me hívva, user beállítva', async () => {
+  it('loginWithEmail() success → api.auth.me called, user set', async () => {
     const mockSession = { access_token: 'email-token', user: { id: 'uid' } }
     mockSignInWithPassword.mockResolvedValue({ data: { session: mockSession }, error: null })
     mockApiAuthMe.mockResolvedValue(MOCK_USER)
@@ -238,7 +238,7 @@ describe('auth.store', () => {
     expect(store.user).toEqual(MOCK_USER)
   })
 
-  it('loginWithEmail() Supabase hiba → AuthError dobva', async () => {
+  it('loginWithEmail() Supabase error → AuthError thrown', async () => {
     mockSignInWithPassword.mockResolvedValue({ data: { session: null }, error: { message: 'Invalid credentials' } })
     const store = useAuthStore()
     await expect(store.loginWithEmail('bad@example.com', 'wrong')).rejects.toMatchObject({
@@ -249,7 +249,7 @@ describe('auth.store', () => {
 
   // ─── loginWithEmail DEV_AUTH_BYPASS ──────────────────────────────────────────
 
-  it('loginWithEmail() bypass spy → MOCK_USER beállítva, navigál /', async () => {
+  it('loginWithEmail() bypass spy → MOCK_USER set, navigates /', async () => {
     const store = useAuthStore()
     vi.spyOn(store, 'loginWithEmail').mockImplementation(async () => {
       store.user = MOCK_USER
@@ -263,7 +263,7 @@ describe('auth.store', () => {
 
   // ─── registerWithEmail ────────────────────────────────────────────────────────
 
-  it('registerWithEmail() siker → api.auth.me hívva, user beállítva', async () => {
+  it('registerWithEmail() success → api.auth.me called, user set', async () => {
     const mockSession = { access_token: 'reg-token', user: { id: 'uid2' } }
     mockSignUp.mockResolvedValue({ data: { session: mockSession }, error: null })
     mockApiAuthMe.mockResolvedValue(MOCK_USER)
@@ -273,7 +273,7 @@ describe('auth.store', () => {
     expect(store.user).toEqual(MOCK_USER)
   })
 
-  it('registerWithEmail() → emailRedirectTo tartalmazza az /auth/callback-et', async () => {
+  it('registerWithEmail() → emailRedirectTo contains /auth/callback', async () => {
     const mockSession = { access_token: 'reg-token', user: { id: 'uid2' } }
     mockSignUp.mockResolvedValue({ data: { session: mockSession }, error: null })
     mockApiAuthMe.mockResolvedValue(MOCK_USER)
@@ -283,7 +283,7 @@ describe('auth.store', () => {
     expect(callOptions.options?.emailRedirectTo).toContain('/auth/callback')
   })
 
-  it('registerWithEmail() duplikált email → AuthError dobva', async () => {
+  it('registerWithEmail() duplicate email → AuthError thrown', async () => {
     mockSignUp.mockResolvedValue({ data: { session: null }, error: { message: 'User already registered' } })
     const store = useAuthStore()
     await expect(store.registerWithEmail('dup@example.com', 'password123', 'Dup User')).rejects.toMatchObject({
@@ -294,7 +294,7 @@ describe('auth.store', () => {
 
   // ─── registerWithEmail DEV_AUTH_BYPASS ───────────────────────────────────────
 
-  it('registerWithEmail() bypass spy → user beállítva email+displayName-mel, navigál /', async () => {
+  it('registerWithEmail() bypass spy → user set with email+displayName, navigates /', async () => {
     const store = useAuthStore()
     vi.spyOn(store, 'registerWithEmail').mockImplementation(async (_email, _password, displayName) => {
       store.user = { ...MOCK_USER, email: 'new@example.com', displayName }

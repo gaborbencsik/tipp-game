@@ -10,7 +10,7 @@ describe('api client', () => {
     vi.unstubAllGlobals()
   })
 
-  it('api.health() GET /api/health-t hív', async () => {
+  it('api.health() calls GET /api/health', async () => {
     const fetchMock = vi.mocked(fetch)
     fetchMock.mockResolvedValueOnce(
       new Response(JSON.stringify({ status: 'ok', timestamp: '2026-03-28T00:00:00.000Z' }), {
@@ -26,7 +26,7 @@ describe('api client', () => {
     expect(result.status).toBe('ok')
   })
 
-  it('api.health() visszaadja a timestamp-et', async () => {
+  it('api.health() returns the timestamp', async () => {
     const fetchMock = vi.mocked(fetch)
     fetchMock.mockResolvedValueOnce(
       new Response(JSON.stringify({ status: 'ok', timestamp: '2026-03-28T12:00:00.000Z' }), {
@@ -38,7 +38,7 @@ describe('api client', () => {
     expect(result.timestamp).toBe('2026-03-28T12:00:00.000Z')
   })
 
-  it('nem-ok válasz esetén Error-t dob a hibaüzenettel', async () => {
+  it('non-ok response → throws Error with error message', async () => {
     const fetchMock = vi.mocked(fetch)
     fetchMock.mockResolvedValueOnce(
       new Response(JSON.stringify({ error: 'Service unavailable' }), {
@@ -49,7 +49,7 @@ describe('api client', () => {
     await expect(api.health()).rejects.toThrow('Service unavailable')
   })
 
-  it('JSON nélküli hiba esetén a statusText-et használja', async () => {
+  it('non-JSON error response → uses statusText', async () => {
     const fetchMock = vi.mocked(fetch)
     fetchMock.mockResolvedValueOnce(
       new Response('Internal Server Error', {
@@ -60,7 +60,7 @@ describe('api client', () => {
     await expect(api.health()).rejects.toThrow('Internal Server Error')
   })
 
-  it('404 esetén Error-t dob', async () => {
+  it('404 response → throws Error', async () => {
     const fetchMock = vi.mocked(fetch)
     fetchMock.mockResolvedValueOnce(
       new Response(JSON.stringify({ error: 'Not Found' }), {

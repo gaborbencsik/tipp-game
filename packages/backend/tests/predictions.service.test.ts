@@ -34,7 +34,7 @@ vi.mock('../src/db/client.js', () => ({
 import { upsertPrediction, getPredictionsForUser } from '../src/services/predictions.service.js'
 import * as schema from '../src/db/schema/index.js'
 
-// ─── Fixture adatok ───────────────────────────────────────────────────────────
+// ─── Fixture data ─────────────────────────────────────────────────────────────
 
 const SUPABASE_ID = 'supabase-uuid-abc'
 const DB_USER_ID = 'db-user-uuid-001'
@@ -62,7 +62,7 @@ const FUTURE_MATCH_ROW = {
   stage: 'group' as const,
   groupName: 'A',
   matchNumber: 1,
-  scheduledAt: new Date(Date.now() + 1000 * 60 * 60 * 24), // holnap
+  scheduledAt: new Date(Date.now() + 1000 * 60 * 60 * 24), // tomorrow
   status: 'scheduled' as const,
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -71,7 +71,7 @@ const FUTURE_MATCH_ROW = {
 
 const PAST_MATCH_ROW = {
   ...FUTURE_MATCH_ROW,
-  scheduledAt: new Date(Date.now() - 1000 * 60 * 60), // 1 órája volt
+  scheduledAt: new Date(Date.now() - 1000 * 60 * 60), // 1 hour ago
 }
 
 const PREDICTION_ROW = {
@@ -87,7 +87,7 @@ const PREDICTION_ROW = {
 
 const VALID_INPUT = { matchId: MATCH_ID, homeGoals: 2, awayGoals: 1 }
 
-// ─── Segédfüggvény: szekvenciális select mock ─────────────────────────────────
+// ─── Helper: sequential select mock ──────────────────────────────────────────
 
 function setupSelectSequence(...results: unknown[][]) {
   let call = 0
@@ -109,14 +109,14 @@ describe('upsertPrediction', () => {
     mockInsert.mockReturnValue({ values: mockValues })
   })
 
-  it('ismeretlen supabaseId → AppError 404', async () => {
+  it('unknown supabaseId → AppError 404', async () => {
     mockLimit.mockResolvedValue([]) // user not found
     await expect(upsertPrediction(SUPABASE_ID, VALID_INPUT)).rejects.toMatchObject({
       status: 404,
     })
   })
 
-  it('ismeretlen matchId → AppError 404', async () => {
+  it('unknown matchId → AppError 404', async () => {
     let call = 0
     mockLimit.mockImplementation(() => {
       call++
@@ -128,7 +128,7 @@ describe('upsertPrediction', () => {
     })
   })
 
-  it('scheduledAt múltban → AppError 409', async () => {
+  it('scheduledAt in the past → AppError 409', async () => {
     let call = 0
     mockLimit.mockImplementation(() => {
       call++
@@ -152,7 +152,7 @@ describe('upsertPrediction', () => {
     })
   })
 
-  it('érvényes input → db.insert meghívva, Prediction visszaadva', async () => {
+  it('valid input → db.insert called, Prediction returned', async () => {
     let call = 0
     mockLimit.mockImplementation(() => {
       call++
@@ -178,7 +178,7 @@ describe('upsertPrediction', () => {
     expect(typeof result.updatedAt).toBe('string')
   })
 
-  it('conflict (meglévő tipp) → onConflictDoUpdate meghívva', async () => {
+  it('conflict (existing prediction) → onConflictDoUpdate called', async () => {
     let call = 0
     mockLimit.mockImplementation(() => {
       call++
@@ -206,14 +206,14 @@ describe('getPredictionsForUser', () => {
     mockSelect.mockReturnValue({ from: mockFrom })
   })
 
-  it('ismeretlen requestingSupabaseId → AppError 404', async () => {
+  it('unknown requestingSupabaseId → AppError 404', async () => {
     mockLimit.mockResolvedValue([]) // requesting user not found
     await expect(getPredictionsForUser('unknown-id', DB_USER_ID)).rejects.toMatchObject({
       status: 404,
     })
   })
 
-  it('ismeretlen targetUserId → AppError 404', async () => {
+  it('unknown targetUserId → AppError 404', async () => {
     let call = 0
     mockLimit.mockImplementation(() => {
       call++
@@ -225,7 +225,7 @@ describe('getPredictionsForUser', () => {
     })
   })
 
-  it('más user tippjeit kéri, nem admin → AppError 403', async () => {
+  it('requesting another user\'s predictions, not admin → AppError 403', async () => {
     const OTHER_USER = { ...DB_USER_ROW, id: 'other-user-uuid' }
     let call = 0
     mockLimit.mockImplementation(() => {
@@ -238,7 +238,7 @@ describe('getPredictionsForUser', () => {
     })
   })
 
-  it('saját tippek lekérése → Prediction[] visszaadva', async () => {
+  it('fetching own predictions → Prediction[] returned', async () => {
     let call = 0
     mockLimit.mockImplementation(() => {
       call++
@@ -256,7 +256,7 @@ describe('getPredictionsForUser', () => {
     expect(typeof pred.createdAt).toBe('string')
   })
 
-  it('admin más user tippjeit kéri → Prediction[] visszaadva', async () => {
+  it('admin fetching another user\'s predictions → Prediction[] returned', async () => {
     const ADMIN_USER = { ...DB_USER_ROW, id: 'admin-uuid', supabaseId: 'admin-supabase-id', role: 'admin' as const }
     const TARGET_USER = { ...DB_USER_ROW, id: 'target-uuid' }
     let call = 0
@@ -271,7 +271,7 @@ describe('getPredictionsForUser', () => {
     expect(result).toHaveLength(1)
   })
 
-  it('nincs tipp → [] visszaadva', async () => {
+  it('no predictions → returns []', async () => {
     let call = 0
     mockLimit.mockImplementation(() => {
       call++
