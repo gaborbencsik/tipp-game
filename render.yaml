@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: tipp-game-backend
+    runtime: docker
+    dockerfilePath: packages/backend/Dockerfile.prod
+    dockerContext: .
+    branch: main
+    region: frankfurt
+    plan: starter
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_JWT_SECRET
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false

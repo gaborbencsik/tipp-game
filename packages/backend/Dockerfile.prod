@@ -1,0 +1,34 @@
+# ── Build stage ──────────────────────────────────────────────────────────────
+FROM node:24-alpine AS builder
+
+WORKDIR /app
+
+COPY package*.json ./
+COPY packages/backend/package*.json packages/backend/
+
+RUN npm ci
+
+COPY packages/backend/src packages/backend/src
+COPY packages/backend/tsconfig.json packages/backend/tsconfig.json
+
+RUN npm run build --workspace=packages/backend
+
+# ── Runtime stage ─────────────────────────────────────────────────────────────
+FROM node:24-alpine AS runtime
+
+WORKDIR /app
+
+COPY package*.json ./
+COPY packages/backend/package*.json packages/backend/
+
+RUN npm ci --omit=dev --workspace=packages/backend
+
+COPY --from=builder /app/packages/backend/dist packages/backend/dist
+COPY packages/backend/src/db/migrations packages/backend/dist/db/migrations
+
+WORKDIR /app/packages/backend
+
+ENV NODE_ENV=production
+EXPOSE 3000
+
+CMD ["sh", "-c", "node dist/db/migrate.js && node dist/index.js"]

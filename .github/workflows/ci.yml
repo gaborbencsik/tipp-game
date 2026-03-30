@@ -26,3 +26,12 @@ jobs:
 
       - name: Test
         run: npm test --workspaces --if-present
+
+  deploy-backend:
+    needs: ci
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger Render deploy
+        run: curl -f -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"

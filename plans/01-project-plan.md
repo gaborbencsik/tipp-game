@@ -88,6 +88,29 @@ Mint **fejlesztő**, szeretnék **egy paranccsal futtatni az összes unit teszte
 **Komplexitás:** S
 **Prioritás:** Must Have
 
+---
+
+#### US-004: Production deploy pipeline
+
+**Story:**
+Mint **fejlesztő**, szeretnék **egy automatizált pipeline-t, amely a `main` branch minden változásakor kideployolja az alkalmazást**, hogy **a legfrissebb verzió mindig elérhető legyen éles környezetben**.
+
+**Elfogadási kritériumok:**
+- [ ] Frontend deployolva Vercelre; minden `main` push után automatikusan buildel és kiad
+- [ ] Backend deployolva Render-re; production `Dockerfile` (multi-stage build, nem dev server)
+- [ ] `render.yaml` Blueprint definiálja a backend service-t és env var referenciákat (IaC)
+- [ ] Supabase projekt konfigurálva: prod DB, Google OAuth callback URL beállítva
+- [ ] Minden szükséges env var beállítva Vercelen és Render-en (nem `.env` fájlból)
+- [ ] `https://` végpont elérhető: frontend URL-ről az API hívások működnek (CORS)
+- [ ] `npm run db:migrate` fut Render deploy hook-ként (pre-deploy command)
+- [ ] GitHub Actions CI: typecheck + test zöld marad minden merge előtt
+- [ ] Rollback: Render dashboard-ról bármely korábbi deploy visszaállítható
+
+**Komplexitás:** M
+**Prioritás:** Must Have
+
+---
+
 ### E1 – Meccsek listázása
 
 #### US-101: Mérkőzések böngészése
@@ -603,6 +626,7 @@ Mint **bejelentkezett felhasználó**, szeretnék **a donation gombra kattintva 
 | US-001 | Monorepo és dev környezet (Docker) | M | Must Have |
 | US-002 | DB schema és seed adatok | S | Must Have |
 | US-003 | Tesztelési infrastruktúra | S | Must Have |
+| US-004 | Production deploy pipeline | M | Must Have |
 | US-101 | Mérkőzések böngészése | M | Must Have |
 | US-102 | Mérkőzés részletek | S | Must Have |
 | US-201 | Tipp leadása | M | Must Have |
@@ -635,7 +659,7 @@ Mint **bejelentkezett felhasználó**, szeretnék **a donation gombra kattintva 
 | US-1102 | Donation átirányítás (valós link) | S | Should Have |
 
 **Összesítés:**
-- Must Have: 25 story (3 technikai + 22 product)
+- Must Have: 26 story (4 technikai + 22 product)
 - Should Have: 10 story
 - Nice to Have: 0 (ld. E10 epic – részletezés a 04-extras.md-ben)
 
