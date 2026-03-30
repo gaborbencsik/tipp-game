@@ -9,11 +9,18 @@ import { authRouter } from './routes/auth.routes.js'
 import { matchesRouter } from './routes/matches.routes.js'
 import { predictionsRouter } from './routes/predictions.routes.js'
 
+const allowedOrigins = (process.env.CORS_ORIGIN ?? 'http://localhost:5173').split(',').map(o => o.trim())
+
 const app = new Koa()
 
 app.use(errorMiddleware)
 app.use(helmet())
-app.use(cors({ origin: process.env.CORS_ORIGIN ?? 'http://localhost:5173' }))
+app.use(cors({
+  origin: (ctx) => {
+    const requestOrigin = ctx.get('Origin')
+    return allowedOrigins.includes(requestOrigin) ? requestOrigin : ''
+  },
+}))
 app.use(compress())
 app.use(bodyParser())
 
