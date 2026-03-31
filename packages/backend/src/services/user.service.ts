@@ -24,7 +24,9 @@ export async function upsertUser(user: AuthenticatedUser): Promise<DbUser> {
     })
     .returning()
     .catch(async (err: unknown) => {
-      const code = (err as { code?: string }).code
+      const code =
+        (err as { code?: string }).code ??
+        ((err as { cause?: { code?: string } }).cause?.code)
       if (code !== '23505') throw err
       // Duplicate email from a different supabase_id – update that row instead
       const rows = await db

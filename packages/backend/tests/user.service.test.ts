@@ -117,6 +117,20 @@ describe('upsertUser', () => {
     expect(result).toEqual(updatedRow)
   })
 
+  it('email conflict via Drizzle wrapper (cause.code 23505) → falls back to UPDATE by email', async () => {
+    const pgCause = Object.assign(new Error('duplicate key value violates unique constraint "users_email_unique"'), { code: '23505' })
+    const drizzleWrapper = Object.assign(new Error('Failed query: insert into "users"...'), { cause: pgCause })
+    mockReturning.mockRejectedValue(drizzleWrapper)
+
+    const updatedRow: DbUser = { ...RETURNED_ROW, supabaseId: 'supabase-uuid-abc' }
+    mockUpdateReturning.mockResolvedValue([updatedRow])
+
+    const result = await upsertUser(BASE_USER)
+
+    expect(mockUpdate).toHaveBeenCalledWith(schema.users)
+    expect(result).toEqual(updatedRow)
+  })
+
   it('non-23505 DB error → rethrows the error', async () => {
     const dbError = Object.assign(new Error('connection refused'), { code: '08006' })
     mockReturning.mockRejectedValue(dbError)
