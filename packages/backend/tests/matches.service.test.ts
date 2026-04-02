@@ -7,7 +7,15 @@ const {
   mockLeftJoin,
   mockWhere,
   mockOrderBy,
+  mockInsert,
+  mockValues,
+  mockReturning,
+  mockUpdate,
+  mockSet,
 } = vi.hoisted(() => {
+  const mockReturning = vi.fn().mockResolvedValue([])
+  const mockSet = vi.fn()
+  const mockValues = vi.fn()
   const mockOrderBy = vi.fn().mockResolvedValue([])
   const mockWhere = vi.fn(() => ({ orderBy: mockOrderBy }))
   const mockLeftJoin = vi.fn(function () {
@@ -15,12 +23,31 @@ const {
   })
   const mockFrom = vi.fn(() => ({ leftJoin: mockLeftJoin, where: mockWhere }))
   const mockSelect = vi.fn(() => ({ from: mockFrom }))
-  return { mockSelect, mockFrom, mockLeftJoin, mockWhere, mockOrderBy }
+  const mockInsert = vi.fn()
+  const mockUpdate = vi.fn()
+  return {
+    mockSelect, mockFrom, mockLeftJoin, mockWhere, mockOrderBy,
+    mockInsert, mockValues, mockReturning, mockUpdate, mockSet,
+  }
 })
 
-vi.mock('../src/db/client.js', () => ({ db: { select: mockSelect } }))
+vi.mock('../src/db/client.js', () => ({
+  db: {
+    select: mockSelect,
+    insert: mockInsert,
+    update: mockUpdate,
+  },
+}))
 
-import { getMatches } from '../src/services/matches.service.js'
+import {
+  getMatches,
+  createMatch,
+  updateMatch,
+  deleteMatch,
+  setResult,
+} from '../src/services/matches.service.js'
+
+// ─── Fixtures ─────────────────────────────────────────────────────────────────
 
 const TEAM_HOME = {
   id: 'team-home-uuid',
@@ -75,6 +102,8 @@ function makeRow(overrides: Record<string, unknown> = {}) {
     match_results: null,
   }
 }
+
+// ─── getMatches ────────────────────────────────────────────────────────────────
 
 describe('getMatches', () => {
   beforeEach(() => {
@@ -173,5 +202,147 @@ describe('getMatches', () => {
     const result = await getMatches()
 
     expect(result[0]?.venue).toBeNull()
+  })
+})
+
+// ─── createMatch ──────────────────────────────────────────────────────────────
+
+describe('createMatch', () => {
+  beforeEach(() => {
+    vi.resetAllMocks()
+  })
+
+  it('valid input → returns new Match', async () => {
+    mockReturning.mockResolvedValue([BASE_MATCH])
+    mockValues.mockReturnValue({ returning: mockReturning })
+    mockInsert.mockReturnValue({ values: mockValues })
+
+    const result = await createMatch({
+      homeTeamId: 'team-home-uuid',
+      awayTeamId: 'team-away-uuid',
+      stage: 'group',
+      scheduledAt: '2026-06-11T15:00:00Z',
+    })
+
+    expect(result.id).toBe('match-uuid-1')
+    expect(result.homeTeamId).toBe('team-home-uuid')
+    expect(result.stage).toBe('group')
+  })
+
+  it('insert fails → throws error', async () => {
+    mockReturning.mockResolvedValue([])
+    mockValues.mockReturnValue({ returning: mockReturning })
+    mockInsert.mockReturnValue({ values: mockValues })
+
+    await expect(createMatch({
+      homeTeamId: 'h',
+      awayTeamId: 'a',
+      stage: 'group',
+      scheduledAt: '2026-06-11T15:00:00Z',
+    })).rejects.toMatchObject({ status: 500 })
+  })
+})
+
+// ─── updateMatch ──────────────────────────────────────────────────────────────
+
+describe('updateMatch', () => {
+  beforeEach(() => {
+    vi.resetAllMocks()
+  })
+
+  it('existing id → returns updated match row', async () => {
+    const updated = { ...BASE_MATCH, status: 'live' as const }
+    mockReturning.mockResolvedValue([updated])
+    const mockWhere2 = vi.fn().mockReturnValue({ returning: mockReturning })
+    mockSet.mockReturnValue({ where: mockWhere2 })
+    mockUpdate.mockReturnValue({ set: mockSet })
+
+    const result = await updateMatch('match-uuid-1', { status: 'live' })
+    expect(result.status).toBe('live')
+  })
+
+  it('non-existing id → AppError 404', async () => {
+    mockReturning.mockResolvedValue([])
+    const mockWhere2 = vi.fn().mockReturnValue({ returning: mockReturning })
+    mockSet.mockReturnValue({ where: mockWhere2 })
+    mockUpdate.mockReturnValue({ set: mockSet })
+
+    await expect(updateMatch('nonexistent', { status: 'live' }))
+      .rejects.toMatchObject({ status: 404, message: 'Match not found' })
+  })
+})
+
+// ─── deleteMatch ──────────────────────────────────────────────────────────────
+
+describe('deleteMatch', () => {
+  beforeEach(() => {
+    vi.resetAllMocks()
+  })
+
+  it('existing id → soft-deletes (sets deletedAt)', async () => {
+    const softDeleted = { ...BASE_MATCH, deletedAt: new Date() }
+    mockReturning.mockResolvedValue([softDeleted])
+    const mockWhere2 = vi.fn().mockReturnValue({ returning: mockReturning })
+    mockSet.mockReturnValue({ where: mockWhere2 })
+    mockUpdate.mockReturnValue({ set: mockSet })
+
+    await expect(deleteMatch('match-uuid-1')).resolves.toBeUndefined()
+    expect(mockUpdate).toHaveBeenCalledOnce()
+  })
+
+  it('non-existing id → AppError 404', async () => {
+    mockReturning.mockResolvedValue([])
+    const mockWhere2 = vi.fn().mockReturnValue({ returning: mockReturning })
+    mockSet.mockReturnValue({ where: mockWhere2 })
+    mockUpdate.mockReturnValue({ set: mockSet })
+
+    await expect(deleteMatch('nonexistent'))
+      .rejects.toMatchObject({ status: 404, message: 'Match not found' })
+  })
+})
+
+// ─── setResult ────────────────────────────────────────────────────────────────
+
+describe('setResult', () => {
+  beforeEach(() => {
+    vi.resetAllMocks()
+  })
+
+  it('upserts result + sets match status to finished', async () => {
+    // insert result → returning
+    const resultRow = {
+      id: 'result-uuid',
+      matchId: 'match-uuid-1',
+      homeGoals: 2,
+      awayGoals: 1,
+      recordedBy: 'admin-uuid',
+      recordedAt: new Date(),
+      updatedAt: new Date(),
+    }
+    mockReturning.mockResolvedValueOnce([resultRow]) // upsert result
+    mockValues.mockReturnValue({ onConflictDoUpdate: vi.fn().mockReturnValue({ returning: mockReturning }) })
+    mockInsert.mockReturnValue({ values: mockValues })
+
+    // update match status
+    const mockWhere2 = vi.fn().mockResolvedValue(undefined)
+    mockSet.mockReturnValue({ where: mockWhere2 })
+    mockUpdate.mockReturnValue({ set: mockSet })
+
+    const result = await setResult('match-uuid-1', 2, 1, 'admin-uuid')
+    expect(result.homeGoals).toBe(2)
+    expect(result.awayGoals).toBe(1)
+  })
+
+  it('insert returns empty → AppError 500', async () => {
+    mockReturning.mockResolvedValue([])
+    mockValues.mockReturnValue({ onConflictDoUpdate: vi.fn().mockReturnValue({ returning: mockReturning }) })
+    mockInsert.mockReturnValue({ values: mockValues })
+
+    const mockWhere2 = vi.fn().mockResolvedValue(undefined)
+    mockSet.mockReturnValue({ where: mockWhere2 })
+    mockUpdate.mockReturnValue({ set: mockSet })
+
+    await expect(setResult('match-uuid-1', 2, 1, 'admin-uuid'))
+      .rejects.toMatchObject({ status: 500 })
   })
 })

@@ -2,10 +2,19 @@ import { alias } from 'drizzle-orm/pg-core'
 import { and, eq, isNull } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { matches, teams, venues, matchResults } from '../db/schema/index.js'
-import type { Match, MatchesFilters } from '../types/index.js'
+import type { Match, MatchesFilters, MatchInput, MatchRow, MatchResultRow } from '../types/index.js'
 
 const homeTeamAlias = alias(teams, 'home_team')
 const awayTeamAlias = alias(teams, 'away_team')
+
+class AppError extends Error {
+  readonly status: number
+  constructor(status: number, message: string) {
+    super(message)
+    this.status = status
+    this.name = 'AppError'
+  }
+}
 
 export async function getMatches(filters: MatchesFilters = {}): Promise<Match[]> {
   const conditions = [isNull(matches.deletedAt)]
@@ -48,4 +57,92 @@ export async function getMatches(filters: MatchesFilters = {}): Promise<Match[]>
       ? { homeGoals: row.match_results.homeGoals, awayGoals: row.match_results.awayGoals }
       : null,
   }))
+}
+
+export async function createMatch(input: MatchInput): Promise<MatchRow> {
+  const rows = await db
+    .insert(matches)
+    .values({
+      homeTeamId: input.homeTeamId,
+      awayTeamId: input.awayTeamId,
+      venueId: input.venueId ?? null,
+      stage: input.stage,
+      groupName: input.groupName ?? null,
+      matchNumber: input.matchNumber ?? null,
+      scheduledAt: new Date(input.scheduledAt),
+      status: input.status ?? 'scheduled',
+    })
+    .returning()
+
+  const row = rows[0]
+  if (!row) throw new AppError(500, 'Failed to create match')
+  return row
+}
+
+export async function updateMatch(id: string, input: Partial<MatchInput>): Promise<MatchRow> {
+  const rows = await db
+    .update(matches)
+    .set({
+      ...(input.homeTeamId !== undefined && { homeTeamId: input.homeTeamId }),
+      ...(input.awayTeamId !== undefined && { awayTeamId: input.awayTeamId }),
+      ...(input.venueId !== undefined && { venueId: input.venueId }),
+      ...(input.stage !== undefined && { stage: input.stage }),
+      ...(input.groupName !== undefined && { groupName: input.groupName }),
+      ...(input.matchNumber !== undefined && { matchNumber: input.matchNumber }),
+      ...(input.scheduledAt !== undefined && { scheduledAt: new Date(input.scheduledAt) }),
+      ...(input.status !== undefined && { status: input.status }),
+      updatedAt: new Date(),
+    })
+    .where(and(eq(matches.id, id), isNull(matches.deletedAt)))
+    .returning()
+
+  const row = rows[0]
+  if (!row) throw new AppError(404, 'Match not found')
+  return row
+}
+
+export async function deleteMatch(id: string): Promise<void> {
+  const rows = await db
+    .update(matches)
+    .set({ deletedAt: new Date(), updatedAt: new Date() })
+    .where(and(eq(matches.id, id), isNull(matches.deletedAt)))
+    .returning()
+
+  if (rows.length === 0) throw new AppError(404, 'Match not found')
+}
+
+export async function setResult(
+  matchId: string,
+  homeGoals: number,
+  awayGoals: number,
+  actorId: string,
+): Promise<MatchResultRow> {
+  const rows = await db
+    .insert(matchResults)
+    .values({
+      matchId,
+      homeGoals,
+      awayGoals,
+      recordedBy: actorId,
+    })
+    .onConflictDoUpdate({
+      target: matchResults.matchId,
+      set: {
+        homeGoals,
+        awayGoals,
+        recordedBy: actorId,
+        updatedAt: new Date(),
+      },
+    })
+    .returning()
+
+  const row = rows[0]
+  if (!row) throw new AppError(500, 'Failed to set result')
+
+  await db
+    .update(matches)
+    .set({ status: 'finished', updatedAt: new Date() })
+    .where(eq(matches.id, matchId))
+
+  return row
 }

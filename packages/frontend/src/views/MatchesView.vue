@@ -6,6 +6,13 @@
         <div class="flex items-center gap-2">
           <router-link
             v-if="isAdmin"
+            to="/admin/matches"
+            class="px-4 py-2 text-sm bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+          >
+            Admin – Mérkőzések
+          </router-link>
+          <router-link
+            v-if="isAdmin"
             to="/admin/teams"
             class="px-4 py-2 text-sm bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
           >

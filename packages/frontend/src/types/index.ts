@@ -53,6 +53,22 @@ export interface MatchesFilters {
   readonly status?: MatchStatus
 }
 
+export interface MatchInput {
+  readonly homeTeamId: string
+  readonly awayTeamId: string
+  readonly venueId?: string | null
+  readonly stage: MatchStage
+  readonly groupName?: string | null
+  readonly matchNumber?: number | null
+  readonly scheduledAt: string
+  readonly status?: MatchStatus
+}
+
+export interface MatchResultInput {
+  readonly homeGoals: number
+  readonly awayGoals: number
+}
+
 export interface MatchDateGroup {
   readonly date: string
   readonly label: string

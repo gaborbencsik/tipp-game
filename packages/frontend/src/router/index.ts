@@ -33,6 +33,12 @@ export const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/admin/matches',
+      name: 'admin-matches',
+      component: () => import('../views/AdminMatchesView.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true },
+    },
+    {
       path: '/admin/teams',
       name: 'admin-teams',
       component: () => import('../views/AdminTeamsView.vue'),

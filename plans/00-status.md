@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-04-02 (US-102)
+> Utoljára frissítve: 2026-04-02 (US-801/802/803)
 
 ## Kész user story-k
 
@@ -148,13 +148,24 @@
 - ✅ `MatchesView`: meccs kártyák felső része kattintható `router-link`-ként
 - ✅ 117 frontend teszt, typecheck CLEAN
 
+### US-801/802/803 – Elfogadási kritériumok teljesítve
+
+- ✅ `matches.service.ts`: `createMatch`, `updateMatch`, `deleteMatch` (soft delete), `setResult` (upsert + match status → finished)
+- ✅ `admin.routes.ts`: `POST/PUT/DELETE /api/admin/matches(/:id)` + `POST /api/admin/matches/:id/result`
+- ✅ `MatchInput`, `MatchResultInput`, `MatchRow`, `MatchResultRow` típusok (backend + frontend)
+- ✅ `api.admin.matches.*` API client metódusok (create/update/delete/setResult)
+- ✅ `admin-matches.store.ts`: Pinia store – CRUD + setResult + loading/error state
+- ✅ `AdminMatchesView.vue`: táblázat, inline create/edit form (csapat dropdown, időpont, szakasz, státusz), eredmény rögzítő form, törlés confirm
+- ✅ `/admin/matches` route – `requiresAuth + requiresAdmin`
+- ✅ Admin – Mérkőzések link a `MatchesView` fejlécébe kerül (csak adminoknak)
+- ✅ 75 backend + 135 frontend teszt, typecheck CLEAN
+
 ---
 
 | Story ID | Megnevezés | Prioritás |
 |----------|-----------|-----------|
-| US-801 | Mérkőzés létrehozása (admin) | Must Have |
-| US-802 | Mérkőzés szerkesztése/törlése (admin) | Must Have |
-| US-803 | Eredmény rögzítése (admin) | Must Have |
+| US-401 | Automatikus pontszámítás | Must Have |
+| US-402 | Konfigurálható pontrendszer | Must Have |
 
 ## Összes story státusz
 
@@ -186,9 +197,9 @@
 | US-604 | Csoport kezelése (admin) | ⬜ Nem kezdett | Must Have |
 | US-605 | Több csoporthoz tartozás | ⬜ Nem kezdett | Must Have |
 | US-701 | User/Admin szerepkörök | ✅ Kész | Must Have |
-| US-801 | Mérkőzés létrehozása | ⬜ Nem kezdett | Must Have |
-| US-802 | Mérkőzés szerkesztése/törlése | ⬜ Nem kezdett | Must Have |
-| US-803 | Eredmény rögzítése | ⬜ Nem kezdett | Must Have |
+| US-801 | Mérkőzés létrehozása | ✅ Kész | Must Have |
+| US-802 | Mérkőzés szerkesztése/törlése | ✅ Kész | Must Have |
+| US-803 | Eredmény rögzítése | ✅ Kész | Must Have |
 | US-804 | Csapatok kezelése | ✅ Kész | Must Have |
 | US-805 | Felhasználók kezelése | ⬜ Nem kezdett | Must Have |
 | US-901 | Statisztikai tipp leadása | ⬜ Nem kezdett | Should Have |
@@ -198,4 +209,4 @@
 
 ---
 
-**Haladás: 14 / 35 story kész** — Must Have: 13/27 ✅, Should Have: 1/7 ✅
+**Haladás: 17 / 35 story kész** — Must Have: 16/27 ✅, Should Have: 1/7 ✅

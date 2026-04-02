@@ -1,4 +1,4 @@
-import type { User, Match, MatchesFilters, Prediction, PredictionInput, Team, TeamInput } from '../types/index.js'
+import type { User, Match, MatchesFilters, MatchInput, MatchResultInput, Prediction, PredictionInput, Team, TeamInput } from '../types/index.js'
 
 const BASE_URL = (import.meta.env.VITE_API_URL ?? '') + '/api'
 
@@ -77,6 +77,31 @@ export const api = {
       delete: (token: string, id: string) =>
         request<void>(`/admin/teams/${id}`, {
           method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+    },
+    matches: {
+      create: (token: string, input: MatchInput) =>
+        request<unknown>('/admin/matches', {
+          method: 'POST',
+          body: JSON.stringify(input),
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      update: (token: string, id: string, input: Partial<MatchInput>) =>
+        request<unknown>(`/admin/matches/${id}`, {
+          method: 'PUT',
+          body: JSON.stringify(input),
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      delete: (token: string, id: string) =>
+        request<void>(`/admin/matches/${id}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      setResult: (token: string, id: string, input: MatchResultInput) =>
+        request<unknown>(`/admin/matches/${id}/result`, {
+          method: 'POST',
+          body: JSON.stringify(input),
           headers: { Authorization: `Bearer ${token}` },
         }),
     },
