@@ -129,6 +129,7 @@
 
 | Story ID | Megnevezés | Prioritás |
 |----------|-----------|-----------|
+| US-305 | Session perzisztencia oldal-újratöltés után | Must Have |
 | US-102 | Mérkőzés részletek | Must Have |
 | US-801 | Mérkőzés létrehozása (admin) | Must Have |
 | US-802 | Mérkőzés szerkesztése/törlése (admin) | Must Have |
@@ -152,6 +153,7 @@
 | US-302 | Bejelentkezés / kijelentkezés | ✅ Kész | Must Have |
 | US-303 | Profil szerkesztése | ⬜ Nem kezdett | Should Have |
 | US-304 | Email + jelszó auth | ✅ Kész | Should Have |
+| US-305 | Session perzisztencia oldal-újratöltés után | ⬜ Nem kezdett | Must Have |
 | US-401 | Automatikus pontszámítás | ⬜ Nem kezdett | Must Have |
 | US-402 | Konfigurálható pontrendszer | ⬜ Nem kezdett | Must Have |
 | US-403 | Pontozás tesztelhetősége | ✅ Kész (US-003 részeként) | Must Have |
@@ -175,4 +177,4 @@
 
 ---
 
-**Haladás: 12 / 34 story kész** — Must Have: 11/26 ✅, Should Have: 1/7 ✅
+**Haladás: 12 / 35 story kész** — Must Have: 11/27 ✅, Should Have: 1/7 ✅
