@@ -71,37 +71,42 @@
             :key="match.id"
             class="bg-white rounded-lg shadow-sm border border-gray-100 p-4 mb-3"
           >
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-xs font-medium uppercase tracking-wide text-gray-500">
-                {{ stageLabel(match.stage) }}
-                <span v-if="match.groupName"> – {{ match.groupName }} csoport</span>
-              </span>
-              <span
-                class="text-xs font-bold px-2 py-0.5 rounded"
-                :class="statusClass(match.status)"
-              >
-                {{ statusLabel(match.status) }}
-              </span>
-            </div>
-
-            <div class="flex items-center justify-center gap-4">
-              <span class="font-semibold text-gray-800 text-right flex-1">{{ match.homeTeam.name }}</span>
-
-              <div class="text-xl font-bold text-gray-900 min-w-[5rem] text-center">
-                <template v-if="match.result">
-                  {{ match.result.homeGoals }} – {{ match.result.awayGoals }}
-                </template>
-                <template v-else>
-                  {{ formatTime(match.scheduledAt) }}
-                </template>
+            <router-link
+              :to="`/matches/${match.id}`"
+              class="block"
+            >
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-medium uppercase tracking-wide text-gray-500">
+                  {{ stageLabel(match.stage) }}
+                  <span v-if="match.groupName"> – {{ match.groupName }} csoport</span>
+                </span>
+                <span
+                  class="text-xs font-bold px-2 py-0.5 rounded"
+                  :class="statusClass(match.status)"
+                >
+                  {{ statusLabel(match.status) }}
+                </span>
               </div>
 
-              <span class="font-semibold text-gray-800 text-left flex-1">{{ match.awayTeam.name }}</span>
-            </div>
+              <div class="flex items-center justify-center gap-4">
+                <span class="font-semibold text-gray-800 text-right flex-1">{{ match.homeTeam.name }}</span>
 
-            <div v-if="match.venue" class="text-xs text-gray-400 text-center mt-1">
-              {{ match.venue.city }}
-            </div>
+                <div class="text-xl font-bold text-gray-900 min-w-[5rem] text-center">
+                  <template v-if="match.result">
+                    {{ match.result.homeGoals }} – {{ match.result.awayGoals }}
+                  </template>
+                  <template v-else>
+                    {{ formatTime(match.scheduledAt) }}
+                  </template>
+                </div>
+
+                <span class="font-semibold text-gray-800 text-left flex-1">{{ match.awayTeam.name }}</span>
+              </div>
+
+              <div v-if="match.venue" class="text-xs text-gray-400 text-center mt-1">
+                {{ match.venue.city }}
+              </div>
+            </router-link>
 
             <!-- Tipp szekció -->
             <div class="mt-3 pt-3 border-t border-gray-100">

@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-04-02 (US-305)
+> Utoljára frissítve: 2026-04-02 (US-102)
 
 ## Kész user story-k
 
@@ -135,11 +135,23 @@
 - ✅ Dev bypass: `restoreSession()` azonnal beállítja a mock admin usert, route guard átenged
 - ✅ 170 teszt (67 backend + 103 frontend), typecheck CLEAN
 
+### US-102 – Elfogadási kritériumok teljesítve
+
+- ✅ `MatchDetailView.vue`: `/matches/:id` route – részletes nézetoldal
+- ✅ Mindkét csapat neve, végeredmény (vagy tervezett időpont), helyszín (stadion + város), szakasz/csoport
+- ✅ Státusz badge (ÉLŐBEN / Befejezett / Tervezett)
+- ✅ Lezárt meccs + van tipp: "Az én tippem: X – X | Pontok: N"
+- ✅ Lezárt meccs + nincs tipp: "Nem adtál tippet erre a mérkőzésre"
+- ✅ Nyitott meccs: tipp form (input–input–Mentés) elérhető ebből a nézetből is
+- ✅ Vissza link (`← Vissza`) → `/matches`
+- ✅ Router: `/matches/:id` route hozzáadva (`requiresAuth: true`)
+- ✅ `MatchesView`: meccs kártyák felső része kattintható `router-link`-ként
+- ✅ 117 frontend teszt, typecheck CLEAN
+
 ---
 
 | Story ID | Megnevezés | Prioritás |
 |----------|-----------|-----------|
-| US-102 | Mérkőzés részletek | Must Have |
 | US-801 | Mérkőzés létrehozása (admin) | Must Have |
 | US-802 | Mérkőzés szerkesztése/törlése (admin) | Must Have |
 | US-803 | Eredmény rögzítése (admin) | Must Have |
@@ -153,7 +165,7 @@
 | US-003 | Tesztelési infrastruktúra | ✅ Kész | Must Have |
 | US-004 | Production deploy pipeline | ⬜ Nem kezdett | Must Have |
 | US-101 | Mérkőzések böngészése | ✅ Kész | Must Have |
-| US-102 | Mérkőzés részletek | ⬜ Nem kezdett | Must Have |
+| US-102 | Mérkőzés részletek | ✅ Kész | Must Have |
 | US-201 | Tipp leadása | ✅ Kész | Must Have |
 | US-202 | Tipp módosítása | ✅ Kész | Must Have |
 | US-203 | Saját tippek összesítő | ⬜ Nem kezdett | Must Have |
@@ -186,4 +198,4 @@
 
 ---
 
-**Haladás: 13 / 35 story kész** — Must Have: 12/27 ✅, Should Have: 1/7 ✅
+**Haladás: 14 / 35 story kész** — Must Have: 13/27 ✅, Should Have: 1/7 ✅

@@ -27,6 +27,12 @@ export const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/matches/:id',
+      name: 'match-detail',
+      component: () => import('../views/MatchDetailView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/admin/teams',
       name: 'admin-teams',
       component: () => import('../views/AdminTeamsView.vue'),
