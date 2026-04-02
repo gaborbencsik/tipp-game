@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-03-28 (US-201/202)
+> Utoljára frissítve: 2026-04-02 (US-701)
 
 ## Kész user story-k
 
@@ -15,6 +15,7 @@
 | **US-101** | Mérkőzések böngészése | ✅ Kész |
 | **US-201** | Tipp leadása | ✅ Kész |
 | **US-202** | Tipp módosítása | ✅ Kész (US-201-gyel együtt) |
+| **US-701** | User/Admin szerepkörök | ✅ Kész |
 
 ### US-001 – Elfogadási kritériumok teljesítve
 
@@ -101,16 +102,25 @@
 - ✅ `seed.ts` és `migrate.ts` kiszervezve `src/db/`-ből `scripts/` mappába
 - ✅ 128 teszt (47 backend + 81 frontend), typecheck CLEAN
 
+### US-701 – Elfogadási kritériumok teljesítve
+
+- ✅ `ADMIN_EMAILS` env változó (vesszővel elválasztott lista, case-insensitive) – admin hozzáférés email alapján
+- ✅ `auth.middleware.ts`: `resolveRole()` minden kérésnél frissen olvassa az env-et, beállítja `AuthenticatedUser.role`-t
+- ✅ `upsertUser`: a `role` értéket DB-be írja – a DB mindig szinkronban van az `ADMIN_EMAILS` env-vel
+- ✅ Új `adminMiddleware` – admin route-ok előtt ellenőrzi a szerepkört, 403-at ad vissza ha nem admin
+- ✅ Frontend `auth.store`: `isAdmin()` getter
+- ✅ Router: `requiresAdmin: true` meta – admin-only route-ok védelmére készen áll
+- ✅ 146 teszt (58 backend + 88 frontend), typecheck CLEAN
+
 ---
 
 | Story ID | Megnevezés | Prioritás |
 |----------|-----------|-----------|
-| US-701 | User/Admin szerepkörök (admin middleware) | Must Have |
 | US-102 | Mérkőzés részletek | Must Have |
-| US-201 | Tipp leadása | Must Have |
-| US-202 | Tipp módosítása | Must Have |
-
----
+| US-804 | Csapatok kezelése (admin) | Must Have |
+| US-801 | Mérkőzés létrehozása (admin) | Must Have |
+| US-802 | Mérkőzés szerkesztése/törlése (admin) | Must Have |
+| US-803 | Eredmény rögzítése (admin) | Must Have |
 
 ## Összes story státusz
 
@@ -140,7 +150,7 @@
 | US-603 | Csoportonkénti ranglista | ⬜ Nem kezdett | Must Have |
 | US-604 | Csoport kezelése (admin) | ⬜ Nem kezdett | Must Have |
 | US-605 | Több csoporthoz tartozás | ⬜ Nem kezdett | Must Have |
-| US-701 | User/Admin szerepkörök | ⬜ Nem kezdett | Must Have |
+| US-701 | User/Admin szerepkörök | ✅ Kész | Must Have |
 | US-801 | Mérkőzés létrehozása | ⬜ Nem kezdett | Must Have |
 | US-802 | Mérkőzés szerkesztése/törlése | ⬜ Nem kezdett | Must Have |
 | US-803 | Eredmény rögzítése | ⬜ Nem kezdett | Must Have |
@@ -153,4 +163,4 @@
 
 ---
 
-**Haladás: 10 / 34 story kész** (9 + US-403 részeként) — Must Have: 9/26 ✅, Should Have: 1/7 ✅
+**Haladás: 11 / 34 story kész** — Must Have: 10/26 ✅, Should Have: 1/7 ✅
