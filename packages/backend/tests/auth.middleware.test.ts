@@ -108,7 +108,7 @@ describe('authMiddleware', () => {
     expect(next).toHaveBeenCalledOnce()
     const user = ctx.state['user'] as AuthenticatedUser
     expect(user.supabaseId).toBe('00000000-0000-0000-0000-000000000001')
-    expect(user.email).toBe('dev@local')
+    expect(user.email).toBe('admin@dev.local')
   })
 
   it('dev-bypass-token in production → 401', async () => {
