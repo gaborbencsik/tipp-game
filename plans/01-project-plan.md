@@ -609,18 +609,41 @@ Mint **admin**, szeretnék **statisztikai tipp típusokat létrehozni, szerkeszt
 Mint **mobil eszközön böngésző felhasználó**, szeretnék **egy hamburger menüt látni a fejlécben**, hogy **a navigációs elemek ne torlódjanak össze kis képernyőn**.
 
 **Elfogadási kritériumok:**
-- [ ] Mobil nézeten (< 768px) a fejléc navigációs gombjai (Admin – Mérkőzések, Admin – Csapatok, Profil, Kijelentkezés) el vannak rejtve, helyettük egy hamburger ikon jelenik meg
-- [ ] A hamburger ikonra kattintva egy legördülő / oldalpanel menü nyílik meg az összes menüponttal
-- [ ] A menü bezárul: menüpontra kattintáskor, a hamburgerre kattintva, vagy a területen kívülre kattintva
-- [ ] Desktop nézeten (≥ 768px) a menü változatlan (vízszintes gombok a fejlécben)
-- [ ] Admin-only elemek (Admin – Mérkőzések, Admin – Csapatok) csak admin usernek jelennek meg a mobilmenüben is
+- [x] Mobil nézeten (< 768px) a sidebar alapból rejtett, helyette hamburger ikon jelenik meg a topbarban
+- [x] A hamburger ikonra kattintva overlay drawer nyílik meg a nav itemekkel
+- [x] A menü bezárul: nav itemre kattintáskor, vagy a backdrop-ra kattintva
+- [x] Desktop nézeten (≥ 768px) az oldalsáv mindig látható (összecsukvható: csak ikonok ↔ ikon + szöveg)
+- [x] Topbar: hamburger gomb + "VB Tippjáték" cím + UserMenuButton minden breakpointon egységesen
 
 **Komplexitás:** S
 **Prioritás:** Should Have
+**Státusz:** ✅ Kész
 
 ---
 
-### E11 – Támogatás / Donation
+#### US-1002: Felhasználói felület lokalizációja (i18n)
+
+**Story:**
+Mint **felhasználó**, szeretnék **az alkalmazást a saját nyelvemen használni (magyar vagy angol)**, hogy **akkor is kényelmes legyen a platform, ha nem vagyok magyar anyanyelvű**.
+
+**Elfogadási kritériumok:**
+- [ ] A fordítások külön JSON fájlokban vannak: `src/locales/hu.json` és `src/locales/en.json`
+- [ ] Az alkalmazás minden látható szövege (feliratok, gombok, hibaüzenetek, státusz badge-ek) a locale fájlokból töltődik – nincs hardcoded UI szöveg a komponensekben
+- [ ] A Profil oldalon egy toggle gomb vált a két nyelv között (pl. "Magyar / English")
+- [ ] A kiválasztott nyelv `localStorage`-ban tárolódik, oldal-újratöltés után megmarad
+- [ ] Alapértelmezett nyelv: magyar (`hu`)
+- [ ] A nyelv váltás azonnali, oldal-újratöltés nélkül
+
+**Technikai megjegyzések:**
+- `vue-i18n` v9+ (Composition API mód)
+- `useI18n()` composable a komponensekben, `$t()` a template-ben
+- A Pinia `locale.store.ts` kezeli az aktív locale-t és a `localStorage` szinkront
+- Backend szövegek (API hibaüzenetek) egyelőre angolul maradnak – csak a frontend UI lokalizálódik
+
+**Komplexitás:** M
+**Prioritás:** Should Have
+
+---
 
 #### US-1101: Donation gomb és pop-up (dummy fázis)
 
@@ -693,6 +716,7 @@ Mint **bejelentkezett felhasználó**, szeretnék **a donation gombra kattintva 
 | US-901 | Statisztikai tipp leadása | L | Should Have |
 | US-902 | Statisztikai tipp típus konfig | L | Should Have |
 | US-1001 | Hamburger menü mobil nézeten | S | Should Have |
+| US-1002 | Felhasználói felület lokalizációja (i18n) | M | Should Have |
 | US-1101 | Donation gomb és pop-up | S | Should Have |
 | US-1102 | Donation átirányítás (valós link) | S | Should Have |
 

@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-04-02 (US-303)
+> Utoljára frissítve: 2026-04-03 (US-1001, AppLayout)
 
 ## Kész user story-k
 
@@ -19,6 +19,7 @@
 | **US-804** | Csapatok kezelése (admin) | ✅ Kész |
 | **US-305** | Session perzisztencia oldal-újratöltés után | ✅ Kész |
 | **US-303** | Profil megtekintése és szerkesztése | ✅ Kész |
+| **US-1001** | Hamburger menü / AppLayout (Gmail-stílus) | ✅ Kész |
 
 ### US-001 – Elfogadási kritériumok teljesítve
 
@@ -171,6 +172,18 @@
 - ✅ Profil link a `MatchesView` fejlécében (minden bejelentkezett usernek)
 - ✅ 77 backend + 142 frontend teszt, typecheck CLEAN
 
+### US-1001 – Elfogadási kritériumok teljesítve
+
+- ✅ `AppLayout.vue` létrehozva – közös layout komponens minden auth-olt nézethez
+- ✅ Topbar: hamburger gomb + "VB Tippjáték" cím + `UserMenuButton` minden breakpointon
+- ✅ Desktop (≥ 768px): oldalsáv `w-14` (ikonok) ↔ `w-56` (ikon + szöveg), hamburger toggleli
+- ✅ Mobil (< 768px): sidebar alapból rejtett (`w-0`), hamburger overlay drawer-ként nyitja
+- ✅ Drawer bezárása: backdrop kattintás, nav itemre kattintás
+- ✅ Gmail-stílusú aktív item: `rounded-full bg-blue-100 text-blue-800 font-semibold`
+- ✅ Disabled nav itemek (Ranglista, Csoportok) placeholder-ként, jövőbeli bővítésre előkészítve
+- ✅ `UserMenuButton` kizárólag `AppLayout`-ban él, a nézetekből eltávolítva
+- ✅ 153 frontend teszt, typecheck CLEAN
+
 ---
 |----------|-----------|-----------|
 | US-401 | Automatikus pontszámítás | Must Have |
@@ -213,10 +226,11 @@
 | US-805 | Felhasználók kezelése | ⬜ Nem kezdett | Must Have |
 | US-901 | Statisztikai tipp leadása | ⬜ Nem kezdett | Should Have |
 | US-902 | Statisztikai tipp típus konfig | ⬜ Nem kezdett | Should Have |
-| US-1001 | Hamburger menü mobil nézeten | ⬜ Nem kezdett | Should Have |
+| US-1001 | Hamburger menü / AppLayout | ✅ Kész | Should Have |
+| US-1002 | Felhasználói felület lokalizációja (i18n) | ⬜ Nem kezdett | Should Have |
 | US-1101 | Donation gomb és pop-up | ⬜ Nem kezdett | Should Have |
 | US-1102 | Donation átirányítás | ⬜ Nem kezdett | Should Have |
 
 ---
 
-**Haladás: 18 / 35 story kész** — Must Have: 16/27 ✅, Should Have: 2/7 ✅
+**Haladás: 15 / 37 story kész** — Must Have: 13/27 ✅, Should Have: 2/9 ✅
