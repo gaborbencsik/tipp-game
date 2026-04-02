@@ -21,13 +21,22 @@
         >
           Meccsek
         </router-link>
+        <router-link
+          v-if="isAdmin"
+          to="/admin/teams"
+          class="inline-block ml-2 px-4 py-2 text-sm bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
+        >
+          Admin – Csapatok
+        </router-link>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useAuthStore } from '../stores/auth.store.js'
 
 const authStore = useAuthStore()
+const isAdmin = computed(() => authStore.user?.role === 'admin')
 </script>

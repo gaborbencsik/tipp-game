@@ -62,7 +62,7 @@ const MOCK_USER: User = {
 
 const MOCK_SESSION = {
   access_token: 'mock-access-token',
-  user: { id: 'supabase-uuid-001', email: 'dev@local' },
+  user: { id: 'supabase-uuid-001', email: 'admin@dev.local' },
 }
 
 describe('auth.store', () => {

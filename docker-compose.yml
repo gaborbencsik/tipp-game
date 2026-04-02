@@ -27,6 +27,7 @@ services:
       DATABASE_URL: postgresql://tipp_user:tipp_pass@db:5432/tipp_game
       SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET:-dev_jwt_secret_placeholder}
       CORS_ORIGIN: http://localhost:5173
+      ADMIN_EMAILS: admin@dev.local
     volumes:
       - ./packages/backend/src:/app/packages/backend/src
     depends_on:
@@ -46,7 +47,7 @@ services:
       - "5173:5173"
     environment:
       VITE_DEV_AUTH_BYPASS: "true"
-      VITE_API_URL: http://backend:3000
+      VITE_API_URL: http://localhost:3000
     volumes:
       - ./packages/frontend/src:/app/packages/frontend/src
     depends_on:

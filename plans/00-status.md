@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-04-02 (US-701)
+> Utoljára frissítve: 2026-04-02 (US-804)
 
 ## Kész user story-k
 
@@ -16,6 +16,7 @@
 | **US-201** | Tipp leadása | ✅ Kész |
 | **US-202** | Tipp módosítása | ✅ Kész (US-201-gyel együtt) |
 | **US-701** | User/Admin szerepkörök | ✅ Kész |
+| **US-804** | Csapatok kezelése (admin) | ✅ Kész |
 
 ### US-001 – Elfogadási kritériumok teljesítve
 
@@ -112,12 +113,23 @@
 - ✅ Router: `requiresAdmin: true` meta – admin-only route-ok védelmére készen áll
 - ✅ 146 teszt (58 backend + 88 frontend), typecheck CLEAN
 
+### US-804 – Elfogadási kritériumok teljesítve
+
+- ✅ `teams.service.ts`: `getTeams`, `getTeamById`, `createTeam`, `updateTeam`, `deleteTeam` – AppError pattern, FK violation (23503) → 409
+- ✅ `admin.routes.ts`: `GET/POST/PUT/DELETE /api/admin/teams(/:id)` – `authMiddleware + adminMiddleware`
+- ✅ Frontend `Team`, `TeamInput` típusok, `api.admin.teams.*` metódusok
+- ✅ `admin-teams.store.ts`: Pinia store – CRUD + loading/error state
+- ✅ `AdminTeamsView.vue`: táblázat, inline form (új/szerkesztés), törlés confirm, error banner, loading spinner
+- ✅ `/admin/teams` route – `requiresAuth + requiresAdmin`
+- ✅ Admin link a `MatchesView` fejlécében – csak adminoknak látható (computed reaktív)
+- ✅ Dev bypass: `restoreSession()` azonnal beállítja a mock admin usert, route guard átenged
+- ✅ 170 teszt (67 backend + 103 frontend), typecheck CLEAN
+
 ---
 
 | Story ID | Megnevezés | Prioritás |
 |----------|-----------|-----------|
 | US-102 | Mérkőzés részletek | Must Have |
-| US-804 | Csapatok kezelése (admin) | Must Have |
 | US-801 | Mérkőzés létrehozása (admin) | Must Have |
 | US-802 | Mérkőzés szerkesztése/törlése (admin) | Must Have |
 | US-803 | Eredmény rögzítése (admin) | Must Have |
@@ -154,7 +166,7 @@
 | US-801 | Mérkőzés létrehozása | ⬜ Nem kezdett | Must Have |
 | US-802 | Mérkőzés szerkesztése/törlése | ⬜ Nem kezdett | Must Have |
 | US-803 | Eredmény rögzítése | ⬜ Nem kezdett | Must Have |
-| US-804 | Csapatok kezelése | ⬜ Nem kezdett | Must Have |
+| US-804 | Csapatok kezelése | ✅ Kész | Must Have |
 | US-805 | Felhasználók kezelése | ⬜ Nem kezdett | Must Have |
 | US-901 | Statisztikai tipp leadása | ⬜ Nem kezdett | Should Have |
 | US-902 | Statisztikai tipp típus konfig | ⬜ Nem kezdett | Should Have |
@@ -163,4 +175,4 @@
 
 ---
 
-**Haladás: 11 / 34 story kész** — Must Have: 10/26 ✅, Should Have: 1/7 ✅
+**Haladás: 12 / 34 story kész** — Must Have: 11/26 ✅, Should Have: 1/7 ✅

@@ -16,10 +16,10 @@ function resolveRole(email: string): 'user' | 'admin' {
 
 const DEV_BYPASS_USER: AuthenticatedUser = {
   supabaseId: '00000000-0000-0000-0000-000000000001',
-  email: 'dev@local',
+  email: 'admin@dev.local',
   displayName: 'Dev User',
   avatarUrl: null,
-  role: resolveRole('dev@local'),
+  role: resolveRole('admin@dev.local'),
 }
 
 function makeJwksClient(): jwksClient.JwksClient {

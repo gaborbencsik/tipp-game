@@ -91,4 +91,25 @@ describe('HomeView', () => {
     await wrapper.find('button').trigger('click')
     expect(mockPush).toHaveBeenCalledWith('/login')
   })
+
+  it('admin user → Admin – Csapatok link visible', () => {
+    const wrapper = mountWithUser()
+    expect(wrapper.text()).toContain('Admin – Csapatok')
+  })
+
+  it('non-admin user → Admin – Csapatok link hidden', () => {
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    const store = useAuthStore()
+    store.user = {
+      id: '00000000-0000-0000-0000-000000000002',
+      supabaseId: '00000000-0000-0000-0000-000000000002',
+      email: 'user@local',
+      displayName: 'Regular User',
+      avatarUrl: null,
+      role: 'user',
+    }
+    const wrapper = mount(HomeView, { global: { plugins: [pinia, buildRouter()] } })
+    expect(wrapper.text()).not.toContain('Admin – Csapatok')
+  })
 })

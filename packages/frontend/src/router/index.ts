@@ -26,11 +26,20 @@ export const router = createRouter({
       component: () => import('../views/MatchesView.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/admin/teams',
+      name: 'admin-teams',
+      component: () => import('../views/AdminTeamsView.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true },
+    },
   ],
 })
 
 router.beforeEach((to) => {
   const authStore = useAuthStore()
+  if (to.name === 'login' && authStore.isAuthenticated()) {
+    return { name: 'home' }
+  }
   if (to.meta.requiresAuth && !authStore.isAuthenticated()) {
     return { name: 'login' }
   }

@@ -11,7 +11,7 @@ const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
 const MOCK_USER: User = {
   id: '00000000-0000-0000-0000-000000000001',
   supabaseId: '00000000-0000-0000-0000-000000000001',
-  email: 'dev@local',
+  email: 'admin@dev.local',
   displayName: 'Dev User',
   avatarUrl: null,
   role: 'admin',
@@ -41,7 +41,10 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function restoreSession(): Promise<void> {
-    if (DEV_AUTH_BYPASS) return
+    if (DEV_AUTH_BYPASS) {
+      user.value = MOCK_USER
+      return
+    }
 
     return new Promise((resolve) => {
       const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {

@@ -59,6 +59,21 @@ export interface MatchDateGroup {
   readonly matches: Match[]
 }
 
+export interface Team {
+  readonly id: string
+  readonly name: string
+  readonly shortCode: string
+  readonly flagUrl: string | null
+  readonly group: string | null
+}
+
+export interface TeamInput {
+  readonly name: string
+  readonly shortCode: string
+  readonly flagUrl?: string | null
+  readonly group?: string | null
+}
+
 export interface PredictionInput {
   readonly matchId: string
   readonly homeGoals: number
