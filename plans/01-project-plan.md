@@ -30,6 +30,7 @@
 | E9 – Stat. tippek | Gólkirály, bajnok, egyéb statisztikai tippek | Should Have |
 | E10 – UX/Polish | Értesítések, animációk, PWA, stb. | Nice to Have |
 | E11 – Támogatás | Donation lehetőség a projekt fenntartásához | Should Have |
+| E12 – Adatszinkron | Automatikus meccs- és eredményadat szinkron külső API-ból | Should Have |
 
 ---
 
@@ -678,6 +679,94 @@ Mint **bejelentkezett felhasználó**, szeretnék **a donation gombra kattintva 
 
 ---
 
+### E12 – Automatikus adatszinkron
+
+#### US-1201: Futball API kiválasztása és integrációs kutatás
+
+**Story:**
+Mint **fejlesztő**, szeretnék **megvizsgálni és kiválasztani a legmegfelelőbb külső futball API-t**, hogy **a meccs- és eredményadatok automatikusan, megbízhatóan és alacsony költséggel szinkronizálhatók legyenek a rendszerbe**.
+
+**Háttér (kutatási összefoglaló):**
+
+| API | Live adat | Coverage | Ár/hó |
+|-----|-----------|----------|-------|
+| API-Football | ✅ | Top ligák, válogatott, NB I | ~$10–15 (starter) |
+| Live-Football-API | ✅ | 1000+ liga | ~$9.99 |
+| Sportmonks | ✅ | Minden liga, profi | ~€29 (drágább) |
+| football-data.org | ❌ | Korlátozott liga | Ingyenes |
+| FootyStats | ⚠️ nem live | Stat-heavy | Ingyenes/olcsó |
+
+**Elfogadási kritériumok:**
+- [ ] Legalább két API tesztelve sandbox/free tier-en: API-Football és Live-Football-API
+- [ ] Dokumentálva: endpoint struktúra, response format, rate limit, quota/nap
+- [ ] Döntési mátrix elkészítve: ár, coverage (VB + NB I), live adat minőség, response latencia, dokumentáció minősége
+- [ ] Kiválasztott API rögzítve a `plans/03-tech-stack.md`-ben indoklással
+- [ ] A szükséges env változók dokumentálva (`.env.example`: `FOOTBALL_API_KEY`, `FOOTBALL_API_BASE_URL`)
+- [ ] Meghatározva: mely endpointok kellenek (fixtures, live scores, teams, standings)
+
+**Komplexitás:** S
+**Prioritás:** Should Have
+
+---
+
+#### US-1202: Futball API szinkronizációs service
+
+**Story:**
+Mint **fejlesztő**, szeretnék **a kiválasztott futball API-ból meccs- és csapatadatokat lekérdezni és a saját adatbázisba szinkronizálni**, hogy **az admin ne kelljen manuálisan vigye fel az összes mérkőzést és eredményt**.
+
+**Elfogadási kritériumok:**
+- [ ] `packages/backend/src/services/football-api.service.ts` – typed HTTP wrapper a külső API fölé; minden közvetlen API hívás itt van, domain logika nélkül
+- [ ] `packages/backend/src/services/sync.service.ts` – szinkronizációs logika: fixtures upsert, results upsert, teams upsert; csak a saját DB-t írja
+- [ ] Fixtures upsert: mérkőzések betöltése a `matches` táblába (`ON CONFLICT DO UPDATE`)
+- [ ] Results upsert: befejezett meccsek eredménye → `match_results` tábla + `matches.status = 'finished'`
+- [ ] Teams upsert: csapatok (név, shortCode, flagUrl, group) → `teams` tábla
+- [ ] Minden szinkron futás írja az `audit_logs` táblát (`type: 'sync'`, mit szinkronizált, hány rekord)
+- [ ] Hibakezelés: API timeout, rate limit (429) → exponential backoff; részleges siker logolva, nem dob el mindent
+- [ ] Unit tesztek: `sync.service.test.ts` – mock API válaszokkal, upsert logika, hibakezelés
+- [ ] `.env.example` frissítve: `FOOTBALL_API_KEY`, `FOOTBALL_API_BASE_URL`, `FOOTBALL_API_COMPETITION_ID`
+
+**Technikai megjegyzések:**
+- `football-api.service.ts` csak typed HTTP wrapper – domain logika tilos benne
+- `sync.service.ts` nem hívható közvetlenül HTTP-n – csak a cron job (US-1203) és az admin trigger hívja
+- Native `fetch` (Node 18+) – nincs axios dependency
+
+**Komplexitás:** M
+**Prioritás:** Should Have
+
+---
+
+#### US-1203: Automatikus adatszinkron cron job
+
+**Story:**
+Mint **fejlesztő**, szeretnék **egy ütemezett cron job-ot, amely percenként fut és a DB aktuális állapota alapján dönti el mit kell éppen szinkronizálni**, hogy **az API quota ne pazarlódjon és az adatok mindig naprakészek legyenek**.
+
+**Adaptív döntési logika:**
+
+| DB állapot | Mit hív | Megjegyzés |
+|------------|---------|------------|
+| Van `status = 'live'` meccs | `sync.service` → live eredmények | Minden percben |
+| Nincs live, de van `scheduled` a következő 24 órában | `sync.service` → fixtures frissítés | 10 percenként |
+| Meccs `live` → `finished` átment | `sync.service` → végeredmény zárás | Következő futásban azonnal |
+| Nincs live és nincs közeli meccs | `sync.service` → csapatok + teljes fixture lista | Naponta egyszer, 03:00 UTC |
+
+**Elfogadási kritériumok:**
+- [ ] `packages/backend/src/jobs/sync.job.ts` – a cron job belépési pontja; lekérdezi a DB állapotát, dönt, meghívja a `sync.service` megfelelő metódusait
+- [ ] A job percenként fut (`node-cron`); az első lépés mindig egy olcsó DB `SELECT` – ez dönti el a következő lépéseket
+- [ ] Rate limit védelem: ha az előző API hívás kevesebb mint X másodperce volt, skip
+- [ ] A scheduler indítása `app.ts`-ben, csak `NODE_ENV !== 'test'` esetén
+- [ ] Minden futás loggol: mit döntött, mit hívott, hány rekord változott, esetleges hiba
+- [ ] Admin manuális trigger: `POST /api/admin/sync` endpoint (csak adminoknak) – azonnali futtatás, ugyanazt a `sync.service`-t hívja
+
+**Technikai megjegyzések:**
+- `node-cron` csomag az ütemezéshez – lightweight, nem igényel külső infrastruktúrát
+- A cron job a meglévő Railway web service-en belül fut – nincs szükség külön Cron Service-re
+- A döntési logika tesztelhető: `sync.job.ts` egy `decideWhatToSync(dbState)` pure függvényt exportál
+
+**Komplexitás:** M
+**Prioritás:** Should Have
+
+---
+
 ## 3. Prioritás összefoglaló
 
 | Story ID | Megnevezés | Komplexitás | Prioritás |
@@ -719,16 +808,19 @@ Mint **bejelentkezett felhasználó**, szeretnék **a donation gombra kattintva 
 | US-1002 | Felhasználói felület lokalizációja (i18n) | M | Should Have |
 | US-1101 | Donation gomb és pop-up | S | Should Have |
 | US-1102 | Donation átirányítás (valós link) | S | Should Have |
+| US-1201 | Futball API kiválasztása (kutatás) | S | Should Have |
+| US-1202 | Futball API szinkronizációs service | M | Should Have |
+| US-1203 | Automatikus adatszinkron cron job | M | Should Have |
 
 **Összesítés:**
 - Must Have: 26 story (4 technikai + 22 product)
-- Should Have: 10 story
+- Should Have: 13 story
 - Nice to Have: 0 (ld. E10 epic – részletezés a 04-extras.md-ben)
 
 **Méret szerinti bontás:**
-- S (Small): 9 story
-- M (Medium): 18 story
-- L (Large): 5 story (US-304 most M, mivel Supabase toggleval)
+- S (Small): 11 story
+- M (Medium): 20 story
+- L (Large): 5 story
 
 ## 4. Story map (vázlat)
 

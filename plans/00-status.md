@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-04-03 (US-1001, AppLayout)
+> Utoljára frissítve: 2026-04-03 (US-1201/1202/1203 stories hozzáadva)
 
 ## Kész user story-k
 
@@ -230,6 +230,9 @@
 | US-1002 | Felhasználói felület lokalizációja (i18n) | ⬜ Nem kezdett | Should Have |
 | US-1101 | Donation gomb és pop-up | ⬜ Nem kezdett | Should Have |
 | US-1102 | Donation átirányítás | ⬜ Nem kezdett | Should Have |
+| US-1201 | Futball API kiválasztása (kutatás) | ⬜ Nem kezdett | Should Have |
+| US-1202 | Futball API szinkronizációs service | ⬜ Nem kezdett | Should Have |
+| US-1203 | Automatikus adatszinkron cron job | ⬜ Nem kezdett | Should Have |
 
 ---
 
