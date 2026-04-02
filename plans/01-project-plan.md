@@ -601,6 +601,25 @@ Mint **admin**, szeretnék **statisztikai tipp típusokat létrehozni, szerkeszt
 
 ---
 
+### E10 – UX / Mobil
+
+#### US-1001: Hamburger menü mobil nézeten
+
+**Story:**
+Mint **mobil eszközön böngésző felhasználó**, szeretnék **egy hamburger menüt látni a fejlécben**, hogy **a navigációs elemek ne torlódjanak össze kis képernyőn**.
+
+**Elfogadási kritériumok:**
+- [ ] Mobil nézeten (< 768px) a fejléc navigációs gombjai (Admin – Mérkőzések, Admin – Csapatok, Profil, Kijelentkezés) el vannak rejtve, helyettük egy hamburger ikon jelenik meg
+- [ ] A hamburger ikonra kattintva egy legördülő / oldalpanel menü nyílik meg az összes menüponttal
+- [ ] A menü bezárul: menüpontra kattintáskor, a hamburgerre kattintva, vagy a területen kívülre kattintva
+- [ ] Desktop nézeten (≥ 768px) a menü változatlan (vízszintes gombok a fejlécben)
+- [ ] Admin-only elemek (Admin – Mérkőzések, Admin – Csapatok) csak admin usernek jelennek meg a mobilmenüben is
+
+**Komplexitás:** S
+**Prioritás:** Should Have
+
+---
+
 ### E11 – Támogatás / Donation
 
 #### US-1101: Donation gomb és pop-up (dummy fázis)
@@ -673,6 +692,7 @@ Mint **bejelentkezett felhasználó**, szeretnék **a donation gombra kattintva 
 | US-805 | Felhasználók kezelése | M | Must Have |
 | US-901 | Statisztikai tipp leadása | L | Should Have |
 | US-902 | Statisztikai tipp típus konfig | L | Should Have |
+| US-1001 | Hamburger menü mobil nézeten | S | Should Have |
 | US-1101 | Donation gomb és pop-up | S | Should Have |
 | US-1102 | Donation átirányítás (valós link) | S | Should Have |
 

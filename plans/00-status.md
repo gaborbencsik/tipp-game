@@ -213,6 +213,7 @@
 | US-805 | Felhasználók kezelése | ⬜ Nem kezdett | Must Have |
 | US-901 | Statisztikai tipp leadása | ⬜ Nem kezdett | Should Have |
 | US-902 | Statisztikai tipp típus konfig | ⬜ Nem kezdett | Should Have |
+| US-1001 | Hamburger menü mobil nézeten | ⬜ Nem kezdett | Should Have |
 | US-1101 | Donation gomb és pop-up | ⬜ Nem kezdett | Should Have |
 | US-1102 | Donation átirányítás | ⬜ Nem kezdett | Should Have |
 
