@@ -138,6 +138,24 @@ Az admin felületen is kapcsolható.
 
 ---
 
+### 🎨 14. Generatív avatar (DiceBear)
+
+Ha a felhasználónak nincs Google-profilképe (vagy email-auth módban van), jelenjen meg egy automatikusan generált SVG avatar a neve alapján a DiceBear API segítségével.
+
+**API:** `https://api.dicebear.com/9.x/miniavs/svg?seed={displayName}` – framework-független, csak egy `<img>` tag, nulla dependency.
+
+**Elfogadási kritériumok:**
+- [ ] Ha `user.avatarUrl` null vagy üres, az avatar URL `https://api.dicebear.com/9.x/miniavs/svg?seed={displayName}` alakban generálódik
+- [ ] Az avatar megjelenik: `ProfileView` (nagy méret), `UserMenuButton` dropdown (kis méret), ranglista sorok (kis méret)
+- [ ] Ha `avatarUrl` elérhető (Google OAuth), az eredeti kép jelenik meg – a DiceBear URL csak fallback
+- [ ] Nincs új npm dependency – az URL generálás egy egyszerű helper függvény
+
+**Hozzáadott érték:** Egységes, egyedi vizuális identitás minden usernek profilkép nélkül is; eltünteti az üres avatar problémát.
+
+**Impl. nehézség:** S
+
+---
+
 ## Összefoglalás – prioritás
 
 | # | Ötlet | Hozzáadott érték | Impl. nehézség |
@@ -155,6 +173,7 @@ Az admin felületen is kapcsolható.
 | 11 | Head-to-head | Magas | M |
 | 12 | Blackout period | Közepes | S |
 | 13 | i18n | Alacsony-Közepes | M |
+| 14 | Generatív avatar (vue-boring-avatars) | Közepes | S |
 
 **Top 3 javasolt post-MVP feature:**
 1. **Countdown timer** (S – gyors win, jó UX)
