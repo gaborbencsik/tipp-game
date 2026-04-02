@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-04-02 (US-804)
+> Utoljára frissítve: 2026-04-02 (US-305)
 
 ## Kész user story-k
 
@@ -17,6 +17,7 @@
 | **US-202** | Tipp módosítása | ✅ Kész (US-201-gyel együtt) |
 | **US-701** | User/Admin szerepkörök | ✅ Kész |
 | **US-804** | Csapatok kezelése (admin) | ✅ Kész |
+| **US-305** | Session perzisztencia oldal-újratöltés után | ✅ Kész |
 
 ### US-001 – Elfogadási kritériumok teljesítve
 
@@ -113,6 +114,15 @@
 - ✅ Router: `requiresAdmin: true` meta – admin-only route-ok védelmére készen áll
 - ✅ 146 teszt (58 backend + 88 frontend), typecheck CLEAN
 
+### US-305 – Elfogadási kritériumok teljesítve
+
+- ✅ Dev bypass módban `login()`, `loginWithEmail()`, `registerWithEmail()` sessionStorage-ba írja a session-t 8 órás TTL-lel
+- ✅ `restoreSession()` dev bypass módban sessionStorage-ból állítja vissza a usert (TTL ellenőrzéssel)
+- ✅ Lejárt session: user null marad, sessionStorage kulcs törlődik
+- ✅ `logout()` dev bypass módban törli a sessionStorage bejegyzést
+- ✅ Production OAuth módban a logika változatlan (Supabase JS client kezeli)
+- ✅ 177 teszt (67 backend + 110 frontend), typecheck CLEAN
+
 ### US-804 – Elfogadási kritériumok teljesítve
 
 - ✅ `teams.service.ts`: `getTeams`, `getTeamById`, `createTeam`, `updateTeam`, `deleteTeam` – AppError pattern, FK violation (23503) → 409
@@ -129,7 +139,6 @@
 
 | Story ID | Megnevezés | Prioritás |
 |----------|-----------|-----------|
-| US-305 | Session perzisztencia oldal-újratöltés után | Must Have |
 | US-102 | Mérkőzés részletek | Must Have |
 | US-801 | Mérkőzés létrehozása (admin) | Must Have |
 | US-802 | Mérkőzés szerkesztése/törlése (admin) | Must Have |
@@ -153,7 +162,7 @@
 | US-302 | Bejelentkezés / kijelentkezés | ✅ Kész | Must Have |
 | US-303 | Profil szerkesztése | ⬜ Nem kezdett | Should Have |
 | US-304 | Email + jelszó auth | ✅ Kész | Should Have |
-| US-305 | Session perzisztencia oldal-újratöltés után | ⬜ Nem kezdett | Must Have |
+| US-305 | Session perzisztencia oldal-újratöltés után | ✅ Kész | Must Have |
 | US-401 | Automatikus pontszámítás | ⬜ Nem kezdett | Must Have |
 | US-402 | Konfigurálható pontrendszer | ⬜ Nem kezdett | Must Have |
 | US-403 | Pontozás tesztelhetősége | ✅ Kész (US-003 részeként) | Must Have |
@@ -177,4 +186,4 @@
 
 ---
 
-**Haladás: 12 / 35 story kész** — Must Have: 11/27 ✅, Should Have: 1/7 ✅
+**Haladás: 13 / 35 story kész** — Must Have: 12/27 ✅, Should Have: 1/7 ✅

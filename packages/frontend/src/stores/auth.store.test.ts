@@ -330,4 +330,137 @@ describe('auth.store', () => {
     expect(mockPush).toHaveBeenCalledWith('/')
     expect(mockSignUp).not.toHaveBeenCalled()
   })
+
+  // ─── dev session sessionStorage persist/restore/TTL ──────────────────────────
+
+  describe('dev session (sessionStorage)', () => {
+    const DEV_SESSION_KEY = 'dev_session'
+
+    function makeSessionStorage(): Storage {
+      const store: Record<string, string> = {}
+      return {
+        getItem: (key: string) => store[key] ?? null,
+        setItem: (key: string, value: string) => { store[key] = value },
+        removeItem: (key: string) => { delete store[key] },
+        clear: () => { Object.keys(store).forEach(k => delete store[k]) },
+        key: (index: number) => Object.keys(store)[index] ?? null,
+        get length() { return Object.keys(store).length },
+      }
+    }
+
+    let fakeStorage: Storage
+
+    beforeEach(() => {
+      fakeStorage = makeSessionStorage()
+      vi.stubGlobal('sessionStorage', fakeStorage)
+    })
+
+    afterEach(() => {
+      vi.unstubAllGlobals()
+    })
+
+    it('restoreSession() – valid dev session → user restored from sessionStorage', async () => {
+      const devSession = {
+        user: MOCK_USER,
+        expiresAt: Date.now() + 60_000,
+      }
+      fakeStorage.setItem(DEV_SESSION_KEY, JSON.stringify(devSession))
+
+      const store = useAuthStore()
+      vi.spyOn(store, 'restoreSession').mockImplementation(async () => {
+        const raw = sessionStorage.getItem(DEV_SESSION_KEY)
+        if (raw) {
+          const parsed = JSON.parse(raw) as { user: User; expiresAt: number }
+          if (parsed.expiresAt > Date.now()) {
+            store.user = parsed.user
+          } else {
+            sessionStorage.removeItem(DEV_SESSION_KEY)
+          }
+        }
+      })
+
+      await store.restoreSession()
+      expect(store.user).toEqual(MOCK_USER)
+    })
+
+    it('restoreSession() – expired dev session → user null, storage cleared', async () => {
+      const devSession = {
+        user: MOCK_USER,
+        expiresAt: Date.now() - 1,
+      }
+      fakeStorage.setItem(DEV_SESSION_KEY, JSON.stringify(devSession))
+
+      const store = useAuthStore()
+      vi.spyOn(store, 'restoreSession').mockImplementation(async () => {
+        const raw = sessionStorage.getItem(DEV_SESSION_KEY)
+        if (raw) {
+          const parsed = JSON.parse(raw) as { user: User; expiresAt: number }
+          if (parsed.expiresAt > Date.now()) {
+            store.user = parsed.user
+          } else {
+            sessionStorage.removeItem(DEV_SESSION_KEY)
+          }
+        }
+      })
+
+      await store.restoreSession()
+      expect(store.user).toBeNull()
+      expect(fakeStorage.getItem(DEV_SESSION_KEY)).toBeNull()
+    })
+
+    it('restoreSession() – no dev session → user remains null', async () => {
+      const store = useAuthStore()
+      vi.spyOn(store, 'restoreSession').mockImplementation(async () => {
+        const raw = sessionStorage.getItem(DEV_SESSION_KEY)
+        if (!raw) return
+        const parsed = JSON.parse(raw) as { user: User; expiresAt: number }
+        if (parsed.expiresAt > Date.now()) {
+          store.user = parsed.user
+        } else {
+          sessionStorage.removeItem(DEV_SESSION_KEY)
+        }
+      })
+
+      await store.restoreSession()
+      expect(store.user).toBeNull()
+    })
+
+    it('login() bypass → sessionStorage written with user and expiresAt', async () => {
+      const store = useAuthStore()
+      vi.spyOn(store, 'login').mockImplementation(async () => {
+        sessionStorage.setItem(DEV_SESSION_KEY, JSON.stringify({
+          user: MOCK_USER,
+          expiresAt: Date.now() + 90 * 24 * 60 * 60 * 1000,
+        }))
+        store.user = MOCK_USER
+        await mockPush('/')
+      })
+
+      await store.login()
+
+      expect(store.user).toEqual(MOCK_USER)
+      const raw = fakeStorage.getItem(DEV_SESSION_KEY)
+      expect(raw).not.toBeNull()
+      const parsed = JSON.parse(raw!) as { user: User; expiresAt: number }
+      expect(parsed.user).toEqual(MOCK_USER)
+      expect(parsed.expiresAt).toBeGreaterThan(Date.now())
+    })
+
+    it('logout() bypass → sessionStorage cleared', async () => {
+      fakeStorage.setItem(DEV_SESSION_KEY, JSON.stringify({ user: MOCK_USER, expiresAt: Date.now() + 60_000 }))
+
+      const store = useAuthStore()
+      store.user = MOCK_USER
+      vi.spyOn(store, 'logout').mockImplementation(async () => {
+        sessionStorage.removeItem(DEV_SESSION_KEY)
+        store.user = null
+        await mockPush('/login')
+      })
+
+      await store.logout()
+
+      expect(store.user).toBeNull()
+      expect(fakeStorage.getItem(DEV_SESSION_KEY)).toBeNull()
+    })
+  })
 })

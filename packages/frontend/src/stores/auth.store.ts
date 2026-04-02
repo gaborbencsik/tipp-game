@@ -8,6 +8,14 @@ import type { User } from '../types/index.js'
 
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
 
+const DEV_SESSION_TTL_MS = 90 * 24 * 60 * 60 * 1000
+const DEV_SESSION_KEY = 'dev_session'
+
+interface DevSession {
+  user: User
+  expiresAt: number
+}
+
 const MOCK_USER: User = {
   id: '00000000-0000-0000-0000-000000000001',
   supabaseId: '00000000-0000-0000-0000-000000000001',
@@ -42,7 +50,15 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function restoreSession(): Promise<void> {
     if (DEV_AUTH_BYPASS) {
-      user.value = MOCK_USER
+      const raw = sessionStorage.getItem(DEV_SESSION_KEY)
+      if (raw) {
+        const parsed = JSON.parse(raw) as DevSession
+        if (parsed.expiresAt > Date.now()) {
+          user.value = parsed.user
+        } else {
+          sessionStorage.removeItem(DEV_SESSION_KEY)
+        }
+      }
       return
     }
 
@@ -75,6 +91,10 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function login(): Promise<void> {
     if (DEV_AUTH_BYPASS) {
+      sessionStorage.setItem(DEV_SESSION_KEY, JSON.stringify({
+        user: MOCK_USER,
+        expiresAt: Date.now() + DEV_SESSION_TTL_MS,
+      }))
       user.value = MOCK_USER
       await router.push('/')
       return
@@ -87,6 +107,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function logout(): Promise<void> {
     if (DEV_AUTH_BYPASS) {
+      sessionStorage.removeItem(DEV_SESSION_KEY)
       user.value = null
       await router.push('/login')
       return
@@ -98,6 +119,10 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function loginWithEmail(email: string, password: string): Promise<void> {
     if (DEV_AUTH_BYPASS) {
+      sessionStorage.setItem(DEV_SESSION_KEY, JSON.stringify({
+        user: MOCK_USER,
+        expiresAt: Date.now() + DEV_SESSION_TTL_MS,
+      }))
       user.value = MOCK_USER
       await router.push('/')
       return
@@ -110,7 +135,12 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function registerWithEmail(email: string, password: string, displayName: string): Promise<void> {
     if (DEV_AUTH_BYPASS) {
-      user.value = { ...MOCK_USER, email, displayName }
+      const mockUser = { ...MOCK_USER, email, displayName }
+      sessionStorage.setItem(DEV_SESSION_KEY, JSON.stringify({
+        user: mockUser,
+        expiresAt: Date.now() + DEV_SESSION_TTL_MS,
+      }))
+      user.value = mockUser
       await router.push('/')
       return
     }
