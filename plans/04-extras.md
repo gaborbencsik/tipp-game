@@ -142,7 +142,11 @@ Az admin felületen is kapcsolható.
 
 Ha a felhasználónak nincs Google-profilképe (vagy email-auth módban van), jelenjen meg egy automatikusan generált SVG avatar a neve alapján a DiceBear API segítségével.
 
-**API:** `https://api.dicebear.com/9.x/miniavs/svg?seed={displayName}` – framework-független, csak egy `<img>` tag, nulla dependency.
+**API:** Két DiceBear stílus közül választható:
+- `https://api.dicebear.com/9.x/miniavs/svg?seed={displayName}`
+- `https://api.dicebear.com/9.x/toon-head/svg?seed={displayName}`
+
+Framework-független, csak egy `<img>` tag, nulla dependency.
 
 **Elfogadási kritériumok:**
 - [ ] Ha `user.avatarUrl` null vagy üres, az avatar URL `https://api.dicebear.com/9.x/miniavs/svg?seed={displayName}` alakban generálódik
