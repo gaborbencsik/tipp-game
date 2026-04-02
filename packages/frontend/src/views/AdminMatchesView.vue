@@ -1,9 +1,8 @@
 <template>
-  <div class="min-h-screen bg-gray-50 p-8">
-    <div class="max-w-6xl mx-auto">
+  <AppLayout>
       <div class="flex items-center justify-between mb-6">
         <h1 class="text-2xl font-bold text-gray-900">Admin – Mérkőzések</h1>
-        <div class="flex gap-2">
+        <div class="flex items-center gap-2">
           <button
             data-testid="new-match-btn"
             class="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
@@ -245,8 +244,7 @@
           </tbody>
         </table>
       </div>
-    </div>
-  </div>
+  </AppLayout>
 </template>
 
 <script setup lang="ts">
@@ -254,6 +252,7 @@ import { onMounted, ref } from 'vue'
 import { useAdminMatchesStore } from '../stores/admin-matches.store.js'
 import { useAdminTeamsStore } from '../stores/admin-teams.store.js'
 import type { Match, MatchStage, MatchStatus } from '../types/index.js'
+import AppLayout from '../components/AppLayout.vue'
 
 const store = useAdminMatchesStore()
 const teamsStore = useAdminTeamsStore()

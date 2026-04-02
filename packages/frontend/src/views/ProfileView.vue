@@ -1,10 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 p-8">
-    <div class="max-w-md mx-auto">
-      <div class="mb-6">
-        <router-link to="/matches" class="text-blue-600 hover:underline text-sm">← Vissza</router-link>
-      </div>
-
+  <AppLayout>
       <h1 class="text-2xl font-bold text-gray-900 mb-6">Profil</h1>
 
       <div class="bg-white rounded shadow p-6 space-y-4">
@@ -53,13 +48,13 @@
           </button>
         </form>
       </div>
-    </div>
-  </div>
+  </AppLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '../stores/auth.store.js'
+import AppLayout from '../components/AppLayout.vue'
 
 const authStore = useAuthStore()
 

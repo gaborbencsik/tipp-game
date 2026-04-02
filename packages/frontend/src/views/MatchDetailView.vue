@@ -1,13 +1,14 @@
 <template>
-  <div class="min-h-screen bg-gray-50 p-8">
-    <div class="max-w-2xl mx-auto">
-      <router-link
-        to="/matches"
-        data-testid="back-link"
-        class="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 mb-6"
-      >
-        ← Vissza
-      </router-link>
+  <AppLayout>
+      <div class="flex items-center justify-between mb-6">
+        <router-link
+          to="/matches"
+          data-testid="back-link"
+          class="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
+        >
+          ← Vissza
+        </router-link>
+      </div>
 
       <div v-if="matchesStore.isLoading" class="flex justify-center py-16">
         <div data-testid="spinner" class="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
@@ -131,8 +132,7 @@
           </template>
         </div>
       </template>
-    </div>
-  </div>
+  </AppLayout>
 </template>
 
 <script setup lang="ts">
@@ -141,6 +141,7 @@ import { useRoute } from 'vue-router'
 import { useMatchesStore } from '../stores/matches.store.js'
 import { usePredictionsStore } from '../stores/predictions.store.js'
 import type { Match, MatchStage, MatchStatus } from '../types/index.js'
+import AppLayout from '../components/AppLayout.vue'
 
 const route = useRoute()
 const matchesStore = useMatchesStore()

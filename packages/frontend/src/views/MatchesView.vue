@@ -1,36 +1,7 @@
 <template>
-  <div class="min-h-screen bg-gray-50 p-8">
-    <div class="max-w-4xl mx-auto">
+  <AppLayout>
       <div class="flex items-center justify-between mb-6">
         <h1 class="text-2xl font-bold text-gray-900">Mérkőzések</h1>
-        <div class="flex items-center gap-2">
-          <router-link
-            v-if="isAdmin"
-            to="/admin/matches"
-            class="px-4 py-2 text-sm bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
-          >
-            Admin – Mérkőzések
-          </router-link>
-          <router-link
-            v-if="isAdmin"
-            to="/admin/teams"
-            class="px-4 py-2 text-sm bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
-          >
-            Admin – Csapatok
-          </router-link>
-          <router-link
-            to="/profile"
-            class="px-4 py-2 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
-          >
-            Profil
-          </router-link>
-          <button
-            class="px-4 py-2 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
-            @click="authStore.logout()"
-          >
-            Kijelentkezés
-          </button>
-        </div>
       </div>
 
       <div class="flex gap-2 mb-6">
@@ -199,21 +170,18 @@
           </div>
         </div>
       </div>
-    </div>
-  </div>
+  </AppLayout>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, computed } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useMatchesStore } from '../stores/matches.store.js'
-import { useAuthStore } from '../stores/auth.store.js'
 import { usePredictionsStore } from '../stores/predictions.store.js'
 import type { Match, MatchStage, MatchStatus } from '../types/index.js'
+import AppLayout from '../components/AppLayout.vue'
 
 const matchesStore = useMatchesStore()
-const authStore = useAuthStore()
 const predictionsStore = usePredictionsStore()
-const isAdmin = computed(() => authStore.user?.role === 'admin')
 
 const now = ref(new Date())
 const draftGoals = ref<Record<string, { home: number | null, away: number | null }>>({})

@@ -73,22 +73,24 @@ describe('HomeView', () => {
     expect(wrapper.text()).toContain('Dev User')
   })
 
-  it('logout button is visible', () => {
+  it('user menu button is visible', () => {
     const wrapper = mountWithUser()
-    expect(wrapper.find('button').text()).toBe('Kijelentkezés')
+    expect(wrapper.find('[data-testid="user-menu-btn"]').exists()).toBe(true)
   })
 
-  it('clicking logout button calls logout()', async () => {
+  it('clicking logout calls logout()', async () => {
     const wrapper = mountWithUser()
     const store = useAuthStore()
     const logoutSpy = vi.spyOn(store, 'logout').mockResolvedValue(undefined)
-    await wrapper.find('button').trigger('click')
+    await wrapper.find('[data-testid="user-menu-btn"]').trigger('click')
+    await wrapper.find('[data-testid="menu-logout"]').trigger('click')
     expect(logoutSpy).toHaveBeenCalledOnce()
   })
 
-  it('clicking logout button navigates to login page', async () => {
+  it('clicking logout navigates to login page', async () => {
     const wrapper = mountWithUser()
-    await wrapper.find('button').trigger('click')
+    await wrapper.find('[data-testid="user-menu-btn"]').trigger('click')
+    await wrapper.find('[data-testid="menu-logout"]').trigger('click')
     expect(mockPush).toHaveBeenCalledWith('/login')
   })
 

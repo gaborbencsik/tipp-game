@@ -260,4 +260,5 @@ describe('MatchesView', () => {
     const btn = wrapper.find('[data-testid="save-button"]')
     expect((btn.element as HTMLButtonElement).disabled).toBe(true)
   })
+
 })

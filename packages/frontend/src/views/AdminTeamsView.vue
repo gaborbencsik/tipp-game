@@ -1,6 +1,8 @@
 <template>
-  <div class="p-6">
-    <h1 class="text-2xl font-bold mb-6">Csapatok kezelése</h1>
+  <AppLayout>
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="text-2xl font-bold">Csapatok kezelése</h1>
+    </div>
 
     <div v-if="store.error" data-testid="error-banner" class="mb-4 p-3 bg-red-100 text-red-700 rounded">
       {{ store.error }}
@@ -117,13 +119,14 @@
         </tr>
       </tbody>
     </table>
-  </div>
+  </AppLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useAdminTeamsStore } from '../stores/admin-teams.store.js'
 import type { Team } from '../types/index.js'
+import AppLayout from '../components/AppLayout.vue'
 
 const GROUPS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
 
