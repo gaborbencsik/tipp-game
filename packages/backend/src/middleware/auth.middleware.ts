@@ -9,11 +9,17 @@ declare module 'koa' {
   }
 }
 
+function resolveRole(email: string): 'user' | 'admin' {
+  const adminEmails = (process.env['ADMIN_EMAILS'] ?? '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean)
+  return adminEmails.includes(email.toLowerCase()) ? 'admin' : 'user'
+}
+
 const DEV_BYPASS_USER: AuthenticatedUser = {
   supabaseId: '00000000-0000-0000-0000-000000000001',
   email: 'dev@local',
   displayName: 'Dev User',
   avatarUrl: null,
+  role: resolveRole('dev@local'),
 }
 
 function makeJwksClient(): jwksClient.JwksClient {
@@ -73,6 +79,7 @@ export async function authMiddleware(ctx: Context, next: Next): Promise<void> {
     email: claims.email,
     displayName: claims.user_metadata?.full_name ?? claims.email.split('@')[0],
     avatarUrl: claims.user_metadata?.avatar_url ?? null,
+    role: resolveRole(claims.email),
   }
 
   await next()

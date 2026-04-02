@@ -30,6 +30,7 @@ const BASE_USER: AuthenticatedUser = {
   email: 'user@example.com',
   displayName: 'John Doe',
   avatarUrl: 'https://avatar.example.com/john.png',
+  role: 'user',
 }
 
 const RETURNED_ROW: DbUser = {
@@ -64,6 +65,7 @@ describe('upsertUser', () => {
         email: 'user@example.com',
         displayName: 'John Doe',
         avatarUrl: 'https://avatar.example.com/john.png',
+        role: 'user',
       })
     )
     expect(result).toEqual(RETURNED_ROW)

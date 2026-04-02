@@ -32,6 +32,10 @@ export const useAuthStore = defineStore('auth', () => {
     return user.value !== null
   }
 
+  function isAdmin(): boolean {
+    return user.value?.role === 'admin'
+  }
+
   async function handleSession(session: Session): Promise<void> {
     user.value = await api.auth.me(session.access_token)
   }
@@ -120,6 +124,6 @@ export const useAuthStore = defineStore('auth', () => {
     await router.push('/')
   }
 
-  return { user, isAuthenticated, handleSession, restoreSession, login, logout, loginWithEmail, registerWithEmail }
+  return { user, isAuthenticated, isAdmin, handleSession, restoreSession, login, logout, loginWithEmail, registerWithEmail }
 })
 

@@ -96,12 +96,29 @@ describe('auth.store', () => {
     expect(store.isAuthenticated()).toBe(false)
   })
 
+  it('isAdmin() returns false when no user', () => {
+    const store = useAuthStore()
+    expect(store.isAdmin()).toBe(false)
+  })
+
   // ─── After user is set ─────────────────────────────────────────────────────
 
   it('isAuthenticated() returns true when user is set', () => {
     const store = useAuthStore()
     store.user = MOCK_USER
     expect(store.isAuthenticated()).toBe(true)
+  })
+
+  it('isAdmin() returns true when user role is admin', () => {
+    const store = useAuthStore()
+    store.user = MOCK_USER
+    expect(store.isAdmin()).toBe(true)
+  })
+
+  it('isAdmin() returns false when user role is user', () => {
+    const store = useAuthStore()
+    store.user = { ...MOCK_USER, role: 'user' }
+    expect(store.isAdmin()).toBe(false)
   })
 
   it('user fields are correct', () => {

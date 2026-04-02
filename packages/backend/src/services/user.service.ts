@@ -12,6 +12,7 @@ export async function upsertUser(user: AuthenticatedUser): Promise<DbUser> {
       email: user.email,
       displayName: user.displayName,
       avatarUrl: user.avatarUrl,
+      role: user.role,
     })
     .onConflictDoUpdate({
       target: users.supabaseId,
@@ -19,6 +20,7 @@ export async function upsertUser(user: AuthenticatedUser): Promise<DbUser> {
         email: user.email,
         displayName: user.displayName,
         avatarUrl: user.avatarUrl,
+        role: user.role,
         updatedAt: new Date(),
       },
     })
@@ -35,6 +37,7 @@ export async function upsertUser(user: AuthenticatedUser): Promise<DbUser> {
           supabaseId: user.supabaseId,
           displayName: user.displayName,
           avatarUrl: user.avatarUrl,
+          role: user.role,
           updatedAt: new Date(),
         })
         .where(eq(users.email, user.email))

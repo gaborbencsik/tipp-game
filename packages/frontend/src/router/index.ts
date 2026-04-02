@@ -34,4 +34,7 @@ router.beforeEach((to) => {
   if (to.meta.requiresAuth && !authStore.isAuthenticated()) {
     return { name: 'login' }
   }
+  if (to.meta.requiresAdmin && !authStore.isAdmin()) {
+    return { name: 'home' }
+  }
 })

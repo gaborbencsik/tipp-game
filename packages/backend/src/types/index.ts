@@ -12,6 +12,7 @@ export interface AuthenticatedUser {
   readonly email: string
   readonly displayName: string
   readonly avatarUrl: string | null
+  readonly role: 'user' | 'admin'
 }
 
 export interface DbUser {

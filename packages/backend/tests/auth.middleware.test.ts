@@ -48,6 +48,7 @@ describe('authMiddleware', () => {
     ;(next as ReturnType<typeof vi.fn>).mockResolvedValue(undefined)
     process.env['NODE_ENV'] = 'test'
     process.env['SUPABASE_URL'] = 'https://test.supabase.co'
+    delete process.env['ADMIN_EMAILS']
     mockGetSigningKey.mockResolvedValue({ getPublicKey: () => 'mock-public-key' })
     mockDecode.mockReturnValue({ header: { kid: 'test-kid' }, payload: MOCK_CLAIMS })
   })
@@ -66,6 +67,7 @@ describe('authMiddleware', () => {
     expect(user.email).toBe('test@example.com')
     expect(user.displayName).toBe('Test User')
     expect(user.avatarUrl).toBe('https://example.com/avatar.png')
+    expect(user.role).toBe('user')
   })
 
   it('missing Authorization header → 401', async () => {
@@ -130,5 +132,32 @@ describe('authMiddleware', () => {
     expect(user.supabaseId).toBe('supabase-uuid-123')
     const verifyCall = mockVerify.mock.calls[0] as [string, string, { algorithms: string[] }]
     expect(verifyCall[2].algorithms).toContain('ES256')
+  })
+
+  it('ADMIN_EMAILS match → role is admin', async () => {
+    process.env['ADMIN_EMAILS'] = 'test@example.com,other@example.com'
+    mockVerify.mockReturnValue(MOCK_CLAIMS)
+    const ctx = makeCtx('Bearer valid-token')
+    await authMiddleware(ctx, next)
+    const user = ctx.state['user'] as AuthenticatedUser
+    expect(user.role).toBe('admin')
+  })
+
+  it('ADMIN_EMAILS no match → role is user', async () => {
+    process.env['ADMIN_EMAILS'] = 'admin@example.com'
+    mockVerify.mockReturnValue(MOCK_CLAIMS)
+    const ctx = makeCtx('Bearer valid-token')
+    await authMiddleware(ctx, next)
+    const user = ctx.state['user'] as AuthenticatedUser
+    expect(user.role).toBe('user')
+  })
+
+  it('ADMIN_EMAILS case-insensitive match → role is admin', async () => {
+    process.env['ADMIN_EMAILS'] = 'TEST@EXAMPLE.COM'
+    mockVerify.mockReturnValue(MOCK_CLAIMS)
+    const ctx = makeCtx('Bearer valid-token')
+    await authMiddleware(ctx, next)
+    const user = ctx.state['user'] as AuthenticatedUser
+    expect(user.role).toBe('admin')
   })
 })
