@@ -3,9 +3,9 @@
       <h1 class="text-2xl font-bold text-gray-900 mb-6">Profil</h1>
 
       <div class="bg-white rounded shadow p-6 space-y-4">
-        <div v-if="authStore.user?.avatarUrl" class="flex justify-center mb-4">
+        <div class="flex justify-center mb-4">
           <img
-            :src="authStore.user.avatarUrl"
+            :src="avatarSrc"
             alt="Avatar"
             data-testid="avatar"
             class="w-16 h-16 rounded-full"
@@ -52,11 +52,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useAuthStore } from '../stores/auth.store.js'
 import AppLayout from '../components/AppLayout.vue'
+import { dicebearUrl } from '../lib/avatar.js'
 
 const authStore = useAuthStore()
+
+const avatarSrc = computed((): string => {
+  const user = authStore.user
+  if (user?.avatarUrl) return user.avatarUrl
+  return dicebearUrl(user?.displayName || user?.email || 'user')
+})
 
 const displayName = ref(authStore.user?.displayName ?? '')
 const isSaving = ref(false)

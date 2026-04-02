@@ -83,22 +83,18 @@ describe('UserMenuButton', () => {
 
   it('avatar-img látszik ha avatarUrl be van állítva', () => {
     const wrapper = mountAsUser({ avatarUrl: 'https://example.com/avatar.png' })
-    expect(wrapper.find('[data-testid="avatar-img"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="avatar-initials"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="avatar-img"]').attributes('src')).toBe('https://example.com/avatar.png')
   })
 
-  it('avatar-initials látszik ha avatarUrl null', () => {
-    const wrapper = mountAsUser({ avatarUrl: null })
-    expect(wrapper.find('[data-testid="avatar-initials"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="avatar-img"]').exists()).toBe(false)
+  it('avatarUrl null esetén DiceBear fallback URL kerül az avatar-img src-be', () => {
+    const wrapper = mountAsUser({ avatarUrl: null, displayName: 'Test User' })
+    const src = wrapper.find('[data-testid="avatar-img"]').attributes('src')
+    expect(src).toContain('api.dicebear.com')
+    expect(src).toContain('miniavs')
+    expect(src).toContain('Test%20User')
   })
 
-  it('a monogram a displayName első betűje nagybetűsen', () => {
-    const wrapper = mountAsUser({ displayName: 'krisztián' })
-    expect(wrapper.find('[data-testid="avatar-initials"]').text()).toBe('K')
-  })
-
-  it('fallback email első betűjére ha displayName üres', () => {
+  it('DiceBear seed email-re esik vissza ha displayName üres', () => {
     const pinia = createPinia()
     setActivePinia(pinia)
     vi.mocked(useAuthStore).mockReturnValue({
@@ -106,7 +102,8 @@ describe('UserMenuButton', () => {
       logout: mockLogout,
     } as unknown as ReturnType<typeof useAuthStore>)
     const wrapper = mount(UserMenuButton, { global: { plugins: [pinia, buildRouter()] } })
-    expect(wrapper.find('[data-testid="avatar-initials"]').text()).toBe('Z')
+    const src = wrapper.find('[data-testid="avatar-img"]').attributes('src')
+    expect(src).toContain('zoltan%40test.com')
   })
 
   // ─── Toggle ───────────────────────────────────────────────────────────────────

@@ -7,19 +7,11 @@
       @click="menuOpen = !menuOpen"
     >
       <img
-        v-if="authStore.user?.avatarUrl"
-        :src="authStore.user.avatarUrl"
+        :src="avatarSrc"
         data-testid="avatar-img"
         class="w-full h-full object-cover"
         alt="Avatar"
       />
-      <span
-        v-else
-        data-testid="avatar-initials"
-        class="w-full h-full bg-blue-600 text-white text-sm font-semibold flex items-center justify-center select-none"
-      >
-        {{ initial }}
-      </span>
     </button>
 
     <!-- Backdrop (z-10) -->
@@ -86,12 +78,14 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useAuthStore } from '../stores/auth.store.js'
+import { dicebearUrl } from '../lib/avatar.js'
 
 const authStore = useAuthStore()
 const menuOpen = ref(false)
 const isAdmin = computed((): boolean => authStore.user?.role === 'admin')
-const initial = computed((): string => {
-  const name = authStore.user?.displayName || authStore.user?.email || '?'
-  return name.charAt(0).toUpperCase()
+const avatarSrc = computed((): string => {
+  const user = authStore.user
+  if (user?.avatarUrl) return user.avatarUrl
+  return dicebearUrl(user?.displayName || user?.email || 'user')
 })
 </script>
