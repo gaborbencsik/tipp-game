@@ -1,7 +1,16 @@
 import { db } from '../db/client.js'
 import { users } from '../db/schema/index.js'
-import { eq } from 'drizzle-orm'
+import { eq, isNull } from 'drizzle-orm'
 import type { AuthenticatedUser, DbUser } from '../types/index.js'
+
+class AppError extends Error {
+  readonly status: number
+  constructor(status: number, message: string) {
+    super(message)
+    this.status = status
+    this.name = 'AppError'
+  }
+}
 
 export async function upsertUser(user: AuthenticatedUser): Promise<DbUser> {
   // First attempt: upsert on supabase_id
@@ -47,6 +56,26 @@ export async function upsertUser(user: AuthenticatedUser): Promise<DbUser> {
 
   const row = bySupabaseId[0]
   if (!row) throw new Error('upsertUser: no row returned')
+
+  return {
+    id: row.id,
+    supabaseId: row.supabaseId,
+    email: row.email,
+    displayName: row.displayName,
+    avatarUrl: row.avatarUrl ?? null,
+    role: row.role,
+  }
+}
+
+export async function updateProfile(userId: string, displayName: string): Promise<DbUser> {
+  const rows = await db
+    .update(users)
+    .set({ displayName, updatedAt: new Date() })
+    .where(eq(users.id, userId) && isNull(users.deletedAt))
+    .returning()
+
+  const row = rows[0]
+  if (!row) throw new AppError(404, 'User not found')
 
   return {
     id: row.id,

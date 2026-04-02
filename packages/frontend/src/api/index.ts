@@ -29,6 +29,14 @@ export const api = {
         headers: { Authorization: `Bearer ${token}` },
       }),
   },
+  users: {
+    updateProfile: (token: string, displayName: string) =>
+      request<User>('/users/me', {
+        method: 'PUT',
+        body: JSON.stringify({ displayName }),
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+  },
   matches: {
     list: (token: string, filters?: MatchesFilters) => {
       const params = new URLSearchParams()

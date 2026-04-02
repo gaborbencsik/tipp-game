@@ -18,6 +18,12 @@
           >
             Admin – Csapatok
           </router-link>
+          <router-link
+            to="/profile"
+            class="px-4 py-2 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
+          >
+            Profil
+          </router-link>
           <button
             class="px-4 py-2 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
             @click="authStore.logout()"

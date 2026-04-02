@@ -22,7 +22,7 @@ vi.mock('../src/db/client.js', () => ({
   db: { insert: mockInsert, update: mockUpdate },
 }))
 
-import { upsertUser } from '../src/services/user.service.js'
+import { upsertUser, updateProfile } from '../src/services/user.service.js'
 import * as schema from '../src/db/schema/index.js'
 
 const BASE_USER: AuthenticatedUser = {
@@ -139,5 +139,37 @@ describe('upsertUser', () => {
 
     await expect(upsertUser(BASE_USER)).rejects.toThrow('connection refused')
     expect(mockUpdate).not.toHaveBeenCalled()
+  })
+})
+
+describe('updateProfile', () => {
+  beforeEach(() => {
+    vi.resetAllMocks()
+    mockUpdateReturning.mockResolvedValue([RETURNED_ROW])
+    mockWhere.mockReturnValue({ returning: mockUpdateReturning })
+    mockSet.mockReturnValue({ where: mockWhere })
+    mockUpdate.mockReturnValue({ set: mockSet })
+  })
+
+  it('valid userId → updates displayName and returns DbUser', async () => {
+    const updated = { ...RETURNED_ROW, displayName: 'New Name' }
+    mockUpdateReturning.mockResolvedValue([updated])
+
+    const result = await updateProfile('db-uuid-123', 'New Name')
+
+    expect(mockUpdate).toHaveBeenCalledWith(schema.users)
+    expect(mockSet).toHaveBeenCalledWith(
+      expect.objectContaining({ displayName: 'New Name' })
+    )
+    expect(result.displayName).toBe('New Name')
+  })
+
+  it('user not found (empty rows) → throws 404 AppError', async () => {
+    mockUpdateReturning.mockResolvedValue([])
+
+    await expect(updateProfile('nonexistent-id', 'Name')).rejects.toMatchObject({
+      status: 404,
+      message: 'User not found',
+    })
   })
 })

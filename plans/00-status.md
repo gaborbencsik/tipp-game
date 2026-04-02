@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-04-02 (US-801/802/803)
+> Utoljára frissítve: 2026-04-02 (US-303)
 
 ## Kész user story-k
 
@@ -18,6 +18,7 @@
 | **US-701** | User/Admin szerepkörök | ✅ Kész |
 | **US-804** | Csapatok kezelése (admin) | ✅ Kész |
 | **US-305** | Session perzisztencia oldal-újratöltés után | ✅ Kész |
+| **US-303** | Profil megtekintése és szerkesztése | ✅ Kész |
 
 ### US-001 – Elfogadási kritériumok teljesítve
 
@@ -160,9 +161,17 @@
 - ✅ Admin – Mérkőzések link a `MatchesView` fejlécébe kerül (csak adminoknak)
 - ✅ 75 backend + 135 frontend teszt, typecheck CLEAN
 
----
+### US-303 – Elfogadási kritériumok teljesítve
 
-| Story ID | Megnevezés | Prioritás |
+- ✅ `user.service.ts`: `updateProfile(userId, displayName)` – DB update, AppError 404 ha nem található
+- ✅ `auth.routes.ts`: `PUT /api/users/me` – authMiddleware, upsertUser, displayName validáció, updateProfile
+- ✅ `api.users.updateProfile(token, displayName)` API client metódus
+- ✅ `auth.store.ts`: `updateProfile(displayName)` action – API hívás, `user.value` frissítés, dev bypass sessionStorage szinkron
+- ✅ `ProfileView.vue`: `/profile` route – email (readonly), avatar, displayName szerkesztés, mentés visszajelzés
+- ✅ Profil link a `MatchesView` fejlécében (minden bejelentkezett usernek)
+- ✅ 77 backend + 142 frontend teszt, typecheck CLEAN
+
+---
 |----------|-----------|-----------|
 | US-401 | Automatikus pontszámítás | Must Have |
 | US-402 | Konfigurálható pontrendszer | Must Have |
@@ -183,7 +192,7 @@
 | US-204 | Mások tippjeinek megtekintése | ⬜ Nem kezdett | Should Have |
 | US-301 | Regisztráció Google OAuth-szal | ✅ Kész | Must Have |
 | US-302 | Bejelentkezés / kijelentkezés | ✅ Kész | Must Have |
-| US-303 | Profil szerkesztése | ⬜ Nem kezdett | Should Have |
+| US-303 | Profil szerkesztése | ✅ Kész | Should Have |
 | US-304 | Email + jelszó auth | ✅ Kész | Should Have |
 | US-305 | Session perzisztencia oldal-újratöltés után | ✅ Kész | Must Have |
 | US-401 | Automatikus pontszámítás | ⬜ Nem kezdett | Must Have |
@@ -209,4 +218,4 @@
 
 ---
 
-**Haladás: 17 / 35 story kész** — Must Have: 16/27 ✅, Should Have: 1/7 ✅
+**Haladás: 18 / 35 story kész** — Must Have: 16/27 ✅, Should Have: 2/7 ✅
