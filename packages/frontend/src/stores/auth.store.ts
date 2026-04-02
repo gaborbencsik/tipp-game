@@ -72,6 +72,7 @@ export const useAuthStore = defineStore('auth', () => {
               user.value = null
             }
           }
+          subscription.unsubscribe()
           resolve()
         } else if (session) {
           try {
@@ -83,9 +84,6 @@ export const useAuthStore = defineStore('auth', () => {
           user.value = null
         }
       })
-
-      // keep subscription alive for the lifetime of the app
-      void subscription
     })
   }
 

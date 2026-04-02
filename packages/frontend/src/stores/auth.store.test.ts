@@ -230,9 +230,11 @@ describe('auth.store', () => {
   // ─── restoreSession ─────────────────────────────────────────────────────────
 
   it('restoreSession() with session → handleSession called', async () => {
+    const unsubscribe = vi.fn()
     mockOnAuthStateChange.mockImplementation((cb: (event: string, session: unknown) => void) => {
-      cb('INITIAL_SESSION', MOCK_SESSION)
-      return { data: { subscription: { unsubscribe: vi.fn() } } }
+      const result = { data: { subscription: { unsubscribe } } }
+      Promise.resolve().then(() => cb('INITIAL_SESSION', MOCK_SESSION))
+      return result
     })
     mockApiAuthMe.mockResolvedValue(MOCK_USER)
     const store = useAuthStore()
@@ -240,14 +242,30 @@ describe('auth.store', () => {
     expect(store.user).toEqual(MOCK_USER)
   })
 
-  it('restoreSession() no session → user remains null', async () => {
+  it('restoreSession() with session → unsubscribe called after INITIAL_SESSION', async () => {
+    const unsubscribe = vi.fn()
     mockOnAuthStateChange.mockImplementation((cb: (event: string, session: unknown) => void) => {
-      cb('INITIAL_SESSION', null)
-      return { data: { subscription: { unsubscribe: vi.fn() } } }
+      const result = { data: { subscription: { unsubscribe } } }
+      Promise.resolve().then(() => cb('INITIAL_SESSION', MOCK_SESSION))
+      return result
+    })
+    mockApiAuthMe.mockResolvedValue(MOCK_USER)
+    const store = useAuthStore()
+    await store.restoreSession()
+    expect(unsubscribe).toHaveBeenCalledOnce()
+  })
+
+  it('restoreSession() no session → user remains null', async () => {
+    const unsubscribe = vi.fn()
+    mockOnAuthStateChange.mockImplementation((cb: (event: string, session: unknown) => void) => {
+      const result = { data: { subscription: { unsubscribe } } }
+      Promise.resolve().then(() => cb('INITIAL_SESSION', null))
+      return result
     })
     const store = useAuthStore()
     await store.restoreSession()
     expect(store.user).toBeNull()
+    expect(unsubscribe).toHaveBeenCalledOnce()
   })
 
   // ─── loginWithEmail ──────────────────────────────────────────────────────────
