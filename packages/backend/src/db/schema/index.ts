@@ -58,7 +58,7 @@ export const users = pgTable('users', {
 export const teams = pgTable('teams', {
   id:        uuid('id').primaryKey().defaultRandom(),
   name:      varchar('name', { length: 100 }).notNull(),
-  shortCode: varchar('short_code', { length: 3 }).notNull().unique(),
+  shortCode: varchar('short_code', { length: 4 }).notNull().unique(),
   flagUrl:   text('flag_url'),
   group:     varchar('group', { length: 1 }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

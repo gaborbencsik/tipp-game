@@ -1,0 +1,1 @@
+ALTER TABLE "teams" ALTER COLUMN "short_code" SET DATA TYPE varchar(4);
