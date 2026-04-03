@@ -1,4 +1,4 @@
-import type { User, Match, MatchesFilters, MatchInput, MatchResultInput, Prediction, PredictionInput, Team, TeamInput, AdminUser } from '../types/index.js'
+import type { User, Match, MatchesFilters, MatchInput, MatchResultInput, Prediction, PredictionInput, Team, TeamInput, AdminUser, Group, GroupInput, JoinGroupInput } from '../types/index.js'
 
 const BASE_URL = (import.meta.env.VITE_API_URL ?? '') + '/api'
 
@@ -55,6 +55,24 @@ export const api = {
       }),
     upsert: (token: string, input: PredictionInput) =>
       request<Prediction>('/predictions', {
+        method: 'POST',
+        body: JSON.stringify(input),
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+  },
+  groups: {
+    mine: (token: string) =>
+      request<Group[]>('/groups/mine', {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+    create: (token: string, input: GroupInput) =>
+      request<Group>('/groups', {
+        method: 'POST',
+        body: JSON.stringify(input),
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+    join: (token: string, input: JoinGroupInput) =>
+      request<Group>('/groups/join', {
         method: 'POST',
         body: JSON.stringify(input),
         headers: { Authorization: `Bearer ${token}` },

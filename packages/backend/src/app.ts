@@ -9,6 +9,7 @@ import { authRouter } from './routes/auth.routes.js'
 import { matchesRouter } from './routes/matches.routes.js'
 import { predictionsRouter } from './routes/predictions.routes.js'
 import { adminRouter } from './routes/admin.routes.js'
+import { groupsRouter } from './routes/groups.routes.js'
 
 const allowedOrigins = (process.env.CORS_ORIGIN ?? 'http://localhost:5173').split(',').map(o => o.trim())
 
@@ -35,6 +36,8 @@ app.use(predictionsRouter.routes())
 app.use(predictionsRouter.allowedMethods())
 app.use(adminRouter.routes())
 app.use(adminRouter.allowedMethods())
+app.use(groupsRouter.routes())
+app.use(groupsRouter.allowedMethods())
 
 app.on('error', (err: Error, ctx: Koa.Context) => {
   const entry: Record<string, unknown> = {

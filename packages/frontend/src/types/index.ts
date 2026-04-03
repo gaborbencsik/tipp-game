@@ -115,3 +115,24 @@ export interface AdminUser {
   readonly bannedAt: string | null
   readonly createdAt: string
 }
+
+export interface Group {
+  readonly id: string
+  readonly name: string
+  readonly description: string | null
+  readonly inviteCode: string
+  readonly inviteActive: boolean
+  readonly createdBy: string
+  readonly memberCount: number
+  readonly isAdmin: boolean
+  readonly createdAt: string
+}
+
+export interface GroupInput {
+  readonly name: string
+  readonly description?: string | null
+}
+
+export interface JoinGroupInput {
+  readonly inviteCode: string
+}

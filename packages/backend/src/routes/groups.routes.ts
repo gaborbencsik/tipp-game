@@ -1,0 +1,44 @@
+import Router from '@koa/router'
+import { authMiddleware } from '../middleware/auth.middleware.js'
+import { upsertUser } from '../services/user.service.js'
+import { getMyGroups, createGroup, joinGroup } from '../services/groups.service.js'
+import type { GroupInput, JoinGroupInput } from '../types/index.js'
+
+const router = new Router()
+
+router.get('/api/groups/mine', authMiddleware, async (ctx) => {
+  const dbUser = await upsertUser(ctx.state.user)
+  ctx.body = await getMyGroups(dbUser.id)
+})
+
+router.post('/api/groups', authMiddleware, async (ctx) => {
+  const dbUser = await upsertUser(ctx.state.user)
+  const body = ctx.request.body as { name?: unknown; description?: unknown }
+  const name = body.name
+  if (typeof name !== 'string' || name.trim().length === 0) {
+    ctx.status = 400
+    ctx.body = { error: 'name is required' }
+    return
+  }
+  const input: GroupInput = {
+    name: name.trim(),
+    description: typeof body.description === 'string' ? body.description.trim() || null : null,
+  }
+  ctx.status = 201
+  ctx.body = await createGroup(input, dbUser.id)
+})
+
+router.post('/api/groups/join', authMiddleware, async (ctx) => {
+  const dbUser = await upsertUser(ctx.state.user)
+  const body = ctx.request.body as { inviteCode?: unknown }
+  const inviteCode = body.inviteCode
+  if (typeof inviteCode !== 'string' || inviteCode.trim().length === 0) {
+    ctx.status = 400
+    ctx.body = { error: 'inviteCode is required' }
+    return
+  }
+  const input: JoinGroupInput = { inviteCode: inviteCode.trim().toUpperCase() }
+  ctx.body = await joinGroup(input.inviteCode, dbUser.id)
+})
+
+export { router as groupsRouter }

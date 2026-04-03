@@ -1,7 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { nextTick } from 'vue'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { createRouter, createMemoryHistory } from 'vue-router'
+import type { Group } from '@/types/index'
 import GroupsView from '@/views/GroupsView.vue'
 
 vi.mock('vue-router', async (importOriginal) => {
@@ -36,6 +38,24 @@ vi.mock('@/stores/auth.store', async (importOriginal) => {
   }
 })
 
+const { mockFetchMyGroups, mockCreateGroup, mockJoinGroup, mockStoreState } = vi.hoisted(() => ({
+  mockFetchMyGroups: vi.fn().mockResolvedValue(undefined),
+  mockCreateGroup: vi.fn(),
+  mockJoinGroup: vi.fn(),
+  mockStoreState: { groups: [] as import('@/types/index').Group[], isLoading: false, error: null as string | null },
+}))
+
+vi.mock('@/stores/groups.store', () => ({
+  useGroupsStore: () => ({
+    get groups() { return mockStoreState.groups },
+    get isLoading() { return mockStoreState.isLoading },
+    get error() { return mockStoreState.error },
+    fetchMyGroups: mockFetchMyGroups,
+    createGroup: mockCreateGroup,
+    joinGroup: mockJoinGroup,
+  }),
+}))
+
 function buildRouter() {
   return createRouter({
     history: createMemoryHistory(),
@@ -52,9 +72,26 @@ function mountView() {
   return mount(GroupsView, { global: { plugins: [pinia, buildRouter()] } })
 }
 
+const SAMPLE_GROUP: Group = {
+  id: 'group-uuid-1',
+  name: 'Barátok',
+  description: 'Barátok csoportja',
+  inviteCode: 'ABCD1234',
+  inviteActive: true,
+  createdBy: 'user-uuid-1',
+  memberCount: 3,
+  isAdmin: true,
+  createdAt: '2026-01-01T00:00:00.000Z',
+}
+
 describe('GroupsView', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
+    mockStoreState.groups = []
+    mockStoreState.isLoading = false
+    mockStoreState.error = null
+    mockFetchMyGroups.mockReset()
+    mockFetchMyGroups.mockResolvedValue(undefined)
   })
 
   it('üres állapotban empty-state jelenik meg', () => {
@@ -64,24 +101,62 @@ describe('GroupsView', () => {
     expect(wrapper.find('[data-testid="spinner"]').exists()).toBe(false)
   })
 
-  it('üres állapotban "Csoport létrehozása" CTA gomb látható', () => {
+  it('üres állapotban \"Csoport létrehozása\" CTA gomb látható', () => {
     const wrapper = mountView()
     const btn = wrapper.find('[data-testid="create-group-btn"]')
     expect(btn.exists()).toBe(true)
     expect(btn.text()).toBe('Csoport létrehozása')
   })
 
-  it('ha vannak csoportok, groups-list jelenik meg és nem empty-state', async () => {
+  it('üres állapotban Csatlakozás gomb is látható', () => {
     const wrapper = mountView()
-    // csoportok közvetlen beállítása a komponens belső state-jén keresztül
-    await wrapper.vm.$nextTick()
-    // A GroupsView jelenleg mindig üres listával indul (US-601 implementálja az API hívást)
-    // ez a teszt az üres → lista átmenetet ellenőrzi ha a state változik
-    expect(wrapper.find('[data-testid="empty-state"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="empty-join-btn"]').exists()).toBe(true)
   })
 
-  it('az oldalon az "Csoportok" fejléc látható', () => {
+  it('csoportok esetén groups-list jelenik meg és nem empty-state', () => {
+    mockStoreState.groups = [SAMPLE_GROUP]
+    const wrapper = mountView()
+    expect(wrapper.find('[data-testid="groups-list"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="empty-state"]').exists()).toBe(false)
+  })
+
+  it('az oldalon az \"Csoportok\" fejléc látható', () => {
     const wrapper = mountView()
     expect(wrapper.text()).toContain('Csoportok')
+  })
+
+  it('create-group-btn kattintásra megjelenik a create-form', async () => {
+    const wrapper = mountView()
+    await wrapper.find('[data-testid="create-group-btn"]').trigger('click')
+    expect(wrapper.find('[data-testid="create-form"]').exists()).toBe(true)
+  })
+
+  it('empty-join-btn kattintásra megjelenik a join-form', async () => {
+    const wrapper = mountView()
+    await wrapper.find('[data-testid="empty-join-btn"]').trigger('click')
+    expect(wrapper.find('[data-testid="join-form"]').exists()).toBe(true)
+  })
+
+  it('create form submit → store.createGroup hívva', async () => {
+    mockCreateGroup.mockResolvedValue(SAMPLE_GROUP)
+    const wrapper = mountView()
+    await wrapper.find('[data-testid="create-group-btn"]').trigger('click')
+    await nextTick()
+    const vm = wrapper.vm as unknown as { createName: string; onCreateSubmit: () => Promise<void> }
+    vm.createName = 'Barátok'
+    await vm.onCreateSubmit()
+    expect(mockCreateGroup).toHaveBeenCalledWith({ name: 'Barátok', description: null })
+  })
+
+  it('join form submit → store.joinGroup hívva', async () => {
+    mockStoreState.groups = [SAMPLE_GROUP]
+    mockJoinGroup.mockResolvedValue(SAMPLE_GROUP)
+    const wrapper = mountView()
+    await wrapper.find('[data-testid="join-group-btn"]').trigger('click')
+    await nextTick()
+    const vm = wrapper.vm as unknown as { joinCode: string; onJoinSubmit: () => Promise<void> }
+    vm.joinCode = 'ABCD1234'
+    await vm.onJoinSubmit()
+    expect(mockJoinGroup).toHaveBeenCalledWith({ inviteCode: 'ABCD1234' })
   })
 })
