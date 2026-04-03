@@ -134,7 +134,10 @@
         >
           <div>
             <div class="flex items-center gap-2">
-              <p class="font-semibold text-gray-900">{{ group.name }}</p>
+              <router-link
+                :to="`/groups/${group.id}`"
+                class="font-semibold text-gray-900 hover:text-blue-700 transition-colors"
+              >{{ group.name }}</router-link>
               <span v-if="group.isAdmin" class="text-xs px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded font-medium">admin</span>
             </div>
             <p v-if="group.description" class="text-xs text-gray-500 mt-0.5">{{ group.description }}</p>
@@ -150,6 +153,12 @@
             </div>
           </div>
           <span class="text-sm text-gray-400">{{ group.memberCount }} tag</span>
+          <router-link
+            :to="`/groups/${group.id}`"
+            class="px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+          >
+            Ranglista
+          </router-link>
         </li>
       </ul>
     </div>

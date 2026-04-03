@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-04-04 (US-501 globális ranglista kész)
+> Utoljára frissítve: 2026-04-04 (US-603 csoportonkénti ranglista kész)
 
 ## Kész user story-k
 
@@ -256,6 +256,17 @@
 - ✅ AppLayout Ranglista nav link engedélyezve (nem disabled)
 - ✅ 205 frontend teszt, typecheck CLEAN
 
+### US-603 – Elfogadási kritériumok teljesítve
+
+- ✅ `group-leaderboard.service.ts`: `getGroupLeaderboard(groupId, requesterId)` — tagok szűrése `groupMembers` JOIN-nal, 404 ha a csoport nem létezik, 403 ha a kérelmező nem tag
+- ✅ `GET /api/groups/:groupId/leaderboard` endpoint — `authMiddleware` mögött
+- ✅ 4 backend teszt (ranked entries, 404, 403, tied rank), 114 backend teszt összesen
+- ✅ `api.groups.leaderboard(token, groupId)` API client metódus
+- ✅ `GroupDetailView.vue`: csoportranglista táblázat (azonos stílus mint a global ranglista), saját sor kiemelve, csoport neve a fejlécben
+- ✅ `/groups/:id` route — `requiresAuth: true`
+- ✅ `GroupsView`: csoport neve router-link → detail view
+- ✅ 205 frontend teszt, typecheck CLEAN
+
 ---
 
 | Story ID | Megnevezés | Státusz | Prioritás |
@@ -282,7 +293,7 @@
 | US-502 | Ranglista szűrés/keresés | ⬜ Nem kezdett | Should Have |
 | US-601 | Csoport létrehozása | ✅ Kész | Must Have |
 | US-602 | Csatlakozás csoporthoz | ✅ Kész | Must Have |
-| US-603 | Csoportonkénti ranglista | ⬜ Nem kezdett | Must Have |
+| US-603 | Csoportonkénti ranglista | ✅ Kész | Must Have |
 | US-604 | Csoport kezelése (admin) | ⬜ Nem kezdett | Must Have |
 | US-605 | Több csoporthoz tartozás | ⬜ Nem kezdett | Must Have |
 | US-606 | Csoportok navigáció (AppLayout) | ✅ Kész | Must Have |
@@ -306,4 +317,4 @@
 
 ---
 
-**Haladás: 24 / 40 story kész** — Must Have: 20/28 ✅, Should Have: 4/11 ✅
+**Haladás: 25 / 40 story kész** — Must Have: 21/28 ✅, Should Have: 4/11 ✅

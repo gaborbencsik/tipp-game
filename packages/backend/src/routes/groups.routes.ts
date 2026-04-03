@@ -2,6 +2,7 @@ import Router from '@koa/router'
 import { authMiddleware } from '../middleware/auth.middleware.js'
 import { upsertUser } from '../services/user.service.js'
 import { getMyGroups, createGroup, joinGroup } from '../services/groups.service.js'
+import { getGroupLeaderboard } from '../services/group-leaderboard.service.js'
 import type { GroupInput, JoinGroupInput } from '../types/index.js'
 
 const router = new Router()
@@ -39,6 +40,11 @@ router.post('/api/groups/join', authMiddleware, async (ctx) => {
   }
   const input: JoinGroupInput = { inviteCode: inviteCode.trim().toUpperCase() }
   ctx.body = await joinGroup(input.inviteCode, dbUser.id)
+})
+
+router.get('/api/groups/:groupId/leaderboard', authMiddleware, async (ctx) => {
+  const dbUser = await upsertUser(ctx.state.user)
+  ctx.body = await getGroupLeaderboard(ctx.params.groupId, dbUser.id)
 })
 
 export { router as groupsRouter }

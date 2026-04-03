@@ -77,6 +77,10 @@ export const api = {
         body: JSON.stringify(input),
         headers: { Authorization: `Bearer ${token}` },
       }),
+    leaderboard: (token: string, groupId: string) =>
+      request<LeaderboardEntry[]>(`/groups/${groupId}/leaderboard`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
   },
   admin: {
     teams: {
