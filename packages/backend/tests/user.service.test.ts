@@ -77,11 +77,13 @@ describe('upsertUser', () => {
       expect.objectContaining({
         target: schema.users.supabaseId,
         set: expect.objectContaining({
-          displayName: 'John Doe',
           avatarUrl: 'https://avatar.example.com/john.png',
         }),
       })
     )
+    // displayName must NOT be overwritten on conflict
+    const callArg = mockOnConflictDoUpdate.mock.calls[0][0] as { set: Record<string, unknown> }
+    expect(callArg.set).not.toHaveProperty('displayName')
   })
 
   it('user with email-prefix displayName → persists as-is', async () => {
@@ -113,9 +115,11 @@ describe('upsertUser', () => {
     expect(mockSet).toHaveBeenCalledWith(
       expect.objectContaining({
         supabaseId: 'supabase-uuid-abc',
-        displayName: 'John Doe',
       })
     )
+    // displayName must NOT be overwritten in email-conflict fallback either
+    const callArg = mockSet.mock.calls[0][0] as Record<string, unknown>
+    expect(callArg).not.toHaveProperty('displayName')
     expect(result).toEqual(updatedRow)
   })
 

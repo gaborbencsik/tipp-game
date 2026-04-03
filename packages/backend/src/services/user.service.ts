@@ -27,7 +27,6 @@ export async function upsertUser(user: AuthenticatedUser): Promise<DbUser> {
       target: users.supabaseId,
       set: {
         email: user.email,
-        displayName: user.displayName,
         avatarUrl: user.avatarUrl,
         role: user.role,
         updatedAt: new Date(),
@@ -44,7 +43,6 @@ export async function upsertUser(user: AuthenticatedUser): Promise<DbUser> {
         .update(users)
         .set({
           supabaseId: user.supabaseId,
-          displayName: user.displayName,
           avatarUrl: user.avatarUrl,
           role: user.role,
           updatedAt: new Date(),
