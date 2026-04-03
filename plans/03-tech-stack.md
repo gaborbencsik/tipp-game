@@ -524,6 +524,15 @@ tipp-game/
 
 > ⚠️ Liga ID-kat verifikálni kell a `GET /leagues?country=Hungary` hívással a saját API key-jel (implementáció előtt, US-1202 részeként).
 
+**Szinkronizációs mód (`FOOTBALL_SYNC_MODE` env változó):**
+
+| Érték | Leírás | Req/nap |
+|-------|--------|---------|
+| `off` | Nincs API hívás (dev, CI) | 0 |
+| `final_only` | Csak végeredmény meccs után | ~20–40 |
+| `adaptive` | Live alatt 2 percenként, egyébként ritka (alapértelmezett) | ~100–300 |
+| `full_live` | Minden percben live lekérdezés | max kvóta |
+
 **Indoklás:** Egyetlen $19/hó-os tier lefedi az összes szükséges ligát. Az egyetlen API, ahol a Magyar NB II elérhető — football-data.org-on NB II nem létezik egyik tier-en sem.
 
 **Részletes kutatási összefoglaló:** `plans/05-football-api.md`

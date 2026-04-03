@@ -187,7 +187,81 @@ A releváns mezők és a saját schema leképezése:
 | Pro | $19 | 7,500 | MVP (VB 2026 alatt, live meccsek) |
 | Ultra | $29 | 75,000 | Ha nagyobb igény mutatkozik |
 
-### Adaptív cron döntési logika (US-1203-hoz)
+---
+
+## 7a. FOOTBALL_SYNC_MODE – Szinkronizációs mód env változó
+
+A cron job viselkedése `FOOTBALL_SYNC_MODE` env változóval hangolható. Ez lehetővé teszi, hogy fejlesztés közben, teszteléskor vagy éles VB alatt eltérő API-kvótát használjunk, és az admin döntsön az eredményfrissítés sűrűségéről.
+
+### Értékek
+
+| `FOOTBALL_SYNC_MODE` | Leírás | Cron futás | API hívás / nap (becslés) |
+|----------------------|--------|------------|--------------------------|
+| `off` | Teljes szinkron letiltva (fejlesztés, CI) | — | 0 |
+| `final_only` | Csak meccs vége után kérdez le eredményt; nem követ live státuszt | 5 percenként; csak `FT`/`AET`/`PEN` figyel | ~20–40 |
+| `adaptive` | Live meccs alatt 2 percenként frissít, egyébként ritka daily sync | 1 percenként (a döntési logika belül van) | ~100–300 |
+| `full_live` | Minden live meccs percenként frissítve, legkisebb latencia | 1 percenként, minden `live=all` kérés | ~90 × concurrent_matches |
+
+**Alapértelmezés ha nincs beállítva:** `adaptive`
+
+### Mód részletei
+
+#### `off`
+- Semmilyen API hívás nem történik
+- A cron job elindul, logol, de azonnal visszatér
+- Hasznos: CI, unit tesztelés, local dev API key nélkül
+
+#### `final_only`
+- A cron 5 percenként fut és megnézi: van-e `live` státuszú meccs a DB-ben, aminek az API-n már `FT`/`AET`/`PEN` státusza van
+- Ha igen: lezárja a meccset és elmenti a végeredményt
+- **Nem követ** halftime, elapsed, részeredményt
+- Legjobb: korlátozott API kvóta, NB II tesztelés, stageing
+- `GET /fixtures?id=X` — csak a konkrét live meccseket kérdezi le (nem `live=all`)
+
+#### `adaptive` (ajánlott prod-ra MVP alatt)
+- Nincs live meccs ÉS nincs scheduled < 24h → naponta 1x teljes fixture sync (< 5 req)
+- Van scheduled < 24h, de nincs live → 10 percenként fixture status check
+- Van live meccs → 2 percenként `GET /fixtures?live=all`
+- Meccs `live` → `finished` átmenet → azonnal végeredmény mentés
+
+#### `full_live`
+- Minden percben `GET /fixtures?live=all`, függetlenül a DB állapottól
+- Minimum latencia az eredményeknél
+- Csak Pro tier-rel ($19/hó) fenntartható VB alatt (párhuzamos meccsek esetén)
+
+### Env változó és `.env.example` kiegészítés
+
+```bash
+# Szinkronizációs mód (off | final_only | adaptive | full_live)
+# Alapértelmezett: adaptive
+# - off:         nincs API hívás (fejlesztés, CI)
+# - final_only:  csak végeredmény, nincs live követés (~20-40 req/nap)
+# - adaptive:    live alatt 2 percenként, egyébként ritka (~100-300 req/nap)
+# - full_live:   minden percben live lekérdezés (max kvóta)
+FOOTBALL_SYNC_MODE=final_only
+```
+
+### Implementációs iránymutatás (US-1202/US-1203-hoz)
+
+A `sync.job.ts`-ben a belépési pontnál:
+
+```typescript
+type SyncMode = 'off' | 'final_only' | 'adaptive' | 'full_live'
+
+function getSyncMode(): SyncMode {
+  const val = process.env['FOOTBALL_SYNC_MODE'] ?? 'adaptive'
+  if (['off', 'final_only', 'adaptive', 'full_live'].includes(val)) {
+    return val as SyncMode
+  }
+  return 'adaptive'
+}
+```
+
+A `decideWhatToSync(dbState, mode)` pure függvény a DB állapot + mode alapján adja vissza a szinkron műveletek listáját — unit tesztelhető DB és API hívás nélkül.
+
+---
+
+### Adaptív cron döntési logika (részletes, `adaptive` módhoz)
 
 ```
 DB állapot               → API hívások         → Becsült req/nap
