@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-04-04 (US-603 csoportonkénti ranglista kész)
+> Utoljára frissítve: 2026-04-04 (US-502 ranglista nézet-váltó kész)
 
 ## Kész user story-k
 
@@ -290,7 +290,7 @@
 | US-402 | Konfigurálható pontrendszer | ⬜ Nem kezdett | Must Have |
 | US-403 | Pontozás tesztelhetősége | ✅ Kész (US-003 részeként) | Must Have |
 | US-501 | Globális ranglista | ✅ Kész | Must Have |
-| US-502 | Ranglista szűrés/keresés | ⬜ Nem kezdett | Should Have |
+| US-502 | Ranglista nézet-váltó (globális + csoportok dropdown) | ✅ Kész | Should Have |
 | US-601 | Csoport létrehozása | ✅ Kész | Must Have |
 | US-602 | Csatlakozás csoporthoz | ✅ Kész | Must Have |
 | US-603 | Csoportonkénti ranglista | ✅ Kész | Must Have |
@@ -317,4 +317,4 @@
 
 ---
 
-**Haladás: 25 / 40 story kész** — Must Have: 21/28 ✅, Should Have: 4/11 ✅
+**Haladás: 26 / 40 story kész** — Must Have: 21/28 ✅, Should Have: 5/11 ✅
