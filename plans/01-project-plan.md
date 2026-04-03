@@ -450,6 +450,7 @@ Mint **csoport admin**, szeretnék **a csoportot kezelni (tagok, meghívó, pont
 - [ ] Meghívó kód újragenerálható / deaktiválható
 - [ ] Admin beállíthatja a csoportszintű pontrendszer override-ot (ha eltér a globálistól)
 - [ ] Admin átadhatja az admin szerepkört másik tagnak
+- [ ] Platform admin (US-805) az összes csoport taglistáját látja az admin panelen (melyik user melyik csoportban van)
 
 **Komplexitás:** L
 **Prioritás:** Must Have
@@ -565,6 +566,7 @@ Mint **admin**, szeretnék **a felhasználókat listázni, szerepkörüket módo
 - [ ] Szerepkör módosítás: user ↔ admin
 - [ ] Tiltás: soft ban (banned_at mező), tiltott user nem tud bejelentkezni
 - [ ] Saját magát az admin nem tilthatja / foszthatja meg admin jogától
+- [ ] Minden felhasználónál látható, hogy melyik csoport(ok)nak tagja (csoport nevek felsorolva)
 
 **Komplexitás:** M
 **Prioritás:** Must Have

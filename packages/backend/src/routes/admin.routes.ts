@@ -14,6 +14,11 @@ import {
   deleteMatch,
   setResult,
 } from '../services/matches.service.js'
+import {
+  getUsers,
+  updateUserRole,
+  banUser,
+} from '../services/admin-users.service.js'
 import { upsertUser } from '../services/user.service.js'
 import type { TeamInput, MatchInput } from '../types/index.js'
 
@@ -70,6 +75,24 @@ adminRouter.post('/matches/:id/result', async (ctx) => {
   const { homeGoals, awayGoals } = ctx.request.body as { homeGoals: number; awayGoals: number }
   const dbUser = await upsertUser(ctx.state.user)
   ctx.body = await setResult(ctx.params['id'] as string, homeGoals, awayGoals, dbUser.id)
+})
+
+// ─── Users ────────────────────────────────────────────────────────────────────
+
+adminRouter.get('/users', async (ctx) => {
+  ctx.body = await getUsers()
+})
+
+adminRouter.put('/users/:id/role', async (ctx) => {
+  const { role } = ctx.request.body as { role: 'user' | 'admin' }
+  const dbUser = await upsertUser(ctx.state.user)
+  ctx.body = await updateUserRole(ctx.params['id'] as string, role, dbUser.id)
+})
+
+adminRouter.put('/users/:id/ban', async (ctx) => {
+  const { ban } = ctx.request.body as { ban: boolean }
+  const dbUser = await upsertUser(ctx.state.user)
+  ctx.body = await banUser(ctx.params['id'] as string, ban, dbUser.id)
 })
 
 export { adminRouter }

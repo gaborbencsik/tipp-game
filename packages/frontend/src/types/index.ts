@@ -106,3 +106,12 @@ export interface Prediction {
   readonly createdAt: string
   readonly updatedAt: string
 }
+
+export interface AdminUser {
+  readonly id: string
+  readonly email: string
+  readonly displayName: string
+  readonly role: 'user' | 'admin'
+  readonly bannedAt: string | null
+  readonly createdAt: string
+}

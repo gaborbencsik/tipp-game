@@ -132,6 +132,15 @@ export interface TeamInput {
   readonly group?: string | null
 }
 
+export interface AdminUser {
+  readonly id: string
+  readonly email: string
+  readonly displayName: string
+  readonly role: 'user' | 'admin'
+  readonly bannedAt: string | null
+  readonly createdAt: string
+}
+
 export interface PredictionInput {
   readonly matchId: string
   readonly homeGoals: number

@@ -1,4 +1,4 @@
-import type { User, Match, MatchesFilters, MatchInput, MatchResultInput, Prediction, PredictionInput, Team, TeamInput } from '../types/index.js'
+import type { User, Match, MatchesFilters, MatchInput, MatchResultInput, Prediction, PredictionInput, Team, TeamInput, AdminUser } from '../types/index.js'
 
 const BASE_URL = (import.meta.env.VITE_API_URL ?? '') + '/api'
 
@@ -110,6 +110,24 @@ export const api = {
         request<unknown>(`/admin/matches/${id}/result`, {
           method: 'POST',
           body: JSON.stringify(input),
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+    },
+    users: {
+      list: (token: string) =>
+        request<AdminUser[]>('/admin/users', {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      updateRole: (token: string, id: string, role: 'user' | 'admin') =>
+        request<AdminUser>(`/admin/users/${id}/role`, {
+          method: 'PUT',
+          body: JSON.stringify({ role }),
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ban: (token: string, id: string, ban: boolean) =>
+        request<AdminUser>(`/admin/users/${id}/ban`, {
+          method: 'PUT',
+          body: JSON.stringify({ ban }),
           headers: { Authorization: `Bearer ${token}` },
         }),
     },
