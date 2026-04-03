@@ -839,7 +839,29 @@ Mint **admin**, szeretném, hogy **az admin felhasználók listájában minden u
 
 ---
 
-| Story ID | Megnevezés | Komplexitás | Prioritás |
+#### UX-001: Tipp input UX javítások
+
+**Story:**
+Mint **felhasználó**, szeretném, hogy **a tipp beviteli mezők kényelmesebben használhatók legyenek**, hogy **gyorsabban és kevesebb kattintással tudjak tippet rögzíteni**.
+
+**Elfogadási kritériumok:**
+- [ ] **Autosave debounce:** tipp automatikusan mentésre kerül 2 másodperccel az utolsó gombnyomás után (nincs szükség "Mentés" gombra kattintani)
+- [ ] **Fókusz → select:** mezőbe kattintáskor / tab-bal belépéskor a tartalom azonnal ki van jelölve (felülírható anélkül, hogy törölni kellene)
+- [ ] **Üres mező fókuszáláskor → 0:** ha a mező üres volt, fókuszáláskor `0` kerül bele és az ki is van jelölve
+- [ ] **Szám beütése → következő mező:** ha a user begépel egy számot (0-9), a fókusz automatikusan a másik (away/home) mezőre ugrik
+- [ ] A "Mentés" gomb maradhat fallback-ként manuális mentéshez
+- [ ] `saveStatus` visszajelzés ("Tipp elmentve!") az autosave után is megjelenik
+
+**Technikai megjegyzések:**
+- Debounce: `setTimeout` + `clearTimeout` az input event handlerben, 2000ms
+- Select on focus: `input.select()` a `@focus` event handlerben
+- Következő mező: `@keydown` figyelés `0-9` billentyűkre, `nextTick` után `nextInput.focus()` + `nextInput.select()`
+- Érintett komponensek: `MatchesView.vue` inline tipp form, `MatchDetailView.vue` tipp form
+
+**Komplexitás:** S
+**Prioritás:** Should Have
+
+---
 |----------|-----------|-------------|-----------|
 | US-001 | Monorepo és dev környezet (Docker) | M | Must Have |
 | US-002 | DB schema és seed adatok | S | Must Have |
@@ -884,6 +906,7 @@ Mint **admin**, szeretném, hogy **az admin felhasználók listájában minden u
 | US-1203 | Automatikus adatszinkron cron job | M | Should Have |
 | US-1301 | Liga entitás bevezetése a meccsekhez | M | Should Have |
 | BUG-001 | Admin users lista: minden sornál ugyanaz a név | S | Should Have |
+| UX-001 | Tipp input UX javítások (autosave, select, autonext) | S | Should Have |
 
 **Összesítés:**
 - Must Have: 26 story (4 technikai + 22 product)
