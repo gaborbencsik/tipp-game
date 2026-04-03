@@ -200,11 +200,11 @@ describe('MatchesView', () => {
 
   // ─── Prediction form ─────────────────────────────────────────────────────────
 
-  it('scheduled match → prediction form visible (inputs and save button)', async () => {
+  it('scheduled match → prediction form visible (inputs, no save button)', async () => {
     const { wrapper } = await mountView([MATCH_SCHEDULED])
     expect(wrapper.find('[data-testid="input-home"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="input-away"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="save-button"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="save-button"]').exists()).toBe(false)
   })
 
   it('finished match → prediction form hidden, Tippelés lezárva text shown', async () => {
@@ -227,7 +227,8 @@ describe('MatchesView', () => {
     expect((awayInput.element as HTMLInputElement).value).toBe('0')
   })
 
-  it('clicking save button calls upsertPrediction', async () => {
+  it('autosave triggers upsertPrediction after input', async () => {
+    vi.useFakeTimers()
     const saved: Prediction = { ...EXISTING_PREDICTION, homeGoals: 2, awayGoals: 1 }
     mockPredictionsUpsert.mockResolvedValue(saved)
     const { wrapper, predictionsStore } = await mountView([MATCH_SCHEDULED])
@@ -235,7 +236,7 @@ describe('MatchesView', () => {
     await wrapper.find('[data-testid="input-home"]').setValue('2')
     await wrapper.find('[data-testid="input-away"]').setValue('1')
     const upsertSpy = vi.spyOn(predictionsStore, 'upsertPrediction').mockResolvedValue()
-    await wrapper.find('[data-testid="save-button"]').trigger('click')
+    vi.advanceTimersByTime(2000)
     await flushPromises()
 
     expect(upsertSpy).toHaveBeenCalledWith({
@@ -243,6 +244,7 @@ describe('MatchesView', () => {
       homeGoals: 2,
       awayGoals: 1,
     })
+    vi.useRealTimers()
   })
 
   it('saveStatus=saved → Tipp elmentve feedback visible', async () => {
@@ -253,12 +255,12 @@ describe('MatchesView', () => {
     expect(wrapper.text()).toContain('Tipp elmentve!')
   })
 
-  it('saveStatus=saving → save button disabled', async () => {
+  it('saveStatus=saving → inputs disabled', async () => {
     const { wrapper, predictionsStore } = await mountView([MATCH_SCHEDULED])
     predictionsStore.saveStatus = { 'match-sched': 'saving' }
     await wrapper.vm.$nextTick()
-    const btn = wrapper.find('[data-testid="save-button"]')
-    expect((btn.element as HTMLButtonElement).disabled).toBe(true)
+    const homeInput = wrapper.find('[data-testid="input-home"]')
+    expect((homeInput.element as HTMLInputElement).disabled).toBe(true)
   })
 
 })

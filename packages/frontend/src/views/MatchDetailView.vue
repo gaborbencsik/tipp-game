@@ -93,14 +93,6 @@
                 @input="onGoalInput('away', ($event.target as HTMLInputElement).value)"
                 @keydown="onGoalKeydown('away', $event)"
               />
-              <button
-                class="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                :disabled="predictionsStore.saveStatus[match.id] === 'saving'"
-                data-testid="save-button"
-                @click="savePrediction()"
-              >
-                {{ predictionsStore.saveStatus[match.id] === 'saving' ? 'Mentés...' : 'Mentés' }}
-              </button>
             </div>
             <div class="text-center mt-1 text-xs">
               <span

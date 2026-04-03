@@ -180,11 +180,11 @@ describe('MatchDetailView', () => {
     expect(wrapper.text()).toContain('Nem adtál tippet')
   })
 
-  it('scheduled match → tip form visible', async () => {
+  it('scheduled match → tip form visible, no save button', async () => {
     const { wrapper } = await mountView('match-sched', [MATCH_SCHEDULED])
     expect(wrapper.find('[data-testid="input-home"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="input-away"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="save-button"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="save-button"]').exists()).toBe(false)
   })
 
   it('"Vissza" link points to /matches', async () => {
