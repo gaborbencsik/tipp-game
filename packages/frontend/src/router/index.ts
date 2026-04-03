@@ -17,7 +17,13 @@ export const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: () => import('../views/MatchesView.vue'),
+      component: () => import('../views/GroupsView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/groups',
+      name: 'groups',
+      component: () => import('../views/GroupsView.vue'),
       meta: { requiresAuth: true },
     },
     {

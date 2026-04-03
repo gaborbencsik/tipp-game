@@ -40,6 +40,21 @@
       >
         <nav class="flex flex-col gap-1 px-2 min-w-[14rem] md:min-w-0">
 
+          <!-- Csoportok -->
+          <router-link
+            to="/groups"
+            data-testid="nav-groups"
+            class="flex items-center gap-3 py-2 rounded-full text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+            :class="sidebarOpen ? 'px-4' : 'px-3 justify-center'"
+            active-class="bg-blue-100 text-blue-800 font-semibold hover:bg-blue-100"
+            @click="sidebarOpen = false"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2h5m6 0v-2a4 4 0 00-2-2H9a4 4 0 00-2 2v2m6 0H9" />
+            </svg>
+            <span v-if="sidebarOpen">Csoportok</span>
+          </router-link>
+
           <!-- Meccsek -->
           <router-link
             to="/matches"
@@ -65,18 +80,6 @@
               <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
             <span v-if="sidebarOpen">Ranglista</span>
-          </button>
-
-          <!-- Csoportok (disabled) -->
-          <button
-            disabled
-            class="flex items-center gap-3 py-2 rounded-full text-sm text-gray-400 cursor-not-allowed"
-            :class="sidebarOpen ? 'px-4' : 'px-3 justify-center'"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2h5m6 0v-2a4 4 0 00-2-2H9a4 4 0 00-2 2v2m6 0H9" />
-            </svg>
-            <span v-if="sidebarOpen">Csoportok</span>
           </button>
 
         </nav>
