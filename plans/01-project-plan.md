@@ -791,6 +791,32 @@ Mint **fejlesztő**, szeretnék **egy ütemezett cron job-ot, amely percenként 
 
 ---
 
+### E13 – Schema evolúció / Liga kezelés
+
+#### US-1301: Liga entitás bevezetése a meccsekhez
+
+**Story:**
+Mint **fejlesztő**, szeretnék **a `matches` táblán egy `league_id` foreign key-t bevezetni egy `leagues` táblára hivatkozva**, hogy **a meccsek ligához rendelhetők legyenek (NB I, NB II, VB 2026, stb.) és a frontend szűrni tudjon liga szerint**.
+
+**Elfogadási kritériumok:**
+- [ ] Új `leagues` tábla: `id` (UUID PK), `name` (varchar 100), `shortName` (varchar 20), `description` (text, nullable), `createdAt`, `updatedAt`
+- [ ] `matches.group_name` (varchar 1) helyett: `matches.league_id` (UUID FK → leagues.id, nullable) + `matches.round` (varchar 20, nullable — pl. "28. forduló", "Group Stage")
+- [ ] Drizzle migráció generálva és alkalmazva
+- [ ] Backend `League` és `LeagueInput` típusok hozzáadva
+- [ ] `Match` API objektumon `league` mező megjelenik (id + name + shortName)
+- [ ] Seed SQL fájlok frissítve: liga INSERT + league_id használata a matches INSERT-ben
+- [ ] Az összes érintett teszt zöld marad
+
+**Technikai megjegyzések:**
+- `group_name varchar(1)` eltávolítandó (VB csoportokhoz a `round` mező elég: "Group A", "Group B")
+- `leagues` tábla seed adatok: NB I, NB II, FIFA World Cup 2026, UEFA Nations League
+- A `match_number` mező maradhat (VB-s sorrend nyilvántartáshoz)
+
+**Komplexitás:** M
+**Prioritás:** Should Have
+
+---
+
 ## 3. Prioritás összefoglaló
 
 | Story ID | Megnevezés | Komplexitás | Prioritás |
@@ -836,6 +862,7 @@ Mint **fejlesztő**, szeretnék **egy ütemezett cron job-ot, amely percenként 
 | US-1201 | Futball API kiválasztása (kutatás) | S | Should Have |
 | US-1202 | Futball API szinkronizációs service | M | Should Have |
 | US-1203 | Automatikus adatszinkron cron job | M | Should Have |
+| US-1301 | Liga entitás bevezetése a meccsekhez | M | Should Have |
 
 **Összesítés:**
 - Must Have: 26 story (4 technikai + 22 product)
