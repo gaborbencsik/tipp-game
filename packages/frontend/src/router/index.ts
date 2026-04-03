@@ -53,8 +53,11 @@ export const router = createRouter({
   ],
 })
 
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   const authStore = useAuthStore()
+  if (!authStore.ready) {
+    await authStore.restoreSession()
+  }
   if (to.name === 'login' && authStore.isAuthenticated()) {
     return { name: 'home' }
   }

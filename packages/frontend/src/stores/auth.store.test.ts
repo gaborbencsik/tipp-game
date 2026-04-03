@@ -268,6 +268,65 @@ describe('auth.store', () => {
     expect(unsubscribe).toHaveBeenCalledOnce()
   })
 
+  // ─── ready flag ─────────────────────────────────────────────────────────────
+
+  it('ready is false before restoreSession()', () => {
+    const store = useAuthStore()
+    expect(store.ready).toBe(false)
+  })
+
+  it('restoreSession() with session → ready becomes true', async () => {
+    const unsubscribe = vi.fn()
+    mockOnAuthStateChange.mockImplementation((cb: (event: string, session: unknown) => void) => {
+      const result = { data: { subscription: { unsubscribe } } }
+      Promise.resolve().then(() => cb('INITIAL_SESSION', MOCK_SESSION))
+      return result
+    })
+    mockApiAuthMe.mockResolvedValue(MOCK_USER)
+    const store = useAuthStore()
+    await store.restoreSession()
+    expect(store.ready).toBe(true)
+  })
+
+  it('restoreSession() no session → ready becomes true', async () => {
+    const unsubscribe = vi.fn()
+    mockOnAuthStateChange.mockImplementation((cb: (event: string, session: unknown) => void) => {
+      const result = { data: { subscription: { unsubscribe } } }
+      Promise.resolve().then(() => cb('INITIAL_SESSION', null))
+      return result
+    })
+    const store = useAuthStore()
+    await store.restoreSession()
+    expect(store.ready).toBe(true)
+  })
+
+  it('restoreSession() API error → ready becomes true', async () => {
+    const unsubscribe = vi.fn()
+    mockOnAuthStateChange.mockImplementation((cb: (event: string, session: unknown) => void) => {
+      const result = { data: { subscription: { unsubscribe } } }
+      Promise.resolve().then(() => cb('INITIAL_SESSION', MOCK_SESSION))
+      return result
+    })
+    mockApiAuthMe.mockRejectedValue(new Error('API error'))
+    const store = useAuthStore()
+    await store.restoreSession()
+    expect(store.ready).toBe(true)
+  })
+
+  it('restoreSession() called twice → ready stays true, onAuthStateChange called once', async () => {
+    const unsubscribe = vi.fn()
+    mockOnAuthStateChange.mockImplementation((cb: (event: string, session: unknown) => void) => {
+      const result = { data: { subscription: { unsubscribe } } }
+      Promise.resolve().then(() => cb('INITIAL_SESSION', null))
+      return result
+    })
+    const store = useAuthStore()
+    await store.restoreSession()
+    await store.restoreSession()
+    expect(store.ready).toBe(true)
+    expect(mockOnAuthStateChange).toHaveBeenCalledTimes(2)
+  })
+
   // ─── loginWithEmail ──────────────────────────────────────────────────────────
 
   it('loginWithEmail() success → api.auth.me called, user set', async () => {

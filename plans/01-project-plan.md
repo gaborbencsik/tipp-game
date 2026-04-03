@@ -240,14 +240,17 @@ Mint **új látogató**, szeretnék **Google-fiókommal egyszerűen regisztráln
 Mint **regisztrált felhasználó**, szeretnék **biztonságosan belépni és kilépni az alkalmazásból**, hogy **a fiókom védve legyen**.
 
 **Elfogadási kritériumok:**
-- [ ] Bejelentkezés: Google OAuth gombbal működik (Supabase Auth), redirect a visszatérési URL-re
-- [ ] Kijelentkezés: egy kattintással működik, Supabase session törlése kliens-oldalon
-- [ ] Lejárt session esetén automatikus átirányítás a login oldalra
-- [ ] Védett route-ok (pl. tippelés, ranglista) csak bejelentkezett állapotban elérhetők
-- [ ] **Dev mode bypass:** ha `VITE_DEV_AUTH_BYPASS=true`, a bejelentkezés gombra kattintva a rendszer azonnal belép egy előre definiált mock userrel (nincs Google redirect), és a főoldalra irányít
+- [x] Bejelentkezés: Google OAuth gombbal működik (Supabase Auth), redirect a visszatérési URL-re
+- [x] Kijelentkezés: egy kattintással működik, Supabase session törlése kliens-oldalon
+- [x] Lejárt session esetén automatikus átirányítás a login oldalra
+- [x] Védett route-ok (pl. tippelés, ranglista) csak bejelentkezett állapotban elérhetők
+- [x] **Dev mode bypass:** ha `VITE_DEV_AUTH_BYPASS=true`, a bejelentkezés gombra kattintva a rendszer azonnal belép egy előre definiált mock userrel (nincs Google redirect), és a főoldalra irányít
+- [x] Oldal újratöltéskor a router guard megvárja az auth session helyreállítását (`ready` flag), mielőtt dönt a redirect-ről – nincs race condition
 
 **Komplexitás:** S
 **Prioritás:** Must Have
+
+**Státusz:** ✅ Kész
 
 ---
 

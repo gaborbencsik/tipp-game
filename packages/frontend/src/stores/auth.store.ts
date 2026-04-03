@@ -34,6 +34,7 @@ class AuthError extends Error {
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
+  const ready = ref(false)
   const router = useRouter()
 
   function isAuthenticated(): boolean {
@@ -59,6 +60,7 @@ export const useAuthStore = defineStore('auth', () => {
           sessionStorage.removeItem(DEV_SESSION_KEY)
         }
       }
+      ready.value = true
       return
     }
 
@@ -72,6 +74,7 @@ export const useAuthStore = defineStore('auth', () => {
               user.value = null
             }
           }
+          ready.value = true
           subscription.unsubscribe()
           resolve()
         } else if (session) {
@@ -179,6 +182,6 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  return { user, isAuthenticated, isAdmin, handleSession, restoreSession, login, logout, loginWithEmail, registerWithEmail, updateProfile }
+  return { user, ready, isAuthenticated, isAdmin, handleSession, restoreSession, login, logout, loginWithEmail, registerWithEmail, updateProfile }
 })
 
