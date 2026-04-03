@@ -98,6 +98,7 @@
               <template v-if="isTippable(match)">
                 <div class="flex items-center gap-2 justify-center">
                   <input
+                    :ref="el => { if (el) homeInputs[match.id] = el as HTMLInputElement }"
                     :value="draftGoals[match.id]?.home ?? ''"
                     type="number"
                     min="0"
@@ -106,10 +107,13 @@
                     data-testid="input-home"
                     class="w-14 text-center border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:border-blue-400"
                     :disabled="predictionsStore.saveStatus[match.id] === 'saving'"
+                    @focus="onGoalFocus(match.id, 'home', $event)"
                     @input="onGoalInput(match.id, 'home', ($event.target as HTMLInputElement).value)"
+                    @keydown="onGoalKeydown(match.id, 'home', $event)"
                   />
                   <span class="text-gray-400 text-sm">–</span>
                   <input
+                    :ref="el => { if (el) awayInputs[match.id] = el as HTMLInputElement }"
                     :value="draftGoals[match.id]?.away ?? ''"
                     type="number"
                     min="0"
@@ -118,7 +122,9 @@
                     data-testid="input-away"
                     class="w-14 text-center border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:border-blue-400"
                     :disabled="predictionsStore.saveStatus[match.id] === 'saving'"
+                    @focus="onGoalFocus(match.id, 'away', $event)"
                     @input="onGoalInput(match.id, 'away', ($event.target as HTMLInputElement).value)"
+                    @keydown="onGoalKeydown(match.id, 'away', $event)"
                   />
                   <button
                     class="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -174,7 +180,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, nextTick, computed } from 'vue'
 import { useMatchesStore } from '../stores/matches.store.js'
 import { usePredictionsStore } from '../stores/predictions.store.js'
 import type { Match, MatchStage, MatchStatus } from '../types/index.js'
@@ -185,6 +191,23 @@ const predictionsStore = usePredictionsStore()
 
 const now = ref(new Date())
 const draftGoals = ref<Record<string, { home: number | null, away: number | null }>>({})
+const homeInputs = ref<Record<string, HTMLInputElement>>({})
+const awayInputs = ref<Record<string, HTMLInputElement>>({})
+const autosaveTimers: Record<string, ReturnType<typeof setTimeout>> = {}
+
+// Ordered list of all tippable inputs: [matchId, side] pairs in display order
+const inputOrder = computed((): Array<{ matchId: string; side: 'home' | 'away' }> => {
+  const order: Array<{ matchId: string; side: 'home' | 'away' }> = []
+  for (const group of matchesStore.matchesByDate) {
+    for (const match of group.matches) {
+      if (isTippable(match)) {
+        order.push({ matchId: match.id, side: 'home' })
+        order.push({ matchId: match.id, side: 'away' })
+      }
+    }
+  }
+  return order
+})
 
 onMounted(async () => {
   await matchesStore.fetchMatches()
@@ -205,10 +228,39 @@ function isTippable(match: Match): boolean {
   return match.status === 'scheduled' && new Date(match.scheduledAt) > now.value
 }
 
+function onGoalFocus(matchId: string, side: 'home' | 'away', event: FocusEvent): void {
+  const input = event.target as HTMLInputElement
+  if (draftGoals.value[matchId]?.[side] == null) {
+    const current = draftGoals.value[matchId] ?? { home: null, away: null }
+    draftGoals.value = { ...draftGoals.value, [matchId]: { ...current, [side]: 0 } }
+  }
+  nextTick(() => input.select())
+}
+
 function onGoalInput(matchId: string, side: 'home' | 'away', raw: string): void {
   const val = raw === '' ? null : Math.min(99, Math.max(0, parseInt(raw, 10)))
   const current = draftGoals.value[matchId] ?? { home: null, away: null }
   draftGoals.value = { ...draftGoals.value, [matchId]: { ...current, [side]: val } }
+  if (autosaveTimers[matchId]) clearTimeout(autosaveTimers[matchId])
+  autosaveTimers[matchId] = setTimeout(() => { void savePrediction(matchId) }, 2000)
+}
+
+function onGoalKeydown(matchId: string, side: 'home' | 'away', event: KeyboardEvent): void {
+  if (/^[0-9]$/.test(event.key)) {
+    const currentIdx = inputOrder.value.findIndex(e => e.matchId === matchId && e.side === side)
+    const next = inputOrder.value[currentIdx + 1]
+    if (!next) return
+    event.preventDefault()
+    const val = parseInt(event.key, 10)
+    const current = draftGoals.value[matchId] ?? { home: null, away: null }
+    draftGoals.value = { ...draftGoals.value, [matchId]: { ...current, [side]: val } }
+    if (autosaveTimers[matchId]) clearTimeout(autosaveTimers[matchId])
+    autosaveTimers[matchId] = setTimeout(() => { void savePrediction(matchId) }, 2000)
+    nextTick(() => {
+      const target = next.side === 'home' ? homeInputs.value[next.matchId] : awayInputs.value[next.matchId]
+      if (target) { target.focus(); target.select() }
+    })
+  }
 }
 
 async function savePrediction(matchId: string): Promise<void> {

@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-04-03 (US-601/602/606 csoportok kész, profil displayName fix)
+> Utoljára frissítve: 2026-04-03 (UX-001 tipp input UX kész)
 
 ## Kész user story-k
 
@@ -225,9 +225,16 @@
 - ✅ Kezdőoldal (`/`) → `MatchesView` (nem GroupsView)
 - ✅ 205 frontend + 100 backend teszt, typecheck CLEAN
 
-### US-303 bugfix – displayName persistencia javítva
+### UX-001 – Elfogadási kritériumok teljesítve
 
-- ✅ `upsertUser` már nem írja felül a `displayName`-t `onConflictDoUpdate`-ban
+- ✅ **Autosave debounce:** 2s inaktivitás után automatikusan elmenti a tippet, nincs szükség "Mentés" gombra
+- ✅ **Fókusz → select:** mezőbe lépéskor a tartalom azonnal ki van jelölve
+- ✅ **Üres mező fókuszáláskor → 0:** ha a mező üres, fókuszkor `0` kerül bele és ki van jelölve
+- ✅ **Szám beütése → következő mező:** `preventDefault()` + érték beállítása + fókusz a következő inputra (meccshatárokon átlépve is)
+- ✅ Érintett komponensek: `MatchesView.vue`, `MatchDetailView.vue`
+- ✅ 205 frontend teszt, typecheck CLEAN
+
+### US-303 bugfix – displayName persistencia javítva
 - ✅ Csak INSERT állítja be az initial `displayName`-t a JWT-ből
 - ✅ `updateProfile` által mentett név megmarad oldal-újratöltés után is
 
@@ -278,7 +285,9 @@
 | US-1201 | Futball API kiválasztása (kutatás) | ✅ Kész | Should Have |
 | US-1202 | Futball API szinkronizációs service | ⬜ Nem kezdett | Should Have |
 | US-1203 | Automatikus adatszinkron cron job | ⬜ Nem kezdett | Should Have |
+| BUG-001 | Admin users lista: minden sornál ugyanaz a név | ⬜ Nem kezdett | Should Have |
+| UX-001 | Tipp input UX javítások | ✅ Kész | Should Have |
 
 ---
 
-**Haladás: 20 / 38 story kész** — Must Have: 17/28 ✅, Should Have: 3/9 ✅
+**Haladás: 21 / 40 story kész** — Must Have: 17/28 ✅, Should Have: 4/11 ✅
