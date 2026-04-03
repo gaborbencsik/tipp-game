@@ -247,7 +247,7 @@
 | US-001 | Monorepo és dev környezet | ✅ Kész | Must Have |
 | US-002 | DB schema és seed adatok | ✅ Kész | Must Have |
 | US-003 | Tesztelési infrastruktúra | ✅ Kész | Must Have |
-| US-004 | Production deploy pipeline | ⬜ Nem kezdett | Must Have |
+| US-004 | Production deploy pipeline | ✅ Kész | Must Have |
 | US-101 | Mérkőzések böngészése | ✅ Kész | Must Have |
 | US-102 | Mérkőzés részletek | ✅ Kész | Must Have |
 | US-201 | Tipp leadása | ✅ Kész | Must Have |
@@ -290,4 +290,4 @@
 
 ---
 
-**Haladás: 21 / 40 story kész** — Must Have: 17/28 ✅, Should Have: 4/11 ✅
+**Haladás: 22 / 40 story kész** — Must Have: 18/28 ✅, Should Have: 4/11 ✅
