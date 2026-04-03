@@ -34,14 +34,10 @@
             <td class="px-4 py-3">
               <div class="flex items-center gap-2 min-w-0">
                 <img
-                  v-if="entry.avatarUrl"
-                  :src="entry.avatarUrl"
+                  :src="entry.avatarUrl ?? dicebearUrl(entry.displayName)"
                   :alt="entry.displayName"
                   class="w-7 h-7 rounded-full object-cover shrink-0"
                 />
-                <div v-else class="w-7 h-7 rounded-full bg-gray-200 shrink-0 flex items-center justify-center text-xs text-gray-500 font-semibold">
-                  {{ entry.displayName.charAt(0).toUpperCase() }}
-                </div>
                 <span class="font-medium text-gray-800 truncate">{{ entry.displayName }}</span>
                 <span v-if="entry.userId === authStore.user?.id" class="text-xs text-blue-600 shrink-0">(te)</span>
               </div>
@@ -59,6 +55,7 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import AppLayout from '../components/AppLayout.vue'
+import { dicebearUrl } from '../lib/avatar.js'
 import { useLeaderboardStore } from '../stores/leaderboard.store.js'
 import { useAuthStore } from '../stores/auth.store.js'
 

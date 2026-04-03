@@ -17,7 +17,7 @@
         <thead>
           <tr class="bg-gray-50 text-left">
             <th class="px-4 py-2 font-semibold">Email</th>
-            <th class="px-4 py-2 font-semibold">Név</th>
+            <th class="px-4 py-2 font-semibold">Felhasználó</th>
             <th class="px-4 py-2 font-semibold">Szerepkör</th>
             <th class="px-4 py-2 font-semibold">Státusz</th>
             <th class="px-4 py-2 font-semibold">Regisztrálva</th>
@@ -32,7 +32,16 @@
             class="border-t hover:bg-gray-50"
           >
             <td class="px-4 py-2">{{ user.email }}</td>
-            <td class="px-4 py-2">{{ user.displayName }}</td>
+            <td class="px-4 py-2">
+              <div class="flex items-center gap-2">
+                <img
+                  :src="dicebearUrl(user.displayName)"
+                  :alt="user.displayName"
+                  class="w-7 h-7 rounded-full object-cover shrink-0"
+                />
+                <span>{{ user.displayName }}</span>
+              </div>
+            </td>
             <td class="px-4 py-2">
               <select
                 data-testid="role-select"
@@ -77,6 +86,7 @@ import { onMounted } from 'vue'
 import AppLayout from '../components/AppLayout.vue'
 import { useAdminUsersStore } from '../stores/admin-users.store.js'
 import { useAuthStore } from '../stores/auth.store.js'
+import { dicebearUrl } from '../lib/avatar.js'
 import type { AdminUser } from '../types/index.js'
 
 const store = useAdminUsersStore()
