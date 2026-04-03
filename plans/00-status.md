@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-04-03 (US-1201/1202/1203 stories hozzáadva)
+> Utoljára frissítve: 2026-04-03 (US-805 Felhasználók kezelése kész)
 
 ## Kész user story-k
 
@@ -19,6 +19,7 @@
 | **US-804** | Csapatok kezelése (admin) | ✅ Kész |
 | **US-305** | Session perzisztencia oldal-újratöltés után | ✅ Kész |
 | **US-303** | Profil megtekintése és szerkesztése | ✅ Kész |
+| **US-805** | Felhasználók kezelése (admin) | ✅ Kész |
 | **US-1001** | Hamburger menü / AppLayout (Gmail-stílus) | ✅ Kész |
 
 ### US-001 – Elfogadási kritériumok teljesítve
@@ -184,6 +185,20 @@
 - ✅ `UserMenuButton` kizárólag `AppLayout`-ban él, a nézetekből eltávolítva
 - ✅ 153 frontend teszt, typecheck CLEAN
 
+### US-805 – Elfogadási kritériumok teljesítve
+
+- ✅ `admin-users.service.ts`: `getUsers`, `updateUserRole`, `banUser` – AppError pattern, önmaga módosítása → 403
+- ✅ `admin.routes.ts`: `GET /api/admin/users`, `PUT /api/admin/users/:id/role`, `PUT /api/admin/users/:id/ban`
+- ✅ Audit log: `role_change` és `ban` akciók `audit_logs` táblába írva
+- ✅ `AdminUser` típus (backend + frontend)
+- ✅ `api.admin.users.*` API client metódusok (list/updateRole/ban)
+- ✅ `admin-users.store.ts`: Pinia store – fetchUsers, updateUserRole, banUser + loading/error state
+- ✅ `AdminUsersView.vue`: táblázat (email, név, szerepkör badge, státusz badge, regisztrálva, műveletek)
+- ✅ Szerepkör toggle gomb és tiltás/feloldás gomb soronként – saját fiók gombjai disabled
+- ✅ Admin – Felhasználók link a `UserMenuButton` dropdown-ban (csak adminoknak)
+- ✅ `/admin/users` route – `requiresAuth + requiresAdmin`
+- ✅ 89 backend + 183 frontend teszt, typecheck CLEAN
+
 ---
 |----------|-----------|-----------|
 | US-401 | Automatikus pontszámítás | Must Have |
@@ -223,7 +238,7 @@
 | US-802 | Mérkőzés szerkesztése/törlése | ✅ Kész | Must Have |
 | US-803 | Eredmény rögzítése | ✅ Kész | Must Have |
 | US-804 | Csapatok kezelése | ✅ Kész | Must Have |
-| US-805 | Felhasználók kezelése | ⬜ Nem kezdett | Must Have |
+| US-805 | Felhasználók kezelése | ✅ Kész | Must Have |
 | US-901 | Statisztikai tipp leadása | ⬜ Nem kezdett | Should Have |
 | US-902 | Statisztikai tipp típus konfig | ⬜ Nem kezdett | Should Have |
 | US-1001 | Hamburger menü / AppLayout | ✅ Kész | Should Have |
@@ -236,4 +251,4 @@
 
 ---
 
-**Haladás: 15 / 37 story kész** — Must Have: 13/27 ✅, Should Have: 2/9 ✅
+**Haladás: 16 / 37 story kész** — Must Have: 14/27 ✅, Should Have: 2/9 ✅
