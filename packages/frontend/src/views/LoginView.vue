@@ -36,6 +36,7 @@
           />
         </div>
 
+        <p v-if="infoMessage" class="text-blue-600 text-sm">{{ infoMessage }}</p>
         <p v-if="errorMessage" class="text-red-600 text-sm">{{ errorMessage }}</p>
 
         <button
@@ -85,10 +86,12 @@ const email = ref('')
 const password = ref('')
 const displayName = ref('')
 const errorMessage = ref('')
+const infoMessage = ref('')
 const isLoading = ref(false)
 
 async function handleSubmit(): Promise<void> {
   errorMessage.value = ''
+  infoMessage.value = ''
   isLoading.value = true
   try {
     if (mode.value === 'login') {
@@ -97,7 +100,13 @@ async function handleSubmit(): Promise<void> {
       await authStore.registerWithEmail(email.value, password.value, displayName.value)
     }
   } catch (err) {
-    errorMessage.value = err instanceof Error ? err.message : 'Ismeretlen hiba'
+    const message = err instanceof Error ? err.message : 'Ismeretlen hiba'
+    if (message.includes('Erősítsd meg')) {
+      infoMessage.value = message
+      mode.value = 'login'
+    } else {
+      errorMessage.value = message
+    }
   } finally {
     isLoading.value = false
   }
