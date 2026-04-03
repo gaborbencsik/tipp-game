@@ -131,15 +131,12 @@ describe('LoginView', () => {
     expect(wrapper.text()).toContain('Google')
   })
 
-  it('clicking Google button calls authStore.login()', async () => {
+  it('Google button is disabled', () => {
     const wrapper = mount(LoginView, {
       global: { plugins: [createPinia(), buildRouter()] },
     })
-    const store = useAuthStore()
-    const loginSpy = vi.spyOn(store, 'login').mockResolvedValue(undefined)
     const googleBtn = wrapper.findAll('button').find(b => b.text().includes('Google'))
-    await googleBtn!.trigger('click')
-    expect(loginSpy).toHaveBeenCalledOnce()
+    expect(googleBtn!.attributes('disabled')).toBeDefined()
   })
 
   it('after successful login the store user is set', async () => {

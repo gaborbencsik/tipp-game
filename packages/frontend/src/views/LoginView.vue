@@ -54,8 +54,8 @@
       </div>
 
       <button
-        class="w-full px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
-        @click="handleGoogleLogin"
+        disabled
+        class="w-full px-6 py-3 border border-gray-300 rounded-lg opacity-50 cursor-not-allowed"
       >
         Bejelentkezés Google-lel
       </button>
@@ -103,7 +103,4 @@ async function handleSubmit(): Promise<void> {
   }
 }
 
-async function handleGoogleLogin(): Promise<void> {
-  await authStore.login()
-}
 </script>
