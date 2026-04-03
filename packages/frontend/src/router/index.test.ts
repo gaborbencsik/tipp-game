@@ -51,11 +51,6 @@ void MOCK_USER
 
 // ─── Router factory ──────────────────────────────────────────────────────────
 
-function buildTestRouter() {
-  const { router } = require('@/router/index')
-  return router
-}
-
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function setAuthReady(authenticated: boolean, admin = false): void {
