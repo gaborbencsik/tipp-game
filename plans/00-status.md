@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-04-03 (US-805 Felhasználók kezelése kész)
+> Utoljára frissítve: 2026-04-03 (US-1201 Futball API kutatás kész)
 
 ## Kész user story-k
 
@@ -21,6 +21,7 @@
 | **US-303** | Profil megtekintése és szerkesztése | ✅ Kész |
 | **US-805** | Felhasználók kezelése (admin) | ✅ Kész |
 | **US-1001** | Hamburger menü / AppLayout (Gmail-stílus) | ✅ Kész |
+| **US-1201** | Futball API kiválasztása (kutatás) | ✅ Kész |
 
 ### US-001 – Elfogadási kritériumok teljesítve
 
@@ -199,6 +200,18 @@
 - ✅ `/admin/users` route – `requiresAuth + requiresAdmin`
 - ✅ 89 backend + 183 frontend teszt, typecheck CLEAN
 
+### US-1201 – Elfogadási kritériumok teljesítve
+
+- ✅ 4 API elemezve: api-football.com, football-data.org, apifootball.com, Sportmonks (+ OpenLigaDB kizárva: csak németes)
+- ✅ Döntési mátrix: ár, NB I/NB II/WC 2026 coverage, live adat, free tier kvóta
+- ✅ **Kiválasztott API: api-football.com (api-sports.io)** — rögzítve `plans/03-tech-stack.md`-ben indoklással
+- ✅ Magyar NB I (liga ID: ~271) és NB II (liga ID: ~272) fedezete megerősítve; NB II az egyetlen kizáró kritérium
+- ✅ Szükséges endpointok: `GET /fixtures`, `GET /teams`, `GET /leagues`
+- ✅ Fixture response struktúra és leképezés a saját Drizzle schemára dokumentálva
+- ✅ Adaptív rate limit stratégia: free (100 req/nap) fejlesztéshez, Pro ($19/hó) VB 2026-hoz
+- ✅ `.env.example` frissítve: `FOOTBALL_API_KEY`, `FOOTBALL_API_BASE_URL`, `FOOTBALL_API_*_LEAGUE_ID`
+- ✅ Részletes kutatási dokumentum: `plans/05-football-api.md`
+
 ---
 |----------|-----------|-----------|
 | US-401 | Automatikus pontszámítás | Must Have |
@@ -245,10 +258,10 @@
 | US-1002 | Felhasználói felület lokalizációja (i18n) | ⬜ Nem kezdett | Should Have |
 | US-1101 | Donation gomb és pop-up | ⬜ Nem kezdett | Should Have |
 | US-1102 | Donation átirányítás | ⬜ Nem kezdett | Should Have |
-| US-1201 | Futball API kiválasztása (kutatás) | ⬜ Nem kezdett | Should Have |
+| US-1201 | Futball API kiválasztása (kutatás) | ✅ Kész | Should Have |
 | US-1202 | Futball API szinkronizációs service | ⬜ Nem kezdett | Should Have |
 | US-1203 | Automatikus adatszinkron cron job | ⬜ Nem kezdett | Should Have |
 
 ---
 
-**Haladás: 16 / 37 story kész** — Must Have: 14/27 ✅, Should Have: 2/9 ✅
+**Haladás: 17 / 37 story kész** — Must Have: 14/27 ✅, Should Have: 3/9 ✅

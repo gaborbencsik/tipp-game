@@ -499,3 +499,31 @@ tipp-game/
 - Utility-first, mobile-first design
 - v4: CSS-first konfiguráció (`@import "tailwindcss"` – nincs `tailwind.config.js`)
 - Kis bundle (built-in tree-shaking)
+
+---
+
+## 11. E12 – Futball API (Adatszinkron)
+
+### Döntés: api-football.com (api-sports.io)
+
+**Választott API:** https://www.api-football.com
+
+| Szempont | Érték |
+|----------|-------|
+| Base URL | `https://v3.football.api-sports.io` |
+| Auth | Header: `x-apisports-key: YOUR_KEY` |
+| Free tier | 100 req/nap (fejlesztés + NB II tesztelés) |
+| Pro tier | $19/hó – 7,500 req/nap (MVP, VB 2026 alatt) |
+
+**Fedezett ligák (projekt szempontjából):**
+- FIFA World Cup 2026 (league ID: 1)
+- UEFA Nations League (league ID: ~5)
+- Internacionális barátságos (league ID: ~10)
+- Magyar NB I – Nemzeti Bajnokság I (league ID: ~271)
+- Magyar NB II (league ID: ~272) — tesztelési célra
+
+> ⚠️ Liga ID-kat verifikálni kell a `GET /leagues?country=Hungary` hívással a saját API key-jel (implementáció előtt, US-1202 részeként).
+
+**Indoklás:** Egyetlen $19/hó-os tier lefedi az összes szükséges ligát. Az egyetlen API, ahol a Magyar NB II elérhető — football-data.org-on NB II nem létezik egyik tier-en sem.
+
+**Részletes kutatási összefoglaló:** `plans/05-football-api.md`
