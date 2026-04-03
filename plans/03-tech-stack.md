@@ -32,7 +32,7 @@
 | Real-time | **Server-Sent Events (SSE)** | Ranglista frissítés |
 | State mgmt | **Pinia** | Vue 3 natív store |
 | API stílus | **REST** | JSON |
-| Hosting | **Railway** (backend) + **Supabase** (DB + Auth) + **Vercel** (frontend) | |
+| Hosting | **Render** (backend) + **Supabase** (DB + Auth) + **Vercel** (frontend) | |
 | Monorepo | **npm workspaces** | |
 | Runtime | **Node.js 24.14.1** (LTS) | |
 | DB verzió | **PostgreSQL 18.3** (Supabase / Docker) | |
@@ -258,7 +258,7 @@ stores/
 │                          DEPLOYMENT                                   │
 │                                                                      │
 │  ┌──────────┐       ┌──────────────┐       ┌──────────────────────┐  │
-│  │  Vercel  │       │   Railway    │       │      Supabase        │  │
+│  │  Vercel  │       │    Render    │       │      Supabase        │  │
 │  │          │       │              │       │                      │  │
 │  │ Vue SPA  │ HTTPS │  Koa.js API  │ SQL   │  ┌────────────────┐  │  │
 │  │ (Static  │──────►│  (REST +     │──────►│  │ PostgreSQL 18.3│  │  │
@@ -274,15 +274,18 @@ stores/
 | Komponens | Platform | Indoklás |
 |-----------|----------|----------|
 | Frontend (Vue SPA) | **Vercel** | Ingyenes, CDN, preview deployments PR-onként |
-| Backend (Koa) | **Railway** | Egyszerű Node.js deploy, env vars kezelés |
+| Backend (Koa) | **Render** | Node.js deploy, env vars kezelés, pre-deploy command támogatás |
 | PostgreSQL | **Supabase** | Managed PG 18.3, ingyenes tier (500MB), connection pooling |
 | Auth | **Supabase Auth** | Google OAuth, session kezelés, email+jelszó opció |
-| Alternatíva all-in-one | **Render** | Ingyenes tier, de lassabb cold start |
+
+**Render deploy konfiguráció (backend):**
+- Build command: `npm run build` (TypeScript → `dist/`)
+- Pre-deploy command: `npm run migrate:prod` (`node dist/db/migrate.js` — Drizzle migráció, idempotens)
+- Start command: `npm run start` (`node dist/index.js`)
 
 **Environment-ek:**
 - `development` – local Docker Compose (sima PostgreSQL 18.3 – Supabase API nélkül, Supabase Auth bypass)
-- `staging` – Supabase staging project + Railway preview
-- `production` – Vercel + Railway + Supabase prod project
+- `production` – Vercel + Render + Supabase prod project
 
 **Local dev Docker Compose felépítés:**
 ```yaml
