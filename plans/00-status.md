@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-04-03 (US-1201 Futball API kutatás kész)
+> Utoljára frissítve: 2026-04-03 (US-601/602/606 csoportok kész, profil displayName fix)
 
 ## Kész user story-k
 
@@ -21,6 +21,8 @@
 | **US-303** | Profil megtekintése és szerkesztése | ✅ Kész |
 | **US-805** | Felhasználók kezelése (admin) | ✅ Kész |
 | **US-1001** | Hamburger menü / AppLayout (Gmail-stílus) | ✅ Kész |
+| **US-601** | Csoport létrehozása | ✅ Kész |
+| **US-602** | Csatlakozás csoporthoz | ✅ Kész |
 | **US-1201** | Futball API kiválasztása (kutatás) | ✅ Kész |
 
 ### US-001 – Elfogadási kritériumok teljesítve
@@ -212,10 +214,24 @@
 - ✅ `.env.example` frissítve: `FOOTBALL_API_KEY`, `FOOTBALL_API_BASE_URL`, `FOOTBALL_API_*_LEAGUE_ID`
 - ✅ Részletes kutatási dokumentum: `plans/05-football-api.md`
 
+### US-601/602/606 – Elfogadási kritériumok teljesítve
+
+- ✅ `groups.service.ts`: `getMyGroups`, `createGroup` (max 5 létrehozott, 8 char invite code retry), `joinGroup` (404/410/409/422 hibák)
+- ✅ `groups.routes.ts`: `GET /api/groups/mine`, `POST /api/groups`, `POST /api/groups/join`
+- ✅ `groups.store.ts` (frontend Pinia): `fetchMyGroups`, `createGroup`, `joinGroup` + loading/error state
+- ✅ `GroupsView.vue`: csoport lista, inline create/join form, invite code megjelenítés + copy gomb ("Másolva!" 2s visszajelzés)
+- ✅ `/groups` route – `requiresAuth: true`
+- ✅ AppLayout nav: Meccsek (első), Csoportok (második)
+- ✅ Kezdőoldal (`/`) → `MatchesView` (nem GroupsView)
+- ✅ 205 frontend + 100 backend teszt, typecheck CLEAN
+
+### US-303 bugfix – displayName persistencia javítva
+
+- ✅ `upsertUser` már nem írja felül a `displayName`-t `onConflictDoUpdate`-ban
+- ✅ Csak INSERT állítja be az initial `displayName`-t a JWT-ből
+- ✅ `updateProfile` által mentett név megmarad oldal-újratöltés után is
+
 ---
-|----------|-----------|-----------|
-| US-401 | Automatikus pontszámítás | Must Have |
-| US-402 | Konfigurálható pontrendszer | Must Have |
 
 ## Összes story státusz
 
@@ -241,12 +257,12 @@
 | US-403 | Pontozás tesztelhetősége | ✅ Kész (US-003 részeként) | Must Have |
 | US-501 | Globális ranglista | ⬜ Nem kezdett | Must Have |
 | US-502 | Ranglista szűrés/keresés | ⬜ Nem kezdett | Should Have |
-| US-601 | Csoport létrehozása | ⬜ Nem kezdett | Must Have |
-| US-602 | Csatlakozás csoporthoz | ⬜ Nem kezdett | Must Have |
+| US-601 | Csoport létrehozása | ✅ Kész | Must Have |
+| US-602 | Csatlakozás csoporthoz | ✅ Kész | Must Have |
 | US-603 | Csoportonkénti ranglista | ⬜ Nem kezdett | Must Have |
 | US-604 | Csoport kezelése (admin) | ⬜ Nem kezdett | Must Have |
 | US-605 | Több csoporthoz tartozás | ⬜ Nem kezdett | Must Have |
-| US-606 | Csoportok mint főoldal és navigáció | ⬜ Nem kezdett | Must Have |
+| US-606 | Csoportok navigáció (AppLayout) | ✅ Kész | Must Have |
 | US-701 | User/Admin szerepkörök | ✅ Kész | Must Have |
 | US-801 | Mérkőzés létrehozása | ✅ Kész | Must Have |
 | US-802 | Mérkőzés szerkesztése/törlése | ✅ Kész | Must Have |
@@ -265,4 +281,4 @@
 
 ---
 
-**Haladás: 17 / 38 story kész** — Must Have: 14/28 ✅, Should Have: 3/9 ✅
+**Haladás: 20 / 38 story kész** — Must Have: 17/28 ✅, Should Have: 3/9 ✅
