@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-04-04 (US-401 automatikus pontszámítás kész, MatchesView tipp+pont megjelenítés)
+> Utoljára frissítve: 2026-04-04 (US-501 globális ranglista kész)
 
 ## Kész user story-k
 
@@ -246,9 +246,17 @@
 - ✅ Csak INSERT állítja be az initial `displayName`-t a JWT-ből
 - ✅ `updateProfile` által mentett név megmarad oldal-újratöltés után is
 
----
+### US-501 – Elfogadási kritériumok teljesítve
 
-## Összes story státusz
+- ✅ `leaderboard.service.ts`: `getLeaderboard()` – SQL aggregáció, `coalesce(sum(pointsGlobal), 0)`, `count(case when pointsGlobal > 0)`, döntetlen kezelés (tied rank)
+- ✅ `GET /api/leaderboard` endpoint – `authMiddleware` mögött
+- ✅ `leaderboard.store.ts` (Pinia): `fetchLeaderboard()`, `getAccessToken()` helper (dev bypass kompatibilis)
+- ✅ `LeaderboardView.vue`: rangsor táblázat (helyezés, avatar, név, tippszám, helyes tipp, pont), saját sor kiemelve (kék háttér + "(te)" jelzés)
+- ✅ `/leaderboard` route – `requiresAuth: true`
+- ✅ AppLayout Ranglista nav link engedélyezve (nem disabled)
+- ✅ 205 frontend teszt, typecheck CLEAN
+
+---
 
 | Story ID | Megnevezés | Státusz | Prioritás |
 |----------|-----------|---------|-----------|
@@ -270,7 +278,7 @@
 | US-401 | Automatikus pontszámítás | ✅ Kész | Must Have |
 | US-402 | Konfigurálható pontrendszer | ⬜ Nem kezdett | Must Have |
 | US-403 | Pontozás tesztelhetősége | ✅ Kész (US-003 részeként) | Must Have |
-| US-501 | Globális ranglista | ⬜ Nem kezdett | Must Have |
+| US-501 | Globális ranglista | ✅ Kész | Must Have |
 | US-502 | Ranglista szűrés/keresés | ⬜ Nem kezdett | Should Have |
 | US-601 | Csoport létrehozása | ✅ Kész | Must Have |
 | US-602 | Csatlakozás csoporthoz | ✅ Kész | Must Have |
@@ -298,4 +306,4 @@
 
 ---
 
-**Haladás: 23 / 40 story kész** — Must Have: 19/28 ✅, Should Have: 4/11 ✅
+**Haladás: 24 / 40 story kész** — Must Have: 20/28 ✅, Should Have: 4/11 ✅

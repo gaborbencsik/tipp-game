@@ -136,3 +136,13 @@ export interface GroupInput {
 export interface JoinGroupInput {
   readonly inviteCode: string
 }
+
+export interface LeaderboardEntry {
+  readonly rank: number
+  readonly userId: string
+  readonly displayName: string
+  readonly avatarUrl: string | null
+  readonly totalPoints: number
+  readonly predictionCount: number
+  readonly correctCount: number
+}

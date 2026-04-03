@@ -1,4 +1,4 @@
-import type { User, Match, MatchesFilters, MatchInput, MatchResultInput, Prediction, PredictionInput, Team, TeamInput, AdminUser, Group, GroupInput, JoinGroupInput } from '../types/index.js'
+import type { User, Match, MatchesFilters, MatchInput, MatchResultInput, Prediction, PredictionInput, Team, TeamInput, AdminUser, Group, GroupInput, JoinGroupInput, LeaderboardEntry } from '../types/index.js'
 
 const BASE_URL = (import.meta.env.VITE_API_URL ?? '') + '/api'
 
@@ -149,5 +149,11 @@ export const api = {
           headers: { Authorization: `Bearer ${token}` },
         }),
     },
+  },
+  leaderboard: {
+    get: (token: string) =>
+      request<LeaderboardEntry[]>('/leaderboard', {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
   },
 }

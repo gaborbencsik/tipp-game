@@ -57,6 +57,12 @@ export const router = createRouter({
       meta: { requiresAuth: true, requiresAdmin: true },
     },
     {
+      path: '/leaderboard',
+      name: 'leaderboard',
+      component: () => import('../views/LeaderboardView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/profile',
       name: 'profile',
       component: () => import('../views/ProfileView.vue'),
