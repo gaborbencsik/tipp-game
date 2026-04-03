@@ -15,6 +15,7 @@ help:
 	@echo "  Adatbázis"
 	@echo "    make db-up         Csak a PG container indítása"
 	@echo "    make db-down       Összes container leállítása (volume megmarad)"
+	@echo "    make db-shell      psql shell a local DB-ben"
 	@echo "    make db-migrate    Drizzle migrációk futtatása"
 	@echo "    make db-seed       Seed adatok betöltése"
 	@echo "    make db-reset      DB törlése és újrainicializálása"
@@ -54,6 +55,9 @@ db-migrate:
 	npm run db:generate --workspace=packages/backend
 	npm run db:migrate --workspace=packages/backend
 
+db-shell:
+	docker compose exec db psql -U tipp_user -d tipp_game
+
 db-seed:
 	npm run db:seed --workspace=packages/backend
 
@@ -84,3 +88,9 @@ build:
 clean:
 	docker compose down -v
 	rm -rf node_modules packages/*/node_modules
+
+
+                  id                  |      name      | is_global_default | exact_score | correct_winner_and_diff | correct_winner | correct_draw | incorrect |          created_at           |          updated_at           
+--------------------------------------+----------------+-------------------+-------------+-------------------------+----------------+--------------+-----------+-------------------------------+-------------------------------
+ 97a5af1f-5682-48ce-895a-2f7918bf337e | Global Default | t                 |           3 |                       2 |              1 |            2 |         0 | 2026-03-28 15:09:44.479089+00 | 2026-03-28 15:09:44.479089+00
+(1 row)

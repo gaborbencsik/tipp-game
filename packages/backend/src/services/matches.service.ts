@@ -2,6 +2,7 @@ import { alias } from 'drizzle-orm/pg-core'
 import { and, eq, isNull } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { matches, teams, venues, matchResults } from '../db/schema/index.js'
+import { calculateAndSavePoints } from './scoring.service.js'
 import type { Match, MatchesFilters, MatchInput, MatchRow, MatchResultRow } from '../types/index.js'
 
 const homeTeamAlias = alias(teams, 'home_team')
@@ -143,6 +144,8 @@ export async function setResult(
     .update(matches)
     .set({ status: 'finished', updatedAt: new Date() })
     .where(eq(matches.id, matchId))
+
+  await calculateAndSavePoints(matchId, { homeGoals, awayGoals })
 
   return row
 }

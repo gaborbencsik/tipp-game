@@ -153,15 +153,22 @@
               <!-- Lezárt meccs -->
               <template v-else>
                 <div class="text-center text-xs text-gray-400">
-                  <span v-if="predictionsStore.predictionByMatchId(match.id)" class="mr-2">
-                    Az én tippem:
-                    <strong class="text-gray-600">
-                      {{ predictionsStore.predictionByMatchId(match.id)!.homeGoals }}
-                      –
-                      {{ predictionsStore.predictionByMatchId(match.id)!.awayGoals }}
-                    </strong>
-                  </span>
-                  <span>Tippelés lezárva</span>
+                  <template v-if="predictionsStore.predictionByMatchId(match.id)">
+                    <span class="mr-2">
+                      Tippem:
+                      <strong class="text-gray-600">
+                        {{ predictionsStore.predictionByMatchId(match.id)!.homeGoals }}
+                        –
+                        {{ predictionsStore.predictionByMatchId(match.id)!.awayGoals }}
+                      </strong>
+                    </span>
+                    <span v-if="predictionsStore.predictionByMatchId(match.id)!.pointsGlobal !== null">
+                      · <strong class="text-blue-600">{{ predictionsStore.predictionByMatchId(match.id)!.pointsGlobal }} pont</strong>
+                    </span>
+                  </template>
+                  <template v-else>
+                    <span>Nem tippeltél erre a meccsre</span>
+                  </template>
                 </div>
               </template>
             </div>

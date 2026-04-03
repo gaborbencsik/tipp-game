@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-04-03 (UX-001 tipp input UX kész)
+> Utoljára frissítve: 2026-04-04 (US-401 automatikus pontszámítás kész, MatchesView tipp+pont megjelenítés)
 
 ## Kész user story-k
 
@@ -225,6 +225,14 @@
 - ✅ Kezdőoldal (`/`) → `MatchesView` (nem GroupsView)
 - ✅ 205 frontend + 100 backend teszt, typecheck CLEAN
 
+### US-401 – Elfogadási kritériumok teljesítve
+
+- ✅ `calculateAndSavePoints(matchId, result)` — lekéri az összes tippet a meccsre + global scoring config, kiszámolja és elmenti a `pointsGlobal`-t minden tippre
+- ✅ `setResult` meghívja `calculateAndSavePoints`-t eredmény rögzítése után
+- ✅ Idempotens: újraszámítás felülírja a régi pontokat
+- ✅ Ha nincs global scoring config → `Error: No global scoring config found`
+- ✅ 5 új teszt (`calculate-and-save-points.test.ts`), 105 backend teszt, typecheck CLEAN
+
 ### UX-001 – Elfogadási kritériumok teljesítve
 
 - ✅ **Autosave debounce:** 2s inaktivitás után automatikusan elmenti a tippet, nincs szükség "Mentés" gombra
@@ -259,7 +267,7 @@
 | US-303 | Profil szerkesztése | ✅ Kész | Should Have |
 | US-304 | Email + jelszó auth | ✅ Kész | Should Have |
 | US-305 | Session perzisztencia oldal-újratöltés után | ✅ Kész | Must Have |
-| US-401 | Automatikus pontszámítás | ⬜ Nem kezdett | Must Have |
+| US-401 | Automatikus pontszámítás | ✅ Kész | Must Have |
 | US-402 | Konfigurálható pontrendszer | ⬜ Nem kezdett | Must Have |
 | US-403 | Pontozás tesztelhetősége | ✅ Kész (US-003 részeként) | Must Have |
 | US-501 | Globális ranglista | ⬜ Nem kezdett | Must Have |
@@ -290,4 +298,4 @@
 
 ---
 
-**Haladás: 22 / 40 story kész** — Must Have: 18/28 ✅, Should Have: 4/11 ✅
+**Haladás: 23 / 40 story kész** — Must Have: 19/28 ✅, Should Have: 4/11 ✅

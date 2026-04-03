@@ -207,16 +207,16 @@ describe('MatchesView', () => {
     expect(wrapper.find('[data-testid="save-button"]').exists()).toBe(false)
   })
 
-  it('finished match → prediction form hidden, Tippelés lezárva text shown', async () => {
+  it('finished match → prediction form hidden, no tip shown', async () => {
     const { wrapper } = await mountView([MATCH_FINISHED])
     expect(wrapper.find('[data-testid="input-home"]').exists()).toBe(false)
-    expect(wrapper.text()).toContain('Tippelés lezárva')
+    expect(wrapper.text()).toContain('Nem tippeltél erre a meccsre')
   })
 
   it('live match → prediction form hidden', async () => {
     const { wrapper } = await mountView([MATCH_LIVE])
     expect(wrapper.find('[data-testid="input-home"]').exists()).toBe(false)
-    expect(wrapper.text()).toContain('Tippelés lezárva')
+    expect(wrapper.text()).toContain('Nem tippeltél erre a meccsre')
   })
 
   it('existing prediction → inputs pre-filled', async () => {
