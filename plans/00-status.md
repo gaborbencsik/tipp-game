@@ -246,6 +246,7 @@
 | US-603 | Csoportonkénti ranglista | ⬜ Nem kezdett | Must Have |
 | US-604 | Csoport kezelése (admin) | ⬜ Nem kezdett | Must Have |
 | US-605 | Több csoporthoz tartozás | ⬜ Nem kezdett | Must Have |
+| US-606 | Csoportok mint főoldal és navigáció | ⬜ Nem kezdett | Must Have |
 | US-701 | User/Admin szerepkörök | ✅ Kész | Must Have |
 | US-801 | Mérkőzés létrehozása | ✅ Kész | Must Have |
 | US-802 | Mérkőzés szerkesztése/törlése | ✅ Kész | Must Have |
@@ -264,4 +265,4 @@
 
 ---
 
-**Haladás: 17 / 37 story kész** — Must Have: 14/27 ✅, Should Have: 3/9 ✅
+**Haladás: 17 / 38 story kész** — Must Have: 14/28 ✅, Should Have: 3/9 ✅

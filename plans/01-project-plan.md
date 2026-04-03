@@ -402,8 +402,27 @@ Mint **bejelentkezett felhasználó**, szeretnék **saját csoportot létrehozni
 - [ ] Létrehozás után a rendszer generál egy egyedi meghívó kódot (6-8 karakteres alfanumerikus)
 - [ ] A létrehozó automatikusan a csoport admin tagja lesz
 - [ ] Egy user legfeljebb 5 csoportot hozhat létre (spamvédelem)
+- [ ] Ha a usernek még nincs egyetlen csoportja sem, a `/groups` oldalon középen egy "Csoport létrehozása" CTA gomb jelenik meg (üres állapot)
+- [ ] A "Csoport létrehozása" gomb/form a `/groups` oldalon érhető el (nem külön route)
 
 **Komplexitás:** M
+**Prioritás:** Must Have
+
+---
+
+#### US-606: Csoportok mint főoldal és navigáció
+
+**Story:**
+Mint **bejelentkezett felhasználó**, szeretnék **bejelentkezés után közvetlenül a csoportjaim oldalát látni**, hogy **azonnal a versenyeim áttekintésével kezdjek**.
+
+**Elfogadási kritériumok:**
+- [ ] Bejelentkezés után (és a `/` root route-ra navigálva) a rendszer a `/groups` oldalra irányít (nem `/matches`)
+- [ ] A bal oldali navigációs sávban a **Csoportok az első elem** (aktív router-link, nem disabled placeholder)
+- [ ] A Meccsek a második nav item marad
+- [ ] A `/groups` route létezik és `requiresAuth: true` védelem alatt áll
+- [ ] Az AppLayout sidebar Csoportok gombjánál az aktív stílus (`bg-blue-100 text-blue-800 font-semibold`) helyesen jelenik meg a `/groups` oldalon
+
+**Komplexitás:** S
 **Prioritás:** Must Have
 
 ---
@@ -801,6 +820,7 @@ Mint **fejlesztő**, szeretnék **egy ütemezett cron job-ot, amely percenként 
 | US-603 | Csoportonkénti ranglista | M | Must Have |
 | US-604 | Csoport kezelése (admin) | L | Must Have |
 | US-605 | Több csoporthoz tartozás | S | Must Have |
+| US-606 | Csoportok mint főoldal és navigáció | S | Must Have |
 | US-701 | User/Admin szerepkörök | M | Must Have |
 | US-801 | Mérkőzés létrehozása | M | Must Have |
 | US-802 | Mérkőzés szerkesztése/törlése | M | Must Have |
