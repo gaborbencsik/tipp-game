@@ -128,14 +128,14 @@ describe('AdminUsersView', () => {
     expect(wrapper.text()).toContain('admin@example.com')
   })
 
-  it('role-btn click → store.updateUserRole called', async () => {
+  it('role-select change → store.updateUserRole called', async () => {
     const updated: AdminUser = { ...USER_1, role: 'admin' }
     mockApiUsersUpdateRole.mockResolvedValue(updated)
     const { wrapper, store } = await mountView([USER_1])
     const updateRoleSpy = vi.spyOn(store, 'updateUserRole').mockResolvedValue()
 
-    const roleBtns = wrapper.findAll('[data-testid="role-btn"]')
-    await roleBtns[0]!.trigger('click')
+    const roleSelects = wrapper.findAll('[data-testid="role-select"]')
+    await roleSelects[0]!.setValue('admin')
     await flushPromises()
 
     expect(updateRoleSpy).toHaveBeenCalledWith(USER_1.id, 'admin')
@@ -154,21 +154,21 @@ describe('AdminUsersView', () => {
     expect(banSpy).toHaveBeenCalledWith(USER_1.id, true)
   })
 
-  it('own account → role-btn and ban-btn are disabled', async () => {
+  it('own account → role-select and ban-btn are disabled', async () => {
     const { wrapper } = await mountView([USER_2])
     const rows = wrapper.findAll('[data-testid="user-row"]')
     expect(rows).toHaveLength(1)
-    const roleBtn = wrapper.find('[data-testid="role-btn"]')
+    const roleSelect = wrapper.find('[data-testid="role-select"]')
     const banBtn = wrapper.find('[data-testid="ban-btn"]')
-    expect(roleBtn.attributes('disabled')).toBeDefined()
+    expect(roleSelect.attributes('disabled')).toBeDefined()
     expect(banBtn.attributes('disabled')).toBeDefined()
   })
 
-  it('other user → role-btn and ban-btn are enabled', async () => {
+  it('other user → role-select and ban-btn are enabled', async () => {
     const { wrapper } = await mountView([USER_1])
-    const roleBtn = wrapper.find('[data-testid="role-btn"]')
+    const roleSelect = wrapper.find('[data-testid="role-select"]')
     const banBtn = wrapper.find('[data-testid="ban-btn"]')
-    expect(roleBtn.attributes('disabled')).toBeUndefined()
+    expect(roleSelect.attributes('disabled')).toBeUndefined()
     expect(banBtn.attributes('disabled')).toBeUndefined()
   })
 })

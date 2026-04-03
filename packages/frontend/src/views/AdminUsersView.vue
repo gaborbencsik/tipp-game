@@ -34,12 +34,16 @@
             <td class="px-4 py-2">{{ user.email }}</td>
             <td class="px-4 py-2">{{ user.displayName }}</td>
             <td class="px-4 py-2">
-              <span
-                :class="user.role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-700'"
-                class="px-2 py-0.5 rounded-full text-xs font-medium"
+              <select
+                data-testid="role-select"
+                :value="user.role"
+                :disabled="user.id === authStore.user?.id"
+                class="text-xs border border-gray-300 rounded px-2 py-1 bg-white disabled:opacity-40 disabled:cursor-not-allowed"
+                @change="onRoleChange(user, ($event.target as HTMLSelectElement).value as 'user' | 'admin')"
               >
-                {{ user.role === 'admin' ? 'Admin' : 'User' }}
-              </span>
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+              </select>
             </td>
             <td class="px-4 py-2">
               <span
@@ -51,14 +55,6 @@
             </td>
             <td class="px-4 py-2 text-gray-500">{{ formatDate(user.createdAt) }}</td>
             <td class="px-4 py-2 flex gap-2">
-              <button
-                data-testid="role-btn"
-                :disabled="user.id === authStore.user?.id"
-                class="px-3 py-1 text-xs rounded border border-gray-300 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
-                @click="toggleRole(user)"
-              >
-                {{ user.role === 'admin' ? 'User-ré' : 'Admin-ná' }}
-              </button>
               <button
                 data-testid="ban-btn"
                 :disabled="user.id === authStore.user?.id"
@@ -92,8 +88,7 @@ function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('hu-HU')
 }
 
-async function toggleRole(user: AdminUser): Promise<void> {
-  const newRole = user.role === 'admin' ? 'user' : 'admin'
+async function onRoleChange(user: AdminUser, newRole: 'user' | 'admin'): Promise<void> {
   await store.updateUserRole(user.id, newRole)
 }
 
