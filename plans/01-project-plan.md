@@ -817,7 +817,27 @@ Mint **fejlesztő**, szeretnék **a `matches` táblán egy `league_id` foreign k
 
 ---
 
-## 3. Prioritás összefoglaló
+### E14 – Bugok és stabilitás
+
+#### BUG-001: Admin users oldalon minden usernél ugyanaz a Név jelenik meg
+
+**Story:**
+Mint **admin**, szeretném, hogy **az admin felhasználók listájában minden user a saját megjelenítési nevét mutassa**, mert jelenleg minden sornál ugyanaz a név szerepel.
+
+**Elfogadási kritériumok:**
+- [ ] `GET /api/admin/users` response-ban minden user objektum saját `displayName`-jét tartalmazza
+- [ ] Ha a backend helyes adatot ad vissza, a frontend is helyesen rendereli soronként a különböző neveket
+- [ ] A hiba forrása azonosítva (backend query / frontend store / template rendering)
+
+**Technikai megjegyzések:**
+- Gyanús helyek: `admin-users.service.ts` `getUsers()` query, `admin-users.store.ts` store state, `AdminUsersView.vue` template
+- A `upsertUser` displayName-fix (2026-04-03) nem érintette az admin users list query-t
+- Debug lépés: network tab-on a `/api/admin/users` response tartalmát ellenőrizni
+
+**Komplexitás:** S
+**Prioritás:** Should Have
+
+---
 
 | Story ID | Megnevezés | Komplexitás | Prioritás |
 |----------|-----------|-------------|-----------|
@@ -863,6 +883,7 @@ Mint **fejlesztő**, szeretnék **a `matches` táblán egy `league_id` foreign k
 | US-1202 | Futball API szinkronizációs service | M | Should Have |
 | US-1203 | Automatikus adatszinkron cron job | M | Should Have |
 | US-1301 | Liga entitás bevezetése a meccsekhez | M | Should Have |
+| BUG-001 | Admin users lista: minden sornál ugyanaz a név | S | Should Have |
 
 **Összesítés:**
 - Must Have: 26 story (4 technikai + 22 product)
