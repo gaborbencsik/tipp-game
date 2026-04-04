@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-04-04 (US-502 ranglista nézet-váltó kész)
+> Utoljára frissítve: 2026-04-04 (BUG-001 updateProfile WHERE bug javítva)
 
 ## Kész user story-k
 
@@ -312,7 +312,7 @@
 | US-1201 | Futball API kiválasztása (kutatás) | ✅ Kész | Should Have |
 | US-1202 | Futball API szinkronizációs service | ⬜ Nem kezdett | Should Have |
 | US-1203 | Automatikus adatszinkron cron job | ⬜ Nem kezdett | Should Have |
-| BUG-001 | Admin users lista: minden sornál ugyanaz a név | ⬜ Nem kezdett | Should Have |
+| BUG-001 | Admin users lista: minden sornál ugyanaz a név | ✅ Kész | Should Have |
 | UX-001 | Tipp input UX javítások | ✅ Kész | Should Have |
 
 ---

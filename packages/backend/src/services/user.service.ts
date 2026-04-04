@@ -1,6 +1,6 @@
 import { db } from '../db/client.js'
 import { users } from '../db/schema/index.js'
-import { eq, isNull } from 'drizzle-orm'
+import { and, eq, isNull } from 'drizzle-orm'
 import type { AuthenticatedUser, DbUser } from '../types/index.js'
 
 class AppError extends Error {
@@ -69,7 +69,7 @@ export async function updateProfile(userId: string, displayName: string): Promis
   const rows = await db
     .update(users)
     .set({ displayName, updatedAt: new Date() })
-    .where(eq(users.id, userId) && isNull(users.deletedAt))
+    .where(and(eq(users.id, userId), isNull(users.deletedAt)))
     .returning()
 
   const row = rows[0]
