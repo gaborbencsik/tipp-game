@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 flex flex-col">
+  <div class="h-screen bg-gray-50 flex flex-col overflow-hidden">
 
     <!-- Topbar -->
     <header class="flex items-center gap-3 bg-white px-2 py-2 h-14 shrink-0">
@@ -20,7 +20,7 @@
       </div>
     </header>
 
-    <div class="flex flex-1 min-h-0 relative">
+    <div class="flex flex-1 min-h-0 relative h-full">
 
       <!-- Mobile overlay backdrop -->
       <div
@@ -32,7 +32,7 @@
       <!-- Sidebar -->
       <aside
         class="bg-white flex flex-col py-2 overflow-hidden transition-all duration-200
-               md:relative md:shrink-0
+               md:relative md:shrink-0 md:h-full
                max-md:fixed max-md:top-14 max-md:bottom-0 max-md:left-0 max-md:z-20"
         :class="[
           sidebarOpen ? 'w-56' : 'md:w-14 max-md:w-0',
@@ -104,7 +104,7 @@
       </aside>
 
       <!-- Main content -->
-      <div class="flex-1 p-4 md:p-8 min-w-0">
+      <div class="flex-1 p-4 md:p-8 min-w-0 overflow-y-auto">
         <div class="max-w-5xl">
           <slot />
         </div>

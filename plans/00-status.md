@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-04-05 (US-203 Tippjeim inline szerkesztés kész, BUG-001 javítva, nav link hozzáadva)
+> Utoljára frissítve: 2026-04-05 (US-203 kész, BUG-001 javítva, timezone fix, AppLayout h-screen layout fix)
 
 ## Kész user story-k
 

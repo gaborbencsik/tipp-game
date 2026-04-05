@@ -676,11 +676,19 @@ Mint **felhasználó**, szeretnék **az alkalmazást a saját nyelvemen használ
 Mint **bejelentkezett felhasználó**, szeretnék **látni egy diszkrét támogatási lehetőséget az alkalmazásban**, hogy **ha szeretném, könnyen megtehetem a projekt fenntartásához való hozzájárulást**.
 
 **Elfogadási kritériumok:**
-- [ ] Az alkalmazás minden oldalán megjelenik egy állandó, de visszafogott "Támogatás" elem (pl. kis szív/kávé ikon a footer-ben vagy a nav jobb sarkában)
-- [ ] Az elemre kattintva egy modal / pop-up jelenik meg köszönettel és rövid leírással
+- [ ] A bal oldali navigációs sávban (AppLayout sidebar) a nav itemek alatt, az aljára rögzítve megjelenik egy "🍺 Támogasd a projektet" gomb
+- [ ] A gomb stílusa visszafogott (amber szín), illeszkedik a nav többi eleméhez; összecsukott sidebarban csak az emoji látható
+- [ ] A gombra kattintva egy modal / pop-up jelenik meg köszönettel és rövid leírással
 - [ ] Ebben a fázisban a pop-up csak egy "Köszönjük!" üzenetet tartalmaz, funkcionális fizetési link nélkül
 - [ ] A gomb nem tolakodó: nem nyílik meg automatikusan, csak kattintásra
 - [ ] A vizuális stílus illeszkedik az app többi eleméhez (Tailwind, kis méret, muted szín)
+
+**Technikai megjegyzések (AppLayout layout fix — szükséges előfeltétel):**
+- A gyökér `div` legyen `h-screen flex flex-col overflow-hidden` (jelenleg `min-h-screen`)
+- A `flex flex-1 min-h-0` container kapjon `h-full`-t
+- Az `<aside>` kapjon `md:h-full`-t
+- A `<nav>` legyen `flex-1` hogy a donation gomb `mt-auto`-val az aljára kerüljön
+- A main content area kapjon `overflow-y-auto`-t, hogy a tartalom scrollozható maradjon
 
 **Komplexitás:** S
 **Prioritás:** Should Have
