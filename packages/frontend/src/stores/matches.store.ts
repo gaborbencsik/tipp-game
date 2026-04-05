@@ -42,7 +42,6 @@ export const useMatchesStore = defineStore('matches', () => {
       month: 'long',
       day: 'numeric',
       weekday: 'long',
-      timeZone: 'UTC',
     })
 
     return Array.from(groups.entries()).map(([date, dateMatches]) => ({
