@@ -63,6 +63,12 @@ export const router = createRouter({
       meta: { requiresAuth: true, requiresAdmin: true },
     },
     {
+      path: '/my-tips',
+      name: 'my-tips',
+      component: () => import('../views/MyTipsView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/leaderboard',
       name: 'leaderboard',
       component: () => import('../views/LeaderboardView.vue'),

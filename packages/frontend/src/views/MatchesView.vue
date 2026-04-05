@@ -53,7 +53,8 @@
           <div
             v-for="match in group.matches"
             :key="match.id"
-            class="bg-white rounded-lg shadow-sm border border-gray-100 p-4 mb-3"
+            class="bg-white rounded-lg shadow-sm border p-4 mb-3"
+            :class="cardBorderClass(match)"
           >
             <router-link
               :to="`/matches/${match.id}`"
@@ -97,6 +98,7 @@
               <!-- Tippelhető meccs -->
               <template v-if="isTippable(match)">
                 <div class="flex items-center gap-2 justify-center">
+                  <span class="text-sm">{{ predictionsStore.predictionByMatchId(match.id) ? '✅' : '⏳' }}</span>
                   <input
                     :ref="el => { if (el) homeInputs[match.id] = el as HTMLInputElement }"
                     :value="draftGoals[match.id]?.home ?? ''"
@@ -154,6 +156,7 @@
               <template v-else>
                 <div class="text-center text-xs text-gray-400">
                   <template v-if="predictionsStore.predictionByMatchId(match.id)">
+                    <span class="mr-1">🔒</span>
                     <span class="mr-2">
                       Tippem:
                       <strong class="text-gray-600">
@@ -167,7 +170,7 @@
                     </span>
                   </template>
                   <template v-else>
-                    <span>Nem tippeltél erre a meccsre</span>
+                    <span>❌ Nem tippeltél erre a meccsre</span>
                   </template>
                 </div>
               </template>
@@ -225,6 +228,13 @@ function initDrafts(): void {
 
 function isTippable(match: Match): boolean {
   return match.status === 'scheduled' && new Date(match.scheduledAt) > now.value
+}
+
+function cardBorderClass(match: Match): string {
+  const prediction = predictionsStore.predictionByMatchId(match.id)
+  if (isTippable(match) && !prediction) return 'border-amber-300 bg-amber-50'
+  if ((match.status === 'finished' || match.status === 'live') && !prediction) return 'border-red-200'
+  return 'border-gray-100'
 }
 
 function onGoalFocus(matchId: string, side: 'home' | 'away', event: FocusEvent): void {

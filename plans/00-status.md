@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-04-04 (BUG-001 updateProfile WHERE bug javítva)
+> Utoljára frissítve: 2026-04-05 (US-203 Tippjeim inline szerkesztés kész, BUG-001 javítva, nav link hozzáadva)
 
 ## Kész user story-k
 
@@ -214,6 +214,20 @@
 - ✅ `.env.example` frissítve: `FOOTBALL_API_KEY`, `FOOTBALL_API_BASE_URL`, `FOOTBALL_API_*_LEAGUE_ID`
 - ✅ Részletes kutatási dokumentum: `plans/05-football-api.md`
 
+### US-203 – Elfogadási kritériumok teljesítve
+
+- ✅ `MyTipsView.vue`: `/my-tips` route – saját tippek összesítő nézet AppLayout-ban
+- ✅ Meccsek napok szerint csoportosítva, hu-HU dátumcímkével
+- ✅ Státusz ikonok: ✅ (tippelt, nyitott), ⏳ (nem tippelt, nyitott), 🔒 (lezárt + tippelt), ❌ (lezárt + kimaradt)
+- ✅ Sorok kiemelése: sárga szegély (`border-amber-300`) ha tippelhető + nincs tipp; piros ha lezárt + kimaradt
+- ✅ Inline szerkesztés: "Tippelj!" gombra vagy meglévő tippre kattintva megnyílik a két input mező
+- ✅ Autosave debounce (2s) + blur-on-save (100ms delay a same-match fókuszváltás elkerüléséhez)
+- ✅ Automata ugrás: szám leütésekor hazai inputból automatikusan ugrik az idegenbeli inputra
+- ✅ Nincs spinner nyíl a szám inputokon (`[appearance:textfield]` Tailwind osztályok)
+- ✅ Lezárt meccs: megjelenő tipp (szürke) + pontszám (kék) ha `pointsGlobal` nem null
+- ✅ AppLayout nav: "Tippjeim" link hozzáadva (clipboard-check ikon)
+- ✅ 205 frontend teszt, typecheck CLEAN
+
 ### US-601/602/606 – Elfogadási kritériumok teljesítve
 
 - ✅ `groups.service.ts`: `getMyGroups`, `createGroup` (max 5 létrehozott, 8 char invite code retry), `joinGroup` (404/410/409/422 hibák)
@@ -279,7 +293,7 @@
 | US-102 | Mérkőzés részletek | ✅ Kész | Must Have |
 | US-201 | Tipp leadása | ✅ Kész | Must Have |
 | US-202 | Tipp módosítása | ✅ Kész | Must Have |
-| US-203 | Saját tippek összesítő | ⬜ Nem kezdett | Must Have |
+| US-203 | Saját tippek összesítő | ✅ Kész | Must Have |
 | US-204 | Mások tippjeinek megtekintése | ⬜ Nem kezdett | Should Have |
 | US-301 | Regisztráció Google OAuth-szal | ✅ Kész | Must Have |
 | US-302 | Bejelentkezés / kijelentkezés | ✅ Kész | Must Have |
@@ -317,4 +331,4 @@
 
 ---
 
-**Haladás: 26 / 40 story kész** — Must Have: 21/28 ✅, Should Have: 5/11 ✅
+**Haladás: 27 / 42 story kész** — Must Have: 22/28 ✅, Should Have: 5/13 ✅
