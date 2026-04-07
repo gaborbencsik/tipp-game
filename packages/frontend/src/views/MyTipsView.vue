@@ -12,7 +12,7 @@
 
     <div v-else>
       <div
-        v-for="group in matchesStore.matchesByDate"
+        v-for="group in [...matchesStore.matchesByDate].reverse()"
         :key="group.date"
         class="mb-8"
       >
