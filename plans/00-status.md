@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-04-07 (UX-002 kész, AppLayout h-screen fix, timezone fix)
+> Utoljára frissítve: 2026-04-07 (UX-002, UX-003 kész, AppLayout h-screen fix, timezone fix)
 
 ## Kész user story-k
 
@@ -265,6 +265,14 @@
 - ✅ `scheduled`/`live` meccseket tartalmazó csoportok mindig nyitva maradnak
 - ✅ 208 frontend teszt, typecheck CLEAN
 
+### UX-003 – Elfogadási kritériumok teljesítve
+
+- ✅ A mai naptól >7 napra lévő, csak `scheduled` meccseket tartalmazó csoportok alapból rejtve vannak
+- ✅ A lista alján megjelenik: "▶ N további tervezett mérkőzés megjelenítése" gomb
+- ✅ Gombra kattintva az összes jövőbeli csoport láthatóvá válik
+- ✅ `live`/`finished` meccsek mindig láthatók dátumtól függetlenül
+- ✅ 212 frontend teszt, typecheck CLEAN
+
 ### US-303 bugfix – displayName persistencia javítva
 - ✅ Csak INSERT állítja be az initial `displayName`-t a JWT-ből
 - ✅ `updateProfile` által mentett név megmarad oldal-újratöltés után is
@@ -338,7 +346,8 @@
 | BUG-001 | Admin users lista: minden sornál ugyanaz a név | ✅ Kész | Should Have |
 | UX-001 | Tipp input UX javítások | ✅ Kész | Should Have |
 | UX-002 | Befejezett meccsek összecsukvása | ✅ Kész | Should Have |
+| UX-003 | Távoli jövőbeli meccsek összecsukvása | ✅ Kész | Should Have |
 
 ---
 
-**Haladás: 28 / 43 story kész** — Must Have: 22/28 ✅, Should Have: 6/14 ✅
+**Haladás: 29 / 44 story kész** — Must Have: 22/28 ✅, Should Have: 7/15 ✅

@@ -42,7 +42,7 @@
 
       <div v-else>
         <div
-          v-for="group in matchesStore.matchesByDate"
+          v-for="group in visibleGroups"
           :key="group.date"
           class="mb-8"
         >
@@ -200,6 +200,15 @@
             </button>
           </template>
         </div>
+
+        <!-- Távoli jövőbeli meccsek -->
+        <button
+          v-if="!showFutureMatches && hiddenFutureCount > 0"
+          class="w-full text-sm text-gray-500 hover:text-gray-700 border border-dashed border-gray-300 rounded-lg py-3 mb-4 transition-colors"
+          @click="showFutureMatches = true"
+        >
+          ▶ {{ hiddenFutureCount }} további tervezett mérkőzés megjelenítése
+        </button>
       </div>
   </AppLayout>
 </template>
@@ -221,8 +230,25 @@ const awayInputs = ref<Record<string, HTMLInputElement>>({})
 const autosaveTimers: Record<string, ReturnType<typeof setTimeout>> = {}
 
 const COLLAPSED_LIMIT = 5
+const FUTURE_DAYS = 7
 const collapsedDates = ref<Set<string>>(new Set())
 const expandedDates = ref<Set<string>>(new Set())
+const showFutureMatches = ref(false)
+
+const cutoffDate = new Date(now.value)
+cutoffDate.setDate(cutoffDate.getDate() + FUTURE_DAYS)
+const cutoffStr = cutoffDate.toISOString().substring(0, 10)
+
+const visibleGroups = computed((): MatchDateGroup[] => {
+  if (showFutureMatches.value) return matchesStore.matchesByDate
+  return matchesStore.matchesByDate.filter(g => g.date <= cutoffStr || g.matches.some(m => m.status !== 'scheduled'))
+})
+
+const hiddenFutureCount = computed((): number => {
+  return matchesStore.matchesByDate
+    .filter(g => g.date > cutoffStr && g.matches.every(m => m.status === 'scheduled'))
+    .reduce((sum, g) => sum + g.matches.length, 0)
+})
 
 // Ordered list of all tippable inputs: [matchId, side] pairs in display order
 const inputOrder = computed((): Array<{ matchId: string; side: 'home' | 'away' }> => {

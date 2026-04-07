@@ -48,7 +48,7 @@ vi.mock('@/stores/auth.store', async (importOriginal) => {
   }
 })
 
-// scheduled match with future kickoff
+// scheduled match with future kickoff (tomorrow = within 7 days)
 const MATCH_SCHEDULED: Match = {
   id: 'match-sched',
   homeTeam: { id: 'ht3', name: 'Brazil', shortCode: 'BRA', flagUrl: null },
@@ -58,6 +58,20 @@ const MATCH_SCHEDULED: Match = {
   groupName: null,
   matchNumber: 64,
   scheduledAt: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(), // tomorrow
+  status: 'scheduled',
+  result: null,
+}
+
+// scheduled match far in the future (> 7 days)
+const MATCH_FAR_FUTURE: Match = {
+  id: 'match-far',
+  homeTeam: { id: 'ht5', name: 'Portugal', shortCode: 'POR', flagUrl: null },
+  awayTeam: { id: 'at5', name: 'Belgium', shortCode: 'BEL', flagUrl: null },
+  venue: null,
+  stage: 'group',
+  groupName: 'C',
+  matchNumber: 10,
+  scheduledAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30).toISOString(), // 30 days from now
   status: 'scheduled',
   result: null,
 }
@@ -305,6 +319,33 @@ describe('MatchesView', () => {
     await wrapper.vm.$nextTick()
     const homeInput = wrapper.find('[data-testid="input-home"]')
     expect((homeInput.element as HTMLInputElement).disabled).toBe(true)
+  })
+
+  // ─── UX-003: Far future matches collapsed ────────────────────────────────────
+
+  it('far future match (>7 days) → hidden by default', async () => {
+    const { wrapper } = await mountView([MATCH_FAR_FUTURE])
+    expect(wrapper.text()).not.toContain('Portugal')
+    expect(wrapper.text()).toContain('további tervezett mérkőzés')
+  })
+
+  it('within-7-days match → visible by default', async () => {
+    const { wrapper } = await mountView([MATCH_SCHEDULED])
+    expect(wrapper.find('[data-testid="input-home"]').exists()).toBe(true)
+  })
+
+  it('clicking future matches button → far future match becomes visible', async () => {
+    const { wrapper } = await mountView([MATCH_FAR_FUTURE])
+    const btn = wrapper.findAll('button').find(b => b.text().includes('további tervezett'))
+    expect(btn).toBeDefined()
+    await btn!.trigger('click')
+    await wrapper.vm.$nextTick()
+    expect(wrapper.text()).toContain('Portugal')
+  })
+
+  it('live match is always visible regardless of date', async () => {
+    const { wrapper } = await mountView([MATCH_LIVE])
+    expect(wrapper.text()).toContain('Germany')
   })
 
 })
