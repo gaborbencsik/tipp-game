@@ -870,6 +870,30 @@ Mint **felhasználó**, szeretném, hogy **a tipp beviteli mezők kényelmesebbe
 **Prioritás:** Should Have
 
 ---
+
+#### UX-002: Befejezett meccsek összecsukvása a meccslistán
+
+**Story:**
+Mint **felhasználó**, szeretném, hogy **a mérkőzések listáján a már befejezett meccsek alapból össze legyenek csukva**, hogy **ne kelljen görgetni rajtuk keresztül és a nyitott meccsekre fókuszálhassak**.
+
+**Elfogadási kritériumok:**
+- [ ] A `finished` státuszú meccseket tartalmazó nap-csoportok alapból össze vannak csukva (csak a dátumcímke látható)
+- [ ] A dátumcímkére kattintva kinyílik a csoport, először csak az **utolsó 5** befejezett meccset mutatja
+- [ ] Ha több mint 5 befejezett meccs van, megjelenik egy "Összes mutatása (N db)" gomb, amely az összeset megjeleníti
+- [ ] `scheduled` és `live` meccseket tartalmazó csoportok mindig nyitva vannak (nem csukhatók össze)
+- [ ] Az összecsukott állapot vizuálisan egyértelmű (pl. chevron ikon a dátumcímke mellett)
+
+**Technikai megjegyzések:**
+- A `matchesByDate` computed-ból kiolvasható hogy egy nap-csoport csak `finished` meccseket tartalmaz-e
+- `collapsedDates` ref: `Set<string>` — inicializáláskor minden csak-finished napot hozzáad
+- `expandedCount` ref: `Record<string, number>` — 5-ről indul, "Összes mutatása" gombra az összes meccs számára ugrik
+- Érintett fájl: `MatchesView.vue`
+
+**Komplexitás:** S
+**Prioritás:** Should Have
+**Prioritás:** Should Have
+
+---
 |----------|-----------|-------------|-----------|
 | US-001 | Monorepo és dev környezet (Docker) | M | Must Have |
 | US-002 | DB schema és seed adatok | S | Must Have |
@@ -915,6 +939,7 @@ Mint **felhasználó**, szeretném, hogy **a tipp beviteli mezők kényelmesebbe
 | US-1301 | Liga entitás bevezetése a meccsekhez | M | Should Have |
 | BUG-001 | Admin users lista: minden sornál ugyanaz a név | S | Should Have |
 | UX-001 | Tipp input UX javítások (autosave, select, autonext) | S | Should Have |
+| UX-002 | Befejezett meccsek összecsukvása a meccslistán | S | Should Have |
 
 **Összesítés:**
 - Must Have: 26 story (4 technikai + 22 product)
