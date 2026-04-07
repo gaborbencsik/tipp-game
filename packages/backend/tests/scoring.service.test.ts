@@ -7,6 +7,7 @@ const DEFAULT_CONFIG: ScoringConfig = {
   correctWinnerAndDiff: 2,
   correctWinner: 1,
   correctDraw: 2,
+  correctOutcome: 1,
   incorrect: 0,
 }
 
@@ -99,6 +100,7 @@ describe('calculatePoints', () => {
       correctWinnerAndDiff: 3,
       correctWinner: 2,
       correctDraw: 3,
+      correctOutcome: 1,
       incorrect: 0,
     }
     expect(calculatePoints({ homeGoals: 2, awayGoals: 1 }, { homeGoals: 2, awayGoals: 1 }, customConfig)).toBe(5)
@@ -106,5 +108,55 @@ describe('calculatePoints', () => {
 
   it('home win predicted, draw actual → 0 points', () => {
     expect(calculatePoints({ homeGoals: 2, awayGoals: 0 }, { homeGoals: 1, awayGoals: 1 }, DEFAULT_CONFIG)).toBe(0)
+  })
+
+  // ─── Outcome after draw bonus ─────────────────────────────────────────────────
+
+  it('outcome: exact draw + correct outcome → exactScore + correctOutcome', () => {
+    expect(calculatePoints(
+      { homeGoals: 1, awayGoals: 1, outcomeAfterDraw: 'extra_time_home' },
+      { homeGoals: 1, awayGoals: 1, outcomeAfterDraw: 'extra_time_home' },
+      DEFAULT_CONFIG,
+    )).toBe(4) // exactScore(3) + correctOutcome(1)
+  })
+
+  it('outcome: correct draw (non-exact) + correct outcome → correctDraw + correctOutcome', () => {
+    expect(calculatePoints(
+      { homeGoals: 0, awayGoals: 0, outcomeAfterDraw: 'penalties_away' },
+      { homeGoals: 1, awayGoals: 1, outcomeAfterDraw: 'penalties_away' },
+      DEFAULT_CONFIG,
+    )).toBe(3) // correctDraw(2) + correctOutcome(1)
+  })
+
+  it('outcome: correct draw + wrong outcome → only correctDraw', () => {
+    expect(calculatePoints(
+      { homeGoals: 1, awayGoals: 1, outcomeAfterDraw: 'extra_time_home' },
+      { homeGoals: 1, awayGoals: 1, outcomeAfterDraw: 'penalties_home' },
+      DEFAULT_CONFIG,
+    )).toBe(3) // exactScore(3), no outcome bonus
+  })
+
+  it('outcome: correct draw + no outcome tipped → no bonus', () => {
+    expect(calculatePoints(
+      { homeGoals: 1, awayGoals: 1, outcomeAfterDraw: null },
+      { homeGoals: 1, awayGoals: 1, outcomeAfterDraw: 'extra_time_away' },
+      DEFAULT_CONFIG,
+    )).toBe(3) // exactScore(3), no outcome bonus
+  })
+
+  it('outcome: result has no outcomeAfterDraw → no bonus even if tipped', () => {
+    expect(calculatePoints(
+      { homeGoals: 1, awayGoals: 1, outcomeAfterDraw: 'penalties_home' },
+      { homeGoals: 1, awayGoals: 1, outcomeAfterDraw: null },
+      DEFAULT_CONFIG,
+    )).toBe(3) // exactScore(3), no outcome bonus
+  })
+
+  it('outcome: non-draw result → outcome bonus never applies', () => {
+    expect(calculatePoints(
+      { homeGoals: 2, awayGoals: 1, outcomeAfterDraw: 'extra_time_home' },
+      { homeGoals: 2, awayGoals: 1, outcomeAfterDraw: 'extra_time_home' },
+      DEFAULT_CONFIG,
+    )).toBe(3) // exactScore(3), outcome is irrelevant for non-draw
   })
 })

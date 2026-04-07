@@ -110,6 +110,9 @@
                     {{ predictionsStore.predictionByMatchId(match.id)!.homeGoals }}
                     –
                     {{ predictionsStore.predictionByMatchId(match.id)!.awayGoals }}
+                    <span v-if="predictionsStore.predictionByMatchId(match.id)!.outcomeAfterDraw" class="text-xs font-normal text-gray-500 ml-1">
+                      · {{ outcomeLabel(predictionsStore.predictionByMatchId(match.id)!.outcomeAfterDraw!) }}
+                    </span>
                   </div>
                   <div v-if="predictionsStore.predictionByMatchId(match.id)!.pointsGlobal !== null" class="text-xs font-bold text-blue-600 text-right">
                     {{ predictionsStore.predictionByMatchId(match.id)!.pointsGlobal }} pont
@@ -136,7 +139,7 @@ import { ref, nextTick, onMounted } from 'vue'
 import AppLayout from '../components/AppLayout.vue'
 import { useMatchesStore } from '../stores/matches.store.js'
 import { usePredictionsStore } from '../stores/predictions.store.js'
-import type { Match } from '../types/index.js'
+import type { Match, MatchOutcome } from '../types/index.js'
 
 const matchesStore = useMatchesStore()
 const predictionsStore = usePredictionsStore()
@@ -255,5 +258,14 @@ function formatDateTime(iso: string): string {
     hour: '2-digit',
     minute: '2-digit',
   }).format(new Date(iso))
+}
+
+function outcomeLabel(outcome: MatchOutcome): string {
+  switch (outcome) {
+    case 'extra_time_home': return 'H+hossz.'
+    case 'extra_time_away': return 'V+hossz.'
+    case 'penalties_home': return 'H+tiz.'
+    case 'penalties_away': return 'V+tiz.'
+  }
 }
 </script>

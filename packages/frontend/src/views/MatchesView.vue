@@ -143,6 +143,44 @@
                     @keydown="onGoalKeydown(match.id, 'away', $event)"
                   />
                 </div>
+
+                <!-- Outcome selector egyenes kieséses meccseknél döntetlen tipp esetén -->
+                <div v-if="showOutcomeSelector(match.id, match.stage)" class="mt-2 flex flex-col gap-1 items-center">
+                  <div class="flex gap-1">
+                    <span class="text-xs text-gray-400 w-20 text-right self-center">Hossz.:</span>
+                    <button
+                      type="button"
+                      class="text-xs px-2 py-1 rounded border transition-colors"
+                      :class="draftOutcomes[match.id] === 'extra_time_home' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'"
+                      data-testid="outcome-extra-time-home"
+                      @click="setOutcome(match.id, 'extra_time_home')"
+                    >← Hazai</button>
+                    <button
+                      type="button"
+                      class="text-xs px-2 py-1 rounded border transition-colors"
+                      :class="draftOutcomes[match.id] === 'extra_time_away' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'"
+                      data-testid="outcome-extra-time-away"
+                      @click="setOutcome(match.id, 'extra_time_away')"
+                    >Vendég →</button>
+                  </div>
+                  <div class="flex gap-1">
+                    <span class="text-xs text-gray-400 w-20 text-right self-center">Tizenegyes:</span>
+                    <button
+                      type="button"
+                      class="text-xs px-2 py-1 rounded border transition-colors"
+                      :class="draftOutcomes[match.id] === 'penalties_home' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'"
+                      data-testid="outcome-penalties-home"
+                      @click="setOutcome(match.id, 'penalties_home')"
+                    >← Hazai</button>
+                    <button
+                      type="button"
+                      class="text-xs px-2 py-1 rounded border transition-colors"
+                      :class="draftOutcomes[match.id] === 'penalties_away' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'"
+                      data-testid="outcome-penalties-away"
+                      @click="setOutcome(match.id, 'penalties_away')"
+                    >Vendég →</button>
+                  </div>
+                </div>
                 <div class="text-center mt-1 text-xs">
                   <span
                     v-if="predictionsStore.saveStatus[match.id] === 'saved'"
@@ -217,7 +255,7 @@
 import { onMounted, ref, nextTick, computed } from 'vue'
 import { useMatchesStore } from '../stores/matches.store.js'
 import { usePredictionsStore } from '../stores/predictions.store.js'
-import type { Match, MatchDateGroup, MatchStage, MatchStatus } from '../types/index.js'
+import type { Match, MatchDateGroup, MatchOutcome, MatchStage, MatchStatus } from '../types/index.js'
 import AppLayout from '../components/AppLayout.vue'
 
 const matchesStore = useMatchesStore()
@@ -234,6 +272,7 @@ const FUTURE_DAYS = 7
 const collapsedDates = ref<Set<string>>(new Set())
 const expandedDates = ref<Set<string>>(new Set())
 const showFutureMatches = ref(false)
+const draftOutcomes = ref<Record<string, MatchOutcome | null>>({})
 
 const cutoffDate = new Date(now.value)
 cutoffDate.setDate(cutoffDate.getDate() + FUTURE_DAYS)
@@ -302,12 +341,31 @@ function initDrafts(): void {
     const existing = predictionsStore.predictionByMatchId(match.id)
     if (existing) {
       draftGoals.value[match.id] = { home: existing.homeGoals, away: existing.awayGoals }
+      draftOutcomes.value[match.id] = existing.outcomeAfterDraw
     }
   }
 }
 
 function isTippable(match: Match): boolean {
   return match.status === 'scheduled' && new Date(match.scheduledAt) > now.value
+}
+
+const KNOCKOUT_STAGES: readonly MatchStage[] = ['round_of_16', 'quarter_final', 'semi_final', 'third_place', 'final']
+
+function showOutcomeSelector(matchId: string, stage: MatchStage): boolean {
+  if (!KNOCKOUT_STAGES.includes(stage)) return false
+  const goals = draftGoals.value[matchId]
+  return goals?.home != null && goals?.away != null && goals.home === goals.away
+}
+
+function setOutcome(matchId: string, outcome: MatchOutcome): void {
+  // Toggle: ha már ki van választva, töröljük
+  draftOutcomes.value = {
+    ...draftOutcomes.value,
+    [matchId]: draftOutcomes.value[matchId] === outcome ? null : outcome,
+  }
+  if (autosaveTimers[matchId]) clearTimeout(autosaveTimers[matchId])
+  autosaveTimers[matchId] = setTimeout(() => { void savePrediction(matchId) }, 2000)
 }
 
 function cardBorderClass(match: Match): string {
@@ -359,6 +417,7 @@ async function savePrediction(matchId: string): Promise<void> {
     matchId,
     homeGoals: draft.home,
     awayGoals: draft.away,
+    outcomeAfterDraw: draftOutcomes.value[matchId] ?? null,
   })
 }
 

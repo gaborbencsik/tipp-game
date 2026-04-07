@@ -1,7 +1,7 @@
 import { eq, isNull } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { users, matches, predictions } from '../db/schema/index.js'
-import type { Prediction, PredictionInput } from '../types/index.js'
+import type { MatchOutcome, Prediction, PredictionInput } from '../types/index.js'
 
 class AppError extends Error {
   readonly status: number
@@ -30,6 +30,7 @@ function toApiPrediction(row: typeof predictions.$inferSelect): Prediction {
     matchId: row.matchId,
     homeGoals: row.homeGoals,
     awayGoals: row.awayGoals,
+    outcomeAfterDraw: (row.outcomeAfterDraw as MatchOutcome | null) ?? null,
     pointsGlobal: row.pointsGlobal ?? null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
@@ -61,12 +62,14 @@ export async function upsertPrediction(
       matchId: input.matchId,
       homeGoals: input.homeGoals,
       awayGoals: input.awayGoals,
+      outcomeAfterDraw: input.outcomeAfterDraw ?? null,
     })
     .onConflictDoUpdate({
       target: [predictions.userId, predictions.matchId],
       set: {
         homeGoals: input.homeGoals,
         awayGoals: input.awayGoals,
+        outcomeAfterDraw: input.outcomeAfterDraw ?? null,
         updatedAt: new Date(),
       },
     })

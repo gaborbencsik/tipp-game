@@ -94,6 +94,41 @@
                 @keydown="onGoalKeydown('away', $event)"
               />
             </div>
+
+            <!-- Outcome selector egyenes kieséses meccseknél döntetlen tipp esetén -->
+            <div v-if="showOutcomeSelector" class="mt-3 flex flex-col gap-1 items-center">
+              <div class="flex gap-1">
+                <span class="text-xs text-gray-400 w-20 text-right self-center">Hossz.:</span>
+                <button
+                  type="button"
+                  class="text-xs px-2 py-1 rounded border transition-colors"
+                  :class="draftOutcome === 'extra_time_home' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'"
+                  @click="setOutcome('extra_time_home')"
+                >← Hazai</button>
+                <button
+                  type="button"
+                  class="text-xs px-2 py-1 rounded border transition-colors"
+                  :class="draftOutcome === 'extra_time_away' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'"
+                  @click="setOutcome('extra_time_away')"
+                >Vendég →</button>
+              </div>
+              <div class="flex gap-1">
+                <span class="text-xs text-gray-400 w-20 text-right self-center">Tizenegyes:</span>
+                <button
+                  type="button"
+                  class="text-xs px-2 py-1 rounded border transition-colors"
+                  :class="draftOutcome === 'penalties_home' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'"
+                  @click="setOutcome('penalties_home')"
+                >← Hazai</button>
+                <button
+                  type="button"
+                  class="text-xs px-2 py-1 rounded border transition-colors"
+                  :class="draftOutcome === 'penalties_away' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'"
+                  @click="setOutcome('penalties_away')"
+                >Vendég →</button>
+              </div>
+            </div>
+
             <div class="text-center mt-1 text-xs">
               <span
                 v-if="predictionsStore.saveStatus[match.id] === 'saved'"
@@ -138,7 +173,7 @@ import { onMounted, onUnmounted, ref, computed, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { useMatchesStore } from '../stores/matches.store.js'
 import { usePredictionsStore } from '../stores/predictions.store.js'
-import type { Match, MatchStage, MatchStatus } from '../types/index.js'
+import type { Match, MatchOutcome, MatchStage, MatchStatus } from '../types/index.js'
 import AppLayout from '../components/AppLayout.vue'
 
 const route = useRoute()
@@ -147,9 +182,12 @@ const predictionsStore = usePredictionsStore()
 
 const now = ref(new Date())
 const draftGoals = ref<{ home: number | null, away: number | null }>({ home: null, away: null })
+const draftOutcome = ref<MatchOutcome | null>(null)
 const homeInputRef = ref<HTMLInputElement | null>(null)
 const awayInputRef = ref<HTMLInputElement | null>(null)
 let autosaveTimer: ReturnType<typeof setTimeout> | null = null
+
+const KNOCKOUT_STAGES: readonly MatchStage[] = ['round_of_16', 'quarter_final', 'semi_final', 'third_place', 'final']
 
 const matchId = computed(() => route.params.id as string)
 
@@ -167,6 +205,7 @@ onMounted(async () => {
   const existing = myPrediction.value
   if (existing) {
     draftGoals.value = { home: existing.homeGoals, away: existing.awayGoals }
+    draftOutcome.value = existing.outcomeAfterDraw
   }
 })
 
@@ -176,6 +215,18 @@ onUnmounted(() => {
 
 function isTippable(m: Match): boolean {
   return m.status === 'scheduled' && new Date(m.scheduledAt) > now.value
+}
+
+const showOutcomeSelector = computed((): boolean => {
+  if (!match.value) return false
+  if (!KNOCKOUT_STAGES.includes(match.value.stage)) return false
+  return draftGoals.value.home != null && draftGoals.value.away != null && draftGoals.value.home === draftGoals.value.away
+})
+
+function setOutcome(outcome: MatchOutcome): void {
+  draftOutcome.value = draftOutcome.value === outcome ? null : outcome
+  if (autosaveTimer) clearTimeout(autosaveTimer)
+  autosaveTimer = setTimeout(() => { void savePrediction() }, 2000)
 }
 
 function onGoalFocus(side: 'home' | 'away', event: FocusEvent): void {
@@ -212,6 +263,7 @@ async function savePrediction(): Promise<void> {
     matchId: matchId.value,
     homeGoals: draftGoals.value.home,
     awayGoals: draftGoals.value.away,
+    outcomeAfterDraw: draftOutcome.value,
   })
 }
 

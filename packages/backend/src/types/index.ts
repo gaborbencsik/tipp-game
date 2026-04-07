@@ -24,11 +24,14 @@ export interface DbUser {
   readonly role: 'user' | 'admin'
 }
 
+export type MatchOutcome = 'extra_time_home' | 'extra_time_away' | 'penalties_home' | 'penalties_away'
+
 export interface ScoringConfig {
   readonly exactScore: number
   readonly correctWinnerAndDiff: number
   readonly correctWinner: number
   readonly correctDraw: number
+  readonly correctOutcome: number
   readonly incorrect: number
 }
 
@@ -61,6 +64,7 @@ export interface MatchVenue {
 export interface MatchResult {
   readonly homeGoals: number
   readonly awayGoals: number
+  readonly outcomeAfterDraw?: MatchOutcome | null
 }
 
 export interface Match {
@@ -112,6 +116,7 @@ export interface MatchResultRow {
   readonly matchId: string
   readonly homeGoals: number
   readonly awayGoals: number
+  readonly outcomeAfterDraw: string | null
   readonly recordedBy: string
   readonly recordedAt: Date
   readonly updatedAt: Date
@@ -166,6 +171,7 @@ export interface PredictionInput {
   readonly matchId: string
   readonly homeGoals: number
   readonly awayGoals: number
+  readonly outcomeAfterDraw?: MatchOutcome | null
 }
 
 export interface Prediction {
@@ -174,6 +180,7 @@ export interface Prediction {
   readonly matchId: string
   readonly homeGoals: number
   readonly awayGoals: number
+  readonly outcomeAfterDraw: MatchOutcome | null
   readonly pointsGlobal: number | null
   readonly createdAt: string
   readonly updatedAt: string

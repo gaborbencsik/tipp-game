@@ -3,7 +3,7 @@ import { and, eq, isNull } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { matches, teams, venues, matchResults } from '../db/schema/index.js'
 import { calculateAndSavePoints } from './scoring.service.js'
-import type { Match, MatchesFilters, MatchInput, MatchRow, MatchResultRow } from '../types/index.js'
+import type { Match, MatchesFilters, MatchInput, MatchOutcome, MatchRow, MatchResultRow } from '../types/index.js'
 
 const homeTeamAlias = alias(teams, 'home_team')
 const awayTeamAlias = alias(teams, 'away_team')
@@ -55,7 +55,11 @@ export async function getMatches(filters: MatchesFilters = {}): Promise<Match[]>
     scheduledAt: row.matches.scheduledAt.toISOString(),
     status: row.matches.status,
     result: row.match_results
-      ? { homeGoals: row.match_results.homeGoals, awayGoals: row.match_results.awayGoals }
+      ? {
+          homeGoals: row.match_results.homeGoals,
+          awayGoals: row.match_results.awayGoals,
+          outcomeAfterDraw: (row.match_results.outcomeAfterDraw as MatchOutcome | null) ?? null,
+        }
       : null,
   }))
 }
@@ -117,6 +121,7 @@ export async function setResult(
   homeGoals: number,
   awayGoals: number,
   actorId: string,
+  outcomeAfterDraw?: MatchOutcome | null,
 ): Promise<MatchResultRow> {
   const rows = await db
     .insert(matchResults)
@@ -124,6 +129,7 @@ export async function setResult(
       matchId,
       homeGoals,
       awayGoals,
+      outcomeAfterDraw: outcomeAfterDraw ?? null,
       recordedBy: actorId,
     })
     .onConflictDoUpdate({
@@ -131,6 +137,7 @@ export async function setResult(
       set: {
         homeGoals,
         awayGoals,
+        outcomeAfterDraw: outcomeAfterDraw ?? null,
         recordedBy: actorId,
         updatedAt: new Date(),
       },
@@ -145,7 +152,7 @@ export async function setResult(
     .set({ status: 'finished', updatedAt: new Date() })
     .where(eq(matches.id, matchId))
 
-  await calculateAndSavePoints(matchId, { homeGoals, awayGoals })
+  await calculateAndSavePoints(matchId, { homeGoals, awayGoals, outcomeAfterDraw: outcomeAfterDraw ?? null })
 
   return row
 }

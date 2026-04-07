@@ -157,6 +157,23 @@
               class="w-16 text-center border border-gray-300 rounded px-2 py-1 text-sm"
             />
           </div>
+          <div
+            v-if="resultFormIsKnockout && resultForm.homeGoals === resultForm.awayGoals"
+            class="mb-4"
+          >
+            <label class="block text-xs text-gray-500 mb-1">Döntetlen utáni kimenetel</label>
+            <select
+              v-model="resultForm.outcomeAfterDraw"
+              data-testid="result-outcome"
+              class="border border-gray-300 rounded px-2 py-1 text-sm"
+            >
+              <option :value="null">– nincs megadva –</option>
+              <option value="extra_time_home">Hosszabbítás – hazai nyer</option>
+              <option value="extra_time_away">Hosszabbítás – vendég nyer</option>
+              <option value="penalties_home">Tizenegyes – hazai nyer</option>
+              <option value="penalties_away">Tizenegyes – vendég nyer</option>
+            </select>
+          </div>
           <div class="flex gap-2">
             <button
               type="submit"
@@ -248,10 +265,10 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import { useAdminMatchesStore } from '../stores/admin-matches.store.js'
 import { useAdminTeamsStore } from '../stores/admin-teams.store.js'
-import type { Match, MatchStage, MatchStatus } from '../types/index.js'
+import type { Match, MatchOutcome, MatchStage, MatchStatus } from '../types/index.js'
 import AppLayout from '../components/AppLayout.vue'
 
 const store = useAdminMatchesStore()
@@ -318,17 +335,34 @@ async function submitForm(): Promise<void> {
 
 // ─── Result form ──────────────────────────────────────────────────────────────
 
+const KNOCKOUT_STAGES: readonly MatchStage[] = ['round_of_16', 'quarter_final', 'semi_final', 'third_place', 'final']
+
 const resultFormMatchId = ref<string | null>(null)
-const resultForm = ref({ homeGoals: 0, awayGoals: 0 })
+const resultForm = ref<{ homeGoals: number; awayGoals: number; outcomeAfterDraw: MatchOutcome | null }>({
+  homeGoals: 0, awayGoals: 0, outcomeAfterDraw: null,
+})
+
+const resultFormIsKnockout = computed((): boolean => {
+  if (!resultFormMatchId.value) return false
+  const match = store.matches.find(m => m.id === resultFormMatchId.value)
+  return match ? KNOCKOUT_STAGES.includes(match.stage) : false
+})
 
 function openResultForm(matchId: string): void {
   resultFormMatchId.value = matchId
-  resultForm.value = { homeGoals: 0, awayGoals: 0 }
+  resultForm.value = { homeGoals: 0, awayGoals: 0, outcomeAfterDraw: null }
 }
 
 async function submitResult(): Promise<void> {
   if (!resultFormMatchId.value) return
-  await store.setResult(resultFormMatchId.value, resultForm.value)
+  const input = {
+    homeGoals: resultForm.value.homeGoals,
+    awayGoals: resultForm.value.awayGoals,
+    outcomeAfterDraw: resultFormIsKnockout.value && resultForm.value.homeGoals === resultForm.value.awayGoals
+      ? resultForm.value.outcomeAfterDraw
+      : null,
+  }
+  await store.setResult(resultFormMatchId.value, input)
   if (!store.error) resultFormMatchId.value = null
 }
 

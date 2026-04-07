@@ -108,6 +108,7 @@ const EXISTING_PREDICTION: Prediction = {
   matchId: 'match-sched',
   homeGoals: 1,
   awayGoals: 0,
+  outcomeAfterDraw: null,
   pointsGlobal: null,
   createdAt: '2026-06-10T10:00:00.000Z',
   updatedAt: '2026-06-10T10:00:00.000Z',
@@ -301,6 +302,7 @@ describe('MatchesView', () => {
       matchId: 'match-sched',
       homeGoals: 2,
       awayGoals: 1,
+      outcomeAfterDraw: null,
     })
     vi.useRealTimers()
   })

@@ -100,13 +100,14 @@ export const matches = pgTable('matches', {
 // ─── MATCH RESULTS ────────────────────────────────────────────────────────────
 
 export const matchResults = pgTable('match_results', {
-  id:         uuid('id').primaryKey().defaultRandom(),
-  matchId:    uuid('match_id').notNull().unique().references(() => matches.id),
-  homeGoals:  smallint('home_goals').notNull(),
-  awayGoals:  smallint('away_goals').notNull(),
-  recordedBy: uuid('recorded_by').notNull().references(() => users.id),
-  recordedAt: timestamp('recorded_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt:  timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  id:               uuid('id').primaryKey().defaultRandom(),
+  matchId:          uuid('match_id').notNull().unique().references(() => matches.id),
+  homeGoals:        smallint('home_goals').notNull(),
+  awayGoals:        smallint('away_goals').notNull(),
+  outcomeAfterDraw: text('outcome_after_draw'),
+  recordedBy:       uuid('recorded_by').notNull().references(() => users.id),
+  recordedAt:       timestamp('recorded_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt:        timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({
   matchIdIdx: uniqueIndex('match_results_match_id_idx').on(t.matchId),
 }))
@@ -121,6 +122,7 @@ export const scoringConfigs = pgTable('scoring_configs', {
   correctWinnerAndDiff: smallint('correct_winner_and_diff').notNull().default(2),
   correctWinner:        smallint('correct_winner').notNull().default(1),
   correctDraw:          smallint('correct_draw').notNull().default(2),
+  correctOutcome:       smallint('correct_outcome').notNull().default(1),
   incorrect:            smallint('incorrect').notNull().default(0),
   createdAt:            timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt:            timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -161,14 +163,15 @@ export const groupMembers = pgTable('group_members', {
 // ─── PREDICTIONS ──────────────────────────────────────────────────────────────
 
 export const predictions = pgTable('predictions', {
-  id:           uuid('id').primaryKey().defaultRandom(),
-  userId:       uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  matchId:      uuid('match_id').notNull().references(() => matches.id, { onDelete: 'cascade' }),
-  homeGoals:    smallint('home_goals').notNull(),
-  awayGoals:    smallint('away_goals').notNull(),
-  pointsGlobal: smallint('points_global'),
-  createdAt:    timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt:    timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  id:               uuid('id').primaryKey().defaultRandom(),
+  userId:           uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  matchId:          uuid('match_id').notNull().references(() => matches.id, { onDelete: 'cascade' }),
+  homeGoals:        smallint('home_goals').notNull(),
+  awayGoals:        smallint('away_goals').notNull(),
+  outcomeAfterDraw: text('outcome_after_draw'),
+  pointsGlobal:     smallint('points_global'),
+  createdAt:        timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt:        timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({
   uniquePrediction: uniqueIndex('predictions_user_match_unique').on(t.userId, t.matchId),
   userIdx:          index('predictions_user_idx').on(t.userId),

@@ -15,6 +15,13 @@
       "when": 1775231147644,
       "tag": "0001_melodic_sprite",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1775576506077,
+      "tag": "0002_outcome_after_draw",
+      "breakpoints": true
     }
   ]
 }

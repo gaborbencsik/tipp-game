@@ -30,9 +30,12 @@ export interface MatchVenue {
   readonly city: string
 }
 
+export type MatchOutcome = 'extra_time_home' | 'extra_time_away' | 'penalties_home' | 'penalties_away'
+
 export interface MatchResult {
   readonly homeGoals: number
   readonly awayGoals: number
+  readonly outcomeAfterDraw?: MatchOutcome | null
 }
 
 export interface Match {
@@ -67,6 +70,7 @@ export interface MatchInput {
 export interface MatchResultInput {
   readonly homeGoals: number
   readonly awayGoals: number
+  readonly outcomeAfterDraw?: MatchOutcome | null
 }
 
 export interface MatchDateGroup {
@@ -94,6 +98,7 @@ export interface PredictionInput {
   readonly matchId: string
   readonly homeGoals: number
   readonly awayGoals: number
+  readonly outcomeAfterDraw?: MatchOutcome | null
 }
 
 export interface Prediction {
@@ -102,6 +107,7 @@ export interface Prediction {
   readonly matchId: string
   readonly homeGoals: number
   readonly awayGoals: number
+  readonly outcomeAfterDraw: MatchOutcome | null
   readonly pointsGlobal: number | null
   readonly createdAt: string
   readonly updatedAt: string

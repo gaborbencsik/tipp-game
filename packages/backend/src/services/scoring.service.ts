@@ -1,11 +1,23 @@
 import { eq } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { predictions, scoringConfigs } from '../db/schema/index.js'
-import type { ScoringConfig, ScoreLine } from '../types/index.js'
+import type { ScoringConfig, ScoreLine, MatchOutcome } from '../types/index.js'
+
+export interface PredictionScore {
+  readonly homeGoals: number
+  readonly awayGoals: number
+  readonly outcomeAfterDraw?: MatchOutcome | null
+}
+
+export interface ResultScore {
+  readonly homeGoals: number
+  readonly awayGoals: number
+  readonly outcomeAfterDraw?: MatchOutcome | null
+}
 
 export function calculatePoints(
-  prediction: ScoreLine,
-  result: ScoreLine,
+  prediction: PredictionScore,
+  result: ResultScore,
   config: ScoringConfig
 ): number {
   const predDiff = prediction.homeGoals - prediction.awayGoals
@@ -13,15 +25,16 @@ export function calculatePoints(
 
   // Pontos találat: mindkét gólszám egyezik
   if (prediction.homeGoals === result.homeGoals && prediction.awayGoals === result.awayGoals) {
-    return config.exactScore
+    const base = config.exactScore
+    return base + outcomeBonus(prediction, result, config)
   }
 
   const predWinner = Math.sign(predDiff)
   const resWinner = Math.sign(resDiff)
 
-  // Döntetlen tipp döntetlenre (de nem pontos találat, mert az fentebb kezelt)
+  // Döntetlen tipp döntetlenre (de nem pontos találat)
   if (predWinner === 0 && resWinner === 0) {
-    return config.correctDraw
+    return config.correctDraw + outcomeBonus(prediction, result, config)
   }
 
   // Helyes győztes
@@ -36,9 +49,26 @@ export function calculatePoints(
   return config.incorrect
 }
 
+function outcomeBonus(
+  prediction: PredictionScore,
+  result: ResultScore,
+  config: ScoringConfig
+): number {
+  // Outcome bónusz csak döntetlen eredményre értelmezett
+  if (result.homeGoals !== result.awayGoals) return 0
+  if (
+    result.outcomeAfterDraw != null &&
+    prediction.outcomeAfterDraw != null &&
+    prediction.outcomeAfterDraw === result.outcomeAfterDraw
+  ) {
+    return config.correctOutcome
+  }
+  return 0
+}
+
 export async function calculateAndSavePoints(
   matchId: string,
-  result: ScoreLine,
+  result: ResultScore,
 ): Promise<void> {
   const [matchPredictions, configs] = await Promise.all([
     db.select().from(predictions).where(eq(predictions.matchId, matchId)),
@@ -51,7 +81,11 @@ export async function calculateAndSavePoints(
   await Promise.all(
     matchPredictions.map((pred) => {
       const points = calculatePoints(
-        { homeGoals: pred.homeGoals, awayGoals: pred.awayGoals },
+        {
+          homeGoals: pred.homeGoals,
+          awayGoals: pred.awayGoals,
+          outcomeAfterDraw: pred.outcomeAfterDraw as MatchOutcome | null,
+        },
         result,
         config,
       )

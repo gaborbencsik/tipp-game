@@ -20,7 +20,7 @@ import {
   banUser,
 } from '../services/admin-users.service.js'
 import { upsertUser } from '../services/user.service.js'
-import type { TeamInput, MatchInput } from '../types/index.js'
+import type { MatchOutcome, TeamInput, MatchInput } from '../types/index.js'
 
 const adminRouter = new Router({ prefix: '/api/admin' })
 
@@ -72,9 +72,13 @@ adminRouter.delete('/matches/:id', async (ctx) => {
 })
 
 adminRouter.post('/matches/:id/result', async (ctx) => {
-  const { homeGoals, awayGoals } = ctx.request.body as { homeGoals: number; awayGoals: number }
+  const { homeGoals, awayGoals, outcomeAfterDraw } = ctx.request.body as {
+    homeGoals: number
+    awayGoals: number
+    outcomeAfterDraw?: MatchOutcome | null
+  }
   const dbUser = await upsertUser(ctx.state.user)
-  ctx.body = await setResult(ctx.params['id'] as string, homeGoals, awayGoals, dbUser.id)
+  ctx.body = await setResult(ctx.params['id'] as string, homeGoals, awayGoals, dbUser.id, outcomeAfterDraw)
 })
 
 // ─── Users ────────────────────────────────────────────────────────────────────
