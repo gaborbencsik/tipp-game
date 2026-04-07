@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-04-05 (US-203 kész, BUG-001 javítva, timezone fix, AppLayout h-screen layout fix)
+> Utoljára frissítve: 2026-04-07 (UX-002 kész, AppLayout h-screen fix, timezone fix)
 
 ## Kész user story-k
 
@@ -256,6 +256,15 @@
 - ✅ Érintett komponensek: `MatchesView.vue`, `MatchDetailView.vue`
 - ✅ 205 frontend teszt, typecheck CLEAN
 
+### UX-002 – Elfogadási kritériumok teljesítve
+
+- ✅ Csak `finished`/`cancelled` meccsekből álló nap-csoportok alapból össze vannak csukva
+- ✅ A dátumcímkére kattintva kinyílik a csoport (chevron ikon jelzi az állapotot)
+- ✅ Kinyitás után először az utolsó 5 meccs látható
+- ✅ Ha több mint 5 van, megjelenik az "Összes mutatása (N db)" gomb
+- ✅ `scheduled`/`live` meccseket tartalmazó csoportok mindig nyitva maradnak
+- ✅ 208 frontend teszt, typecheck CLEAN
+
 ### US-303 bugfix – displayName persistencia javítva
 - ✅ Csak INSERT állítja be az initial `displayName`-t a JWT-ből
 - ✅ `updateProfile` által mentett név megmarad oldal-újratöltés után is
@@ -328,7 +337,8 @@
 | US-1203 | Automatikus adatszinkron cron job | ⬜ Nem kezdett | Should Have |
 | BUG-001 | Admin users lista: minden sornál ugyanaz a név | ✅ Kész | Should Have |
 | UX-001 | Tipp input UX javítások | ✅ Kész | Should Have |
+| UX-002 | Befejezett meccsek összecsukvása | ✅ Kész | Should Have |
 
 ---
 
-**Haladás: 27 / 42 story kész** — Must Have: 22/28 ✅, Should Have: 5/13 ✅
+**Haladás: 28 / 43 story kész** — Must Have: 22/28 ✅, Should Have: 6/14 ✅
