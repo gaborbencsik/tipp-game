@@ -909,7 +909,28 @@ Mint **felhasználó**, szeretném, hogy **a mérkőzések listáján a már bef
 
 **Komplexitás:** S
 **Prioritás:** Should Have
-**Prioritás:** Should Have
+
+---
+
+#### UX-004: Focilabda kurzor ikon
+
+**Story:**
+Mint **felhasználó**, szeretném, hogy **az alkalmazás loading állapotában és kattintható elemeken egy focilabda emoji kurzor jelenjen meg**, hogy **az oldal sportos hangulata vizuálisan is megjelenjen a legapróbb részletekben is**.
+
+**Elfogadási kritériumok:**
+- [ ] Loading spinner helyén (vagy mellett) a kurzor ⚽ focilabda emoji ikonra változik
+- [ ] Kattintható gombokra és linkekre húzva a kurzor focilabda ikonra vált
+- [ ] Normál (nem interaktív) szövegen a kurzor alapértelmezett marad
+- [ ] A custom kurzor CSS-sel valósul meg (`cursor: url(...)`) fallback-kel (`cursor: pointer`)
+- [ ] Mobilon (ahol nincs kurzor) a változás nem okoz vizuális hibát
+
+**Technikai megjegyzések:**
+- CSS `cursor` property SVG vagy PNG data URL-lel: `cursor: url("data:image/svg+xml,..."), auto`
+- Tailwind v4-ben custom `cursor-soccer` utility osztály definiálható `@theme` block-ban
+- Érintett fájlok: `style.css` (global cursor definíció), opcionálisan `AppLayout.vue` és spinner komponensek
+
+**Komplexitás:** S
+**Prioritás:** Nice to Have
 
 ---
 |----------|-----------|-------------|-----------|
@@ -959,11 +980,12 @@ Mint **felhasználó**, szeretném, hogy **a mérkőzések listáján a már bef
 | UX-001 | Tipp input UX javítások (autosave, select, autonext) | S | Should Have |
 | UX-002 | Befejezett meccsek összecsukvása a meccslistán | S | Should Have |
 | UX-003 | Távoli jövőbeli meccsek összecsukvása a meccslistán | S | Should Have |
+| UX-004 | Focilabda kurzor ikon | S | Nice to Have |
 
 **Összesítés:**
 - Must Have: 26 story (4 technikai + 22 product)
 - Should Have: 13 story
-- Nice to Have: 0 (ld. E10 epic – részletezés a 04-extras.md-ben)
+- Nice to Have: 1 (UX-004 + ld. E10 epic – részletezés a 04-extras.md-ben)
 
 **Méret szerinti bontás:**
 - S (Small): 11 story
