@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-04-07 (UX-002, UX-003 kész, AppLayout h-screen fix, timezone fix)
+> Utoljára frissítve: 2026-04-07 (US-205 kész: outcomeAfterDraw tipp egyenes kieséses meccsekre)
 
 ## Kész user story-k
 
@@ -24,6 +24,7 @@
 | **US-601** | Csoport létrehozása | ✅ Kész |
 | **US-602** | Csatlakozás csoporthoz | ✅ Kész |
 | **US-1201** | Futball API kiválasztása (kutatás) | ✅ Kész |
+| **US-205** | Hosszabbítás/tizenegyes kimenetel tipp | ✅ Kész |
 
 ### US-001 – Elfogadási kritériumok teljesítve
 
@@ -298,9 +299,19 @@
 - ✅ `GroupsView`: csoport neve router-link → detail view
 - ✅ 205 frontend teszt, typecheck CLEAN
 
----
+### US-205 – Elfogadási kritériumok teljesítve
 
-| Story ID | Megnevezés | Státusz | Prioritás |
+- ✅ DB migráció: `outcome_after_draw` nullable text oszlop a `predictions` és `match_results` táblákban
+- ✅ DB migráció: `correct_outcome` smallint (default: 1) a `scoring_configs` táblában
+- ✅ `MatchOutcome` union type: `'extra_time_home' | 'extra_time_away' | 'penalties_home' | 'penalties_away'`
+- ✅ Scoring service: döntetlen eredmény + helyes outcome tipp → `+correctOutcome` bónuszpont (rendes pontok mellé)
+- ✅ Backend API validáció: `outcomeAfterDraw` opcionálisan fogadva `POST /api/predictions` és admin result endpoint-on
+- ✅ `MatchesView` + `MatchDetailView`: egyenes kieséses meccsnél döntetlen tipp esetén 4 gombos outcome selector jelenik meg (Hossz./Tizenegyes × Hazai/Vendég); toggle-olható
+- ✅ `AdminMatchesView`: döntetlen eredmény rögzítésekor outcome dropdown jelenik meg knockout meccsekre
+- ✅ `MyTipsView`: lezárt meccsnél az outcome tipp megjelenik a tipp mellett (pl. „1–1 · H+hossz.")
+- ✅ 120 backend + 212 frontend teszt, typecheck CLEAN
+
+---
 |----------|-----------|---------|-----------|
 | US-001 | Monorepo és dev környezet | ✅ Kész | Must Have |
 | US-002 | DB schema és seed adatok | ✅ Kész | Must Have |
@@ -311,7 +322,7 @@
 | US-201 | Tipp leadása | ✅ Kész | Must Have |
 | US-202 | Tipp módosítása | ✅ Kész | Must Have |
 | US-203 | Saját tippek összesítő | ✅ Kész | Must Have |
-| US-204 | Mások tippjeinek megtekintése | ⬜ Nem kezdett | Should Have |
+| US-205 | Hosszabbítás/tizenegyes outcome tipp | ✅ Kész | Should Have |
 | US-301 | Regisztráció Google OAuth-szal | ✅ Kész | Must Have |
 | US-302 | Bejelentkezés / kijelentkezés | ✅ Kész | Must Have |
 | US-303 | Profil szerkesztése | ✅ Kész | Should Have |
@@ -350,4 +361,4 @@
 
 ---
 
-**Haladás: 29 / 44 story kész** — Must Have: 22/28 ✅, Should Have: 7/15 ✅
+**Haladás: 30 / 45 story kész** — Must Have: 22/28 ✅, Should Have: 8/16 ✅
