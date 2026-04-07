@@ -146,11 +146,17 @@ describe('MatchesView', () => {
     resolveList([])
   })
 
-  it('matches loaded → date groups rendered', async () => {
-    const { wrapper } = await mountView([MATCH_LIVE, MATCH_FINISHED, MATCH_SCHEDULED])
+  it('matches loaded → live and scheduled groups rendered, finished group collapsed', async () => {
+    // MATCH_FINISHED is on a different day from MATCH_LIVE so it forms its own all-finished group
+    const finishedOnOwnDay: Match = {
+      ...MATCH_FINISHED,
+      scheduledAt: '2026-06-10T18:00:00.000Z',
+    }
+    const { wrapper } = await mountView([MATCH_LIVE, finishedOnOwnDay, MATCH_SCHEDULED])
     expect(wrapper.text()).toContain('Germany')
     expect(wrapper.text()).toContain('France')
     expect(wrapper.text()).toContain('Brazil')
+    expect(wrapper.text()).not.toContain('Spain')
   })
 
   it('live match → ÉLŐBEN text visible', async () => {
@@ -160,6 +166,9 @@ describe('MatchesView', () => {
 
   it('finished match → result scores and teams visible', async () => {
     const { wrapper } = await mountView([MATCH_FINISHED])
+    // expand first
+    await wrapper.find('h2').trigger('click')
+    await wrapper.vm.$nextTick()
     expect(wrapper.text()).toContain('Spain')
     expect(wrapper.text()).toContain('Italy')
     expect(wrapper.text()).toContain('Befejezett')
@@ -207,17 +216,52 @@ describe('MatchesView', () => {
     expect(wrapper.find('[data-testid="save-button"]').exists()).toBe(false)
   })
 
-  it('finished match → prediction form hidden, no tip shown', async () => {
+  it('finished match → date group collapsed by default, teams not visible', async () => {
     const { wrapper } = await mountView([MATCH_FINISHED])
     expect(wrapper.find('[data-testid="input-home"]').exists()).toBe(false)
-    expect(wrapper.text()).toContain('Nem tippeltél erre a meccsre')
+    // collapsed: match content not rendered
+    expect(wrapper.text()).not.toContain('Spain')
   })
 
-  it('live match → prediction form hidden', async () => {
-    const { wrapper } = await mountView([MATCH_LIVE])
-    expect(wrapper.find('[data-testid="input-home"]').exists()).toBe(false)
-    expect(wrapper.text()).toContain('Nem tippeltél erre a meccsre')
+  it('finished match → clicking date header expands group', async () => {
+    const { wrapper } = await mountView([MATCH_FINISHED])
+    expect(wrapper.text()).not.toContain('Spain')
+    // click the h2 header to expand
+    await wrapper.find('h2').trigger('click')
+    await wrapper.vm.$nextTick()
+    expect(wrapper.text()).toContain('Spain')
   })
+
+  it('live match → date group not collapsed', async () => {
+    const { wrapper } = await mountView([MATCH_LIVE])
+    expect(wrapper.text()).toContain('Germany')
+  })
+
+  it('scheduled match → date group not collapsed', async () => {
+    const { wrapper } = await mountView([MATCH_SCHEDULED])
+    expect(wrapper.find('[data-testid="input-home"]').exists()).toBe(true)
+  })
+
+  it('more than 5 finished matches → "Összes mutatása" button appears after expand', async () => {
+    const finishedMatches: Match[] = Array.from({ length: 7 }, (_, i) => ({
+      id: `match-fin-${i}`,
+      homeTeam: { id: `ht${i}`, name: `Home ${i}`, shortCode: `H${i}`, flagUrl: null },
+      awayTeam: { id: `at${i}`, name: `Away ${i}`, shortCode: `A${i}`, flagUrl: null },
+      venue: null,
+      stage: 'group' as const,
+      groupName: null,
+      matchNumber: i,
+      scheduledAt: '2026-06-11T18:00:00.000Z',
+      status: 'finished' as const,
+      result: { homeGoals: 1, awayGoals: 0 },
+    }))
+    const { wrapper } = await mountView(finishedMatches)
+    await wrapper.find('h2').trigger('click')
+    await wrapper.vm.$nextTick()
+    expect(wrapper.text()).toContain('Összes mutatása')
+    expect(wrapper.text()).toContain('7 db')
+  })
+
 
   it('existing prediction → inputs pre-filled', async () => {
     const { wrapper } = await mountView([MATCH_SCHEDULED], [EXISTING_PREDICTION])

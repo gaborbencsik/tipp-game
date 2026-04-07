@@ -46,16 +46,30 @@
           :key="group.date"
           class="mb-8"
         >
-          <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b border-gray-200 pb-1">
-            {{ group.label }}
+          <h2
+            class="text-lg font-semibold text-gray-700 mb-3 border-b border-gray-200 pb-1 flex items-center justify-between"
+            :class="isCollapsible(group) ? 'cursor-pointer select-none hover:text-gray-900' : ''"
+            @click="isCollapsible(group) && toggleCollapsed(group.date)"
+          >
+            <span>{{ group.label }}</span>
+            <svg
+              v-if="isCollapsible(group)"
+              xmlns="http://www.w3.org/2000/svg"
+              class="w-4 h-4 text-gray-400 transition-transform duration-200 shrink-0"
+              :class="collapsedDates.has(group.date) ? '' : 'rotate-180'"
+              fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
           </h2>
 
-          <div
-            v-for="match in group.matches"
-            :key="match.id"
-            class="bg-white rounded-lg shadow-sm border p-4 mb-3"
-            :class="cardBorderClass(match)"
-          >
+          <template v-if="!collapsedDates.has(group.date)">
+            <div
+              v-for="match in visibleMatches(group)"
+              :key="match.id"
+              class="bg-white rounded-lg shadow-sm border p-4 mb-3"
+              :class="cardBorderClass(match)"
+            >
             <router-link
               :to="`/matches/${match.id}`"
               class="block"
@@ -176,6 +190,15 @@
               </template>
             </div>
           </div>
+
+            <button
+              v-if="isCollapsible(group) && group.matches.length > COLLAPSED_LIMIT && expandedDates.has(group.date) === false"
+              class="text-xs text-blue-600 hover:text-blue-800 mt-1 mb-2"
+              @click="expandedDates.add(group.date)"
+            >
+              Összes mutatása ({{ group.matches.length }} db)
+            </button>
+          </template>
         </div>
       </div>
   </AppLayout>
@@ -185,7 +208,7 @@
 import { onMounted, ref, nextTick, computed } from 'vue'
 import { useMatchesStore } from '../stores/matches.store.js'
 import { usePredictionsStore } from '../stores/predictions.store.js'
-import type { Match, MatchStage, MatchStatus } from '../types/index.js'
+import type { Match, MatchDateGroup, MatchStage, MatchStatus } from '../types/index.js'
 import AppLayout from '../components/AppLayout.vue'
 
 const matchesStore = useMatchesStore()
@@ -196,6 +219,10 @@ const draftGoals = ref<Record<string, { home: number | null, away: number | null
 const homeInputs = ref<Record<string, HTMLInputElement>>({})
 const awayInputs = ref<Record<string, HTMLInputElement>>({})
 const autosaveTimers: Record<string, ReturnType<typeof setTimeout>> = {}
+
+const COLLAPSED_LIMIT = 5
+const collapsedDates = ref<Set<string>>(new Set())
+const expandedDates = ref<Set<string>>(new Set())
 
 // Ordered list of all tippable inputs: [matchId, side] pairs in display order
 const inputOrder = computed((): Array<{ matchId: string; side: 'home' | 'away' }> => {
@@ -215,7 +242,34 @@ onMounted(async () => {
   await matchesStore.fetchMatches()
   await predictionsStore.fetchMyPredictions()
   initDrafts()
+  initCollapsed()
 })
+
+function initCollapsed(): void {
+  for (const group of matchesStore.matchesByDate) {
+    if (isCollapsible(group)) {
+      collapsedDates.value.add(group.date)
+    }
+  }
+}
+
+function isCollapsible(group: MatchDateGroup): boolean {
+  return group.matches.every(m => m.status === 'finished' || m.status === 'cancelled')
+}
+
+function toggleCollapsed(date: string): void {
+  if (collapsedDates.value.has(date)) {
+    collapsedDates.value = new Set([...collapsedDates.value].filter(d => d !== date))
+  } else {
+    collapsedDates.value = new Set([...collapsedDates.value, date])
+    expandedDates.value = new Set([...expandedDates.value].filter(d => d !== date))
+  }
+}
+
+function visibleMatches(group: MatchDateGroup): Match[] {
+  if (!isCollapsible(group) || expandedDates.value.has(group.date)) return group.matches
+  return group.matches.slice(-COLLAPSED_LIMIT)
+}
 
 function initDrafts(): void {
   for (const match of matchesStore.matches) {
