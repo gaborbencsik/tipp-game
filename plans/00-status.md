@@ -359,7 +359,8 @@
 | UX-002 | Befejezett meccsek összecsukvása | ✅ Kész | Should Have |
 | UX-003 | Távoli jövőbeli meccsek összecsukvása | ✅ Kész | Should Have |
 | UX-004 | Focilabda kurzor ikon | ⬜ Nem kezdett | Nice to Have |
+| DISC-001 | Landing oldal discovery (design + marketing + social) | ⬜ Nem kezdett | Should Have |
 
 ---
 
-**Haladás: 30 / 46 story kész** — Must Have: 22/28 ✅, Should Have: 8/16 ✅, Nice to Have: 0/1
+**Haladás: 30 / 47 story kész** — Must Have: 22/28 ✅, Should Have: 8/17 ✅, Nice to Have: 0/1
