@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-04-08 (UX-005 és SEC-001 story felvéve)
+> Utoljára frissítve: 2026-04-08 (UX-005, UX-006, US-806, SEC-001 story-k felvéve)
 
 ## Kész user story-k
 
@@ -360,9 +360,11 @@
 | UX-003 | Távoli jövőbeli meccsek összecsukvása | ✅ Kész | Should Have |
 | UX-004 | Focilabda kurzor ikon | ⬜ Nem kezdett | Nice to Have |
 | UX-005 | Optimista törlés az admin listákon | ⬜ Nem kezdett | Should Have |
+| UX-006 | Csapat zászló/logo megjelenítése (flag-icons) | ⬜ Nem kezdett | Should Have |
+| US-806 | Csapat típus és country code mezők (DB migráció) | ⬜ Nem kezdett | Should Have |
 | DISC-001 | Landing oldal discovery (design + marketing + social) | ⬜ Nem kezdett | Should Have |
 | SEC-001 | Row-Level Security bekapcsolása (Supabase RLS) | ⬜ Nem kezdett | Must Have |
 
 ---
 
-**Haladás: 30 / 49 story kész** — Must Have: 22/29 ✅, Should Have: 8/18 ✅, Nice to Have: 0/1
+**Haladás: 30 / 51 story kész** — Must Have: 22/29 ✅, Should Have: 8/20 ✅, Nice to Have: 0/1

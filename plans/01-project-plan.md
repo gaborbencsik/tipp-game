@@ -609,6 +609,64 @@ Mint **admin**, szeretném, hogy **ha törlök egy meccset és az API kérés si
 
 ---
 
+#### UX-006: Csapat zászló/logo megjelenítése a frontend nézetekben
+
+**Story:**
+Mint **felhasználó**, szeretném, hogy **a meccslistán, meccs részlet nézetben, saját tippjeimnél és a ranglistán a csapatok neve mellett megjelenjen a zászló/logo ikon**, hogy **a meccseket vizuálisan is könnyen azonosítsam**.
+
+**Kontextus:**
+A `teams` táblán lesz `teamType` enum (`national` / `club`), `countryCode` (ISO alpha-2, pl. `hu`, `de`) és `flagUrl` (klub logo URL) mező (lásd US-806). A frontend ezek alapján dönti el mit renderel.
+
+**Renderelési logika (prioritás sorrendben):**
+1. `teamType = 'national'` + `countryCode` van → `flag-icons` CSS osztály (`<span class="fi fi-de">`) — SVG zászló, nulla hálózati kérés
+2. `teamType = 'club'` + `flagUrl` van → `<img>` a logo URL-lel, törött kép esetén shortCode fallback
+3. minden más → `shortCode` szöveg fallback (pl. „GER", „FTC")
+
+**Technikai részletek:**
+- `flag-icons` npm csomag telepítése (`npm install flag-icons`) — CSS import, SVG sprite alapú
+- FIFA shortCode → ISO alpha-2 mapping: hardcoded konstans a frontenden (~32 VB csapat + NB I klubok country code-ja a DB-ben tárolva)
+- Fallback hierarchia garantálja, hogy mindig jelenik meg valami
+
+**Elfogadási kritériumok:**
+- [ ] `flag-icons` csomag telepítve, CSS importálva
+- [ ] `TeamBadge` komponens létrehozva: fogad `team: { shortCode, teamType, countryCode, flagUrl }` propot, rendereli a fenti logika szerint
+- [ ] `MatchesView`: hazai és vendég csapat neve mellett `TeamBadge` megjelenik
+- [ ] `MatchDetailView`: mindkét csapatnál `TeamBadge` megjelenik
+- [ ] `MyTipsView`: a tippelt meccs soraiban `TeamBadge` megjelenik
+- [ ] Törött kép (`onerror`) → automatikusan shortCode szövegre vált
+- [ ] A badge fix méretű (`w-6 h-6`)
+
+**Függőség:** US-806 (teamType + countryCode DB migráció) előfeltétel
+
+**Komplexitás:** S
+**Prioritás:** Should Have
+
+---
+
+#### US-806: Csapat típus és country code mezők a teams táblában
+
+**Story:**
+Mint **fejlesztő**, szeretném, hogy **a `teams` táblán legyen egy `teamType` enum mező (`national` / `club`) és egy `countryCode` mező (ISO alpha-2)**, hogy **a frontend meg tudja különböztetni a válogatottakat a klub csapatoktól, és ennek megfelelően zászlót vagy klub logót tudjon megjeleníteni**.
+
+**Elfogadási kritériumok:**
+- [ ] `pgEnum('team_type', ['national', 'club'])` létrehozva a Drizzle schemában
+- [ ] `teams` tábla: `teamType: teamTypeEnum('team_type').notNull().default('national')`
+- [ ] `teams` tábla: `countryCode: varchar('country_code', { length: 2 })` — nullable, csak national csapatoknál töltendő ki (pl. `'hu'`, `'de'`)
+- [ ] Drizzle migráció generálva és elnevezve (`0003_team_type_country_code.sql`)
+- [ ] Backend `Team` és `TeamInput` típusok frissítve (`teamType`, `countryCode` mezőkkel)
+- [ ] Frontend `Team` típus frissítve
+- [ ] Admin csapatkezelő form (`AdminTeamsView`): `teamType` dropdown (Válogatott / Klub), `countryCode` input mező (csak national esetén látható)
+- [ ] Seed adatok frissítve: VB-s csapatokhoz `teamType: 'national'` + `countryCode` beállítva
+- [ ] Az összes meglévő teszt zöld marad
+
+**Megjegyzés:**
+A `countryCode` ISO alpha-2 formátumban tárolódik (pl. `'hu'`, `'de'`, `'fr'`) — ez közvetlenül a `flag-icons` CSS osztályba kerül (`fi-hu`, `fi-de`). A `flagUrl` mező megmarad klub csapatokhoz.
+
+**Komplexitás:** S
+**Prioritás:** Should Have
+
+---
+
 ### E9 – Statisztikai tippek
 
 #### US-901: Statisztikai tipp leadása
@@ -1170,12 +1228,14 @@ Opcionális sticky nav anchor linkekkel: `Funkciók | Hogyan működik? | FAQ | 
 | UX-003 | Távoli jövőbeli meccsek összecsukvása a meccslistán | S | Should Have |
 | UX-004 | Focilabda kurzor ikon | S | Nice to Have |
 | UX-005 | Optimista törlés az admin listákon | S | Should Have |
+| UX-006 | Csapat zászló/logo megjelenítése (flag-icons) | S | Should Have |
+| US-806 | Csapat típus és country code mezők (DB migráció) | S | Should Have |
 | DISC-001 | Landing oldal discovery (design + marketing + social) | L | Should Have |
 | SEC-001 | Row-Level Security bekapcsolása (Supabase RLS) | S | Must Have |
 
 **Összesítés:**
 - Must Have: 27 story (4 technikai + 23 product)
-- Should Have: 16 story
+- Should Have: 18 story
 - Nice to Have: 1 (UX-004 + ld. E10 epic – részletezés a 04-extras.md-ben)
 
 **Méret szerinti bontás:**
