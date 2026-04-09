@@ -31,6 +31,7 @@
 | E10 – UX/Polish | Értesítések, animációk, PWA, stb. | Nice to Have |
 | E11 – Támogatás | Donation lehetőség a projekt fenntartásához | Should Have |
 | E12 – Adatszinkron | Automatikus meccs- és eredményadat szinkron külső API-ból | Should Have |
+| E14 – Biztonság | Adatbázis-szintű hozzáférés-szabályozás (RLS) | Must Have |
 
 ---
 
@@ -592,6 +593,22 @@ Mint **admin**, szeretnék **a felhasználókat listázni, szerepkörüket módo
 
 ---
 
+#### UX-005: Optimista törlés az admin mérkőzés-listán
+
+**Story:**
+Mint **admin**, szeretném, hogy **ha törlök egy meccset és az API kérés sikeres, a sor azonnal eltűnjön a listából**, anélkül hogy újra kellene tölteni az oldalt.
+
+**Elfogadási kritériumok:**
+- [ ] Törlés gombra kattintva (és confirm után) az API hívás indul
+- [ ] Ha az API sikeres (2xx), a sor azonnal eltűnik a táblázatból (`store.matches`-ből kivesszük optimistán)
+- [ ] Ha az API hibát ad vissza, a sor visszakerül a listába és hibaüzenet jelenik meg
+- [ ] A viselkedés a csapatok admin listáján is azonos legyen (`AdminTeamsView`)
+
+**Komplexitás:** S
+**Prioritás:** Should Have
+
+---
+
 ### E9 – Statisztikai tippek
 
 #### US-901: Statisztikai tipp leadása
@@ -934,6 +951,37 @@ Mint **felhasználó**, szeretném, hogy **az alkalmazás loading állapotában 
 
 ---
 
+### E14 – Biztonság
+
+#### SEC-001: Row-Level Security bekapcsolása minden Supabase táblán
+
+**Story:**
+Mint **fejlesztő és rendszergazda**, szeretném, hogy **minden adatbázis-tábla Row-Level Security (RLS) védelemmel rendelkezzen**, hogy **a Supabase PostgREST API-n keresztül senki ne férhessen hozzá közvetlenül az adatokhoz az anon key segítségével**, még ha a JWT-alapú backend API is teljesen el van zárva a frontendtől.
+
+**Kontextus:**
+A Supabase email-figyelmeztetést küldött: az összes tábla nyilvánosan elérhető, mert nincs RLS bekapcsolva. Bár az alkalmazás nem használja a Supabase PostgREST API-t (minden adat a Koa backend API-n megy át), az `anon` key publikus a frontend bundle-ban, és valaki közvetlen PostgREST hívásokkal olvashatna/írhatna az adatbázisba.
+
+**Megoldás:**
+- `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` minden táblára egy új Drizzle migrációban
+- Explicit `DENY` policy nélkül az RLS bekapcsolása automatikusan blokkol minden PostgREST/anon hozzáférést
+- A backend `DATABASE_URL` connection string-et (service role / direkt psql user) **nem érinti** az RLS — az app tovább működik változtatás nélkül
+- Supabase service role (`service_role` key) automatikusan bypass-olja az RLS-t
+
+**Elfogadási kritériumok:**
+- [ ] Minden táblán (`users`, `teams`, `venues`, `matches`, `match_results`, `scoring_configs`, `groups`, `group_members`, `predictions`, `group_prediction_points`, `special_prediction_types`, `special_predictions`, `audit_logs`) be van kapcsolva az RLS
+- [ ] Új Drizzle migráció generálva és elnevezve (`0003_enable_rls.sql`)
+- [ ] A backend összes meglévő tesztje változatlanul zöld (a backend nem érinti az RLS-t)
+- [ ] A Supabase dashboard biztonsági figyelmeztetése eltűnik a migráció futtatása után
+- [ ] Manuálisan tesztelve: Supabase anon key-jel közvetlen `curl` hívás → 401/403 visszaadva
+
+**Megjegyzés a migrációs stratégiáról:**
+Mivel a backend Drizzle ORM-et használ és direkt DB kapcsolaton ér el mindent, az RLS bekapcsolása **kizárólag a PostgREST réteget zárja le**. Nincs szükség `POLICY` definíciókra — az "implicit deny all" elég.
+
+**Komplexitás:** S
+**Prioritás:** Must Have (biztonsági javítás)
+
+---
+
 ### E13 – Landing & Marketing
 
 #### DISC-001: Landing oldal discovery (design + marketing + social stratégia)
@@ -1121,11 +1169,13 @@ Opcionális sticky nav anchor linkekkel: `Funkciók | Hogyan működik? | FAQ | 
 | UX-002 | Befejezett meccsek összecsukvása a meccslistán | S | Should Have |
 | UX-003 | Távoli jövőbeli meccsek összecsukvása a meccslistán | S | Should Have |
 | UX-004 | Focilabda kurzor ikon | S | Nice to Have |
+| UX-005 | Optimista törlés az admin listákon | S | Should Have |
 | DISC-001 | Landing oldal discovery (design + marketing + social) | L | Should Have |
+| SEC-001 | Row-Level Security bekapcsolása (Supabase RLS) | S | Must Have |
 
 **Összesítés:**
-- Must Have: 26 story (4 technikai + 22 product)
-- Should Have: 14 story
+- Must Have: 27 story (4 technikai + 23 product)
+- Should Have: 16 story
 - Nice to Have: 1 (UX-004 + ld. E10 epic – részletezés a 04-extras.md-ben)
 
 **Méret szerinti bontás:**
