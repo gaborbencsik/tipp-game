@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-04-10 (US-206/404/607 kedvenc csapat dupla pont; US-604/901/902 csoportszintű liga filter + stat tippek átírva)
+> Utoljára frissítve: 2026-04-13 (US-604 felbontva: 604-A/B/C + US-608 + US-609)
 
 ## Kész user story-k
 
@@ -336,7 +336,11 @@
 | US-601 | Csoport létrehozása | ✅ Kész | Must Have |
 | US-602 | Csatlakozás csoporthoz | ✅ Kész | Must Have |
 | US-603 | Csoportonkénti ranglista | ✅ Kész | Must Have |
-| US-604 | Csoport kezelése (admin) | ⬜ Nem kezdett | Must Have |
+| US-604-A | Csoport tagkezelés (admin) | ⬜ Nem kezdett | Must Have |
+| US-604-B | Meghívó kód kezelése (admin) | ⬜ Nem kezdett | Must Have |
+| US-604-C | Csoport törlése (admin) | ⬜ Nem kezdett | Should Have |
+| US-608 | Csoportszintű pontrendszer override | ⬜ Nem kezdett | Must Have |
+| US-609 | Liga filter csoportonként | ⬜ Nem kezdett | Should Have |
 | US-605 | Több csoporthoz tartozás | ⬜ Nem kezdett | Must Have |
 | US-606 | Csoportok navigáció (AppLayout) | ✅ Kész | Must Have |
 | US-701 | User/Admin szerepkörök | ✅ Kész | Must Have |
@@ -370,4 +374,4 @@
 
 ---
 
-**Haladás: 30 / 54 story kész** — Must Have: 22/29 ✅, Should Have: 8/23 ✅, Nice to Have: 0/1
+**Haladás: 30 / 58 story kész** — Must Have: 22/33 ✅, Should Have: 8/23 ✅, Nice to Have: 0/1

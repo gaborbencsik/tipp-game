@@ -506,36 +506,108 @@ Mint **csoport tagja**, szeretnék **a csoport ranglistáját látni csak a tago
 
 ---
 
-#### US-604: Csoport kezelése (admin)
+#### US-604-A: Csoport tagkezelés (admin)
 
 **Story:**
-Mint **csoport admin**, szeretnék **a csoportot teljes körűen konfigurálni** — tagok, meghívó, pontrendszer, liga filter, stat tippek —, hogy **a verseny szabályait én határozzam meg a csoport igényei szerint**.
+Mint **csoport admin**, szeretnék **a csoport tagjait kezelni** — listázni, eltávolítani, admin szerepkört átadni —, hogy **a csoport összetételét én kontrolláljam**.
 
 **Elfogadási kritériumok:**
+- [ ] `GET /api/groups/:groupId/members` — taglista (csak csoport tagoknak), tartalmazza: userId, displayName, avatarUrl, isAdmin, joinedAt
+- [ ] `DELETE /api/groups/:groupId/members/:userId` — tag eltávolítása (csak csoport admin, saját magát nem távolíthatja el)
+- [ ] `PUT /api/groups/:groupId/members/:userId/role` — admin szerep átadása (csak csoport admin, saját magától elveheti ha van másik admin)
+- [ ] Backend: mindhárom endpoint `authMiddleware` + csoport-admin jogosultság ellenőrzés
+- [ ] `GroupMember` típus (backend + frontend): `userId`, `displayName`, `avatarUrl`, `isAdmin`, `joinedAt`
+- [ ] Frontend: `GroupDetailView` kiegészítve „Tagok" tabon — taglista táblázat (avatar, név, szerep badge, csatlakozás dátuma, Eltávolít / Admin átadás gombok)
+- [ ] Saját sor kiemelve, saját magát eltávolítani nem lehet (gomb disabled)
+- [ ] Törlés előtt confirm dialog
+- [ ] Unit tesztek: taglista, eltávolítás, jogosultság ellenőrzés
 
-*Tagkezelés:*
-- [ ] Admin látja és kezeli a taglistát (tag eltávolítása lehetséges)
-- [ ] Meghívó kód újragenerálható / deaktiválható
-- [ ] Admin átadhatja az admin szerepkört másik tagnak
-- [ ] Platform admin (US-805) az összes csoport taglistáját látja az admin panelen
-
-*Pontrendszer (csoport létrehozásakor és később is szerkeszthető):*
-- [ ] Csoport admin beállíthatja a csoportszintű pontrendszer override-ot (pontos tipp, helyes győztes, gólkülönbség, döntetlen, outcome — mind felülírható a globálistól)
-- [ ] Ha nincs override, a globális scoring config érvényes
-- [ ] A pontrendszer csak a jövőbeli meccsekre hat visszamenőleg nem módosít
-
-*Liga / meccs filter:*
-- [ ] Csoport admin beállíthatja, hogy a csoport melyik liga(k) meccseire vonatkozzon (pl. csak VB 2026, vagy VB + NB I)
-- [ ] Ha liga filter aktív, a csoport ranglistája csak a szűrt meccsekre adott tippek pontjait számolja
-- [ ] A liga filter a csoport detail oldalán látható a tagoknak
-
-*Statisztikai tippek (US-901/902 scope-ból ide kerül):*
-- [ ] Csoport admin be- és kikapcsolhatja a stat tippeket a csoportban
-- [ ] Ha be van kapcsolva, a stat tippek típusait a csoport admin konfigurálja (nem globálisan — lásd US-902 módosítás)
-- [ ] A stat tippek pontjai a csoport ranglistájához adódnak hozzá, a globális ranglistához nem
-
-**Komplexitás:** L
+**Komplexitás:** S
 **Prioritás:** Must Have
+
+---
+
+#### US-604-B: Meghívó kód kezelése (admin)
+
+**Story:**
+Mint **csoport admin**, szeretnék **a csoport meghívó kódját újragenerálni vagy deaktiválni**, hogy **megakadályozzam illetéktelenek csatlakozását**.
+
+**Elfogadási kritériumok:**
+- [ ] `PUT /api/groups/:groupId/invite` — új 8 karakteres kód generálása (régi érvénytelenül), `inviteActive = true`
+- [ ] `PATCH /api/groups/:groupId/invite` — invite aktív/inaktív togglelása (`inviteActive` mező)
+- [ ] Csak csoport admin hívhatja
+- [ ] Frontend: `GroupDetailView` beállítások szekcióban megjelenik a meghívó kód + Másolás gomb + Újragenerálás gomb + Deaktiválás toggle
+- [ ] Újragenerálás előtt figyelmeztető üzenet: „A régi meghívó link érvénytelen lesz"
+- [ ] Ha `inviteActive = false`, a GroupsView-ban a meghívó kód „Inaktív" felirattal jelenik meg
+- [ ] Unit tesztek: újragenerálás, deaktiválás, jogosultság ellenőrzés
+
+**Komplexitás:** S
+**Prioritás:** Must Have
+
+---
+
+#### US-604-C: Csoport törlése (admin)
+
+**Story:**
+Mint **csoport admin**, szeretnék **a csoportomat törölni**, hogy **ha már nincs rá szükség, el tudjam távolítani**.
+
+**Elfogadási kritériumok:**
+- [ ] `DELETE /api/groups/:groupId` — soft delete (`deletedAt` mező), csak csoport admin
+- [ ] Törlés előtt confirm dialog: „A csoport és a csoport ranglista véglegesen törlődik"
+- [ ] Törlés után a tagok a `/groups` oldalra kerülnek, a csoport eltűnik a listájukból
+- [ ] Platform admin (US-805) bármely csoportot törölheti
+- [ ] Unit tesztek: törlés, jogosultság ellenőrzés, soft delete szűrés
+
+**Komplexitás:** S
+**Prioritás:** Should Have
+
+---
+
+#### US-608: Csoportszintű pontrendszer override
+
+**Story:**
+Mint **csoport admin**, szeretnék **a csoportomban eltérő pontértékeket beállítani a globálistól**, hogy **saját szabályok szerint versenyezzünk**.
+
+**Kontextus:**
+A `groups.scoringConfigId` FK már létezik a DB-ben, de a csoport ranglista jelenleg a globális `predictions.pointsGlobal`-t használja. Ez a story bevezeti a `groupPredictionPoints` tábla tényleges használatát és a csoportszintű pontszámítást.
+
+**Elfogadási kritériumok:**
+- [ ] `PUT /api/groups/:groupId/scoring` — csoport scoring config beállítása (pontos tipp, helyes győztes, gólkülönbség, döntetlen, outcome értékek)
+- [ ] Ha nincs override (`scoringConfigId = null`), a globális config érvényes
+- [ ] `calculateGroupPoints(matchId, groupId)` service: lekéri a csoport scoring config-ját, kiszámolja és elmenti a `groupPredictionPoints` rekordokat
+- [ ] `setResult()` meghívja `calculateGroupPoints()`-t minden csoportra amely tartalmazza a meccs ligáját
+- [ ] `getGroupLeaderboard()` átírva: `groupPredictionPoints` összege helyett (jelenleg global `pointsGlobal`)
+- [ ] A pontrendszer változtatása csak jövőbeli meccsekre hat
+- [ ] Frontend: `GroupDetailView` beállítások tabon scoring form (6 input mező, alapértelmezett értékek a globálisból)
+- [ ] Unit tesztek: override érvényesül, globális fallback, idempotens újraszámítás
+
+**Függőség:** US-604-A (GroupDetailView settings tab alapja)
+
+**Komplexitás:** M
+**Prioritás:** Must Have
+
+---
+
+#### US-609: Liga filter csoportonként
+
+**Story:**
+Mint **csoport admin**, szeretnék **beállítani, hogy a csoport melyik liga(k) meccseit számolja a ranglistához**, hogy **pl. csak VB 2026 meccseken versenyezzünk, NB I nélkül**.
+
+**Kontextus:**
+Ez a story az US-1301 (liga entitás bevezetése) után valósítható meg, mert a liga filter liga ID-kra hivatkozik.
+
+**Elfogadási kritériumok:**
+- [ ] `group_leagues` junction tábla: `groupId`, `leagueId` — melyik ligák meccsei számítanak a csoportban
+- [ ] Ha a tábla üres (nincs filter), minden meccs számít
+- [ ] `PUT /api/groups/:groupId/leagues` — liga filter beállítása (liga ID-k listája)
+- [ ] `calculateGroupPoints()` figyelembe veszi a liga filtert: csak a filterben szereplő ligák meccseit számolja
+- [ ] Frontend: liga filter multi-select a csoport beállításokban
+- [ ] Unit tesztek: filter aktív, filter üres (minden meccs), filter módosítás
+
+**Függőség:** US-1301 (liga entitás), US-608 (calculateGroupPoints service)
+
+**Komplexitás:** M
+**Prioritás:** Should Have
 
 ---
 
@@ -570,7 +642,7 @@ A kedvenc csapat profilszinten van beállítva ligánként (US-206) — csoporto
 - [ ] A szabály változtatása csak jövőbeli meccsekre hat, visszamenőleg nem módosít
 - [ ] Ha egy tag nem állított be kedvenc csapatot (US-206), a szabály rá nem vonatkozik (nincs büntetés)
 
-**Függőség:** US-604 (csoport kezelés admin felület), US-206 (profilszintű kedvenc csapat)
+**Függőség:** US-604-A (csoport kezelés admin felület), US-206 (profilszintű kedvenc csapat)
 
 **Komplexitás:** S
 **Prioritás:** Should Have
@@ -760,7 +832,7 @@ A `countryCode` ISO alpha-2 formátumban tárolódik (pl. `'hu'`, `'de'`, `'fr'`
 Mint **bejelentkezett felhasználó**, szeretnék **a csoportomban konfigurált statisztikai tippeket leadni** (pl. gólkirály, bajnok csapat), hogy **az egyéni meccs-tippeken túl is versenyezhessek a csoporton belül**.
 
 **Kontextus:**
-A stat tippek nem globálisak — minden csoport admin külön kapcsolhatja be és konfigurálhatja őket a csoportjában (US-604). A stat tippek pontjai kizárólag a csoport ranglistájához adódnak hozzá.
+A stat tippek nem globálisak — minden csoport admin külön kapcsolhatja be és konfigurálhatja őket a csoportjában (US-604-A). A stat tippek pontjai kizárólag a csoport ranglistájához adódnak hozzá.
 
 **Elfogadási kritériumok:**
 - [ ] Ha a csoportban a stat tippek be vannak kapcsolva, a csoport oldalán megjelenik egy "Statisztikai tippek" szekció
@@ -1299,10 +1371,14 @@ Opcionális sticky nav anchor linkekkel: `Funkciók | Hogyan működik? | FAQ | 
 | US-601 | Csoport létrehozása | M | Must Have |
 | US-602 | Csatlakozás csoporthoz | M | Must Have |
 | US-603 | Csoportonkénti ranglista | M | Must Have |
-| US-604 | Csoport kezelése (admin) | L | Must Have |
+| US-604-A | Csoport tagkezelés (admin) | S | Must Have |
+| US-604-B | Meghívó kód kezelése (admin) | S | Must Have |
+| US-604-C | Csoport törlése (admin) | S | Should Have |
 | US-605 | Több csoporthoz tartozás | S | Must Have |
 | US-606 | Csoportok mint főoldal és navigáció | S | Must Have |
 | US-607 | Kedvenc csapat dupla pont szabály (csoport beállítás) | S | Should Have |
+| US-608 | Csoportszintű pontrendszer override | M | Must Have |
+| US-609 | Liga filter csoportonként | M | Should Have |
 | US-701 | User/Admin szerepkörök | M | Must Have |
 | US-801 | Mérkőzés létrehozása | M | Must Have |
 | US-802 | Mérkőzés szerkesztése/törlése | M | Must Have |
@@ -1331,8 +1407,8 @@ Opcionális sticky nav anchor linkekkel: `Funkciók | Hogyan működik? | FAQ | 
 | SEC-001 | Row-Level Security bekapcsolása (Supabase RLS) | S | Must Have |
 
 **Összesítés:**
-- Must Have: 27 story (4 technikai + 23 product)
-- Should Have: 21 story
+- Must Have: 30 story (4 technikai + 26 product)
+- Should Have: 23 story
 - Nice to Have: 1 (UX-004 + ld. E10 epic – részletezés a 04-extras.md-ben)
 
 **Méret szerinti bontás:**
