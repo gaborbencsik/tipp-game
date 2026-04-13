@@ -1,18 +1,29 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import type { Group } from '@/types/index'
+import type { Group, GroupMember } from '@/types/index'
 
 vi.mock('vue-router', () => ({
   useRouter: () => ({ push: vi.fn() }),
 }))
 
-const { mockGetSession, mockGroupsMine, mockGroupsCreate, mockGroupsJoin } = vi.hoisted(() => ({
+const {
+  mockGetSession,
+  mockGroupsMine,
+  mockGroupsCreate,
+  mockGroupsJoin,
+  mockGroupsMembers,
+  mockGroupsRemoveMember,
+  mockGroupsUpdateMemberRole,
+} = vi.hoisted(() => ({
   mockGetSession: vi.fn().mockResolvedValue({
     data: { session: { access_token: 'mock-token' } },
   }),
   mockGroupsMine: vi.fn(),
   mockGroupsCreate: vi.fn(),
   mockGroupsJoin: vi.fn(),
+  mockGroupsMembers: vi.fn(),
+  mockGroupsRemoveMember: vi.fn(),
+  mockGroupsUpdateMemberRole: vi.fn(),
 }))
 
 vi.mock('@/lib/supabase', () => ({
@@ -32,6 +43,9 @@ vi.mock('@/api/index', () => ({
       mine: mockGroupsMine,
       create: mockGroupsCreate,
       join: mockGroupsJoin,
+      members: mockGroupsMembers,
+      removeMember: mockGroupsRemoveMember,
+      updateMemberRole: mockGroupsUpdateMemberRole,
     },
   },
 }))
@@ -68,6 +82,9 @@ describe('groups.store', () => {
     mockGroupsMine.mockReset()
     mockGroupsCreate.mockReset()
     mockGroupsJoin.mockReset()
+    mockGroupsMembers.mockReset()
+    mockGroupsRemoveMember.mockReset()
+    mockGroupsUpdateMemberRole.mockReset()
     mockGetSession.mockResolvedValue({ data: { session: { access_token: 'mock-token' } } })
   })
 
@@ -167,5 +184,79 @@ describe('groups.store', () => {
     mockGroupsJoin.mockRejectedValue(new Error('Group not found'))
     const store = useGroupsStore()
     await expect(store.joinGroup({ inviteCode: 'INVALID1' })).rejects.toThrow('Group not found')
+  })
+
+  // ─── fetchGroupMembers ────────────────────────────────────────────────────────
+
+  const MEMBER_A: GroupMember = {
+    id: 'gm-uuid-1',
+    userId: 'user-uuid-1',
+    displayName: 'Alice',
+    avatarUrl: null,
+    isAdmin: true,
+    joinedAt: '2026-01-01T00:00:00.000Z',
+  }
+
+  const MEMBER_B: GroupMember = {
+    id: 'gm-uuid-2',
+    userId: 'user-uuid-2',
+    displayName: 'Bob',
+    avatarUrl: null,
+    isAdmin: false,
+    joinedAt: '2026-01-02T00:00:00.000Z',
+  }
+
+  it('fetchGroupMembers() success → membersMap populated', async () => {
+    mockGroupsMembers.mockResolvedValue([MEMBER_A, MEMBER_B])
+    const store = useGroupsStore()
+    await store.fetchGroupMembers('group-uuid-1')
+    expect(store.membersMap['group-uuid-1']).toEqual([MEMBER_A, MEMBER_B])
+  })
+
+  it('fetchGroupMembers() error → membersError set', async () => {
+    mockGroupsMembers.mockRejectedValue(new Error('Not a member'))
+    const store = useGroupsStore()
+    await store.fetchGroupMembers('group-uuid-1')
+    expect(store.membersError).toBe('Not a member')
+    expect(store.membersMap['group-uuid-1']).toBeUndefined()
+  })
+
+  // ─── removeMember ─────────────────────────────────────────────────────────────
+
+  it('removeMember() success → member filtered from membersMap', async () => {
+    mockGroupsMembers.mockResolvedValue([MEMBER_A, MEMBER_B])
+    mockGroupsRemoveMember.mockResolvedValue({ success: true })
+    const store = useGroupsStore()
+    await store.fetchGroupMembers('group-uuid-1')
+    await store.removeMember('group-uuid-1', 'user-uuid-2')
+    expect(store.membersMap['group-uuid-1']).toHaveLength(1)
+    expect(store.membersMap['group-uuid-1']![0].userId).toBe('user-uuid-1')
+  })
+
+  it('removeMember() error → throws', async () => {
+    mockGroupsRemoveMember.mockRejectedValue(new Error('Not authorized'))
+    const store = useGroupsStore()
+    await expect(store.removeMember('group-uuid-1', 'user-uuid-2')).rejects.toThrow('Not authorized')
+  })
+
+  // ─── toggleMemberAdmin ────────────────────────────────────────────────────────
+
+  it('toggleMemberAdmin() success → isAdmin updated in membersMap', async () => {
+    mockGroupsMembers.mockResolvedValue([MEMBER_A, MEMBER_B])
+    const updatedMember: GroupMember = { ...MEMBER_B, isAdmin: true }
+    mockGroupsUpdateMemberRole.mockResolvedValue(updatedMember)
+    const store = useGroupsStore()
+    await store.fetchGroupMembers('group-uuid-1')
+    await store.toggleMemberAdmin('group-uuid-1', 'user-uuid-2', true)
+    const bob = store.membersMap['group-uuid-1']?.find((m) => m.userId === 'user-uuid-2')
+    expect(bob?.isAdmin).toBe(true)
+  })
+
+  it('toggleMemberAdmin() error → throws', async () => {
+    mockGroupsUpdateMemberRole.mockRejectedValue(new Error('Cannot change your own admin status'))
+    const store = useGroupsStore()
+    await expect(store.toggleMemberAdmin('group-uuid-1', 'user-uuid-1', false)).rejects.toThrow(
+      'Cannot change your own admin status',
+    )
   })
 })

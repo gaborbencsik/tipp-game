@@ -1,4 +1,4 @@
-import type { User, Match, MatchesFilters, MatchInput, MatchResultInput, Prediction, PredictionInput, Team, TeamInput, AdminUser, Group, GroupInput, JoinGroupInput, LeaderboardEntry } from '../types/index.js'
+import type { User, Match, MatchesFilters, MatchInput, MatchResultInput, Prediction, PredictionInput, Team, TeamInput, AdminUser, Group, GroupInput, GroupMember, JoinGroupInput, LeaderboardEntry } from '../types/index.js'
 
 const BASE_URL = (import.meta.env.VITE_API_URL ?? '') + '/api'
 
@@ -79,6 +79,21 @@ export const api = {
       }),
     leaderboard: (token: string, groupId: string) =>
       request<LeaderboardEntry[]>(`/groups/${groupId}/leaderboard`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+    members: (token: string, groupId: string) =>
+      request<GroupMember[]>(`/groups/${groupId}/members`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+    removeMember: (token: string, groupId: string, userId: string) =>
+      request<{ success: boolean }>(`/groups/${groupId}/members/${userId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+    updateMemberRole: (token: string, groupId: string, userId: string, isAdmin: boolean) =>
+      request<GroupMember>(`/groups/${groupId}/members/${userId}/role`, {
+        method: 'PUT',
+        body: JSON.stringify({ isAdmin }),
         headers: { Authorization: `Bearer ${token}` },
       }),
   },

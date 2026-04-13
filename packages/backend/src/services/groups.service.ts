@@ -1,7 +1,7 @@
-import { eq, isNull, sql } from 'drizzle-orm'
+import { and, eq, isNull, sql } from 'drizzle-orm'
 import { db } from '../db/client.js'
-import { groups, groupMembers } from '../db/schema/index.js'
-import type { Group, GroupInput } from '../types/index.js'
+import { groups, groupMembers, users } from '../db/schema/index.js'
+import type { Group, GroupInput, GroupMember } from '../types/index.js'
 
 class AppError extends Error {
   readonly status: number
@@ -154,3 +154,121 @@ export async function joinGroup(inviteCode: string, userId: string): Promise<Gro
   return toApiGroup(group, memberCount, false)
 }
 
+export async function getGroupMembers(groupId: string, requesterId: string): Promise<GroupMember[]> {
+  const groupRows = await db
+    .select()
+    .from(groups)
+    .where(and(eq(groups.id, groupId), isNull(groups.deletedAt)))
+    .limit(1)
+  if (!groupRows[0]) throw new AppError(404, 'Group not found')
+
+  const rows = await db
+    .select({
+      id: groupMembers.id,
+      userId: groupMembers.userId,
+      displayName: users.displayName,
+      avatarUrl: users.avatarUrl,
+      isAdmin: groupMembers.isAdmin,
+      joinedAt: groupMembers.joinedAt,
+    })
+    .from(groupMembers)
+    .innerJoin(users, eq(groupMembers.userId, users.id))
+    .where(eq(groupMembers.groupId, groupId))
+    .orderBy(groupMembers.joinedAt)
+
+  const requester = rows.find((r) => r.userId === requesterId)
+  if (!requester) throw new AppError(403, 'Not a member of this group')
+
+  return rows.map((r) => ({
+    id: r.id,
+    userId: r.userId,
+    displayName: r.displayName,
+    avatarUrl: r.avatarUrl ?? null,
+    isAdmin: r.isAdmin,
+    joinedAt: r.joinedAt.toISOString(),
+  }))
+}
+
+export async function removeMember(groupId: string, targetUserId: string, requesterId: string): Promise<void> {
+  if (targetUserId === requesterId) throw new AppError(403, 'Cannot remove yourself')
+
+  const groupRows = await db
+    .select()
+    .from(groups)
+    .where(and(eq(groups.id, groupId), isNull(groups.deletedAt)))
+    .limit(1)
+  if (!groupRows[0]) throw new AppError(404, 'Group not found')
+
+  const members = await db
+    .select()
+    .from(groupMembers)
+    .where(eq(groupMembers.groupId, groupId))
+
+  const requester = members.find((m) => m.userId === requesterId)
+  if (!requester || !requester.isAdmin) throw new AppError(403, 'Not authorized')
+
+  const target = members.find((m) => m.userId === targetUserId)
+  if (!target) throw new AppError(404, 'Member not found')
+
+  await db
+    .delete(groupMembers)
+    .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, targetUserId)))
+}
+
+export async function setMemberAdmin(
+  groupId: string,
+  targetUserId: string,
+  isAdmin: boolean,
+  requesterId: string,
+): Promise<GroupMember> {
+  if (targetUserId === requesterId) throw new AppError(403, 'Cannot change your own admin status')
+
+  const groupRows = await db
+    .select()
+    .from(groups)
+    .where(and(eq(groups.id, groupId), isNull(groups.deletedAt)))
+    .limit(1)
+  if (!groupRows[0]) throw new AppError(404, 'Group not found')
+
+  const rows = await db
+    .select({
+      id: groupMembers.id,
+      userId: groupMembers.userId,
+      displayName: users.displayName,
+      avatarUrl: users.avatarUrl,
+      isAdmin: groupMembers.isAdmin,
+      joinedAt: groupMembers.joinedAt,
+    })
+    .from(groupMembers)
+    .innerJoin(users, eq(groupMembers.userId, users.id))
+    .where(eq(groupMembers.groupId, groupId))
+
+  const requester = rows.find((r) => r.userId === requesterId)
+  if (!requester || !requester.isAdmin) throw new AppError(403, 'Not authorized')
+
+  const target = rows.find((r) => r.userId === targetUserId)
+  if (!target) throw new AppError(404, 'Member not found')
+
+  if (!isAdmin) {
+    const adminCount = rows.filter((r) => r.isAdmin).length
+    if (adminCount === 1 && target.isAdmin) throw new AppError(422, 'Cannot demote the last admin')
+  }
+
+  const updated = await db
+    .update(groupMembers)
+    .set({ isAdmin })
+    .where(eq(groupMembers.id, target.id))
+    .returning()
+
+  const updatedRow = updated[0]
+  if (!updatedRow) throw new AppError(500, 'Failed to update member role')
+
+  return {
+    id: target.id,
+    userId: target.userId,
+    displayName: target.displayName,
+    avatarUrl: target.avatarUrl ?? null,
+    isAdmin: updatedRow.isAdmin,
+    joinedAt: target.joinedAt.toISOString(),
+  }
+}

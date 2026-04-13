@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { supabase } from '../lib/supabase.js'
 import { api } from '../api/index.js'
-import type { Group, GroupInput, JoinGroupInput } from '../types/index.js'
+import type { Group, GroupInput, GroupMember, JoinGroupInput } from '../types/index.js'
 
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
 
@@ -16,6 +16,9 @@ export const useGroupsStore = defineStore('groups', () => {
   const groups = ref<Group[]>([])
   const isLoading = ref(false)
   const error = ref<string | null>(null)
+  const membersMap = ref<Record<string, GroupMember[]>>({})
+  const membersLoading = ref(false)
+  const membersError = ref<string | null>(null)
 
   async function fetchMyGroups(): Promise<void> {
     isLoading.value = true
@@ -44,12 +47,45 @@ export const useGroupsStore = defineStore('groups', () => {
     return group
   }
 
+  async function fetchGroupMembers(groupId: string): Promise<void> {
+    membersLoading.value = true
+    membersError.value = null
+    try {
+      const token = await getAccessToken()
+      membersMap.value[groupId] = await api.groups.members(token, groupId)
+    } catch (err) {
+      membersError.value = err instanceof Error ? err.message : 'Ismeretlen hiba'
+    } finally {
+      membersLoading.value = false
+    }
+  }
+
+  async function removeMember(groupId: string, userId: string): Promise<void> {
+    const token = await getAccessToken()
+    await api.groups.removeMember(token, groupId, userId)
+    membersMap.value[groupId] = (membersMap.value[groupId] ?? []).filter((m) => m.userId !== userId)
+  }
+
+  async function toggleMemberAdmin(groupId: string, userId: string, isAdmin: boolean): Promise<void> {
+    const token = await getAccessToken()
+    const updated = await api.groups.updateMemberRole(token, groupId, userId, isAdmin)
+    membersMap.value[groupId] = (membersMap.value[groupId] ?? []).map((m) =>
+      m.userId === userId ? updated : m,
+    )
+  }
+
   return {
     groups,
     isLoading,
     error,
+    membersMap,
+    membersLoading,
+    membersError,
     fetchMyGroups,
     createGroup,
     joinGroup,
+    fetchGroupMembers,
+    removeMember,
+    toggleMemberAdmin,
   }
 })

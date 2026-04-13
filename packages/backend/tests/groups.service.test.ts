@@ -1,18 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import type { Group } from '../src/types/index.js'
+import type { Group, GroupMember } from '../src/types/index.js'
 
 // ─── DB mock ──────────────────────────────────────────────────────────────────
 
-const { mockSelect, mockInsert } = vi.hoisted(() => ({
+const { mockSelect, mockInsert, mockDelete, mockUpdate } = vi.hoisted(() => ({
   mockSelect: vi.fn(),
   mockInsert: vi.fn(),
+  mockDelete: vi.fn(),
+  mockUpdate: vi.fn(),
 }))
 
 vi.mock('../src/db/client.js', () => ({
-  db: { select: mockSelect, insert: mockInsert },
+  db: { select: mockSelect, insert: mockInsert, delete: mockDelete, update: mockUpdate },
 }))
 
-import { getMyGroups, createGroup, joinGroup } from '../src/services/groups.service.js'
+import { getMyGroups, createGroup, joinGroup, getGroupMembers, removeMember, setMemberAdmin } from '../src/services/groups.service.js'
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
 
@@ -63,6 +65,55 @@ function makeInsertChain(returning: unknown[] = []) {
   const valuesFn = vi.fn().mockReturnValue({ returning: returningFn })
   const insertFn = vi.fn().mockReturnValue({ values: valuesFn })
   return { insertFn, valuesFn, returningFn }
+}
+
+function makeDeleteChain() {
+  const chain: Record<string, unknown> = {}
+  const terminal = Promise.resolve(undefined)
+  ;(chain as Record<string, unknown>)['then'] = terminal.then.bind(terminal)
+  ;(chain as Record<string, unknown>)['catch'] = terminal.catch.bind(terminal)
+  ;(chain as Record<string, unknown>)['finally'] = terminal.finally.bind(terminal)
+  chain['where'] = vi.fn().mockReturnValue(terminal)
+  return chain
+}
+
+function makeUpdateChain(returning: unknown[] = []) {
+  const returningFn = vi.fn().mockResolvedValue(returning)
+  const whereFn = vi.fn().mockReturnValue({ returning: returningFn })
+  const setFn = vi.fn().mockReturnValue({ where: whereFn })
+  return { setFn, whereFn, returningFn }
+}
+
+// ─── Member fixtures ──────────────────────────────────────────────────────────
+
+const REQUESTER_ID = USER_ID
+const TARGET_ID = 'user-uuid-3'
+
+const MEMBER_ROW_ADMIN = {
+  id: 'gm-uuid-1',
+  userId: REQUESTER_ID,
+  displayName: 'Alice',
+  avatarUrl: null,
+  isAdmin: true,
+  joinedAt: NOW,
+}
+
+const MEMBER_ROW_TARGET = {
+  id: 'gm-uuid-2',
+  userId: TARGET_ID,
+  displayName: 'Bob',
+  avatarUrl: null,
+  isAdmin: false,
+  joinedAt: NOW,
+}
+
+const MEMBER_ROW_ADMIN2 = {
+  id: 'gm-uuid-3',
+  userId: 'user-uuid-4',
+  displayName: 'Carol',
+  avatarUrl: null,
+  isAdmin: true,
+  joinedAt: NOW,
 }
 
 // ─── getMyGroups ──────────────────────────────────────────────────────────────
@@ -205,5 +256,163 @@ describe('joinGroup', () => {
 
     const result = await joinGroup('ABCD1234', OTHER_USER_ID)
     expect(result.memberCount).toBe(2)
+  })
+})
+
+// ─── getGroupMembers ───────────────────────────────────────────────────────────
+
+describe('getGroupMembers', () => {
+  beforeEach(() => { vi.resetAllMocks() })
+
+  it('group not found → AppError 404', async () => {
+    mockSelect.mockReturnValueOnce(makeSelectChain([]))
+    await expect(getGroupMembers('group-uuid-1', REQUESTER_ID)).rejects.toMatchObject({
+      status: 404,
+      message: 'Group not found',
+    })
+  })
+
+  it('requester not a member → AppError 403', async () => {
+    mockSelect
+      .mockReturnValueOnce(makeSelectChain([GROUP_ROW]))
+      .mockReturnValueOnce(makeSelectChain([MEMBER_ROW_TARGET]))
+    await expect(getGroupMembers('group-uuid-1', REQUESTER_ID)).rejects.toMatchObject({
+      status: 403,
+      message: 'Not a member of this group',
+    })
+  })
+
+  it('returns mapped GroupMember list', async () => {
+    mockSelect
+      .mockReturnValueOnce(makeSelectChain([GROUP_ROW]))
+      .mockReturnValueOnce(makeSelectChain([MEMBER_ROW_ADMIN, MEMBER_ROW_TARGET]))
+    const result = await getGroupMembers('group-uuid-1', REQUESTER_ID)
+    expect(result).toHaveLength(2)
+    expect(result[0]).toMatchObject<Partial<GroupMember>>({
+      id: 'gm-uuid-1',
+      userId: REQUESTER_ID,
+      displayName: 'Alice',
+      isAdmin: true,
+      joinedAt: NOW.toISOString(),
+    })
+  })
+})
+
+// ─── removeMember ─────────────────────────────────────────────────────────────
+
+describe('removeMember', () => {
+  beforeEach(() => { vi.resetAllMocks() })
+
+  it('self-remove → AppError 403', async () => {
+    await expect(removeMember('group-uuid-1', REQUESTER_ID, REQUESTER_ID)).rejects.toMatchObject({
+      status: 403,
+      message: 'Cannot remove yourself',
+    })
+  })
+
+  it('group not found → AppError 404', async () => {
+    mockSelect.mockReturnValueOnce(makeSelectChain([]))
+    await expect(removeMember('group-uuid-1', TARGET_ID, REQUESTER_ID)).rejects.toMatchObject({
+      status: 404,
+      message: 'Group not found',
+    })
+  })
+
+  it('requester not admin → AppError 403', async () => {
+    const nonAdminRequester = { ...MEMBER_ROW_ADMIN, isAdmin: false }
+    mockSelect
+      .mockReturnValueOnce(makeSelectChain([GROUP_ROW]))
+      .mockReturnValueOnce(makeSelectChain([nonAdminRequester, MEMBER_ROW_TARGET]))
+    await expect(removeMember('group-uuid-1', TARGET_ID, REQUESTER_ID)).rejects.toMatchObject({
+      status: 403,
+      message: 'Not authorized',
+    })
+  })
+
+  it('target not in group → AppError 404', async () => {
+    mockSelect
+      .mockReturnValueOnce(makeSelectChain([GROUP_ROW]))
+      .mockReturnValueOnce(makeSelectChain([MEMBER_ROW_ADMIN]))
+    await expect(removeMember('group-uuid-1', TARGET_ID, REQUESTER_ID)).rejects.toMatchObject({
+      status: 404,
+      message: 'Member not found',
+    })
+  })
+
+  it('success → calls db.delete', async () => {
+    mockSelect
+      .mockReturnValueOnce(makeSelectChain([GROUP_ROW]))
+      .mockReturnValueOnce(makeSelectChain([MEMBER_ROW_ADMIN, MEMBER_ROW_TARGET]))
+    const deleteChain = makeDeleteChain()
+    mockDelete.mockReturnValueOnce(deleteChain)
+    await expect(removeMember('group-uuid-1', TARGET_ID, REQUESTER_ID)).resolves.toBeUndefined()
+    expect(mockDelete).toHaveBeenCalledOnce()
+  })
+})
+
+// ─── setMemberAdmin ───────────────────────────────────────────────────────────
+
+describe('setMemberAdmin', () => {
+  beforeEach(() => { vi.resetAllMocks() })
+
+  it('self-change → AppError 403', async () => {
+    await expect(setMemberAdmin('group-uuid-1', REQUESTER_ID, true, REQUESTER_ID)).rejects.toMatchObject({
+      status: 403,
+      message: 'Cannot change your own admin status',
+    })
+  })
+
+  it('group not found → AppError 404', async () => {
+    mockSelect.mockReturnValueOnce(makeSelectChain([]))
+    await expect(setMemberAdmin('group-uuid-1', TARGET_ID, true, REQUESTER_ID)).rejects.toMatchObject({
+      status: 404,
+      message: 'Group not found',
+    })
+  })
+
+  it('requester not admin → AppError 403', async () => {
+    const nonAdminRequester = { ...MEMBER_ROW_ADMIN, isAdmin: false }
+    mockSelect
+      .mockReturnValueOnce(makeSelectChain([GROUP_ROW]))
+      .mockReturnValueOnce(makeSelectChain([nonAdminRequester, MEMBER_ROW_TARGET]))
+    await expect(setMemberAdmin('group-uuid-1', TARGET_ID, true, REQUESTER_ID)).rejects.toMatchObject({
+      status: 403,
+      message: 'Not authorized',
+    })
+  })
+
+  it('target not in group → AppError 404', async () => {
+    mockSelect
+      .mockReturnValueOnce(makeSelectChain([GROUP_ROW]))
+      .mockReturnValueOnce(makeSelectChain([MEMBER_ROW_ADMIN]))
+    await expect(setMemberAdmin('group-uuid-1', TARGET_ID, false, REQUESTER_ID)).rejects.toMatchObject({
+      status: 404,
+      message: 'Member not found',
+    })
+  })
+
+  it('demote when 2 admins → succeeds', async () => {
+    const targetAdmin = { ...MEMBER_ROW_TARGET, isAdmin: true }
+    mockSelect
+      .mockReturnValueOnce(makeSelectChain([GROUP_ROW]))
+      .mockReturnValueOnce(makeSelectChain([MEMBER_ROW_ADMIN, targetAdmin]))
+    const { setFn } = makeUpdateChain([{ ...MEMBER_ROW_TARGET, isAdmin: false }])
+    mockUpdate.mockReturnValueOnce({ set: setFn })
+    const result = await setMemberAdmin('group-uuid-1', TARGET_ID, false, REQUESTER_ID)
+    expect(result.isAdmin).toBe(false)
+  })
+
+  it('promote member → returns updated GroupMember with isAdmin=true', async () => {
+    mockSelect
+      .mockReturnValueOnce(makeSelectChain([GROUP_ROW]))
+      .mockReturnValueOnce(makeSelectChain([MEMBER_ROW_ADMIN, MEMBER_ROW_TARGET]))
+    const { setFn } = makeUpdateChain([{ ...MEMBER_ROW_TARGET, isAdmin: true }])
+    mockUpdate.mockReturnValueOnce({ set: setFn })
+    const result = await setMemberAdmin('group-uuid-1', TARGET_ID, true, REQUESTER_ID)
+    expect(result).toMatchObject<Partial<GroupMember>>({
+      userId: TARGET_ID,
+      isAdmin: true,
+      displayName: 'Bob',
+    })
   })
 })

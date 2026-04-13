@@ -1,7 +1,7 @@
 import Router from '@koa/router'
 import { authMiddleware } from '../middleware/auth.middleware.js'
 import { upsertUser } from '../services/user.service.js'
-import { getMyGroups, createGroup, joinGroup } from '../services/groups.service.js'
+import { getMyGroups, createGroup, joinGroup, getGroupMembers, removeMember, setMemberAdmin } from '../services/groups.service.js'
 import { getGroupLeaderboard } from '../services/group-leaderboard.service.js'
 import type { GroupInput, JoinGroupInput } from '../types/index.js'
 
@@ -45,6 +45,28 @@ router.post('/api/groups/join', authMiddleware, async (ctx) => {
 router.get('/api/groups/:groupId/leaderboard', authMiddleware, async (ctx) => {
   const dbUser = await upsertUser(ctx.state.user)
   ctx.body = await getGroupLeaderboard(ctx.params.groupId, dbUser.id)
+})
+
+router.get('/api/groups/:groupId/members', authMiddleware, async (ctx) => {
+  const dbUser = await upsertUser(ctx.state.user)
+  ctx.body = await getGroupMembers(ctx.params.groupId, dbUser.id)
+})
+
+router.delete('/api/groups/:groupId/members/:userId', authMiddleware, async (ctx) => {
+  const dbUser = await upsertUser(ctx.state.user)
+  await removeMember(ctx.params.groupId, ctx.params.userId, dbUser.id)
+  ctx.body = { success: true }
+})
+
+router.put('/api/groups/:groupId/members/:userId/role', authMiddleware, async (ctx) => {
+  const dbUser = await upsertUser(ctx.state.user)
+  const body = ctx.request.body as { isAdmin?: unknown }
+  if (typeof body.isAdmin !== 'boolean') {
+    ctx.status = 400
+    ctx.body = { error: 'isAdmin must be a boolean' }
+    return
+  }
+  ctx.body = await setMemberAdmin(ctx.params.groupId, ctx.params.userId, body.isAdmin, dbUser.id)
 })
 
 export { router as groupsRouter }

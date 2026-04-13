@@ -134,6 +134,15 @@ export interface Group {
   readonly createdAt: string
 }
 
+export interface GroupMember {
+  readonly id: string
+  readonly userId: string
+  readonly displayName: string
+  readonly avatarUrl: string | null
+  readonly isAdmin: boolean
+  readonly joinedAt: string
+}
+
 export interface GroupInput {
   readonly name: string
   readonly description?: string | null

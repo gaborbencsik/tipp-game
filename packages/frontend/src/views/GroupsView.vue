@@ -130,34 +130,29 @@
           v-for="group in store.groups"
           :key="group.id"
           data-testid="group-item"
-          class="bg-white rounded-xl border border-gray-200 px-5 py-4 flex items-center justify-between hover:border-blue-300 transition-colors"
         >
-          <div>
-            <div class="flex items-center gap-2">
-              <router-link
-                :to="`/groups/${group.id}`"
-                class="font-semibold text-gray-900 hover:text-blue-700 transition-colors"
-              >{{ group.name }}</router-link>
-              <span v-if="group.isAdmin" class="text-xs px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded font-medium">admin</span>
-            </div>
-            <p v-if="group.description" class="text-xs text-gray-500 mt-0.5">{{ group.description }}</p>
-            <div v-if="group.inviteActive" class="flex items-center gap-2 mt-1.5">
-              <span class="font-mono text-xs text-gray-500 tracking-widest" data-testid="invite-code">{{ group.inviteCode }}</span>
-              <button
-                class="text-xs transition-colors"
-                :class="copiedGroupId === group.id ? 'text-green-600' : 'text-blue-600 hover:text-blue-800'"
-                @click="copyInviteCode(group.id, group.inviteCode)"
-              >
-                {{ copiedGroupId === group.id ? 'Másolva!' : 'Másolás' }}
-              </button>
-            </div>
-          </div>
-          <span class="text-sm text-gray-400">{{ group.memberCount }} tag</span>
           <router-link
             :to="`/groups/${group.id}`"
-            class="px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+            class="flex items-center justify-between bg-white rounded-xl border border-gray-200 px-5 py-4 hover:border-blue-300 hover:bg-blue-50/30 transition-colors cursor-pointer"
           >
-            Ranglista
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-semibold text-gray-900">{{ group.name }}</span>
+                <span v-if="group.isAdmin" class="text-xs px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded font-medium">admin</span>
+              </div>
+              <p v-if="group.description" class="text-xs text-gray-500 mt-0.5">{{ group.description }}</p>
+              <div v-if="group.inviteActive" class="flex items-center gap-2 mt-1.5" @click.prevent>
+                <span class="font-mono text-xs text-gray-500 tracking-widest" data-testid="invite-code">{{ group.inviteCode }}</span>
+                <button
+                  class="text-xs transition-colors"
+                  :class="copiedGroupId === group.id ? 'text-green-600' : 'text-blue-600 hover:text-blue-800'"
+                  @click.stop.prevent="copyInviteCode(group.id, group.inviteCode)"
+                >
+                  {{ copiedGroupId === group.id ? 'Másolva!' : 'Másolás' }}
+                </button>
+              </div>
+            </div>
+            <span class="text-sm text-gray-400 shrink-0 ml-4">{{ group.memberCount }} tag</span>
           </router-link>
         </li>
       </ul>
