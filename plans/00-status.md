@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-04-08 (UX-005, UX-006, US-806, SEC-001 story-k felvéve)
+> Utoljára frissítve: 2026-04-10 (US-206/404/607 kedvenc csapat dupla pont; US-604/901/902 csoportszintű liga filter + stat tippek átírva)
 
 ## Kész user story-k
 
@@ -362,9 +362,12 @@
 | UX-005 | Optimista törlés az admin listákon | ⬜ Nem kezdett | Should Have |
 | UX-006 | Csapat zászló/logo megjelenítése (flag-icons) | ⬜ Nem kezdett | Should Have |
 | US-806 | Csapat típus és country code mezők (DB migráció) | ⬜ Nem kezdett | Should Have |
+| US-206 | Kedvenc csapat beállítása ligánként | ⬜ Nem kezdett | Should Have |
+| US-404 | Kedvenc csapat dupla pont számítás | ⬜ Nem kezdett | Should Have |
+| US-607 | Kedvenc csapat dupla pont szabály (csoport beállítás) | ⬜ Nem kezdett | Should Have |
 | DISC-001 | Landing oldal discovery (design + marketing + social) | ⬜ Nem kezdett | Should Have |
 | SEC-001 | Row-Level Security bekapcsolása (Supabase RLS) | ⬜ Nem kezdett | Must Have |
 
 ---
 
-**Haladás: 30 / 51 story kész** — Must Have: 22/29 ✅, Should Have: 8/20 ✅, Nice to Have: 0/1
+**Haladás: 30 / 54 story kész** — Must Have: 22/29 ✅, Should Have: 8/23 ✅, Nice to Have: 0/1

@@ -212,6 +212,30 @@ Mint **bejelentkezett felhasználó**, szeretnék **a meccsek lezárása után m
 
 ---
 
+#### US-206: Kedvenc csapat beállítása ligánként
+
+**Story:**
+Mint **bejelentkezett felhasználó**, szeretnék **ligánként (pl. VB 2026, NB I) egy kedvenc csapatot megjelölni**, hogy **az adott csapat meccseire szerzett pontjaim duplán számítsanak azokban a csoportokban, ahol ez a szabály be van kapcsolva**.
+
+**Kontextus:**
+A dupla pont szabály csoportonként kapcsolható be (US-607). Ha egy csoportban be van kapcsolva, a user kedvenc csapatának mérkőzéseire szerzett tipp pontjai automatikusan × 2-re módosulnak. A kedvenc csapat beállítható az adott liga első meccsének kezdetéig — utána csak a még le nem játszott meccsekre vonatkozik a hatás.
+
+**Elfogadási kritériumok:**
+- [ ] Profil oldalon (vagy dedikált "Kedvenc csapat" szekcióban) ligánként egy csapatot lehet kijelölni
+- [ ] A beállítás az adott liga **első meccsének kezdetéig** szabadon módosítható; utána a már lejátszott meccsekre visszamenőleg nem érvényes
+- [ ] Ha a user az első meccs után állít be kedvenc csapatot, a dupla pont csak az ezt követő meccsekre vonatkozik
+- [ ] A kedvenc csapat a ranglistán és a csoport ranglistán egy kis ikon/badge-dzsel jelölve van a user neve mellett (pl. a csapat zászlója / shortCode)
+- [ ] Ha a user nem állított be kedvenc csapatot, nincs dupla pont — semmi sem kötelező
+- [ ] Backend: `favorite_teams` tábla: `userId`, `teamId`, `leagueId` (vagy `tournamentId`), `setAt` — unique constraint `(userId, leagueId)`
+
+**Megjegyzés:**
+A dupla pont számítás csak akkor aktív, ha az adott csoportban a `favoriteTeamDoublePoints` flag be van kapcsolva (US-607). Csoporton kívül (globális ranglista) a kedvenc csapat nem hat a pontszámra.
+
+**Komplexitás:** M
+**Prioritás:** Should Have
+
+---
+
 ### E3 – Felhasználókezelés / Auth
 
 #### US-301: Regisztráció és bejelentkezés Supabase Auth + Google OAuth-szal
@@ -358,6 +382,28 @@ Mint **fejlesztő**, szeretnék **a pontszámítási logikát izoláltan, unit t
 
 ---
 
+#### US-404: Kedvenc csapat dupla pont számítás
+
+**Story:**
+Mint **rendszer**, szeretnék **eredmény rögzítésekor a kedvenc csapat dupla pont szabályt alkalmazni a csoportonkénti pontszámítás során**, hogy **a csoportban bekapcsolt szabály automatikusan érvényesüljön**.
+
+**Kontextus:**
+Az alap `calculatePoints()` (US-401/403) változatlan marad — a dupla pont egy wrapper logika a csoportonkénti pontmentésnél. Csak azokat a `group_prediction_points` rekordokat érinti, ahol a csoport `favoriteTeamDoublePoints = true` és a user kedvenc csapata részt vesz az adott meccsen.
+
+**Elfogadási kritériumok:**
+- [ ] `calculateGroupPoints(matchId, groupId)` service: lekéri a csoport `favoriteTeamDoublePoints` flagét; ha igaz, minden user esetén megnézi, hogy a kedvenc csapata (az adott liga szerint) szerepel-e a meccsen; ha igen, a pont × 2
+- [ ] Az alap `calculatePoints()` pure function érintetlen marad
+- [ ] A dupla pont csak a `group_prediction_points` táblában jelenik meg, a `predictions.pointsGlobal` nem változik
+- [ ] Idempotens: újraszámítás felülírja a régi értéket
+- [ ] Unit tesztek: dupla pont aktív + kedvenc csapat játszik → ×2; dupla pont aktív + nem kedvenc csapat → ×1; dupla pont inaktív → ×1; user nincs kedvenc csapat → ×1
+
+**Függőség:** US-206 (favorite_teams tábla), US-607 (favoriteTeamDoublePoints flag)
+
+**Komplexitás:** M
+**Prioritás:** Should Have
+
+---
+
 ### E5 – Ranglista
 
 #### US-501: Globális ranglista megtekintése
@@ -463,14 +509,30 @@ Mint **csoport tagja**, szeretnék **a csoport ranglistáját látni csak a tago
 #### US-604: Csoport kezelése (admin)
 
 **Story:**
-Mint **csoport admin**, szeretnék **a csoportot kezelni (tagok, meghívó, pontrendszer)**, hogy **a verseny szabályait én határozzam meg**.
+Mint **csoport admin**, szeretnék **a csoportot teljes körűen konfigurálni** — tagok, meghívó, pontrendszer, liga filter, stat tippek —, hogy **a verseny szabályait én határozzam meg a csoport igényei szerint**.
 
 **Elfogadási kritériumok:**
+
+*Tagkezelés:*
 - [ ] Admin látja és kezeli a taglistát (tag eltávolítása lehetséges)
 - [ ] Meghívó kód újragenerálható / deaktiválható
-- [ ] Admin beállíthatja a csoportszintű pontrendszer override-ot (ha eltér a globálistól)
 - [ ] Admin átadhatja az admin szerepkört másik tagnak
-- [ ] Platform admin (US-805) az összes csoport taglistáját látja az admin panelen (melyik user melyik csoportban van)
+- [ ] Platform admin (US-805) az összes csoport taglistáját látja az admin panelen
+
+*Pontrendszer (csoport létrehozásakor és később is szerkeszthető):*
+- [ ] Csoport admin beállíthatja a csoportszintű pontrendszer override-ot (pontos tipp, helyes győztes, gólkülönbség, döntetlen, outcome — mind felülírható a globálistól)
+- [ ] Ha nincs override, a globális scoring config érvényes
+- [ ] A pontrendszer csak a jövőbeli meccsekre hat visszamenőleg nem módosít
+
+*Liga / meccs filter:*
+- [ ] Csoport admin beállíthatja, hogy a csoport melyik liga(k) meccseire vonatkozzon (pl. csak VB 2026, vagy VB + NB I)
+- [ ] Ha liga filter aktív, a csoport ranglistája csak a szűrt meccsekre adott tippek pontjait számolja
+- [ ] A liga filter a csoport detail oldalán látható a tagoknak
+
+*Statisztikai tippek (US-901/902 scope-ból ide kerül):*
+- [ ] Csoport admin be- és kikapcsolhatja a stat tippeket a csoportban
+- [ ] Ha be van kapcsolva, a stat tippek típusait a csoport admin konfigurálja (nem globálisan — lásd US-902 módosítás)
+- [ ] A stat tippek pontjai a csoport ranglistájához adódnak hozzá, a globális ranglistához nem
 
 **Komplexitás:** L
 **Prioritás:** Must Have
@@ -489,6 +551,29 @@ Mint **bejelentkezett felhasználó**, szeretnék **egyszerre több csoporthoz i
 
 **Komplexitás:** S
 **Prioritás:** Must Have
+
+---
+
+#### US-607: Kedvenc csapat dupla pont szabály bekapcsolása csoportonként
+
+**Story:**
+Mint **csoport admin**, szeretnék **a csoportban bekapcsolni egy opcionális szabályt, amely szerint a tagok kedvenc csapatának meccsein szerzett pontjai duplán számítanak**, hogy **extra izgalmat adjak a versenynek**.
+
+**Kontextus:**
+A kedvenc csapat profilszinten van beállítva ligánként (US-206) — csoportonként nem felülírható. A dupla pont szabály csak azt kapcsolja be/ki, hogy ez a profilszintű beállítás hat-e a csoport pontszámítására.
+
+**Elfogadási kritériumok:**
+- [ ] `groups` táblán új boolean mező: `favoriteTeamDoublePoints` (default: `false`)
+- [ ] Csoport admin be- és kikapcsolhatja a szabályt a csoport beállításaiban
+- [ ] Ha be van kapcsolva, a csoport ranglistán egy ikon/badge jelzi az aktív szabályt
+- [ ] A csoport tagjai látják az aktív szabályt (csoport detail oldalon: „Kedvenc csapat dupla pont: aktív")
+- [ ] A szabály változtatása csak jövőbeli meccsekre hat, visszamenőleg nem módosít
+- [ ] Ha egy tag nem állított be kedvenc csapatot (US-206), a szabály rá nem vonatkozik (nincs büntetés)
+
+**Függőség:** US-604 (csoport kezelés admin felület), US-206 (profilszintű kedvenc csapat)
+
+**Komplexitás:** S
+**Prioritás:** Should Have
 
 ---
 
@@ -669,32 +754,40 @@ A `countryCode` ISO alpha-2 formátumban tárolódik (pl. `'hu'`, `'de'`, `'fr'`
 
 ### E9 – Statisztikai tippek
 
-#### US-901: Statisztikai tipp leadása
+#### US-901: Statisztikai tipp leadása (csoportszinten)
 
 **Story:**
-Mint **bejelentkezett felhasználó**, szeretnék **a torna egészére vonatkozó statisztikai tippeket leadni** (pl. gólkirály, bajnok csapat), hogy **az egyéni meccs-tippeken túl is versenyezhessek**.
+Mint **bejelentkezett felhasználó**, szeretnék **a csoportomban konfigurált statisztikai tippeket leadni** (pl. gólkirály, bajnok csapat), hogy **az egyéni meccs-tippeken túl is versenyezhessek a csoporton belül**.
+
+**Kontextus:**
+A stat tippek nem globálisak — minden csoport admin külön kapcsolhatja be és konfigurálhatja őket a csoportjában (US-604). A stat tippek pontjai kizárólag a csoport ranglistájához adódnak hozzá.
 
 **Elfogadási kritériumok:**
-- [ ] A torna megkezdése előtt elérhető egy "Statisztikai tippek" oldal
-- [ ] A tippelhető mezők adminisztrátorilag konfigurálhatók (típus: szabad szöveges, dropdown, stb.)
-- [ ] Minden mező esetén configban megadott határidőig lehet tippelni
-- [ ] A tippek lezárása és kiértékelése is admin feladat
+- [ ] Ha a csoportban a stat tippek be vannak kapcsolva, a csoport oldalán megjelenik egy "Statisztikai tippek" szekció
+- [ ] Csak az adott csoport által konfigurált tipp típusok jelennek meg
+- [ ] Minden mező esetén a csoport admin által megadott határidőig lehet tippelni
+- [ ] A tippek lezárása és kiértékelése a csoport admin feladata
+- [ ] Ha nincs a csoportban stat tipp konfigurálva, a szekció nem jelenik meg
 
 **Komplexitás:** L
 **Prioritás:** Should Have
 
 ---
 
-#### US-902: Statisztikai tipp típus konfigurálása (admin)
+#### US-902: Statisztikai tipp típus konfigurálása (csoport admin)
 
 **Story:**
-Mint **admin**, szeretnék **statisztikai tipp típusokat létrehozni, szerkeszteni, és pontszámot rendelni hozzájuk**, hogy **flexibilis torna-szintű tippjátékot konfigurálhassak**.
+Mint **csoport admin**, szeretnék **a csoportomban statisztikai tipp típusokat létrehozni, szerkeszteni és pontszámot rendelni hozzájuk**, hogy **flexibilis, csoportspecifikus torna-szintű tippjátékot konfigurálhassak**.
+
+**Kontextus:**
+A stat tipp típusok csoporthoz kötöttek, nem globálisak. Minden csoport admin a saját csoportjához hozhat létre tipp típusokat.
 
 **Elfogadási kritériumok:**
-- [ ] Admin felületen tipp típus létrehozása: név, leírás, bemenet típusa (szöveges/dropdown), határidő, pontszám
-- [ ] Dropdown típusnál a válaszlehetőségek listája megadható
-- [ ] Az adminisztrált értékelés: admin megadja a helyes választ, a rendszer kiszámolja a pontokat
-- [ ] A statisztikai tippek pontjai hozzáadódnak a globális ranglistához
+- [ ] Csoport admin felületen tipp típus létrehozása: név, leírás, bemenet típusa (szöveges/dropdown), határidő, pontszám
+- [ ] Dropdown típusnál a válaszlehetőségek listája megadható (pl. csapat nevek)
+- [ ] Admin megadja a helyes választ kiértékeléskor, a rendszer kiszámolja a pontokat
+- [ ] A stat tippek pontjai csak a csoport ranglistájához adódnak hozzá, a globális ranglistához **nem**
+- [ ] Egy csoport admin más csoportok stat tipp konfigját nem látja / nem szerkeszti
 
 **Komplexitás:** L
 **Prioritás:** Should Have
@@ -1190,6 +1283,8 @@ Opcionális sticky nav anchor linkekkel: `Funkciók | Hogyan működik? | FAQ | 
 | US-202 | Tipp módosítása | S | Must Have |
 | US-203 | Saját tippek összesítő | M | Must Have |
 | US-204 | Mások tippjeinek megtekintése | M | Should Have |
+| US-205 | Hosszabbítás/tizenegyes outcome tipp | M | Should Have |
+| US-206 | Kedvenc csapat beállítása ligánként | M | Should Have |
 | US-301 | Regisztráció Google OAuth-szal | M | Must Have |
 | US-302 | Bejelentkezés / kijelentkezés | S | Must Have |
 | US-303 | Profil szerkesztése | S | Should Have |
@@ -1198,6 +1293,7 @@ Opcionális sticky nav anchor linkekkel: `Funkciók | Hogyan működik? | FAQ | 
 | US-401 | Automatikus pontszámítás | M | Must Have |
 | US-402 | Konfigurálható pontrendszer | M | Must Have |
 | US-403 | Pontozás tesztelhetősége | S | Must Have |
+| US-404 | Kedvenc csapat dupla pont számítás | M | Should Have |
 | US-501 | Globális ranglista | M | Must Have |
 | US-502 | Ranglista szűrés/keresés | M | Should Have |
 | US-601 | Csoport létrehozása | M | Must Have |
@@ -1206,6 +1302,7 @@ Opcionális sticky nav anchor linkekkel: `Funkciók | Hogyan működik? | FAQ | 
 | US-604 | Csoport kezelése (admin) | L | Must Have |
 | US-605 | Több csoporthoz tartozás | S | Must Have |
 | US-606 | Csoportok mint főoldal és navigáció | S | Must Have |
+| US-607 | Kedvenc csapat dupla pont szabály (csoport beállítás) | S | Should Have |
 | US-701 | User/Admin szerepkörök | M | Must Have |
 | US-801 | Mérkőzés létrehozása | M | Must Have |
 | US-802 | Mérkőzés szerkesztése/törlése | M | Must Have |
@@ -1235,7 +1332,7 @@ Opcionális sticky nav anchor linkekkel: `Funkciók | Hogyan működik? | FAQ | 
 
 **Összesítés:**
 - Must Have: 27 story (4 technikai + 23 product)
-- Should Have: 18 story
+- Should Have: 21 story
 - Nice to Have: 1 (UX-004 + ld. E10 epic – részletezés a 04-extras.md-ben)
 
 **Méret szerinti bontás:**
