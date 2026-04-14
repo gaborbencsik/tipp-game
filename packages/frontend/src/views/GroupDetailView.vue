@@ -141,6 +141,48 @@
       </div>
     </div>
 
+    <!-- Invite section (admin only, inside members tab) -->
+    <div v-if="activeTab === 'members' && currentUserIsGroupAdmin" data-testid="invite-section" class="mt-6 bg-white rounded-xl border border-gray-200 p-4">
+      <h3 class="text-sm font-semibold text-gray-700 mb-3">Meghívó kód</h3>
+      <div class="flex items-center gap-2 mb-3">
+        <span data-testid="invite-code-display" class="font-mono text-lg font-bold tracking-widest text-gray-900">{{ currentGroup?.inviteCode }}</span>
+        <button
+          class="text-xs px-2 py-1 rounded border transition-all duration-200"
+          :class="copiedInvite === 'code' ? 'border-green-400 bg-green-50 text-green-600' : 'border-gray-300 text-gray-600 hover:border-gray-400'"
+          @click="copyInviteCode"
+        >
+          {{ copiedInvite === 'code' ? '✓ Másolva' : 'Kód' }}
+        </button>
+        <button
+          class="text-xs px-2 py-1 rounded border transition-all duration-200"
+          :class="copiedInvite === 'url' ? 'border-green-400 bg-green-50 text-green-600' : 'border-blue-300 text-blue-600 hover:border-blue-400'"
+          @click="copyInviteUrl"
+        >
+          {{ copiedInvite === 'url' ? '✓ Másolva' : 'Link másolása' }}
+        </button>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="text-sm text-gray-500">
+          Állapot: <span :class="currentGroup?.inviteActive ? 'text-green-600' : 'text-red-500'">{{ currentGroup?.inviteActive ? 'Aktív' : 'Inaktív' }}</span>
+        </span>
+        <button
+          data-testid="invite-toggle-btn"
+          class="text-xs px-2 py-1 rounded border"
+          :class="currentGroup?.inviteActive ? 'border-red-300 text-red-600' : 'border-green-300 text-green-600'"
+          @click="onToggleInvite"
+        >
+          {{ currentGroup?.inviteActive ? 'Deaktiválás' : 'Aktiválás' }}
+        </button>
+        <button
+          data-testid="invite-regenerate-btn"
+          class="text-xs px-2 py-1 rounded border border-blue-300 text-blue-600"
+          @click="showInviteConfirm = true"
+        >
+          Újragenerálás
+        </button>
+      </div>
+    </div>
+
     <!-- Confirm dialog -->
     <div v-if="confirmRemoveUserId !== null" data-testid="confirm-dialog" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div class="bg-white rounded-xl p-6 shadow-xl max-w-sm w-full mx-4">
@@ -159,6 +201,29 @@
             @click="onConfirmRemove"
           >
             Eltávolítás
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Invite confirm dialog -->
+    <div v-if="showInviteConfirm" data-testid="invite-confirm-dialog" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+      <div class="bg-white rounded-xl p-6 shadow-xl max-w-sm w-full mx-4">
+        <p class="text-gray-800 mb-4">Biztosan újra szeretnéd generálni a meghívó kódot? A régi kód érvénytelenné válik.</p>
+        <div class="flex gap-3 justify-end">
+          <button
+            data-testid="invite-confirm-cancel"
+            class="px-4 py-2 text-sm rounded border border-gray-300 text-gray-700"
+            @click="showInviteConfirm = false"
+          >
+            Mégse
+          </button>
+          <button
+            data-testid="invite-confirm-ok"
+            class="px-4 py-2 text-sm rounded bg-blue-600 text-white font-medium"
+            @click="onConfirmRegenerate"
+          >
+            Újragenerálás
           </button>
         </div>
       </div>
@@ -203,10 +268,19 @@ const activeTab = ref<Tab>('leaderboard')
 const confirmRemoveUserId = ref<string | null>(null)
 
 const groupName = computed(() => groupsStore.groups.find(g => g.id === groupId)?.name ?? 'Csoport')
+const currentGroup = computed(() => groupsStore.groups.find(g => g.id === groupId))
 const members = computed(() => groupsStore.membersMap[groupId] ?? [])
 const currentUserIsGroupAdmin = computed(() =>
   groupsStore.membersMap[groupId]?.some(m => m.userId === authStore.user?.id && m.isAdmin) ?? false,
 )
+
+const showInviteConfirm = ref(false)
+const copiedInvite = ref<'code' | 'url' | null>(null)
+
+function setCopiedInvite(type: 'code' | 'url'): void {
+  copiedInvite.value = type
+  setTimeout(() => { copiedInvite.value = null }, 2000)
+}
 
 async function onToggleAdmin(member: GroupMember): Promise<void> {
   await groupsStore.toggleMemberAdmin(groupId, member.userId, !member.isAdmin)
@@ -217,6 +291,33 @@ async function onConfirmRemove(): Promise<void> {
   const userId = confirmRemoveUserId.value
   confirmRemoveUserId.value = null
   await groupsStore.removeMember(groupId, userId)
+}
+
+async function onToggleInvite(): Promise<void> {
+  const active = currentGroup.value?.inviteActive
+  if (active === undefined) return
+  await groupsStore.setInviteActive(groupId, !active)
+}
+
+async function onConfirmRegenerate(): Promise<void> {
+  showInviteConfirm.value = false
+  await groupsStore.regenerateInvite(groupId)
+}
+
+function copyInviteCode(): void {
+  const code = currentGroup.value?.inviteCode
+  if (code) {
+    navigator.clipboard.writeText(code)
+    setCopiedInvite('code')
+  }
+}
+
+function copyInviteUrl(): void {
+  const code = currentGroup.value?.inviteCode
+  if (code) {
+    navigator.clipboard.writeText(`${window.location.origin}/join/${code}`)
+    setCopiedInvite('url')
+  }
 }
 
 onMounted(async () => {

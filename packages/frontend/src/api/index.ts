@@ -96,6 +96,17 @@ export const api = {
         body: JSON.stringify({ isAdmin }),
         headers: { Authorization: `Bearer ${token}` },
       }),
+    regenerateInvite: (token: string, groupId: string) =>
+      request<Group>(`/groups/${groupId}/invite`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+    setInviteActive: (token: string, groupId: string, active: boolean) =>
+      request<Group>(`/groups/${groupId}/invite`, {
+        method: 'PATCH',
+        body: JSON.stringify({ active }),
+        headers: { Authorization: `Bearer ${token}` },
+      }),
   },
   admin: {
     teams: {

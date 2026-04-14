@@ -1,11 +1,14 @@
 import Router from '@koa/router'
 import { authMiddleware } from '../middleware/auth.middleware.js'
+import { createRateLimit } from '../middleware/rateLimit.middleware.js'
 import { upsertUser } from '../services/user.service.js'
-import { getMyGroups, createGroup, joinGroup, getGroupMembers, removeMember, setMemberAdmin } from '../services/groups.service.js'
+import { getMyGroups, createGroup, joinGroup, getGroupMembers, removeMember, setMemberAdmin, regenerateInviteCode, setInviteActive } from '../services/groups.service.js'
 import { getGroupLeaderboard } from '../services/group-leaderboard.service.js'
 import type { GroupInput, JoinGroupInput } from '../types/index.js'
 
 const router = new Router()
+
+const joinRateLimit = createRateLimit({ windowMs: 60_000, max: 10 })
 
 router.get('/api/groups/mine', authMiddleware, async (ctx) => {
   const dbUser = await upsertUser(ctx.state.user)
@@ -29,7 +32,7 @@ router.post('/api/groups', authMiddleware, async (ctx) => {
   ctx.body = await createGroup(input, dbUser.id)
 })
 
-router.post('/api/groups/join', authMiddleware, async (ctx) => {
+router.post('/api/groups/join', joinRateLimit, authMiddleware, async (ctx) => {
   const dbUser = await upsertUser(ctx.state.user)
   const body = ctx.request.body as { inviteCode?: unknown }
   const inviteCode = body.inviteCode
@@ -67,6 +70,22 @@ router.put('/api/groups/:groupId/members/:userId/role', authMiddleware, async (c
     return
   }
   ctx.body = await setMemberAdmin(ctx.params.groupId, ctx.params.userId, body.isAdmin, dbUser.id)
+})
+
+router.put('/api/groups/:groupId/invite', authMiddleware, async (ctx) => {
+  const dbUser = await upsertUser(ctx.state.user)
+  ctx.body = await regenerateInviteCode(ctx.params.groupId, dbUser.id)
+})
+
+router.patch('/api/groups/:groupId/invite', authMiddleware, async (ctx) => {
+  const dbUser = await upsertUser(ctx.state.user)
+  const body = ctx.request.body as { active?: unknown }
+  if (typeof body.active !== 'boolean') {
+    ctx.status = 400
+    ctx.body = { error: 'active must be a boolean' }
+    return
+  }
+  ctx.body = await setInviteActive(ctx.params.groupId, body.active, dbUser.id)
 })
 
 export { router as groupsRouter }

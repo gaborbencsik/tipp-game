@@ -77,9 +77,12 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../stores/auth.store.js'
 
 const authStore = useAuthStore()
+const router = useRouter()
+const route = useRoute()
 
 const mode = ref<'login' | 'register'>('login')
 const email = ref('')
@@ -98,6 +101,10 @@ async function handleSubmit(): Promise<void> {
       await authStore.loginWithEmail(email.value, password.value)
     } else {
       await authStore.registerWithEmail(email.value, password.value, displayName.value)
+    }
+    const redirect = route.query.redirect
+    if (typeof redirect === 'string' && redirect.startsWith('/')) {
+      await router.push(redirect)
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Ismeretlen hiba'

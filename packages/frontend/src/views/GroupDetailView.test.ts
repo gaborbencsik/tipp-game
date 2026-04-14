@@ -21,12 +21,16 @@ const {
   mockGroupsRemoveMember,
   mockGroupsUpdateMemberRole,
   mockGroupsMine,
+  mockGroupsRegenerateInvite,
+  mockGroupsSetInviteActive,
 } = vi.hoisted(() => ({
   mockGroupsLeaderboard: vi.fn().mockResolvedValue([]),
   mockGroupsMembers: vi.fn().mockResolvedValue([]),
   mockGroupsRemoveMember: vi.fn().mockResolvedValue({ success: true }),
   mockGroupsUpdateMemberRole: vi.fn().mockResolvedValue(undefined),
   mockGroupsMine: vi.fn().mockResolvedValue([]),
+  mockGroupsRegenerateInvite: vi.fn().mockResolvedValue(undefined),
+  mockGroupsSetInviteActive: vi.fn().mockResolvedValue(undefined),
 }))
 
 vi.mock('@/lib/supabase', () => ({
@@ -48,6 +52,8 @@ vi.mock('@/api/index', () => ({
       members: mockGroupsMembers,
       removeMember: mockGroupsRemoveMember,
       updateMemberRole: mockGroupsUpdateMemberRole,
+      regenerateInvite: mockGroupsRegenerateInvite,
+      setInviteActive: mockGroupsSetInviteActive,
     },
     predictions: { mine: vi.fn(), upsert: vi.fn() },
     matches: { list: vi.fn() },
@@ -139,6 +145,8 @@ describe('GroupDetailView', () => {
     mockGroupsMembers.mockReset().mockResolvedValue([])
     mockGroupsRemoveMember.mockReset().mockResolvedValue({ success: true })
     mockGroupsUpdateMemberRole.mockReset()
+    mockGroupsRegenerateInvite.mockReset().mockResolvedValue(undefined)
+    mockGroupsSetInviteActive.mockReset().mockResolvedValue(undefined)
     mockGroupsMine.mockReset().mockResolvedValue([GROUP])
     setActivePinia(createPinia())
   })
@@ -258,5 +266,69 @@ describe('GroupDetailView', () => {
     const { wrapper } = await mountView([], [LEADERBOARD_ENTRY])
     expect(wrapper.text()).toContain('Alice')
     expect(wrapper.text()).toContain('10')
+  })
+
+  // ─── Invite section ───────────────────────────────────────────────────────────
+
+  it('invite section visible for admin on members tab', async () => {
+    const { wrapper } = await mountView([MEMBER_SELF])
+    await wrapper.find('[data-testid="tab-members"]').trigger('click')
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find('[data-testid="invite-section"]').exists()).toBe(true)
+  })
+
+  it('invite section shows invite code', async () => {
+    const { wrapper } = await mountView([MEMBER_SELF])
+    await wrapper.find('[data-testid="tab-members"]').trigger('click')
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find('[data-testid="invite-code-display"]').text()).toBe('ABCD1234')
+  })
+
+  it('invite section not visible on leaderboard tab', async () => {
+    const { wrapper } = await mountView([MEMBER_SELF])
+    expect(wrapper.find('[data-testid="invite-section"]').exists()).toBe(false)
+  })
+
+  it('clicking Újragenerálás → confirm dialog appears', async () => {
+    const { wrapper } = await mountView([MEMBER_SELF])
+    await wrapper.find('[data-testid="tab-members"]').trigger('click')
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find('[data-testid="invite-confirm-dialog"]').exists()).toBe(false)
+    await wrapper.find('[data-testid="invite-regenerate-btn"]').trigger('click')
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find('[data-testid="invite-confirm-dialog"]').exists()).toBe(true)
+  })
+
+  it('invite confirm cancel → dialog disappears', async () => {
+    const { wrapper } = await mountView([MEMBER_SELF])
+    await wrapper.find('[data-testid="tab-members"]').trigger('click')
+    await wrapper.vm.$nextTick()
+    await wrapper.find('[data-testid="invite-regenerate-btn"]').trigger('click')
+    await wrapper.vm.$nextTick()
+    await wrapper.find('[data-testid="invite-confirm-cancel"]').trigger('click')
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find('[data-testid="invite-confirm-dialog"]').exists()).toBe(false)
+  })
+
+  it('invite confirm OK → store.regenerateInvite called', async () => {
+    const { wrapper, store } = await mountView([MEMBER_SELF])
+    const regenerateSpy = vi.spyOn(store, 'regenerateInvite').mockResolvedValue()
+    await wrapper.find('[data-testid="tab-members"]').trigger('click')
+    await wrapper.vm.$nextTick()
+    await wrapper.find('[data-testid="invite-regenerate-btn"]').trigger('click')
+    await wrapper.vm.$nextTick()
+    await wrapper.find('[data-testid="invite-confirm-ok"]').trigger('click')
+    await flushPromises()
+    expect(regenerateSpy).toHaveBeenCalledWith('group-uuid-1')
+  })
+
+  it('clicking toggle button → store.setInviteActive called', async () => {
+    const { wrapper, store } = await mountView([MEMBER_SELF])
+    const toggleSpy = vi.spyOn(store, 'setInviteActive').mockResolvedValue()
+    await wrapper.find('[data-testid="tab-members"]').trigger('click')
+    await wrapper.vm.$nextTick()
+    await wrapper.find('[data-testid="invite-toggle-btn"]').trigger('click')
+    await flushPromises()
+    expect(toggleSpy).toHaveBeenCalledWith('group-uuid-1', false)
   })
 })

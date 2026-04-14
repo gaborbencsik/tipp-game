@@ -1344,7 +1344,40 @@ Opcionális sticky nav anchor linkekkel: `Funkciók | Hogyan működik? | FAQ | 
 
 **Komplexitás:** L
 **Prioritás:** Should Have
-|----------|-----------|-------------|-----------|
+
+---
+
+### E14 – Biztonság (kiegészítés)
+
+#### SEC-002: HMAC-aláírt meghívó URL-ek
+
+**Story:**
+Mint **fejlesztő**, szeretném, hogy **a meghívó URL-ek kriptográfiai aláírással legyenek védve**, hogy **a join endpoint rate limit nélkül is biztonságos legyen, és a meghívó kód brute-force kipörgetése matematikailag lehetetlenné váljon**.
+
+**Kontextus:**
+Jelenleg a join endpoint IP-alapú rate limittel van védve. Ez elegendő a legtöbb esethez, de a HMAC megközelítés infrastruktúra-független védelmet nyújt: a kód maga tartalmazza az aláírást, így érvénytelen kód soha nem ér el DB-t.
+
+**Megoldás:**
+- Az invite URL formátuma: `/join/ABCD1234.a3f2b1c4d5e6f7a8b9c0...` (kód + HMAC-SHA256 signature)
+- A signature az `INVITE_HMAC_SECRET` env változóval generálódik
+- A backend validálja a signature-t a DB lookup előtt — érvénytelen signature → 400, nincs DB hit
+- A meglévő `inviteCode` mező és `inviteActive` logika változatlan marad
+- Regenerálásnál az új kód új signature-t kap
+
+**Elfogadási kritériumok:**
+- [ ] `INVITE_HMAC_SECRET` env változó bevezetve mindkét környezetbe
+- [ ] `generateSignedInviteCode(code, secret): string` pure helper függvény
+- [ ] `verifyInviteCode(signedCode, secret): string | null` — visszaadja a raw kódot vagy null-t
+- [ ] `/api/groups/join` endpoint validálja a signature-t DB lookup előtt
+- [ ] Meglévő join tesztek frissítve, új unit tesztek a helper függvényekhez
+- [ ] A rate limit megmarad (defense in depth)
+
+**Komplexitás:** S
+**Prioritás:** Nice to Have
+
+---
+
+
 | US-001 | Monorepo és dev környezet (Docker) | M | Must Have |
 | US-002 | DB schema és seed adatok | S | Must Have |
 | US-003 | Tesztelési infrastruktúra | S | Must Have |
@@ -1405,11 +1438,12 @@ Opcionális sticky nav anchor linkekkel: `Funkciók | Hogyan működik? | FAQ | 
 | US-806 | Csapat típus és country code mezők (DB migráció) | S | Should Have |
 | DISC-001 | Landing oldal discovery (design + marketing + social) | L | Should Have |
 | SEC-001 | Row-Level Security bekapcsolása (Supabase RLS) | S | Must Have |
+| SEC-002 | HMAC-aláírt meghívó URL-ek | S | Nice to Have |
 
 **Összesítés:**
 - Must Have: 30 story (4 technikai + 26 product)
 - Should Have: 23 story
-- Nice to Have: 1 (UX-004 + ld. E10 epic – részletezés a 04-extras.md-ben)
+- Nice to Have: 2 (UX-004, SEC-002 + ld. E10 epic – részletezés a 04-extras.md-ben)
 
 **Méret szerinti bontás:**
 - S (Small): 11 story

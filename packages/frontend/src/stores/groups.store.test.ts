@@ -14,6 +14,8 @@ const {
   mockGroupsMembers,
   mockGroupsRemoveMember,
   mockGroupsUpdateMemberRole,
+  mockGroupsRegenerateInvite,
+  mockGroupsSetInviteActive,
 } = vi.hoisted(() => ({
   mockGetSession: vi.fn().mockResolvedValue({
     data: { session: { access_token: 'mock-token' } },
@@ -24,6 +26,8 @@ const {
   mockGroupsMembers: vi.fn(),
   mockGroupsRemoveMember: vi.fn(),
   mockGroupsUpdateMemberRole: vi.fn(),
+  mockGroupsRegenerateInvite: vi.fn(),
+  mockGroupsSetInviteActive: vi.fn(),
 }))
 
 vi.mock('@/lib/supabase', () => ({
@@ -46,6 +50,8 @@ vi.mock('@/api/index', () => ({
       members: mockGroupsMembers,
       removeMember: mockGroupsRemoveMember,
       updateMemberRole: mockGroupsUpdateMemberRole,
+      regenerateInvite: mockGroupsRegenerateInvite,
+      setInviteActive: mockGroupsSetInviteActive,
     },
   },
 }))
@@ -85,6 +91,8 @@ describe('groups.store', () => {
     mockGroupsMembers.mockReset()
     mockGroupsRemoveMember.mockReset()
     mockGroupsUpdateMemberRole.mockReset()
+    mockGroupsRegenerateInvite.mockReset()
+    mockGroupsSetInviteActive.mockReset()
     mockGetSession.mockResolvedValue({ data: { session: { access_token: 'mock-token' } } })
   })
 
@@ -258,5 +266,53 @@ describe('groups.store', () => {
     await expect(store.toggleMemberAdmin('group-uuid-1', 'user-uuid-1', false)).rejects.toThrow(
       'Cannot change your own admin status',
     )
+  })
+
+  // ─── regenerateInvite ─────────────────────────────────────────────────────────
+
+  it('regenerateInvite() → group updated in list', async () => {
+    mockGroupsMine.mockResolvedValue([GROUP_A, GROUP_B])
+    const updatedGroup = { ...GROUP_A, inviteCode: 'NEWCODE1' }
+    mockGroupsRegenerateInvite.mockResolvedValue(updatedGroup)
+    const store = useGroupsStore()
+    await store.fetchMyGroups()
+    await store.regenerateInvite('group-uuid-1')
+    expect(store.groups.find((g) => g.id === 'group-uuid-1')?.inviteCode).toBe('NEWCODE1')
+  })
+
+  it('regenerateInvite() → other groups unchanged', async () => {
+    mockGroupsMine.mockResolvedValue([GROUP_A, GROUP_B])
+    mockGroupsRegenerateInvite.mockResolvedValue({ ...GROUP_A, inviteCode: 'NEWCODE1' })
+    const store = useGroupsStore()
+    await store.fetchMyGroups()
+    await store.regenerateInvite('group-uuid-1')
+    expect(store.groups.find((g) => g.id === 'group-uuid-2')).toEqual(GROUP_B)
+  })
+
+  // ─── setInviteActive ──────────────────────────────────────────────────────────
+
+  it('setInviteActive(false) → group inviteActive set to false', async () => {
+    mockGroupsMine.mockResolvedValue([GROUP_A, GROUP_B])
+    mockGroupsSetInviteActive.mockResolvedValue({ ...GROUP_A, inviteActive: false })
+    const store = useGroupsStore()
+    await store.fetchMyGroups()
+    await store.setInviteActive('group-uuid-1', false)
+    expect(store.groups.find((g) => g.id === 'group-uuid-1')?.inviteActive).toBe(false)
+  })
+
+  it('setInviteActive(true) → group inviteActive set to true', async () => {
+    const inactiveGroupA = { ...GROUP_A, inviteActive: false }
+    mockGroupsMine.mockResolvedValue([inactiveGroupA, GROUP_B])
+    mockGroupsSetInviteActive.mockResolvedValue({ ...inactiveGroupA, inviteActive: true })
+    const store = useGroupsStore()
+    await store.fetchMyGroups()
+    await store.setInviteActive('group-uuid-1', true)
+    expect(store.groups.find((g) => g.id === 'group-uuid-1')?.inviteActive).toBe(true)
+  })
+
+  it('setInviteActive() error → throws', async () => {
+    mockGroupsSetInviteActive.mockRejectedValue(new Error('Not authorized'))
+    const store = useGroupsStore()
+    await expect(store.setInviteActive('group-uuid-1', false)).rejects.toThrow('Not authorized')
   })
 })

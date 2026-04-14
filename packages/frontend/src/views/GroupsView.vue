@@ -144,12 +144,22 @@
               <div v-if="group.inviteActive" class="flex items-center gap-2 mt-1.5" @click.prevent>
                 <span class="font-mono text-xs text-gray-500 tracking-widest" data-testid="invite-code">{{ group.inviteCode }}</span>
                 <button
-                  class="text-xs transition-colors"
-                  :class="copiedGroupId === group.id ? 'text-green-600' : 'text-blue-600 hover:text-blue-800'"
-                  @click.stop.prevent="copyInviteCode(group.id, group.inviteCode)"
+                  class="text-xs px-1.5 py-0.5 rounded transition-all duration-200"
+                  :class="copiedState.get(group.id) === 'code' ? 'bg-green-100 text-green-600' : 'text-gray-400 hover:text-gray-600'"
+                  @click.stop.prevent="copyCode(group.id, group.inviteCode)"
                 >
-                  {{ copiedGroupId === group.id ? 'Másolva!' : 'Másolás' }}
+                  {{ copiedState.get(group.id) === 'code' ? '✓ Másolva' : 'Kód' }}
                 </button>
+                <button
+                  class="text-xs px-1.5 py-0.5 rounded transition-all duration-200"
+                  :class="copiedState.get(group.id) === 'url' ? 'bg-green-100 text-green-600' : 'text-blue-600 hover:text-blue-800'"
+                  @click.stop.prevent="copyUrl(group.id, group.inviteCode)"
+                >
+                  {{ copiedState.get(group.id) === 'url' ? '✓ Másolva' : 'Link másolása' }}
+                </button>
+              </div>
+              <div v-else-if="group.isAdmin" class="flex items-center gap-2 mt-1.5">
+                <span data-testid="invite-inactive-badge" class="text-xs px-1.5 py-0.5 bg-red-100 text-red-600 rounded font-medium">Meghívó inaktív</span>
               </div>
             </div>
             <span class="text-sm text-gray-400 shrink-0 ml-4">{{ group.memberCount }} tag</span>
@@ -181,7 +191,26 @@ const createError = ref<string | null>(null)
 
 const joinCode = ref('')
 const joinError = ref<string | null>(null)
-const copiedGroupId = ref<string | null>(null)
+const copiedState = ref(new Map<string, 'code' | 'url'>())
+
+function setCopied(groupId: string, type: 'code' | 'url'): void {
+  copiedState.value = new Map(copiedState.value).set(groupId, type)
+  setTimeout(() => {
+    const next = new Map(copiedState.value)
+    next.delete(groupId)
+    copiedState.value = next
+  }, 2000)
+}
+
+async function copyCode(groupId: string, code: string): Promise<void> {
+  await navigator.clipboard.writeText(code)
+  setCopied(groupId, 'code')
+}
+
+async function copyUrl(groupId: string, code: string): Promise<void> {
+  await navigator.clipboard.writeText(`${window.location.origin}/join/${code}`)
+  setCopied(groupId, 'url')
+}
 
 onMounted(async () => {
   await store.fetchMyGroups()
@@ -198,12 +227,6 @@ function closeJoinForm(): void {
   showJoinForm.value = false
   joinCode.value = ''
   joinError.value = null
-}
-
-async function copyInviteCode(groupId: string, code: string): Promise<void> {
-  await navigator.clipboard.writeText(code)
-  copiedGroupId.value = groupId
-  setTimeout(() => { copiedGroupId.value = null }, 2000)
 }
 
 async function onCreateSubmit(): Promise<void> {

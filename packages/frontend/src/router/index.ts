@@ -80,6 +80,12 @@ export const router = createRouter({
       component: () => import('../views/ProfileView.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/join/:code',
+      name: 'join',
+      component: () => import('../views/JoinView.vue'),
+      meta: { requiresAuth: true },
+    },
   ],
 })
 
@@ -92,7 +98,7 @@ router.beforeEach(async (to) => {
     return { name: 'home' }
   }
   if (to.meta.requiresAuth && !authStore.isAuthenticated()) {
-    return { name: 'login' }
+    return { name: 'login', query: { redirect: to.fullPath } }
   }
   if (to.meta.requiresAdmin && !authStore.isAdmin()) {
     return { name: 'home' }

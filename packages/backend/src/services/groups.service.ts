@@ -272,3 +272,65 @@ export async function setMemberAdmin(
     joinedAt: target.joinedAt.toISOString(),
   }
 }
+
+async function getGroupWithAdminCheck(groupId: string, requesterId: string): Promise<{ group: typeof groups.$inferSelect; memberCount: number; isAdmin: boolean }> {
+  const groupRows = await db
+    .select()
+    .from(groups)
+    .where(and(eq(groups.id, groupId), isNull(groups.deletedAt)))
+    .limit(1)
+  if (!groupRows[0]) throw new AppError(404, 'Group not found')
+
+  const members = await db
+    .select()
+    .from(groupMembers)
+    .where(eq(groupMembers.groupId, groupId))
+
+  const requester = members.find((m) => m.userId === requesterId)
+  if (!requester || !requester.isAdmin) throw new AppError(403, 'Not authorized')
+
+  return { group: groupRows[0], memberCount: members.length, isAdmin: requester.isAdmin }
+}
+
+export async function regenerateInviteCode(groupId: string, requesterId: string): Promise<Group> {
+  const { group, memberCount } = await getGroupWithAdminCheck(groupId, requesterId)
+
+  let newCode = generateInviteCode()
+  let attempts = 0
+  while (attempts < 10) {
+    const existing = await db
+      .select()
+      .from(groups)
+      .where(eq(groups.inviteCode, newCode))
+      .limit(1)
+    if (!existing[0]) break
+    newCode = generateInviteCode()
+    attempts++
+  }
+
+  const updated = await db
+    .update(groups)
+    .set({ inviteCode: newCode, inviteActive: true })
+    .where(eq(groups.id, group.id))
+    .returning()
+
+  const updatedGroup = updated[0]
+  if (!updatedGroup) throw new AppError(500, 'Failed to regenerate invite code')
+
+  return toApiGroup(updatedGroup, memberCount, true)
+}
+
+export async function setInviteActive(groupId: string, active: boolean, requesterId: string): Promise<Group> {
+  const { group, memberCount } = await getGroupWithAdminCheck(groupId, requesterId)
+
+  const updated = await db
+    .update(groups)
+    .set({ inviteActive: active })
+    .where(eq(groups.id, group.id))
+    .returning()
+
+  const updatedGroup = updated[0]
+  if (!updatedGroup) throw new AppError(500, 'Failed to update invite status')
+
+  return toApiGroup(updatedGroup, memberCount, true)
+}

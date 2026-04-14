@@ -14,7 +14,7 @@ vi.mock('../src/db/client.js', () => ({
   db: { select: mockSelect, insert: mockInsert, delete: mockDelete, update: mockUpdate },
 }))
 
-import { getMyGroups, createGroup, joinGroup, getGroupMembers, removeMember, setMemberAdmin } from '../src/services/groups.service.js'
+import { getMyGroups, createGroup, joinGroup, getGroupMembers, removeMember, setMemberAdmin, regenerateInviteCode, setInviteActive } from '../src/services/groups.service.js'
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
 
@@ -414,5 +414,91 @@ describe('setMemberAdmin', () => {
       isAdmin: true,
       displayName: 'Bob',
     })
+  })
+})
+
+// ─── regenerateInviteCode ─────────────────────────────────────────────────────
+
+describe('regenerateInviteCode', () => {
+  beforeEach(() => { vi.resetAllMocks() })
+
+  it('group not found → AppError 404', async () => {
+    mockSelect.mockReturnValueOnce(makeSelectChain([]))
+    await expect(regenerateInviteCode('group-uuid-1', REQUESTER_ID)).rejects.toMatchObject({
+      status: 404,
+      message: 'Group not found',
+    })
+  })
+
+  it('requester not admin → AppError 403', async () => {
+    const nonAdminRequester = { ...MEMBER_ROW_ADMIN, isAdmin: false }
+    mockSelect
+      .mockReturnValueOnce(makeSelectChain([GROUP_ROW]))
+      .mockReturnValueOnce(makeSelectChain([nonAdminRequester]))
+    await expect(regenerateInviteCode('group-uuid-1', REQUESTER_ID)).rejects.toMatchObject({
+      status: 403,
+      message: 'Not authorized',
+    })
+  })
+
+  it('success → returns Group with new inviteCode and inviteActive=true', async () => {
+    mockSelect
+      .mockReturnValueOnce(makeSelectChain([GROUP_ROW]))          // group check
+      .mockReturnValueOnce(makeSelectChain([MEMBER_ROW_ADMIN]))   // members check
+      .mockReturnValueOnce(makeSelectChain([]))                   // uniqueness check (no collision)
+    const updatedGroup = { ...GROUP_ROW, inviteCode: 'NEWCODE1', inviteActive: true }
+    const { setFn } = makeUpdateChain([updatedGroup])
+    mockUpdate.mockReturnValueOnce({ set: setFn })
+    const result = await regenerateInviteCode('group-uuid-1', REQUESTER_ID)
+    expect(result.inviteActive).toBe(true)
+    expect(result.inviteCode).toBe('NEWCODE1')
+  })
+})
+
+// ─── setInviteActive ──────────────────────────────────────────────────────────
+
+describe('setInviteActive', () => {
+  beforeEach(() => { vi.resetAllMocks() })
+
+  it('group not found → AppError 404', async () => {
+    mockSelect.mockReturnValueOnce(makeSelectChain([]))
+    await expect(setInviteActive('group-uuid-1', false, REQUESTER_ID)).rejects.toMatchObject({
+      status: 404,
+      message: 'Group not found',
+    })
+  })
+
+  it('requester not admin → AppError 403', async () => {
+    const nonAdminRequester = { ...MEMBER_ROW_ADMIN, isAdmin: false }
+    mockSelect
+      .mockReturnValueOnce(makeSelectChain([GROUP_ROW]))
+      .mockReturnValueOnce(makeSelectChain([nonAdminRequester]))
+    await expect(setInviteActive('group-uuid-1', false, REQUESTER_ID)).rejects.toMatchObject({
+      status: 403,
+      message: 'Not authorized',
+    })
+  })
+
+  it('deactivate → returns Group with inviteActive=false', async () => {
+    mockSelect
+      .mockReturnValueOnce(makeSelectChain([GROUP_ROW]))
+      .mockReturnValueOnce(makeSelectChain([MEMBER_ROW_ADMIN]))
+    const updatedGroup = { ...GROUP_ROW, inviteActive: false }
+    const { setFn } = makeUpdateChain([updatedGroup])
+    mockUpdate.mockReturnValueOnce({ set: setFn })
+    const result = await setInviteActive('group-uuid-1', false, REQUESTER_ID)
+    expect(result.inviteActive).toBe(false)
+  })
+
+  it('activate → returns Group with inviteActive=true', async () => {
+    const inactiveGroup = { ...GROUP_ROW, inviteActive: false }
+    mockSelect
+      .mockReturnValueOnce(makeSelectChain([inactiveGroup]))
+      .mockReturnValueOnce(makeSelectChain([MEMBER_ROW_ADMIN]))
+    const updatedGroup = { ...GROUP_ROW, inviteActive: true }
+    const { setFn } = makeUpdateChain([updatedGroup])
+    mockUpdate.mockReturnValueOnce({ set: setFn })
+    const result = await setInviteActive('group-uuid-1', true, REQUESTER_ID)
+    expect(result.inviteActive).toBe(true)
   })
 })
