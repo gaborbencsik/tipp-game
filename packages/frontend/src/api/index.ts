@@ -17,6 +17,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     throw new Error(body.error ?? response.statusText)
   }
 
+  if (response.status === 204) return undefined as T
   return response.json() as Promise<T>
 }
 
@@ -105,6 +106,11 @@ export const api = {
       request<Group>(`/groups/${groupId}/invite`, {
         method: 'PATCH',
         body: JSON.stringify({ active }),
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+    delete: (token: string, groupId: string) =>
+      request<void>(`/groups/${groupId}`, {
+        method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       }),
   },

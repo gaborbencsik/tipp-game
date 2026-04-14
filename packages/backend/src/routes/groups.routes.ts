@@ -2,7 +2,7 @@ import Router from '@koa/router'
 import { authMiddleware } from '../middleware/auth.middleware.js'
 import { createRateLimit } from '../middleware/rateLimit.middleware.js'
 import { upsertUser } from '../services/user.service.js'
-import { getMyGroups, createGroup, joinGroup, getGroupMembers, removeMember, setMemberAdmin, regenerateInviteCode, setInviteActive } from '../services/groups.service.js'
+import { getMyGroups, createGroup, joinGroup, getGroupMembers, removeMember, setMemberAdmin, regenerateInviteCode, setInviteActive, deleteGroup } from '../services/groups.service.js'
 import { getGroupLeaderboard } from '../services/group-leaderboard.service.js'
 import type { GroupInput, JoinGroupInput } from '../types/index.js'
 
@@ -86,6 +86,14 @@ router.patch('/api/groups/:groupId/invite', authMiddleware, async (ctx) => {
     return
   }
   ctx.body = await setInviteActive(ctx.params.groupId, body.active, dbUser.id)
+})
+
+router.delete('/api/groups/:groupId', authMiddleware, async (ctx) => {
+  const dbUser = await upsertUser(ctx.state.user)
+  const isGlobalAdmin = ctx.state.user.role === 'admin'
+  await deleteGroup(ctx.params.groupId, dbUser.id, isGlobalAdmin)
+  ctx.status = 204
+  ctx.body = null
 })
 
 export { router as groupsRouter }

@@ -183,6 +183,17 @@
       </div>
     </div>
 
+    <!-- Csoport törlése (admin only) -->
+    <div v-if="activeTab === 'members' && currentUserIsGroupAdmin" class="mt-4">
+      <button
+        data-testid="delete-group-btn"
+        class="text-xs px-3 py-1.5 rounded border border-red-300 text-red-600 hover:bg-red-50 transition-colors"
+        @click="showDeleteConfirm = true"
+      >
+        Csoport törlése
+      </button>
+    </div>
+
     <!-- Confirm dialog -->
     <div v-if="confirmRemoveUserId !== null" data-testid="confirm-dialog" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div class="bg-white rounded-xl p-6 shadow-xl max-w-sm w-full mx-4">
@@ -228,12 +239,36 @@
         </div>
       </div>
     </div>
+
+    <!-- Delete group confirm dialog -->
+    <div v-if="showDeleteConfirm" data-testid="delete-confirm-dialog" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+      <div class="bg-white rounded-xl p-6 shadow-xl max-w-sm w-full mx-4">
+        <p class="text-gray-800 mb-1 font-semibold">Csoport törlése</p>
+        <p class="text-gray-500 text-sm mb-4">A csoport és a csoport ranglista véglegesen törlődik. Ez a művelet nem vonható vissza.</p>
+        <div class="flex gap-3 justify-end">
+          <button
+            data-testid="delete-confirm-cancel"
+            class="px-4 py-2 text-sm rounded border border-gray-300 text-gray-700"
+            @click="showDeleteConfirm = false"
+          >
+            Mégse
+          </button>
+          <button
+            data-testid="delete-confirm-ok"
+            class="px-4 py-2 text-sm rounded bg-red-600 text-white font-medium"
+            @click="onConfirmDelete"
+          >
+            Törlés
+          </button>
+        </div>
+      </div>
+    </div>
   </AppLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import AppLayout from '../components/AppLayout.vue'
 import { dicebearUrl } from '../lib/avatar.js'
 import { useGroupsStore } from '../stores/groups.store.js'
@@ -257,6 +292,7 @@ function formatDate(iso: string): string {
 }
 
 const route = useRoute()
+const router = useRouter()
 const groupsStore = useGroupsStore()
 const authStore = useAuthStore()
 
@@ -275,6 +311,7 @@ const currentUserIsGroupAdmin = computed(() =>
 )
 
 const showInviteConfirm = ref(false)
+const showDeleteConfirm = ref(false)
 const copiedInvite = ref<'code' | 'url' | null>(null)
 
 function setCopiedInvite(type: 'code' | 'url'): void {
@@ -302,6 +339,12 @@ async function onToggleInvite(): Promise<void> {
 async function onConfirmRegenerate(): Promise<void> {
   showInviteConfirm.value = false
   await groupsStore.regenerateInvite(groupId)
+}
+
+async function onConfirmDelete(): Promise<void> {
+  showDeleteConfirm.value = false
+  await groupsStore.deleteGroup(groupId)
+  await router.push('/groups')
 }
 
 function copyInviteCode(): void {

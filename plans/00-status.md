@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-04-14 (US-604-A, US-604-B kész; SEC-002 backlogba felvéve)
+> Utoljára frissítve: 2026-04-14 (US-604-A, US-604-B, US-604-C kész; SEC-002 backlogba felvéve)
 
 ## Kész user story-k
 
@@ -27,6 +27,7 @@
 | **US-205** | Hosszabbítás/tizenegyes kimenetel tipp | ✅ Kész |
 | **US-604-A** | Csoport tagkezelés (admin) | ✅ Kész |
 | **US-604-B** | Meghívó kód kezelése (admin) | ✅ Kész |
+| **US-604-C** | Csoport törlése (admin) | ✅ Kész |
 
 ### US-001 – Elfogadási kritériumok teljesítve
 
@@ -342,8 +343,17 @@
 - ✅ Join URL = `window.location.origin + /join/` + kód (dinamikus, domain-független)
 - ✅ 145 backend + 241 frontend teszt, typecheck CLEAN
 
+### US-604-C – Elfogadási kritériumok teljesítve
+
+- ✅ `groups.service.ts`: `deleteGroup(groupId, requesterId, isGlobalAdmin)` — soft delete (`deletedAt`), 404 ha nem létezik, 403 ha nem admin (platform admin bypass-szal)
+- ✅ `DELETE /api/groups/:groupId` endpoint — `authMiddleware` mögött, 204 No Content válasz
+- ✅ `api/index.ts` request helper: 204 No Content → JSON parse kihagyva (`undefined as T`)
+- ✅ Frontend `api/index.ts`: `groups.delete(token, groupId)` metódus
+- ✅ `groups.store.ts`: `deleteGroup(groupId)` action — API hívás után a csoportot kiszűri a `groups` listából
+- ✅ `GroupDetailView.vue`: "Csoport törlése" gomb (admin only, Tagok tab alján) — megerősítő dialog, törlés után `/groups` redirect
+- ✅ 150 backend + 247 frontend teszt, typecheck CLEAN
+
 ---
-|----------|-----------|---------|-----------|
 | US-001 | Monorepo és dev környezet | ✅ Kész | Must Have |
 | US-002 | DB schema és seed adatok | ✅ Kész | Must Have |
 | US-003 | Tesztelési infrastruktúra | ✅ Kész | Must Have |
@@ -369,7 +379,7 @@
 | US-603 | Csoportonkénti ranglista | ✅ Kész | Must Have |
 | US-604-A | Csoport tagkezelés (admin) | ✅ Kész | Must Have |
 | US-604-B | Meghívó kód kezelése (admin) | ✅ Kész | Must Have |
-| US-604-C | Csoport törlése (admin) | ⬜ Nem kezdett | Should Have |
+| US-604-C | Csoport törlése (admin) | ✅ Kész | Should Have |
 | US-608 | Csoportszintű pontrendszer override | ⬜ Nem kezdett | Must Have |
 | US-609 | Liga filter csoportonként | ⬜ Nem kezdett | Should Have |
 | US-605 | Több csoporthoz tartozás | ⬜ Nem kezdett | Must Have |
@@ -406,4 +416,4 @@
 
 ---
 
-**Haladás: 32 / 60 story kész** — Must Have: 24/33 ✅, Should Have: 8/23 ✅, Nice to Have: 0/2
+**Haladás: 33 / 60 story kész** — Must Have: 24/33 ✅, Should Have: 9/23 ✅, Nice to Have: 0/2

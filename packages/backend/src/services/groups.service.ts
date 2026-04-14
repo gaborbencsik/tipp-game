@@ -334,3 +334,26 @@ export async function setInviteActive(groupId: string, active: boolean, requeste
 
   return toApiGroup(updatedGroup, memberCount, true)
 }
+
+export async function deleteGroup(groupId: string, requesterId: string, isGlobalAdmin: boolean): Promise<void> {
+  const groupRows = await db
+    .select()
+    .from(groups)
+    .where(and(eq(groups.id, groupId), isNull(groups.deletedAt)))
+    .limit(1)
+  if (!groupRows[0]) throw new AppError(404, 'Group not found')
+
+  if (!isGlobalAdmin) {
+    const members = await db
+      .select()
+      .from(groupMembers)
+      .where(eq(groupMembers.groupId, groupId))
+    const requester = members.find((m) => m.userId === requesterId)
+    if (!requester || !requester.isAdmin) throw new AppError(403, 'Not authorized')
+  }
+
+  await db
+    .update(groups)
+    .set({ deletedAt: new Date() })
+    .where(eq(groups.id, groupId))
+}

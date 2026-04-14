@@ -16,6 +16,7 @@ const {
   mockGroupsUpdateMemberRole,
   mockGroupsRegenerateInvite,
   mockGroupsSetInviteActive,
+  mockGroupsDelete,
 } = vi.hoisted(() => ({
   mockGetSession: vi.fn().mockResolvedValue({
     data: { session: { access_token: 'mock-token' } },
@@ -28,6 +29,7 @@ const {
   mockGroupsUpdateMemberRole: vi.fn(),
   mockGroupsRegenerateInvite: vi.fn(),
   mockGroupsSetInviteActive: vi.fn(),
+  mockGroupsDelete: vi.fn(),
 }))
 
 vi.mock('@/lib/supabase', () => ({
@@ -52,6 +54,7 @@ vi.mock('@/api/index', () => ({
       updateMemberRole: mockGroupsUpdateMemberRole,
       regenerateInvite: mockGroupsRegenerateInvite,
       setInviteActive: mockGroupsSetInviteActive,
+      delete: mockGroupsDelete,
     },
   },
 }))
@@ -93,6 +96,7 @@ describe('groups.store', () => {
     mockGroupsUpdateMemberRole.mockReset()
     mockGroupsRegenerateInvite.mockReset()
     mockGroupsSetInviteActive.mockReset()
+    mockGroupsDelete.mockReset()
     mockGetSession.mockResolvedValue({ data: { session: { access_token: 'mock-token' } } })
   })
 
@@ -314,5 +318,23 @@ describe('groups.store', () => {
     mockGroupsSetInviteActive.mockRejectedValue(new Error('Not authorized'))
     const store = useGroupsStore()
     await expect(store.setInviteActive('group-uuid-1', false)).rejects.toThrow('Not authorized')
+  })
+
+  // ─── deleteGroup ──────────────────────────────────────────────────────────────
+
+  it('deleteGroup() → group removed from list', async () => {
+    mockGroupsMine.mockResolvedValue([GROUP_A, GROUP_B])
+    mockGroupsDelete.mockResolvedValue(undefined)
+    const store = useGroupsStore()
+    await store.fetchMyGroups()
+    await store.deleteGroup('group-uuid-1')
+    expect(store.groups).toHaveLength(1)
+    expect(store.groups[0].id).toBe('group-uuid-2')
+  })
+
+  it('deleteGroup() error → throws', async () => {
+    mockGroupsDelete.mockRejectedValue(new Error('Not authorized'))
+    const store = useGroupsStore()
+    await expect(store.deleteGroup('group-uuid-1')).rejects.toThrow('Not authorized')
   })
 })

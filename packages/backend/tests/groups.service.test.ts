@@ -14,7 +14,7 @@ vi.mock('../src/db/client.js', () => ({
   db: { select: mockSelect, insert: mockInsert, delete: mockDelete, update: mockUpdate },
 }))
 
-import { getMyGroups, createGroup, joinGroup, getGroupMembers, removeMember, setMemberAdmin, regenerateInviteCode, setInviteActive } from '../src/services/groups.service.js'
+import { getMyGroups, createGroup, joinGroup, getGroupMembers, removeMember, setMemberAdmin, regenerateInviteCode, setInviteActive, deleteGroup } from '../src/services/groups.service.js'
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
 
@@ -500,5 +500,58 @@ describe('setInviteActive', () => {
     mockUpdate.mockReturnValueOnce({ set: setFn })
     const result = await setInviteActive('group-uuid-1', true, REQUESTER_ID)
     expect(result.inviteActive).toBe(true)
+  })
+})
+
+// ─── deleteGroup ──────────────────────────────────────────────────────────────
+
+describe('deleteGroup', () => {
+  beforeEach(() => { vi.resetAllMocks() })
+
+  it('group not found → AppError 404', async () => {
+    mockSelect.mockReturnValueOnce(makeSelectChain([]))
+    await expect(deleteGroup('group-uuid-1', REQUESTER_ID, false)).rejects.toMatchObject({
+      status: 404,
+      message: 'Group not found',
+    })
+  })
+
+  it('requester not a member → AppError 403', async () => {
+    mockSelect
+      .mockReturnValueOnce(makeSelectChain([GROUP_ROW]))
+      .mockReturnValueOnce(makeSelectChain([MEMBER_ROW_TARGET]))
+    await expect(deleteGroup('group-uuid-1', REQUESTER_ID, false)).rejects.toMatchObject({
+      status: 403,
+      message: 'Not authorized',
+    })
+  })
+
+  it('requester not admin → AppError 403', async () => {
+    const nonAdminRequester = { ...MEMBER_ROW_ADMIN, isAdmin: false }
+    mockSelect
+      .mockReturnValueOnce(makeSelectChain([GROUP_ROW]))
+      .mockReturnValueOnce(makeSelectChain([nonAdminRequester]))
+    await expect(deleteGroup('group-uuid-1', REQUESTER_ID, false)).rejects.toMatchObject({
+      status: 403,
+      message: 'Not authorized',
+    })
+  })
+
+  it('csoport admin → soft delete', async () => {
+    mockSelect
+      .mockReturnValueOnce(makeSelectChain([GROUP_ROW]))
+      .mockReturnValueOnce(makeSelectChain([MEMBER_ROW_ADMIN]))
+    const { setFn } = makeUpdateChain([{ ...GROUP_ROW, deletedAt: new Date() }])
+    mockUpdate.mockReturnValueOnce({ set: setFn })
+    await expect(deleteGroup('group-uuid-1', REQUESTER_ID, false)).resolves.toBeUndefined()
+    expect(mockUpdate).toHaveBeenCalledOnce()
+  })
+
+  it('global admin → skip membership check, soft delete', async () => {
+    mockSelect.mockReturnValueOnce(makeSelectChain([GROUP_ROW]))
+    const { setFn } = makeUpdateChain([{ ...GROUP_ROW, deletedAt: new Date() }])
+    mockUpdate.mockReturnValueOnce({ set: setFn })
+    await expect(deleteGroup('group-uuid-1', 'other-user', true)).resolves.toBeUndefined()
+    expect(mockUpdate).toHaveBeenCalledOnce()
   })
 })

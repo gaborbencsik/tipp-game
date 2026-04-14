@@ -23,6 +23,7 @@ const {
   mockGroupsMine,
   mockGroupsRegenerateInvite,
   mockGroupsSetInviteActive,
+  mockGroupsDelete,
 } = vi.hoisted(() => ({
   mockGroupsLeaderboard: vi.fn().mockResolvedValue([]),
   mockGroupsMembers: vi.fn().mockResolvedValue([]),
@@ -31,6 +32,7 @@ const {
   mockGroupsMine: vi.fn().mockResolvedValue([]),
   mockGroupsRegenerateInvite: vi.fn().mockResolvedValue(undefined),
   mockGroupsSetInviteActive: vi.fn().mockResolvedValue(undefined),
+  mockGroupsDelete: vi.fn().mockResolvedValue(undefined),
 }))
 
 vi.mock('@/lib/supabase', () => ({
@@ -54,6 +56,7 @@ vi.mock('@/api/index', () => ({
       updateMemberRole: mockGroupsUpdateMemberRole,
       regenerateInvite: mockGroupsRegenerateInvite,
       setInviteActive: mockGroupsSetInviteActive,
+      delete: mockGroupsDelete,
     },
     predictions: { mine: vi.fn(), upsert: vi.fn() },
     matches: { list: vi.fn() },
@@ -147,6 +150,7 @@ describe('GroupDetailView', () => {
     mockGroupsUpdateMemberRole.mockReset()
     mockGroupsRegenerateInvite.mockReset().mockResolvedValue(undefined)
     mockGroupsSetInviteActive.mockReset().mockResolvedValue(undefined)
+    mockGroupsDelete.mockReset().mockResolvedValue(undefined)
     mockGroupsMine.mockReset().mockResolvedValue([GROUP])
     setActivePinia(createPinia())
   })
@@ -330,5 +334,47 @@ describe('GroupDetailView', () => {
     await wrapper.find('[data-testid="invite-toggle-btn"]').trigger('click')
     await flushPromises()
     expect(toggleSpy).toHaveBeenCalledWith('group-uuid-1', false)
+  })
+
+  // ─── Delete group ─────────────────────────────────────────────────────────────
+
+  it('delete group button visible for admin on members tab', async () => {
+    const { wrapper } = await mountView([MEMBER_SELF])
+    await wrapper.find('[data-testid="tab-members"]').trigger('click')
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find('[data-testid="delete-group-btn"]').exists()).toBe(true)
+  })
+
+  it('clicking delete group button → confirm dialog appears', async () => {
+    const { wrapper } = await mountView([MEMBER_SELF])
+    await wrapper.find('[data-testid="tab-members"]').trigger('click')
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find('[data-testid="delete-confirm-dialog"]').exists()).toBe(false)
+    await wrapper.find('[data-testid="delete-group-btn"]').trigger('click')
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find('[data-testid="delete-confirm-dialog"]').exists()).toBe(true)
+  })
+
+  it('delete confirm cancel → dialog disappears', async () => {
+    const { wrapper } = await mountView([MEMBER_SELF])
+    await wrapper.find('[data-testid="tab-members"]').trigger('click')
+    await wrapper.vm.$nextTick()
+    await wrapper.find('[data-testid="delete-group-btn"]').trigger('click')
+    await wrapper.vm.$nextTick()
+    await wrapper.find('[data-testid="delete-confirm-cancel"]').trigger('click')
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find('[data-testid="delete-confirm-dialog"]').exists()).toBe(false)
+  })
+
+  it('delete confirm OK → store.deleteGroup called', async () => {
+    const { wrapper, store } = await mountView([MEMBER_SELF])
+    const deleteSpy = vi.spyOn(store, 'deleteGroup').mockResolvedValue()
+    await wrapper.find('[data-testid="tab-members"]').trigger('click')
+    await wrapper.vm.$nextTick()
+    await wrapper.find('[data-testid="delete-group-btn"]').trigger('click')
+    await wrapper.vm.$nextTick()
+    await wrapper.find('[data-testid="delete-confirm-ok"]').trigger('click')
+    await flushPromises()
+    expect(deleteSpy).toHaveBeenCalledWith('group-uuid-1')
   })
 })

@@ -86,6 +86,12 @@ export const useGroupsStore = defineStore('groups', () => {
     groups.value = groups.value.map((g) => g.id === groupId ? updated : g)
   }
 
+  async function deleteGroup(groupId: string): Promise<void> {
+    const token = await getAccessToken()
+    await api.groups.delete(token, groupId)
+    groups.value = groups.value.filter((g) => g.id !== groupId)
+  }
+
   return {
     groups,
     isLoading,
@@ -101,5 +107,6 @@ export const useGroupsStore = defineStore('groups', () => {
     toggleMemberAdmin,
     regenerateInvite,
     setInviteActive,
+    deleteGroup,
   }
 })
