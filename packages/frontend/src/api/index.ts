@@ -113,6 +113,16 @@ export const api = {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       }),
+    getScoringConfig: (token: string, groupId: string) =>
+      request<ScoringConfigFull | null>(`/groups/${groupId}/scoring-config`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+    setScoringConfig: (token: string, groupId: string, input: ScoringConfigInput) =>
+      request<ScoringConfigFull>(`/groups/${groupId}/scoring-config`, {
+        method: 'PUT',
+        body: JSON.stringify(input),
+        headers: { Authorization: `Bearer ${token}` },
+      }),
   },
   admin: {
     teams: {

@@ -4,7 +4,8 @@ import { createRateLimit } from '../middleware/rateLimit.middleware.js'
 import { upsertUser } from '../services/user.service.js'
 import { getMyGroups, createGroup, joinGroup, getGroupMembers, removeMember, setMemberAdmin, regenerateInviteCode, setInviteActive, deleteGroup } from '../services/groups.service.js'
 import { getGroupLeaderboard } from '../services/group-leaderboard.service.js'
-import type { GroupInput, JoinGroupInput } from '../types/index.js'
+import { getGroupConfig, setGroupConfig } from '../services/scoring-config.service.js'
+import type { GroupInput, JoinGroupInput, ScoringConfigInput } from '../types/index.js'
 
 const router = new Router()
 
@@ -94,6 +95,36 @@ router.delete('/api/groups/:groupId', authMiddleware, async (ctx) => {
   await deleteGroup(ctx.params.groupId, dbUser.id, isGlobalAdmin)
   ctx.status = 204
   ctx.body = null
+})
+
+router.get('/api/groups/:groupId/scoring-config', authMiddleware, async (ctx) => {
+  const dbUser = await upsertUser(ctx.state.user)
+  // getGroupMembers throws 403 if not a member
+  await getGroupMembers(ctx.params.groupId, dbUser.id)
+  ctx.body = await getGroupConfig(ctx.params.groupId)
+})
+
+router.put('/api/groups/:groupId/scoring-config', authMiddleware, async (ctx) => {
+  const dbUser = await upsertUser(ctx.state.user)
+  const members = await getGroupMembers(ctx.params.groupId, dbUser.id)
+  const isGroupAdmin = members.some(m => m.userId === dbUser.id && m.isAdmin)
+  if (!isGroupAdmin) {
+    ctx.status = 403
+    ctx.body = { error: 'Not a group admin' }
+    return
+  }
+  const body = ctx.request.body as Record<string, unknown>
+  const fields: Array<keyof ScoringConfigInput> = [
+    'exactScore', 'correctWinnerAndDiff', 'correctWinner', 'correctDraw', 'correctOutcome', 'incorrect',
+  ]
+  for (const field of fields) {
+    if (typeof body[field] !== 'number') {
+      ctx.status = 400
+      ctx.body = { error: `Field '${field}' must be a number` }
+      return
+    }
+  }
+  ctx.body = await setGroupConfig(ctx.params.groupId, body as unknown as ScoringConfigInput)
 })
 
 export { router as groupsRouter }

@@ -1,6 +1,6 @@
 import { eq, isNull, sql, count } from 'drizzle-orm'
 import { db } from '../db/client.js'
-import { users, predictions, groupMembers, groups } from '../db/schema/index.js'
+import { users, predictions, groupMembers, groups, scoringConfigs, groupPredictionPoints } from '../db/schema/index.js'
 import type { LeaderboardEntry } from './leaderboard.service.js'
 
 class AppError extends Error {
@@ -14,7 +14,7 @@ class AppError extends Error {
 
 export async function getGroupLeaderboard(groupId: string, requesterId: string): Promise<LeaderboardEntry[]> {
   const group = await db
-    .select({ id: groups.id })
+    .select({ id: groups.id, scoringConfigId: groups.scoringConfigId })
     .from(groups)
     .where(eq(groups.id, groupId))
     .limit(1)
@@ -29,25 +29,58 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
   const memberIds = membership.map(m => m.userId)
   if (!memberIds.includes(requesterId)) throw new AppError(403, 'Not a member of this group')
 
-  const rows = await db
-    .select({
-      userId: users.id,
-      displayName: users.displayName,
-      avatarUrl: users.avatarUrl,
-      totalPoints: sql<number>`coalesce(sum(${predictions.pointsGlobal}), 0)`,
-      predictionCount: count(predictions.id),
-      correctCount: sql<number>`count(case when ${predictions.pointsGlobal} > 0 then 1 end)`,
-    })
-    .from(groupMembers)
-    .innerJoin(users, eq(users.id, groupMembers.userId))
-    .leftJoin(predictions, eq(predictions.userId, users.id))
-    .where(eq(groupMembers.groupId, groupId))
-    .groupBy(users.id, users.displayName, users.avatarUrl)
-    .orderBy(sql`coalesce(sum(${predictions.pointsGlobal}), 0) desc`)
+  const hasGroupConfig = group[0].scoringConfigId !== null
+
+  let rows: Array<{
+    userId: string
+    displayName: string
+    avatarUrl: string | null
+    totalPoints: number
+    predictionCount: number
+    correctCount: number
+  }>
+
+  if (hasGroupConfig) {
+    rows = await db
+      .select({
+        userId: users.id,
+        displayName: users.displayName,
+        avatarUrl: users.avatarUrl,
+        totalPoints: sql<number>`coalesce(sum(${groupPredictionPoints.points}), 0)`,
+        predictionCount: count(groupPredictionPoints.id),
+        correctCount: sql<number>`count(case when ${groupPredictionPoints.points} > 0 then 1 end)`,
+      })
+      .from(groupMembers)
+      .innerJoin(users, eq(users.id, groupMembers.userId))
+      .leftJoin(predictions, eq(predictions.userId, users.id))
+      .leftJoin(
+        groupPredictionPoints,
+        sql`${groupPredictionPoints.predictionId} = ${predictions.id} AND ${groupPredictionPoints.groupId} = ${groupId}::uuid`,
+      )
+      .where(eq(groupMembers.groupId, groupId))
+      .groupBy(users.id, users.displayName, users.avatarUrl)
+      .orderBy(sql`coalesce(sum(${groupPredictionPoints.points}), 0) desc`)
+  } else {
+    rows = await db
+      .select({
+        userId: users.id,
+        displayName: users.displayName,
+        avatarUrl: users.avatarUrl,
+        totalPoints: sql<number>`coalesce(sum(${predictions.pointsGlobal}), 0)`,
+        predictionCount: count(predictions.id),
+        correctCount: sql<number>`count(case when ${predictions.pointsGlobal} > 0 then 1 end)`,
+      })
+      .from(groupMembers)
+      .innerJoin(users, eq(users.id, groupMembers.userId))
+      .leftJoin(predictions, eq(predictions.userId, users.id))
+      .where(eq(groupMembers.groupId, groupId))
+      .groupBy(users.id, users.displayName, users.avatarUrl)
+      .orderBy(sql`coalesce(sum(${predictions.pointsGlobal}), 0) desc`)
+  }
 
   let rank = 1
   return rows.map((row, i) => {
-    if (i > 0 && row.totalPoints < rows[i - 1].totalPoints) {
+    if (i > 0 && row.totalPoints < rows[i - 1]!.totalPoints) {
       rank = i + 1
     }
     return {

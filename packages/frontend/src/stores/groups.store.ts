@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { supabase } from '../lib/supabase.js'
 import { api } from '../api/index.js'
-import type { Group, GroupInput, GroupMember, JoinGroupInput } from '../types/index.js'
+import type { Group, GroupInput, GroupMember, JoinGroupInput, ScoringConfigFull, ScoringConfigInput } from '../types/index.js'
 
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
 
@@ -19,6 +19,10 @@ export const useGroupsStore = defineStore('groups', () => {
   const membersMap = ref<Record<string, GroupMember[]>>({})
   const membersLoading = ref(false)
   const membersError = ref<string | null>(null)
+  const groupScoringConfigs = ref<Record<string, ScoringConfigFull | null>>({})
+  const groupScoringLoading = ref(false)
+  const groupScoringError = ref<string | null>(null)
+  const groupScoringSaveStatus = ref<'idle' | 'saving' | 'saved' | 'error'>('idle')
 
   async function fetchMyGroups(): Promise<void> {
     isLoading.value = true
@@ -92,6 +96,32 @@ export const useGroupsStore = defineStore('groups', () => {
     groups.value = groups.value.filter((g) => g.id !== groupId)
   }
 
+  async function fetchGroupScoringConfig(groupId: string): Promise<void> {
+    groupScoringLoading.value = true
+    groupScoringError.value = null
+    try {
+      const token = await getAccessToken()
+      groupScoringConfigs.value[groupId] = await api.groups.getScoringConfig(token, groupId)
+    } catch (err) {
+      groupScoringError.value = err instanceof Error ? err.message : 'Ismeretlen hiba'
+    } finally {
+      groupScoringLoading.value = false
+    }
+  }
+
+  async function setGroupScoringConfig(groupId: string, input: ScoringConfigInput): Promise<void> {
+    groupScoringSaveStatus.value = 'saving'
+    try {
+      const token = await getAccessToken()
+      const updated = await api.groups.setScoringConfig(token, groupId, input)
+      groupScoringConfigs.value[groupId] = updated
+      groupScoringSaveStatus.value = 'saved'
+      setTimeout(() => { groupScoringSaveStatus.value = 'idle' }, 3000)
+    } catch {
+      groupScoringSaveStatus.value = 'error'
+    }
+  }
+
   return {
     groups,
     isLoading,
@@ -99,6 +129,10 @@ export const useGroupsStore = defineStore('groups', () => {
     membersMap,
     membersLoading,
     membersError,
+    groupScoringConfigs,
+    groupScoringLoading,
+    groupScoringError,
+    groupScoringSaveStatus,
     fetchMyGroups,
     createGroup,
     joinGroup,
@@ -108,5 +142,7 @@ export const useGroupsStore = defineStore('groups', () => {
     regenerateInvite,
     setInviteActive,
     deleteGroup,
+    fetchGroupScoringConfig,
+    setGroupScoringConfig,
   }
 })

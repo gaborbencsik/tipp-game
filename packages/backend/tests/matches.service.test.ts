@@ -329,10 +329,12 @@ describe('setResult', () => {
     mockUpdate.mockReturnValue({ set: mockSet })
 
     // calculateAndSavePoints: select predictions (empty) + select config
+    // calculateAndSaveGroupPoints: select predictions (empty)
     const CONFIG_ROW = { id: 'cfg-1', exactScore: 3, correctWinnerAndDiff: 2, correctWinner: 1, correctDraw: 2, incorrect: 0, isGlobalDefault: true }
     mockWhere
       .mockResolvedValueOnce([])        // predictions for match → empty, no updates needed
       .mockResolvedValueOnce([CONFIG_ROW]) // scoring config
+      .mockResolvedValueOnce([])        // calculateAndSaveGroupPoints: predictions for match → empty
 
     const result = await setResult('match-uuid-1', 2, 1, 'admin-uuid')
     expect(result.homeGoals).toBe(2)

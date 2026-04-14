@@ -23,6 +23,15 @@
       >
         Tagok
       </button>
+      <button
+        v-if="canManageSettings"
+        data-testid="tab-settings"
+        class="px-4 py-2 text-sm font-medium"
+        :class="activeTab === 'settings' ? 'border-b-2 border-blue-600 text-blue-700 font-semibold' : 'text-gray-500'"
+        @click="activeTab = 'settings'"
+      >
+        Beállítások
+      </button>
     </div>
 
     <!-- Ranglista tab -->
@@ -194,8 +203,55 @@
       </button>
     </div>
 
-    <!-- Confirm dialog -->
-    <div v-if="confirmRemoveUserId !== null" data-testid="confirm-dialog" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+    <!-- Beállítások tab -->
+    <div v-if="activeTab === 'settings'" data-testid="settings-tab">
+      <div v-if="groupsStore.groupScoringLoading" class="text-gray-500">Betöltés...</div>
+      <div v-else-if="groupsStore.groupScoringError" class="text-red-600">{{ groupsStore.groupScoringError }}</div>
+      <div v-else class="max-w-md">
+        <h3 class="text-base font-semibold text-gray-800 mb-1">Egyedi pontrendszer</h3>
+        <p class="text-sm text-gray-500 mb-4">Ha beállítod, a csoport ranglista ezt a pontrendszert használja a globális helyett.</p>
+        <form class="space-y-3" @submit.prevent="submitScoringConfig">
+          <div v-for="field in scoringFields" :key="field.key" class="flex items-center justify-between gap-4">
+            <label class="text-sm font-medium text-gray-700">{{ field.label }}</label>
+            <input
+              v-model.number="scoringDraft[field.key]"
+              :data-testid="`settings-field-${field.key}`"
+              type="number"
+              min="0"
+              max="10"
+              required
+              class="w-20 border rounded px-2 py-1 text-center"
+            />
+          </div>
+          <div class="flex items-center gap-4 pt-2">
+            <button
+              type="submit"
+              data-testid="settings-submit"
+              class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+              :disabled="groupsStore.groupScoringSaveStatus === 'saving'"
+            >
+              Mentés
+            </button>
+            <span
+              v-if="groupsStore.groupScoringSaveStatus === 'saved'"
+              data-testid="settings-save-status"
+              class="text-sm text-green-600"
+            >
+              Elmentve!
+            </span>
+            <span
+              v-else-if="groupsStore.groupScoringSaveStatus === 'error'"
+              data-testid="settings-save-status"
+              class="text-sm text-red-600"
+            >
+              Hiba a mentés során
+            </span>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Confirm dialog -->    <div v-if="confirmRemoveUserId !== null" data-testid="confirm-dialog" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div class="bg-white rounded-xl p-6 shadow-xl max-w-sm w-full mx-4">
         <p class="text-gray-800 mb-4">Biztosan el szeretnéd távolítani ezt a tagot?</p>
         <div class="flex gap-3 justify-end">
@@ -267,7 +323,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, reactive, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppLayout from '../components/AppLayout.vue'
 import { dicebearUrl } from '../lib/avatar.js'
@@ -275,9 +331,9 @@ import { useGroupsStore } from '../stores/groups.store.js'
 import { useAuthStore } from '../stores/auth.store.js'
 import { api } from '../api/index.js'
 import { supabase } from '../lib/supabase.js'
-import type { GroupMember, LeaderboardEntry } from '../types/index.js'
+import type { GroupMember, LeaderboardEntry, ScoringConfigInput } from '../types/index.js'
 
-type Tab = 'leaderboard' | 'members'
+type Tab = 'leaderboard' | 'members' | 'settings'
 
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
 
@@ -309,10 +365,57 @@ const members = computed(() => groupsStore.membersMap[groupId] ?? [])
 const currentUserIsGroupAdmin = computed(() =>
   groupsStore.membersMap[groupId]?.some(m => m.userId === authStore.user?.id && m.isAdmin) ?? false,
 )
+const isGlobalAdmin = computed(() => authStore.user?.role === 'admin')
+const canManageSettings = computed(() => currentUserIsGroupAdmin.value || isGlobalAdmin.value)
 
 const showInviteConfirm = ref(false)
 const showDeleteConfirm = ref(false)
 const copiedInvite = ref<'code' | 'url' | null>(null)
+
+const scoringFields: Array<{ key: keyof ScoringConfigInput; label: string }> = [
+  { key: 'exactScore', label: 'Pontos találat' },
+  { key: 'correctWinnerAndDiff', label: 'Helyes győztes + gólkülönbség' },
+  { key: 'correctWinner', label: 'Helyes győztes' },
+  { key: 'correctDraw', label: 'Döntetlen tipp döntetlenre' },
+  { key: 'correctOutcome', label: 'Outcome bónusz (hossz./tizenegyes)' },
+  { key: 'incorrect', label: 'Helytelen tipp' },
+]
+
+type ScoringDraft = {
+  exactScore: number
+  correctWinnerAndDiff: number
+  correctWinner: number
+  correctDraw: number
+  correctOutcome: number
+  incorrect: number
+}
+
+const scoringDraft = reactive<ScoringDraft>({
+  exactScore: 3,
+  correctWinnerAndDiff: 2,
+  correctWinner: 1,
+  correctDraw: 2,
+  correctOutcome: 1,
+  incorrect: 0,
+})
+
+watch(
+  () => groupsStore.groupScoringConfigs[groupId],
+  (cfg) => {
+    if (!cfg) return
+    scoringDraft.exactScore = cfg.exactScore
+    scoringDraft.correctWinnerAndDiff = cfg.correctWinnerAndDiff
+    scoringDraft.correctWinner = cfg.correctWinner
+    scoringDraft.correctDraw = cfg.correctDraw
+    scoringDraft.correctOutcome = cfg.correctOutcome
+    scoringDraft.incorrect = cfg.incorrect
+  },
+  { immediate: true },
+)
+
+async function submitScoringConfig(): Promise<void> {
+  await groupsStore.setGroupScoringConfig(groupId, { ...scoringDraft })
+}
 
 function setCopiedInvite(type: 'code' | 'url'): void {
   copiedInvite.value = type
@@ -371,6 +474,9 @@ onMounted(async () => {
     const token = await getAccessToken()
     entries.value = await api.groups.leaderboard(token, groupId)
     await groupsStore.fetchGroupMembers(groupId)
+    if (canManageSettings.value) {
+      await groupsStore.fetchGroupScoringConfig(groupId)
+    }
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Ismeretlen hiba'
   } finally {

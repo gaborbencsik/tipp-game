@@ -17,6 +17,8 @@ const {
   mockGroupsRegenerateInvite,
   mockGroupsSetInviteActive,
   mockGroupsDelete,
+  mockGroupsGetScoringConfig,
+  mockGroupsSetScoringConfig,
 } = vi.hoisted(() => ({
   mockGetSession: vi.fn().mockResolvedValue({
     data: { session: { access_token: 'mock-token' } },
@@ -30,6 +32,8 @@ const {
   mockGroupsRegenerateInvite: vi.fn(),
   mockGroupsSetInviteActive: vi.fn(),
   mockGroupsDelete: vi.fn(),
+  mockGroupsGetScoringConfig: vi.fn(),
+  mockGroupsSetScoringConfig: vi.fn(),
 }))
 
 vi.mock('@/lib/supabase', () => ({
@@ -55,6 +59,8 @@ vi.mock('@/api/index', () => ({
       regenerateInvite: mockGroupsRegenerateInvite,
       setInviteActive: mockGroupsSetInviteActive,
       delete: mockGroupsDelete,
+      getScoringConfig: mockGroupsGetScoringConfig,
+      setScoringConfig: mockGroupsSetScoringConfig,
     },
   },
 }))
@@ -97,6 +103,8 @@ describe('groups.store', () => {
     mockGroupsRegenerateInvite.mockReset()
     mockGroupsSetInviteActive.mockReset()
     mockGroupsDelete.mockReset()
+    mockGroupsGetScoringConfig.mockReset()
+    mockGroupsSetScoringConfig.mockReset()
     mockGetSession.mockResolvedValue({ data: { session: { access_token: 'mock-token' } } })
   })
 
@@ -336,5 +344,71 @@ describe('groups.store', () => {
     mockGroupsDelete.mockRejectedValue(new Error('Not authorized'))
     const store = useGroupsStore()
     await expect(store.deleteGroup('group-uuid-1')).rejects.toThrow('Not authorized')
+  })
+
+  // ─── fetchGroupScoringConfig ──────────────────────────────────────────────────
+
+  const SCORING_CONFIG = {
+    id: 'config-uuid-1',
+    name: 'Group Override',
+    exactScore: 5,
+    correctWinnerAndDiff: 3,
+    correctWinner: 2,
+    correctDraw: 3,
+    correctOutcome: 1,
+    incorrect: 0,
+  }
+
+  it('fetchGroupScoringConfig() → config stored in groupScoringConfigs', async () => {
+    mockGroupsGetScoringConfig.mockResolvedValue(SCORING_CONFIG)
+    const store = useGroupsStore()
+    await store.fetchGroupScoringConfig('group-uuid-1')
+    expect(store.groupScoringConfigs['group-uuid-1']).toEqual(SCORING_CONFIG)
+  })
+
+  it('fetchGroupScoringConfig() → null stored when group has no override', async () => {
+    mockGroupsGetScoringConfig.mockResolvedValue(null)
+    const store = useGroupsStore()
+    await store.fetchGroupScoringConfig('group-uuid-1')
+    expect(store.groupScoringConfigs['group-uuid-1']).toBeNull()
+  })
+
+  it('fetchGroupScoringConfig() error → groupScoringError set', async () => {
+    mockGroupsGetScoringConfig.mockRejectedValue(new Error('Not a member'))
+    const store = useGroupsStore()
+    await store.fetchGroupScoringConfig('group-uuid-1')
+    expect(store.groupScoringError).toBe('Not a member')
+  })
+
+  // ─── setGroupScoringConfig ────────────────────────────────────────────────────
+
+  it('setGroupScoringConfig() → config updated in groupScoringConfigs', async () => {
+    const updatedConfig = { ...SCORING_CONFIG, exactScore: 10 }
+    mockGroupsSetScoringConfig.mockResolvedValue(updatedConfig)
+    const store = useGroupsStore()
+    await store.setGroupScoringConfig('group-uuid-1', {
+      exactScore: 10,
+      correctWinnerAndDiff: 3,
+      correctWinner: 2,
+      correctDraw: 3,
+      correctOutcome: 1,
+      incorrect: 0,
+    })
+    expect(store.groupScoringConfigs['group-uuid-1']?.exactScore).toBe(10)
+    expect(store.groupScoringSaveStatus).toBe('saved')
+  })
+
+  it('setGroupScoringConfig() error → saveStatus set to error', async () => {
+    mockGroupsSetScoringConfig.mockRejectedValue(new Error('Not authorized'))
+    const store = useGroupsStore()
+    await store.setGroupScoringConfig('group-uuid-1', {
+      exactScore: 5,
+      correctWinnerAndDiff: 3,
+      correctWinner: 2,
+      correctDraw: 3,
+      correctOutcome: 1,
+      incorrect: 0,
+    })
+    expect(store.groupScoringSaveStatus).toBe('error')
   })
 })

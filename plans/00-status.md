@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-04-14 (US-604-A, US-604-B, US-604-C, US-402 kész; admin menü refactor; SEC-002 backlogba felvéve)
+> Utoljára frissítve: 2026-04-14 (US-604-A, US-604-B, US-604-C, US-402, US-608 kész; admin menü refactor; SEC-002 backlogba felvéve)
 
 ## Kész user story-k
 
@@ -29,6 +29,7 @@
 | **US-604-B** | Meghívó kód kezelése (admin) | ✅ Kész |
 | **US-604-C** | Csoport törlése (admin) | ✅ Kész |
 | **US-402** | Konfigurálható pontrendszer | ✅ Kész |
+| **US-608** | Csoport szintű pontrendszer override | ✅ Kész |
 
 ### US-001 – Elfogadási kritériumok teljesítve
 
@@ -371,6 +372,18 @@
 - ✅ `UserMenuButton.vue`: admin linkek összecsukható "Admin" szekció alá csoportosítva (alapból csukott, `/admin/*` route-okon auto-nyitva)
 - ✅ Minden admin nézetben (`AdminMatchesView`, `AdminTeamsView`, `AdminUsersView`, `AdminScoringView`) egységes pill tab navigáció (Mérkőzések / Csapatok / Felhasználók / Pontrendszer)
 - ✅ 262 frontend teszt, typecheck CLEAN
+
+### US-608 – Elfogadási kritériumok teljesítve
+
+- ✅ `scoring-config.service.ts`: `getGroupConfig(groupId)` → `ScoringConfigFull | null`, `setGroupConfig(groupId, input)` → létrehozza vagy frissíti a group-specifikus konfigurációt
+- ✅ `GET /api/groups/:groupId/scoring-config` — tag is lekérhet
+- ✅ `PUT /api/groups/:groupId/scoring-config` — csak group admin, 6 mező szám validáció + 403 ha nem admin
+- ✅ `scoring.service.ts`: `calculateAndSaveGroupPoints(matchId, result)` — minden mérkőzés eredményénél lefut, csak azokat a (prediction, group) párokat kezeli, ahol a csoportnak van saját `scoringConfigId`
+- ✅ `group-leaderboard.service.ts`: ha csoportnak van `scoringConfigId` → `group_prediction_points` tábla alapján számol, különben `predictions.pointsGlobal` fallback
+- ✅ `api/index.ts`: `groups.getScoringConfig`, `groups.setScoringConfig` metódusok
+- ✅ `groups.store.ts`: `groupScoringConfigs`, `groupScoringLoading`, `groupScoringError`, `groupScoringSaveStatus` state; `fetchGroupScoringConfig`, `setGroupScoringConfig` akciók
+- ✅ `GroupDetailView.vue`: "Beállítások" tab (group admin only), egyedi pontrendszer form (6 mező, előtöltve), mentési visszajelzés
+- ✅ 164 backend + 267 frontend teszt, typecheck CLEAN
 
 ---
 
