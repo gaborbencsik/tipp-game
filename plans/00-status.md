@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-04-14 (US-604-A, US-604-B, US-604-C, US-402 kész; SEC-002 backlogba felvéve)
+> Utoljára frissítve: 2026-04-14 (US-604-A, US-604-B, US-604-C, US-402 kész; admin menü refactor; SEC-002 backlogba felvéve)
 
 ## Kész user story-k
 
@@ -365,6 +365,12 @@
 - ✅ `AdminScoringView.vue`: form 6 szerkeszthető mezővel, előtöltve, "Elmentve!" visszajelzés
 - ✅ `/admin/scoring` route + "Admin – Pontrendszer" link a `UserMenuButton` dropdown-ban
 - ✅ 154 backend + 259 frontend teszt, typecheck CLEAN
+
+### Admin UX refactor – kész
+
+- ✅ `UserMenuButton.vue`: admin linkek összecsukható "Admin" szekció alá csoportosítva (alapból csukott, `/admin/*` route-okon auto-nyitva)
+- ✅ Minden admin nézetben (`AdminMatchesView`, `AdminTeamsView`, `AdminUsersView`, `AdminScoringView`) egységes pill tab navigáció (Mérkőzések / Csapatok / Felhasználók / Pontrendszer)
+- ✅ 262 frontend teszt, typecheck CLEAN
 
 ---
 
