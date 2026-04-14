@@ -63,6 +63,15 @@
       >
         Admin – Felhasználók
       </router-link>
+      <router-link
+        v-if="isAdmin"
+        to="/admin/scoring"
+        data-testid="menu-admin-scoring"
+        class="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+        @click="menuOpen = false"
+      >
+        Admin – Pontrendszer
+      </router-link>
       <div v-if="isAdmin" class="border-t border-gray-100" />
       <router-link
         to="/profile"

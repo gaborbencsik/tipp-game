@@ -35,6 +35,26 @@ export interface ScoringConfig {
   readonly incorrect: number
 }
 
+export interface ScoringConfigFull {
+  readonly id: string
+  readonly name: string
+  readonly exactScore: number
+  readonly correctWinnerAndDiff: number
+  readonly correctWinner: number
+  readonly correctDraw: number
+  readonly correctOutcome: number
+  readonly incorrect: number
+}
+
+export interface ScoringConfigInput {
+  readonly exactScore: number
+  readonly correctWinnerAndDiff: number
+  readonly correctWinner: number
+  readonly correctDraw: number
+  readonly correctOutcome: number
+  readonly incorrect: number
+}
+
 export interface ScoreLine {
   readonly homeGoals: number
   readonly awayGoals: number

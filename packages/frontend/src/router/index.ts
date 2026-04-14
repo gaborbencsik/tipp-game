@@ -63,6 +63,12 @@ export const router = createRouter({
       meta: { requiresAuth: true, requiresAdmin: true },
     },
     {
+      path: '/admin/scoring',
+      name: 'admin-scoring',
+      component: () => import('../views/AdminScoringView.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true },
+    },
+    {
       path: '/my-tips',
       name: 'my-tips',
       component: () => import('../views/MyTipsView.vue'),

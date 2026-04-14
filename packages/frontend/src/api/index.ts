@@ -1,4 +1,4 @@
-import type { User, Match, MatchesFilters, MatchInput, MatchResultInput, Prediction, PredictionInput, Team, TeamInput, AdminUser, Group, GroupInput, GroupMember, JoinGroupInput, LeaderboardEntry } from '../types/index.js'
+import type { User, Match, MatchesFilters, MatchInput, MatchResultInput, Prediction, PredictionInput, Team, TeamInput, AdminUser, Group, GroupInput, GroupMember, JoinGroupInput, LeaderboardEntry, ScoringConfigFull, ScoringConfigInput } from '../types/index.js'
 
 const BASE_URL = (import.meta.env.VITE_API_URL ?? '') + '/api'
 
@@ -182,6 +182,18 @@ export const api = {
         request<AdminUser>(`/admin/users/${id}/ban`, {
           method: 'PUT',
           body: JSON.stringify({ ban }),
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+    },
+    scoringConfig: {
+      get: (token: string) =>
+        request<ScoringConfigFull>('/admin/scoring-config', {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      update: (token: string, input: ScoringConfigInput) =>
+        request<ScoringConfigFull>('/admin/scoring-config', {
+          method: 'PUT',
+          body: JSON.stringify(input),
           headers: { Authorization: `Bearer ${token}` },
         }),
     },

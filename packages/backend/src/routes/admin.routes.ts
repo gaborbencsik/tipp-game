@@ -20,7 +20,8 @@ import {
   banUser,
 } from '../services/admin-users.service.js'
 import { upsertUser } from '../services/user.service.js'
-import type { MatchOutcome, TeamInput, MatchInput } from '../types/index.js'
+import { getGlobalConfig, updateGlobalConfig } from '../services/scoring-config.service.js'
+import type { MatchOutcome, TeamInput, MatchInput, ScoringConfigInput } from '../types/index.js'
 
 const adminRouter = new Router({ prefix: '/api/admin' })
 
@@ -97,6 +98,27 @@ adminRouter.put('/users/:id/ban', async (ctx) => {
   const { ban } = ctx.request.body as { ban: boolean }
   const dbUser = await upsertUser(ctx.state.user)
   ctx.body = await banUser(ctx.params['id'] as string, ban, dbUser.id)
+})
+
+// ─── Scoring config ───────────────────────────────────────────────────────────
+
+adminRouter.get('/scoring-config', async (ctx) => {
+  ctx.body = await getGlobalConfig()
+})
+
+adminRouter.put('/scoring-config', async (ctx) => {
+  const body = ctx.request.body as Record<string, unknown>
+  const fields: Array<keyof ScoringConfigInput> = [
+    'exactScore', 'correctWinnerAndDiff', 'correctWinner', 'correctDraw', 'correctOutcome', 'incorrect',
+  ]
+  for (const field of fields) {
+    if (typeof body[field] !== 'number') {
+      ctx.status = 400
+      ctx.body = { error: `Field '${field}' must be a number` }
+      return
+    }
+  }
+  ctx.body = await updateGlobalConfig(body as unknown as ScoringConfigInput)
 })
 
 export { adminRouter }

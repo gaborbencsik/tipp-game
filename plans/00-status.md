@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-04-14 (US-604-A, US-604-B, US-604-C kész; SEC-002 backlogba felvéve)
+> Utoljára frissítve: 2026-04-14 (US-604-A, US-604-B, US-604-C, US-402 kész; SEC-002 backlogba felvéve)
 
 ## Kész user story-k
 
@@ -28,6 +28,7 @@
 | **US-604-A** | Csoport tagkezelés (admin) | ✅ Kész |
 | **US-604-B** | Meghívó kód kezelése (admin) | ✅ Kész |
 | **US-604-C** | Csoport törlése (admin) | ✅ Kész |
+| **US-402** | Konfigurálható pontrendszer | ✅ Kész |
 
 ### US-001 – Elfogadási kritériumok teljesítve
 
@@ -353,7 +354,20 @@
 - ✅ `GroupDetailView.vue`: "Csoport törlése" gomb (admin only, Tagok tab alján) — megerősítő dialog, törlés után `/groups` redirect
 - ✅ 150 backend + 247 frontend teszt, typecheck CLEAN
 
+### US-402 – Elfogadási kritériumok teljesítve
+
+- ✅ `scoring-config.service.ts`: `getGlobalConfig()` (404 ha nincs), `updateGlobalConfig(input)`
+- ✅ `GET /api/admin/scoring-config` + `PUT /api/admin/scoring-config` — `authMiddleware + adminMiddleware`
+- ✅ PUT validáció: minden mező `typeof !== 'number'` → 400
+- ✅ `ScoringConfigFull` + `ScoringConfigInput` interface (backend + frontend types)
+- ✅ `api.admin.scoringConfig.get/update` API client metódusok
+- ✅ `admin-scoring.store.ts`: `fetchConfig`, `updateConfig`, `saveStatus` ('idle'/'saving'/'saved'/'error')
+- ✅ `AdminScoringView.vue`: form 6 szerkeszthető mezővel, előtöltve, "Elmentve!" visszajelzés
+- ✅ `/admin/scoring` route + "Admin – Pontrendszer" link a `UserMenuButton` dropdown-ban
+- ✅ 154 backend + 259 frontend teszt, typecheck CLEAN
+
 ---
+
 | US-001 | Monorepo és dev környezet | ✅ Kész | Must Have |
 | US-002 | DB schema és seed adatok | ✅ Kész | Must Have |
 | US-003 | Tesztelési infrastruktúra | ✅ Kész | Must Have |
@@ -370,7 +384,7 @@
 | US-304 | Email + jelszó auth | ✅ Kész | Should Have |
 | US-305 | Session perzisztencia oldal-újratöltés után | ✅ Kész | Must Have |
 | US-401 | Automatikus pontszámítás | ✅ Kész | Must Have |
-| US-402 | Konfigurálható pontrendszer | ⬜ Nem kezdett | Must Have |
+| US-402 | Konfigurálható pontrendszer | ✅ Kész | Must Have |
 | US-403 | Pontozás tesztelhetősége | ✅ Kész (US-003 részeként) | Must Have |
 | US-501 | Globális ranglista | ✅ Kész | Must Have |
 | US-502 | Ranglista nézet-váltó (globális + csoportok dropdown) | ✅ Kész | Should Have |
@@ -416,4 +430,4 @@
 
 ---
 
-**Haladás: 33 / 60 story kész** — Must Have: 24/33 ✅, Should Have: 9/23 ✅, Nice to Have: 0/2
+**Haladás: 34 / 60 story kész** — Must Have: 25/33 ✅, Should Have: 9/23 ✅, Nice to Have: 0/2
