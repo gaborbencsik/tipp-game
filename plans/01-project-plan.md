@@ -808,18 +808,16 @@ Mint **fejlesztő**, szeretném, hogy **a `teams` táblán legyen egy `teamType`
 **Elfogadási kritériumok:**
 - [ ] `pgEnum('team_type', ['national', 'club'])` létrehozva a Drizzle schemában
 - [ ] `teams` tábla: `teamType: teamTypeEnum('team_type').notNull().default('national')`
-- [ ] `teams` tábla: `countryCode: varchar('country_code', { length: 10 })` — nullable (ISO alpha-2, ill. `gb-sct`, `gb-eng` speciális esetekhez)
+- [ ] `teams` tábla: `countryCode: varchar('country_code', { length: 2 })` — nullable, csak national csapatoknál töltendő ki (pl. `'hu'`, `'de'`)
 - [ ] Drizzle migráció generálva és elnevezve (`0003_team_type_country_code.sql`)
 - [ ] Backend `Team` és `TeamInput` típusok frissítve (`teamType`, `countryCode` mezőkkel)
 - [ ] Frontend `Team` típus frissítve
 - [ ] Admin csapatkezelő form (`AdminTeamsView`): `teamType` dropdown (Válogatott / Klub), `countryCode` input mező (csak national esetén látható)
-- [ ] `scripts/wc2026-teams.sql` futtatva: 48 VB 2026 csapat (12 csoport, A–L) bekerül a DB-be `ON CONFLICT DO NOTHING`-gal
-- [ ] A meglévő seed csapatok lecserélődnek / kiegészülnek a valós VB-s adatokkal
-- [ ] Minden meglévő csapathoz `teamType = 'national'` és a megfelelő `countryCode` beállítva (migrációs UPDATE a SQL fájlban)
+- [ ] Seed adatok frissítve: VB-s csapatokhoz `teamType: 'national'` + `countryCode` beállítva
 - [ ] Az összes meglévő teszt zöld marad
 
-**Technikai megjegyzés:**
-A `countryCode` ISO alpha-2 formátumban tárolódik (pl. `'hu'`, `'de'`, `'fr'`), kivéve Skócia (`gb-sct`) és Anglia (`gb-eng`) ahol a `flag-icons` csomag az összetett kódot várja. A `flagUrl` mező megmarad klub csapatokhoz. A `scripts/wc2026-teams.sql` fájl már tartalmazza mind a 48 csapatot a country code-okkal kommentben — US-806 implementációjakor ezek az oszlopba kerülnek.
+**Megjegyzés:**
+A `countryCode` ISO alpha-2 formátumban tárolódik (pl. `'hu'`, `'de'`, `'fr'`) — ez közvetlenül a `flag-icons` CSS osztályba kerül (`fi-hu`, `fi-de`). A `flagUrl` mező megmarad klub csapatokhoz.
 
 **Komplexitás:** S
 **Prioritás:** Should Have
