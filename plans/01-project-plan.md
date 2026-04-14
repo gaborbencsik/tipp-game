@@ -824,6 +824,75 @@ A `countryCode` ISO alpha-2 formátumban tárolódik (pl. `'hu'`, `'de'`, `'fr'`
 
 ---
 
+#### US-807: Admin használati statisztikák (dashboard)
+
+**Story:**
+Mint **platform admin**, szeretnék **egy áttekintő statisztikai dashboardot**, hogy **lássam a platform aktivitását, azonosítsam az aktív és inaktív felhasználókat, és döntéseket hozzak a fejlesztési prioritásokról**.
+
+**Javasolt metrikák**
+
+*Összesített mutatók (top kártyák):*
+
+| Metrika | Leírás |
+|---------|--------|
+| Regisztrált felhasználók | `users` tábla nem-törölt sorok száma |
+| Aktív felhasználók (7 nap) | Legalább 1 tippet adott le az elmúlt 7 napban |
+| Összes leadott tipp | `predictions` tábla sor száma |
+| Kitöltési arány | `predictions / (users × meccsek)` — hány % a tényleges részvétel |
+| Csoportok száma | Nem-törölt csoportok |
+| Átlagos csoport méret | `group_members` tagok / csoportok |
+
+*Felhasználónkénti táblázat (rangsorolt, szűrhető):*
+
+| Oszlop | Forrás |
+|--------|--------|
+| Felhasználó (avatar + név) | `users` |
+| Regisztrálva | `users.createdAt` |
+| Összes tipp | `count(predictions)` |
+| Kitöltési % | `predictions / meccsek_száma × 100` |
+| Szerzett pont | `sum(predictions.pointsGlobal)` |
+| Csoportok száma | `count(group_members)` |
+| Utolsó aktivitás | `max(predictions.createdAt)` |
+| Tiltott? | `users.isBanned` badge |
+
+*Meccs-szintű statisztikák (táblázat):*
+
+| Oszlop | Leírás |
+|--------|--------|
+| Meccs | csapatok + dátum |
+| Tippelt / összes user | hányan tippeltek erre |
+| Kitöltési % | részvétel aránya |
+| Átlag hazai tipp | összes leadott hazai gólszám átlaga |
+| Átlag vendég tipp | összes leadott vendég gólszám átlaga |
+| Eredmény | ha már van |
+
+*Aktivitási trend (opcionális, Nice to Have szinten):*
+- Napi/heti tipp leadások száma az elmúlt 30 napban (egyszerű bar chart vagy sparkline)
+
+**Elfogadási kritériumok:**
+- [ ] `GET /api/admin/stats` endpoint — `authMiddleware + adminMiddleware`
+- [ ] Response tartalmazza: `userCount`, `activeUsersLast7Days`, `predictionCount`, `fillRate`, `groupCount`, `avgGroupSize`
+- [ ] `GET /api/admin/stats/users` — felhasználónkénti aggregált adatok (tipp db, pontszám, csoport db, utolsó aktivitás)
+- [ ] `GET /api/admin/stats/matches` — meccs-szintű részvételi statisztikák
+- [ ] Frontend: `/admin/stats` route — `requiresAuth + requiresAdmin`
+- [ ] Admin menüben "Statisztikák" link megjelenik
+- [ ] Top kártyák renderelve (összesített mutatók)
+- [ ] Felhasználónkénti táblázat: rendezhető tipp db / pont / kitöltés szerint
+- [ ] Meccs-szintű táblázat: kitöltési % alapján rendezhető
+- [ ] Minden adat valós idejű (nem cachelt) — az oldal betöltésekor friss lekérdezés
+- [ ] Backend unit tesztek az aggregációs service-hez
+- [ ] Frontend tesztek az `AdminStatsView`-hoz
+
+**Technikai megjegyzések:**
+- Külön `stats.service.ts` — ne keveredjen a meglévő service-ekkel
+- Az összes aggregáció egy SQL-lekérdezéssel vagy néhány hatékony Drizzle query-vel megoldható (nem N+1)
+- `fillRate` = `predictionCount / (userCount × matchCount) × 100`, ahol `matchCount` az összes nem-törölt meccs
+
+**Komplexitás:** M
+**Prioritás:** Should Have
+
+---
+
 ### E9 – Statisztikai tippek
 
 #### US-901: Statisztikai tipp leadása (csoportszinten)
@@ -1436,13 +1505,14 @@ Jelenleg a join endpoint IP-alapú rate limittel van védve. Ez elegendő a legt
 | UX-005 | Optimista törlés az admin listákon | S | Should Have |
 | UX-006 | Csapat zászló/logo megjelenítése (flag-icons) | S | Should Have |
 | US-806 | Csapat típus és country code mezők (DB migráció) | S | Should Have |
+| US-807 | Admin használati statisztikák (dashboard) | M | Should Have |
 | DISC-001 | Landing oldal discovery (design + marketing + social) | L | Should Have |
 | SEC-001 | Row-Level Security bekapcsolása (Supabase RLS) | S | Must Have |
 | SEC-002 | HMAC-aláírt meghívó URL-ek | S | Nice to Have |
 
 **Összesítés:**
 - Must Have: 30 story (4 technikai + 26 product)
-- Should Have: 23 story
+- Should Have: 24 story
 - Nice to Have: 2 (UX-004, SEC-002 + ld. E10 epic – részletezés a 04-extras.md-ben)
 
 **Méret szerinti bontás:**
