@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-04-13 (US-604 felbontva: 604-A/B/C + US-608 + US-609)
+> Utoljára frissítve: 2026-04-14 (US-604-A, US-604-B kész; SEC-002 backlogba felvéve)
 
 ## Kész user story-k
 
@@ -25,6 +25,8 @@
 | **US-602** | Csatlakozás csoporthoz | ✅ Kész |
 | **US-1201** | Futball API kiválasztása (kutatás) | ✅ Kész |
 | **US-205** | Hosszabbítás/tizenegyes kimenetel tipp | ✅ Kész |
+| **US-604-A** | Csoport tagkezelés (admin) | ✅ Kész |
+| **US-604-B** | Meghívó kód kezelése (admin) | ✅ Kész |
 
 ### US-001 – Elfogadási kritériumok teljesítve
 
@@ -311,6 +313,35 @@
 - ✅ `MyTipsView`: lezárt meccsnél az outcome tipp megjelenik a tipp mellett (pl. „1–1 · H+hossz.")
 - ✅ 120 backend + 212 frontend teszt, typecheck CLEAN
 
+### US-604-A – Elfogadási kritériumok teljesítve
+
+- ✅ `groups.service.ts`: `getGroupMembers`, `removeMember`, `setMemberAdmin` — AppError pattern (404/403)
+- ✅ `GET /api/groups/:groupId/members` — requester tagságát ellenőrzi
+- ✅ `DELETE /api/groups/:groupId/members/:userId` — csak admin távolíthat el tagot, magát nem
+- ✅ `PUT /api/groups/:groupId/members/:userId/role` — csak admin módosíthat, magán nem, utolsó admin védett
+- ✅ `GroupDetailView.vue`: Ranglista + Tagok tab; Tagok tab csak csoport adminnak látható
+- ✅ Tagok táblázat: avatar, név, szerep badge, csatlakozás dátuma, Admin/visszavon + Eltávolít gombok
+- ✅ Saját sor gombjai disabled, megerősítő dialog az eltávolításhoz
+- ✅ `groups.store.ts`: `fetchGroupMembers`, `removeMember`, `toggleMemberAdmin` actions + `membersMap`, `membersError`
+- ✅ 141 backend + 241 frontend teszt, typecheck CLEAN
+
+### US-604-B – Elfogadási kritériumok teljesítve
+
+- ✅ `groups.service.ts`: `regenerateInviteCode` (új kód generálása, uniqueness retry max 10), `setInviteActive`
+- ✅ `PUT /api/groups/:groupId/invite` — meghívó kód újragenerálása, `inviteActive = true` visszaállítással
+- ✅ `PATCH /api/groups/:groupId/invite` — meghívó aktiválás/deaktiválás (`active: boolean` validációval)
+- ✅ Rate limit: `POST /api/groups/join` — 10 kérés/perc/IP, in-memory sliding window (külső csomag nélkül)
+- ✅ `rateLimit.middleware.ts`: `createRateLimit({ windowMs, max })` — 4 unit teszt
+- ✅ Frontend `api/index.ts`: `regenerateInvite`, `setInviteActive` metódusok
+- ✅ `groups.store.ts`: `regenerateInvite`, `setInviteActive` actions (frissítik a `groups` listát)
+- ✅ `GroupDetailView.vue`: "Meghívó kód" szekció (csak admin, Tagok tab alján) — kód display, Kód másolás, Link másolása, Deaktiválás/Aktiválás, Újragenerálás (confirm dialoggal)
+- ✅ `GroupsView.vue`: inaktív meghívójú csoportnál admin usernek piros "Meghívó inaktív" badge
+- ✅ Másolás gombokon zöld ✓ animáció 2 másodpercig (`copiedInvite` / `copiedState` ref)
+- ✅ `/join/:code` route + `JoinView.vue` — automatikusan join-ol és a csoport detail oldalra irányít
+- ✅ Router guard: `redirect` query param megőrzése bejelentkezés előtt; `LoginView` bejelentkezés után visszairányít
+- ✅ Join URL = `window.location.origin + /join/` + kód (dinamikus, domain-független)
+- ✅ 145 backend + 241 frontend teszt, typecheck CLEAN
+
 ---
 |----------|-----------|---------|-----------|
 | US-001 | Monorepo és dev környezet | ✅ Kész | Must Have |
@@ -336,8 +367,8 @@
 | US-601 | Csoport létrehozása | ✅ Kész | Must Have |
 | US-602 | Csatlakozás csoporthoz | ✅ Kész | Must Have |
 | US-603 | Csoportonkénti ranglista | ✅ Kész | Must Have |
-| US-604-A | Csoport tagkezelés (admin) | ⬜ Nem kezdett | Must Have |
-| US-604-B | Meghívó kód kezelése (admin) | ⬜ Nem kezdett | Must Have |
+| US-604-A | Csoport tagkezelés (admin) | ✅ Kész | Must Have |
+| US-604-B | Meghívó kód kezelése (admin) | ✅ Kész | Must Have |
 | US-604-C | Csoport törlése (admin) | ⬜ Nem kezdett | Should Have |
 | US-608 | Csoportszintű pontrendszer override | ⬜ Nem kezdett | Must Have |
 | US-609 | Liga filter csoportonként | ⬜ Nem kezdett | Should Have |
@@ -371,7 +402,8 @@
 | US-607 | Kedvenc csapat dupla pont szabály (csoport beállítás) | ⬜ Nem kezdett | Should Have |
 | DISC-001 | Landing oldal discovery (design + marketing + social) | ⬜ Nem kezdett | Should Have |
 | SEC-001 | Row-Level Security bekapcsolása (Supabase RLS) | ⬜ Nem kezdett | Must Have |
+| SEC-002 | HMAC-aláírt meghívó URL-ek | ⬜ Nem kezdett | Nice to Have |
 
 ---
 
-**Haladás: 30 / 58 story kész** — Must Have: 22/33 ✅, Should Have: 8/23 ✅, Nice to Have: 0/1
+**Haladás: 32 / 60 story kész** — Must Have: 24/33 ✅, Should Have: 8/23 ✅, Nice to Have: 0/2
