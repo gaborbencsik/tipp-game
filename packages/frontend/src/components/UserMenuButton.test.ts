@@ -155,6 +155,32 @@ describe('UserMenuButton', () => {
     expect(wrapper.find('[data-testid="menu-admin-users"]').exists()).toBe(true)
   })
 
+  it('admin section toggle → admin linkek elrejtve', async () => {
+    const wrapper = mountAsAdmin()
+    await wrapper.find('[data-testid="user-menu-btn"]').trigger('click')
+    // adminOpen starts as false (path is '/'), so one click opens it, second closes it
+    await wrapper.find('[data-testid="admin-section-toggle"]').trigger('click') // open
+    await wrapper.find('[data-testid="admin-section-toggle"]').trigger('click') // close
+    await wrapper.vm.$nextTick()
+    expect((wrapper.find('[data-testid="menu-admin-matches"]').element as HTMLElement).style.display).toBe('none')
+  })
+
+  it('admin section toggle kétszer → admin linkek visszajönnek', async () => {
+    const wrapper = mountAsAdmin()
+    await wrapper.find('[data-testid="user-menu-btn"]').trigger('click')
+    await wrapper.find('[data-testid="admin-section-toggle"]').trigger('click') // open
+    await wrapper.find('[data-testid="admin-section-toggle"]').trigger('click') // close
+    await wrapper.find('[data-testid="admin-section-toggle"]').trigger('click') // open again
+    await wrapper.vm.$nextTick()
+    expect((wrapper.find('[data-testid="menu-admin-matches"]').element as HTMLElement).style.display).toBe('')
+  })
+
+  it('nem-admin usernél admin-section-toggle nem látható', async () => {
+    const wrapper = mountAsUser()
+    await wrapper.find('[data-testid="user-menu-btn"]').trigger('click')
+    expect(wrapper.find('[data-testid="admin-section-toggle"]').exists()).toBe(false)
+  })
+
   // ─── Akciók ───────────────────────────────────────────────────────────────────
 
   it('Kijelentkezés gomb → authStore.logout() meghívódik', async () => {

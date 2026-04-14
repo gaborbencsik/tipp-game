@@ -36,43 +36,53 @@
           {{ authStore.user?.email }}
         </p>
       </div>
-      <router-link
-        v-if="isAdmin"
-        to="/admin/matches"
-        data-testid="menu-admin-matches"
-        class="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
-        @click="menuOpen = false"
-      >
-        Admin – Mérkőzések
-      </router-link>
-      <router-link
-        v-if="isAdmin"
-        to="/admin/teams"
-        data-testid="menu-admin-teams"
-        class="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
-        @click="menuOpen = false"
-      >
-        Admin – Csapatok
-      </router-link>
-      <router-link
-        v-if="isAdmin"
-        to="/admin/users"
-        data-testid="menu-admin-users"
-        class="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
-        @click="menuOpen = false"
-      >
-        Admin – Felhasználók
-      </router-link>
-      <router-link
-        v-if="isAdmin"
-        to="/admin/scoring"
-        data-testid="menu-admin-scoring"
-        class="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
-        @click="menuOpen = false"
-      >
-        Admin – Pontrendszer
-      </router-link>
-      <div v-if="isAdmin" class="border-t border-gray-100" />
+      <template v-if="isAdmin">
+        <button
+          data-testid="admin-section-toggle"
+          class="flex w-full items-center justify-between px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+          @click="adminOpen = !adminOpen"
+        >
+          <span>Admin</span>
+          <span class="text-gray-400 text-xs">{{ adminOpen ? '▼' : '▶' }}</span>
+        </button>
+        <router-link
+          v-show="adminOpen"
+          to="/admin/matches"
+          data-testid="menu-admin-matches"
+          class="flex items-center pl-6 pr-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+          @click="menuOpen = false"
+        >
+          Mérkőzések
+        </router-link>
+        <router-link
+          v-show="adminOpen"
+          to="/admin/teams"
+          data-testid="menu-admin-teams"
+          class="flex items-center pl-6 pr-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+          @click="menuOpen = false"
+        >
+          Csapatok
+        </router-link>
+        <router-link
+          v-show="adminOpen"
+          to="/admin/users"
+          data-testid="menu-admin-users"
+          class="flex items-center pl-6 pr-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+          @click="menuOpen = false"
+        >
+          Felhasználók
+        </router-link>
+        <router-link
+          v-show="adminOpen"
+          to="/admin/scoring"
+          data-testid="menu-admin-scoring"
+          class="flex items-center pl-6 pr-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+          @click="menuOpen = false"
+        >
+          Pontrendszer
+        </router-link>
+        <div class="border-t border-gray-100" />
+      </template>
       <router-link
         to="/profile"
         data-testid="menu-profile"
@@ -95,11 +105,14 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { useAuthStore } from '../stores/auth.store.js'
 import { dicebearUrl } from '../lib/avatar.js'
 
 const authStore = useAuthStore()
+const route = useRoute()
 const menuOpen = ref(false)
+const adminOpen = ref(route.path.startsWith('/admin'))
 const isAdmin = computed((): boolean => authStore.user?.role === 'admin')
 const avatarSrc = computed((): string => {
   const user = authStore.user
