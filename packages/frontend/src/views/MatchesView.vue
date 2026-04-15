@@ -41,55 +41,33 @@
       </div>
 
       <div v-else>
+        <!-- Aktuális és jövőbeli meccsnapok -->
         <div
-          v-for="group in visibleGroups"
+          v-for="group in visibleUpcomingGroups"
           :key="group.date"
           class="mb-8"
         >
-          <h2
-            class="text-lg font-semibold text-gray-700 mb-3 border-b border-gray-200 pb-1 flex items-center justify-between"
-            :class="isCollapsible(group) ? 'cursor-pointer select-none hover:text-gray-900' : ''"
-            @click="isCollapsible(group) && toggleCollapsed(group.date)"
-          >
-            <span>{{ group.label }}</span>
-            <svg
-              v-if="isCollapsible(group)"
-              xmlns="http://www.w3.org/2000/svg"
-              class="w-4 h-4 text-gray-400 transition-transform duration-200 shrink-0"
-              :class="collapsedDates.has(group.date) ? '' : 'rotate-180'"
-              fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
+          <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b border-gray-200 pb-1">
+            {{ group.label }}
           </h2>
-
-          <template v-if="!collapsedDates.has(group.date)">
-            <div
-              v-for="match in visibleMatches(group)"
-              :key="match.id"
-              class="bg-white rounded-lg shadow-sm border p-4 mb-3"
-              :class="cardBorderClass(match)"
-            >
-            <router-link
-              :to="`/matches/${match.id}`"
-              class="block"
-            >
+          <div
+            v-for="match in group.matches"
+            :key="match.id"
+            class="bg-white rounded-lg shadow-sm border p-4 mb-3"
+            :class="cardBorderClass(match)"
+          >
+            <router-link :to="`/matches/${match.id}`" class="block">
               <div class="flex items-center justify-between mb-2">
                 <span class="text-xs font-medium uppercase tracking-wide text-gray-500">
                   {{ stageLabel(match.stage) }}
                   <span v-if="match.groupName"> – {{ match.groupName }} csoport</span>
                 </span>
-                <span
-                  class="text-xs font-bold px-2 py-0.5 rounded"
-                  :class="statusClass(match.status)"
-                >
+                <span class="text-xs font-bold px-2 py-0.5 rounded" :class="statusClass(match.status)">
                   {{ statusLabel(match.status) }}
                 </span>
               </div>
-
               <div class="flex items-center justify-center gap-4">
                 <span class="font-semibold text-gray-800 text-right flex-1">{{ match.homeTeam.name }}</span>
-
                 <div class="text-xl font-bold text-gray-900 min-w-[5rem] text-center">
                   <template v-if="match.result">
                     {{ match.result.homeGoals }} – {{ match.result.awayGoals }}
@@ -98,10 +76,8 @@
                     {{ formatTime(match.scheduledAt) }}
                   </template>
                 </div>
-
                 <span class="font-semibold text-gray-800 text-left flex-1">{{ match.awayTeam.name }}</span>
               </div>
-
               <div v-if="match.venue" class="text-xs text-gray-400 text-center mt-1">
                 {{ match.venue.city }}
               </div>
@@ -109,17 +85,13 @@
 
             <!-- Tipp szekció -->
             <div class="mt-3 pt-3 border-t border-gray-100">
-              <!-- Tippelhető meccs -->
               <template v-if="isTippable(match)">
                 <div class="flex items-center gap-2 justify-center">
                   <span class="text-sm">{{ predictionsStore.predictionByMatchId(match.id) ? '✅' : '⏳' }}</span>
                   <input
                     :ref="el => { if (el) homeInputs[match.id] = el as HTMLInputElement }"
                     :value="draftGoals[match.id]?.home ?? ''"
-                    type="number"
-                    min="0"
-                    max="99"
-                    placeholder="0"
+                    type="number" min="0" max="99" placeholder="0"
                     data-testid="input-home"
                     class="w-14 text-center border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:border-blue-400"
                     :disabled="predictionsStore.saveStatus[match.id] === 'saving'"
@@ -131,10 +103,7 @@
                   <input
                     :ref="el => { if (el) awayInputs[match.id] = el as HTMLInputElement }"
                     :value="draftGoals[match.id]?.away ?? ''"
-                    type="number"
-                    min="0"
-                    max="99"
-                    placeholder="0"
+                    type="number" min="0" max="99" placeholder="0"
                     data-testid="input-away"
                     class="w-14 text-center border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:border-blue-400"
                     :disabled="predictionsStore.saveStatus[match.id] === 'saving'"
@@ -144,82 +113,31 @@
                   />
                 </div>
 
-                <!-- Outcome selector egyenes kieséses meccseknél döntetlen tipp esetén -->
                 <div v-if="showOutcomeSelector(match.id, match.stage)" class="mt-2 flex flex-col gap-1 items-center">
                   <div class="flex gap-1">
                     <span class="text-xs text-gray-400 w-20 text-right self-center">Hossz.:</span>
-                    <button
-                      type="button"
-                      class="text-xs px-2 py-1 rounded border transition-colors"
-                      :class="draftOutcomes[match.id] === 'extra_time_home' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'"
-                      data-testid="outcome-extra-time-home"
-                      @click="setOutcome(match.id, 'extra_time_home')"
-                    >← Hazai</button>
-                    <button
-                      type="button"
-                      class="text-xs px-2 py-1 rounded border transition-colors"
-                      :class="draftOutcomes[match.id] === 'extra_time_away' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'"
-                      data-testid="outcome-extra-time-away"
-                      @click="setOutcome(match.id, 'extra_time_away')"
-                    >Vendég →</button>
+                    <button type="button" class="text-xs px-2 py-1 rounded border transition-colors" :class="draftOutcomes[match.id] === 'extra_time_home' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'" data-testid="outcome-extra-time-home" @click="setOutcome(match.id, 'extra_time_home')">← Hazai</button>
+                    <button type="button" class="text-xs px-2 py-1 rounded border transition-colors" :class="draftOutcomes[match.id] === 'extra_time_away' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'" data-testid="outcome-extra-time-away" @click="setOutcome(match.id, 'extra_time_away')">Vendég →</button>
                   </div>
                   <div class="flex gap-1">
                     <span class="text-xs text-gray-400 w-20 text-right self-center">Tizenegyes:</span>
-                    <button
-                      type="button"
-                      class="text-xs px-2 py-1 rounded border transition-colors"
-                      :class="draftOutcomes[match.id] === 'penalties_home' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'"
-                      data-testid="outcome-penalties-home"
-                      @click="setOutcome(match.id, 'penalties_home')"
-                    >← Hazai</button>
-                    <button
-                      type="button"
-                      class="text-xs px-2 py-1 rounded border transition-colors"
-                      :class="draftOutcomes[match.id] === 'penalties_away' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'"
-                      data-testid="outcome-penalties-away"
-                      @click="setOutcome(match.id, 'penalties_away')"
-                    >Vendég →</button>
+                    <button type="button" class="text-xs px-2 py-1 rounded border transition-colors" :class="draftOutcomes[match.id] === 'penalties_home' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'" data-testid="outcome-penalties-home" @click="setOutcome(match.id, 'penalties_home')">← Hazai</button>
+                    <button type="button" class="text-xs px-2 py-1 rounded border transition-colors" :class="draftOutcomes[match.id] === 'penalties_away' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'" data-testid="outcome-penalties-away" @click="setOutcome(match.id, 'penalties_away')">Vendég →</button>
                   </div>
                 </div>
                 <div class="text-center mt-1 text-xs">
-                  <span
-                    v-if="predictionsStore.saveStatus[match.id] === 'saved'"
-                    class="text-green-600"
-                    data-testid="save-success"
-                  >
-                    Tipp elmentve! ✓
-                  </span>
-                  <span
-                    v-else-if="predictionsStore.saveStatus[match.id] === 'error'"
-                    class="text-red-500"
-                  >
-                    {{ predictionsStore.error }}
-                  </span>
-                  <span
-                    v-else-if="predictionsStore.predictionByMatchId(match.id)"
-                    class="text-gray-400"
-                  >
-                    Utoljára módosítva: {{ formatDateTime(predictionsStore.predictionByMatchId(match.id)!.updatedAt) }}
-                  </span>
+                  <span v-if="predictionsStore.saveStatus[match.id] === 'saved'" class="text-green-600" data-testid="save-success">Tipp elmentve! ✓</span>
+                  <span v-else-if="predictionsStore.saveStatus[match.id] === 'error'" class="text-red-500">{{ predictionsStore.error }}</span>
+                  <span v-else-if="predictionsStore.predictionByMatchId(match.id)" class="text-gray-400">Utoljára módosítva: {{ formatDateTime(predictionsStore.predictionByMatchId(match.id)!.updatedAt) }}</span>
                 </div>
               </template>
 
-              <!-- Lezárt meccs -->
               <template v-else>
                 <div class="text-center text-xs text-gray-400">
                   <template v-if="predictionsStore.predictionByMatchId(match.id)">
                     <span class="mr-1">🔒</span>
-                    <span class="mr-2">
-                      Tippem:
-                      <strong class="text-gray-600">
-                        {{ predictionsStore.predictionByMatchId(match.id)!.homeGoals }}
-                        –
-                        {{ predictionsStore.predictionByMatchId(match.id)!.awayGoals }}
-                      </strong>
-                    </span>
-                    <span v-if="predictionsStore.predictionByMatchId(match.id)!.pointsGlobal !== null">
-                      · <strong class="text-blue-600">{{ predictionsStore.predictionByMatchId(match.id)!.pointsGlobal }} pont</strong>
-                    </span>
+                    <span class="mr-2">Tippem: <strong class="text-gray-600">{{ predictionsStore.predictionByMatchId(match.id)!.homeGoals }} – {{ predictionsStore.predictionByMatchId(match.id)!.awayGoals }}</strong></span>
+                    <span v-if="predictionsStore.predictionByMatchId(match.id)!.pointsGlobal !== null">· <strong class="text-blue-600">{{ predictionsStore.predictionByMatchId(match.id)!.pointsGlobal }} pont</strong></span>
                   </template>
                   <template v-else>
                     <span>❌ Nem tippeltél erre a meccsre</span>
@@ -228,14 +146,83 @@
               </template>
             </div>
           </div>
+        </div>
 
-            <button
-              v-if="isCollapsible(group) && group.matches.length > COLLAPSED_LIMIT && expandedDates.has(group.date) === false"
-              class="text-xs text-blue-600 hover:text-blue-800 mt-1 mb-2"
-              @click="expandedDates.add(group.date)"
+        <!-- Lejátszott meccsek – összecsomagolt szekció -->
+        <div v-if="finishedDayGroups.length > 0" class="mb-8">
+          <button
+            data-testid="finished-section-toggle"
+            class="w-full text-left flex items-center justify-between border-b border-gray-200 pb-1 mb-3 cursor-pointer select-none hover:text-gray-900 group"
+            @click="toggleFinishedSection"
+          >
+            <span class="text-lg font-semibold text-gray-500 group-hover:text-gray-700">
+              Lejátszott meccsek
+              <span class="text-sm font-normal text-gray-400 ml-2">
+                ({{ finishedDayGroups.length }} nap, {{ finishedMatchCount }} mérkőzés)
+              </span>
+            </span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="w-4 h-4 text-gray-400 transition-transform duration-200 shrink-0"
+              :class="finishedSectionOpen ? 'rotate-180' : ''"
+              fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
             >
-              Összes mutatása ({{ group.matches.length }} db)
-            </button>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          <template v-if="finishedSectionOpen">
+            <div v-for="group in finishedDayGroups" :key="group.date" class="mb-8">
+              <h2 class="text-base font-semibold text-gray-600 mb-3 border-b border-gray-100 pb-1">
+                {{ group.label }}
+              </h2>
+              <div
+                v-for="match in group.matches"
+                :key="match.id"
+                class="bg-white rounded-lg shadow-sm border p-4 mb-3"
+                :class="cardBorderClass(match)"
+              >
+                <router-link :to="`/matches/${match.id}`" class="block">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-medium uppercase tracking-wide text-gray-500">
+                      {{ stageLabel(match.stage) }}
+                      <span v-if="match.groupName"> – {{ match.groupName }} csoport</span>
+                    </span>
+                    <span class="text-xs font-bold px-2 py-0.5 rounded" :class="statusClass(match.status)">
+                      {{ statusLabel(match.status) }}
+                    </span>
+                  </div>
+                  <div class="flex items-center justify-center gap-4">
+                    <span class="font-semibold text-gray-800 text-right flex-1">{{ match.homeTeam.name }}</span>
+                    <div class="text-xl font-bold text-gray-900 min-w-[5rem] text-center">
+                      <template v-if="match.result">
+                        {{ match.result.homeGoals }} – {{ match.result.awayGoals }}
+                      </template>
+                      <template v-else>
+                        {{ formatTime(match.scheduledAt) }}
+                      </template>
+                    </div>
+                    <span class="font-semibold text-gray-800 text-left flex-1">{{ match.awayTeam.name }}</span>
+                  </div>
+                  <div v-if="match.venue" class="text-xs text-gray-400 text-center mt-1">
+                    {{ match.venue.city }}
+                  </div>
+                </router-link>
+
+                <div class="mt-3 pt-3 border-t border-gray-100">
+                  <div class="text-center text-xs text-gray-400">
+                    <template v-if="predictionsStore.predictionByMatchId(match.id)">
+                      <span class="mr-1">🔒</span>
+                      <span class="mr-2">Tippem: <strong class="text-gray-600">{{ predictionsStore.predictionByMatchId(match.id)!.homeGoals }} – {{ predictionsStore.predictionByMatchId(match.id)!.awayGoals }}</strong></span>
+                      <span v-if="predictionsStore.predictionByMatchId(match.id)!.pointsGlobal !== null">· <strong class="text-blue-600">{{ predictionsStore.predictionByMatchId(match.id)!.pointsGlobal }} pont</strong></span>
+                    </template>
+                    <template v-else>
+                      <span>❌ Nem tippeltél erre a meccsre</span>
+                    </template>
+                  </div>
+                </div>
+              </div>
+            </div>
           </template>
         </div>
 
@@ -267,32 +254,56 @@ const homeInputs = ref<Record<string, HTMLInputElement>>({})
 const awayInputs = ref<Record<string, HTMLInputElement>>({})
 const autosaveTimers: Record<string, ReturnType<typeof setTimeout>> = {}
 
-const COLLAPSED_LIMIT = 5
 const FUTURE_DAYS = 7
-const collapsedDates = ref<Set<string>>(new Set())
-const expandedDates = ref<Set<string>>(new Set())
 const showFutureMatches = ref(false)
 const draftOutcomes = ref<Record<string, MatchOutcome | null>>({})
+
+const LS_KEY = 'matches_finished_expanded'
+const finishedSectionOpen = ref(false)
+
+function toggleFinishedSection(): void {
+  finishedSectionOpen.value = !finishedSectionOpen.value
+  try {
+    localStorage.setItem(LS_KEY, String(finishedSectionOpen.value))
+  } catch {
+    // ignore
+  }
+}
 
 const cutoffDate = new Date(now.value)
 cutoffDate.setDate(cutoffDate.getDate() + FUTURE_DAYS)
 const cutoffStr = cutoffDate.toISOString().substring(0, 10)
 
-const visibleGroups = computed((): MatchDateGroup[] => {
-  if (showFutureMatches.value) return matchesStore.matchesByDate
-  return matchesStore.matchesByDate.filter(g => g.date <= cutoffStr || g.matches.some(m => m.status !== 'scheduled'))
+function isFinishedDay(group: MatchDateGroup): boolean {
+  return group.matches.every(m => m.status === 'finished' || m.status === 'cancelled')
+}
+
+const finishedDayGroups = computed((): MatchDateGroup[] =>
+  matchesStore.matchesByDate.filter(g => isFinishedDay(g)),
+)
+
+const finishedMatchCount = computed((): number =>
+  finishedDayGroups.value.reduce((sum, g) => sum + g.matches.length, 0),
+)
+
+const upcomingDayGroups = computed((): MatchDateGroup[] =>
+  matchesStore.matchesByDate.filter(g => !isFinishedDay(g)),
+)
+
+const visibleUpcomingGroups = computed((): MatchDateGroup[] => {
+  if (showFutureMatches.value) return upcomingDayGroups.value
+  return upcomingDayGroups.value.filter(g => g.date <= cutoffStr || g.matches.some(m => m.status !== 'scheduled'))
 })
 
 const hiddenFutureCount = computed((): number => {
-  return matchesStore.matchesByDate
+  return upcomingDayGroups.value
     .filter(g => g.date > cutoffStr && g.matches.every(m => m.status === 'scheduled'))
     .reduce((sum, g) => sum + g.matches.length, 0)
 })
 
-// Ordered list of all tippable inputs: [matchId, side] pairs in display order
 const inputOrder = computed((): Array<{ matchId: string; side: 'home' | 'away' }> => {
   const order: Array<{ matchId: string; side: 'home' | 'away' }> = []
-  for (const group of matchesStore.matchesByDate) {
+  for (const group of upcomingDayGroups.value) {
     for (const match of group.matches) {
       if (isTippable(match)) {
         order.push({ matchId: match.id, side: 'home' })
@@ -304,37 +315,16 @@ const inputOrder = computed((): Array<{ matchId: string; side: 'home' | 'away' }
 })
 
 onMounted(async () => {
+  try {
+    const stored = localStorage.getItem(LS_KEY)
+    if (stored !== null) finishedSectionOpen.value = stored === 'true'
+  } catch {
+    // ignore
+  }
   await matchesStore.fetchMatches()
   await predictionsStore.fetchMyPredictions()
   initDrafts()
-  initCollapsed()
 })
-
-function initCollapsed(): void {
-  for (const group of matchesStore.matchesByDate) {
-    if (isCollapsible(group)) {
-      collapsedDates.value.add(group.date)
-    }
-  }
-}
-
-function isCollapsible(group: MatchDateGroup): boolean {
-  return group.matches.every(m => m.status === 'finished' || m.status === 'cancelled')
-}
-
-function toggleCollapsed(date: string): void {
-  if (collapsedDates.value.has(date)) {
-    collapsedDates.value = new Set([...collapsedDates.value].filter(d => d !== date))
-  } else {
-    collapsedDates.value = new Set([...collapsedDates.value, date])
-    expandedDates.value = new Set([...expandedDates.value].filter(d => d !== date))
-  }
-}
-
-function visibleMatches(group: MatchDateGroup): Match[] {
-  if (!isCollapsible(group) || expandedDates.value.has(group.date)) return group.matches
-  return group.matches.slice(-COLLAPSED_LIMIT)
-}
 
 function initDrafts(): void {
   for (const match of matchesStore.matches) {
@@ -359,7 +349,6 @@ function showOutcomeSelector(matchId: string, stage: MatchStage): boolean {
 }
 
 function setOutcome(matchId: string, outcome: MatchOutcome): void {
-  // Toggle: ha már ki van választva, töröljük
   draftOutcomes.value = {
     ...draftOutcomes.value,
     [matchId]: draftOutcomes.value[matchId] === outcome ? null : outcome,
@@ -451,18 +440,12 @@ function stageLabel(stage: MatchStage): string {
 }
 
 function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString('hu-HU', {
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+  return new Date(iso).toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })
 }
 
 function formatDateTime(iso: string): string {
   return new Intl.DateTimeFormat('hu-HU', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
+    month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
   }).format(new Date(iso))
 }
 </script>

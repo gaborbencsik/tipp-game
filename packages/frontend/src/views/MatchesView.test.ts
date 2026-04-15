@@ -146,6 +146,7 @@ describe('MatchesView', () => {
     mockPredictionsMine.mockResolvedValue([])
     mockPredictionsUpsert.mockReset()
     setActivePinia(createPinia())
+    localStorage.clear()
   })
 
   // ─── Loading and rendering ────────────────────────────────────────────────────
@@ -161,7 +162,7 @@ describe('MatchesView', () => {
     resolveList([])
   })
 
-  it('matches loaded → live and scheduled groups rendered, finished group collapsed', async () => {
+  it('matches loaded → live and scheduled groups rendered, finished group hidden', async () => {
     // MATCH_FINISHED is on a different day from MATCH_LIVE so it forms its own all-finished group
     const finishedOnOwnDay: Match = {
       ...MATCH_FINISHED,
@@ -171,6 +172,7 @@ describe('MatchesView', () => {
     expect(wrapper.text()).toContain('Germany')
     expect(wrapper.text()).toContain('France')
     expect(wrapper.text()).toContain('Brazil')
+    // finished section is collapsed by default
     expect(wrapper.text()).not.toContain('Spain')
   })
 
@@ -179,10 +181,10 @@ describe('MatchesView', () => {
     expect(wrapper.text()).toContain('ÉLŐBEN')
   })
 
-  it('finished match → result scores and teams visible', async () => {
+  it('finished match → result scores and teams visible after expanding section', async () => {
     const { wrapper } = await mountView([MATCH_FINISHED])
-    // expand first
-    await wrapper.find('h2').trigger('click')
+    // expand the finished section
+    await wrapper.find('[data-testid="finished-section-toggle"]').trigger('click')
     await wrapper.vm.$nextTick()
     expect(wrapper.text()).toContain('Spain')
     expect(wrapper.text()).toContain('Italy')
@@ -231,20 +233,31 @@ describe('MatchesView', () => {
     expect(wrapper.find('[data-testid="save-button"]').exists()).toBe(false)
   })
 
-  it('finished match → date group collapsed by default, teams not visible', async () => {
+  it('finished match → section collapsed by default, teams not visible', async () => {
     const { wrapper } = await mountView([MATCH_FINISHED])
     expect(wrapper.find('[data-testid="input-home"]').exists()).toBe(false)
-    // collapsed: match content not rendered
     expect(wrapper.text()).not.toContain('Spain')
   })
 
-  it('finished match → clicking date header expands group', async () => {
+  it('finished match → clicking finished-section-toggle expands and shows teams', async () => {
     const { wrapper } = await mountView([MATCH_FINISHED])
     expect(wrapper.text()).not.toContain('Spain')
-    // click the h2 header to expand
-    await wrapper.find('h2').trigger('click')
+    await wrapper.find('[data-testid="finished-section-toggle"]').trigger('click')
     await wrapper.vm.$nextTick()
     expect(wrapper.text()).toContain('Spain')
+  })
+
+  it('finished match → finished-section-toggle button is visible', async () => {
+    const { wrapper } = await mountView([MATCH_FINISHED])
+    expect(wrapper.find('[data-testid="finished-section-toggle"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Lejátszott meccsek')
+  })
+
+  it('finished match → toggle shows day and match count in header', async () => {
+    const { wrapper } = await mountView([MATCH_FINISHED])
+    const toggleText = wrapper.find('[data-testid="finished-section-toggle"]').text()
+    expect(toggleText).toContain('1 nap')
+    expect(toggleText).toContain('1 mérkőzés')
   })
 
   it('live match → date group not collapsed', async () => {
@@ -256,27 +269,6 @@ describe('MatchesView', () => {
     const { wrapper } = await mountView([MATCH_SCHEDULED])
     expect(wrapper.find('[data-testid="input-home"]').exists()).toBe(true)
   })
-
-  it('more than 5 finished matches → "Összes mutatása" button appears after expand', async () => {
-    const finishedMatches: Match[] = Array.from({ length: 7 }, (_, i) => ({
-      id: `match-fin-${i}`,
-      homeTeam: { id: `ht${i}`, name: `Home ${i}`, shortCode: `H${i}`, flagUrl: null },
-      awayTeam: { id: `at${i}`, name: `Away ${i}`, shortCode: `A${i}`, flagUrl: null },
-      venue: null,
-      stage: 'group' as const,
-      groupName: null,
-      matchNumber: i,
-      scheduledAt: '2026-06-11T18:00:00.000Z',
-      status: 'finished' as const,
-      result: { homeGoals: 1, awayGoals: 0 },
-    }))
-    const { wrapper } = await mountView(finishedMatches)
-    await wrapper.find('h2').trigger('click')
-    await wrapper.vm.$nextTick()
-    expect(wrapper.text()).toContain('Összes mutatása')
-    expect(wrapper.text()).toContain('7 db')
-  })
-
 
   it('existing prediction → inputs pre-filled', async () => {
     const { wrapper } = await mountView([MATCH_SCHEDULED], [EXISTING_PREDICTION])

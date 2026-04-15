@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-04-14 (US-604-A, US-604-B, US-604-C, US-402, US-608 kész; admin menü refactor; SEC-002 backlogba felvéve)
+> Utoljára frissítve: 2026-04-14 (US-604-A, US-604-B, US-604-C, US-402, US-608, US-1003 kész; admin menü refactor; SEC-002 backlogba felvéve)
 
 ## Kész user story-k
 
@@ -30,6 +30,7 @@
 | **US-604-C** | Csoport törlése (admin) | ✅ Kész |
 | **US-402** | Konfigurálható pontrendszer | ✅ Kész |
 | **US-608** | Csoport szintű pontrendszer override | ✅ Kész |
+| **US-1003** | Lejátszott meccsek összecsomagolt szekció | ✅ Kész |
 
 ### US-001 – Elfogadási kritériumok teljesítve
 
