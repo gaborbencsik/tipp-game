@@ -55,6 +55,8 @@ const TEAM_HOME = {
   shortCode: 'GER',
   flagUrl: 'https://example.com/ger.png',
   group: 'A',
+  teamType: 'national' as const,
+  countryCode: 'de',
   createdAt: new Date(),
   updatedAt: new Date(),
 }
@@ -65,6 +67,8 @@ const TEAM_AWAY = {
   shortCode: 'FRA',
   flagUrl: 'https://example.com/fra.png',
   group: 'A',
+  teamType: 'national' as const,
+  countryCode: 'fr',
   createdAt: new Date(),
   updatedAt: new Date(),
 }

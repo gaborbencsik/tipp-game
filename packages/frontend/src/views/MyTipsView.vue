@@ -32,12 +32,12 @@
               <div class="text-lg shrink-0">{{ statusIcon(match) }}</div>
               <div class="min-w-0">
                 <div class="flex items-center gap-2 text-sm font-medium text-gray-800">
-                  <span class="truncate">{{ match.homeTeam.name }}</span>
+                  <span class="truncate"><TeamBadge :team="match.homeTeam" /></span>
                   <span class="text-gray-400 shrink-0">
                     <template v-if="match.result">{{ match.result.homeGoals }}–{{ match.result.awayGoals }}</template>
                     <template v-else>vs</template>
                   </span>
-                  <span class="truncate">{{ match.awayTeam.name }}</span>
+                  <span class="truncate"><TeamBadge :team="match.awayTeam" /></span>
                 </div>
                 <div class="text-xs text-gray-400 mt-0.5">{{ formatDateTime(match.scheduledAt) }}</div>
               </div>
@@ -137,6 +137,7 @@
 <script setup lang="ts">
 import { ref, nextTick, onMounted } from 'vue'
 import AppLayout from '../components/AppLayout.vue'
+import TeamBadge from '../components/TeamBadge.vue'
 import { useMatchesStore } from '../stores/matches.store.js'
 import { usePredictionsStore } from '../stores/predictions.store.js'
 import type { Match, MatchOutcome } from '../types/index.js'

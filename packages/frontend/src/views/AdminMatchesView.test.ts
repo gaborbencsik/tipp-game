@@ -56,8 +56,8 @@ vi.mock('@/api/index', () => ({
 
 const MATCH: Match = {
   id: 'match-1',
-  homeTeam: { id: 'ht', name: 'Germany', shortCode: 'GER', flagUrl: null },
-  awayTeam: { id: 'at', name: 'France', shortCode: 'FRA', flagUrl: null },
+  homeTeam: { id: 'ht', name: 'Germany', shortCode: 'GER', flagUrl: null, teamType: 'national' as const, countryCode: 'de' },
+  awayTeam: { id: 'at', name: 'France', shortCode: 'FRA', flagUrl: null, teamType: 'national' as const, countryCode: 'fr' },
   venue: null,
   stage: 'group',
   groupName: 'A',

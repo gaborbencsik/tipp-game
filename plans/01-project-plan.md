@@ -785,13 +785,13 @@ A `teams` táblán lesz `teamType` enum (`national` / `club`), `countryCode` (IS
 - Fallback hierarchia garantálja, hogy mindig jelenik meg valami
 
 **Elfogadási kritériumok:**
-- [ ] `flag-icons` csomag telepítve, CSS importálva
-- [ ] `TeamBadge` komponens létrehozva: fogad `team: { shortCode, teamType, countryCode, flagUrl }` propot, rendereli a fenti logika szerint
-- [ ] `MatchesView`: hazai és vendég csapat neve mellett `TeamBadge` megjelenik
-- [ ] `MatchDetailView`: mindkét csapatnál `TeamBadge` megjelenik
-- [ ] `MyTipsView`: a tippelt meccs soraiban `TeamBadge` megjelenik
-- [ ] Törött kép (`onerror`) → automatikusan shortCode szövegre vált
-- [ ] A badge fix méretű (`w-6 h-6`)
+- [x] `flag-icons` csomag telepítve, CSS importálva
+- [x] `TeamBadge` komponens létrehozva: fogad `team: { shortCode, teamType, countryCode, flagUrl }` propot, rendereli a fenti logika szerint
+- [x] `MatchesView`: hazai és vendég csapat neve mellett `TeamBadge` megjelenik
+- [x] `MatchDetailView`: mindkét csapatnál `TeamBadge` megjelenik
+- [x] `MyTipsView`: a tippelt meccs soraiban `TeamBadge` megjelenik
+- [x] Törött kép (`onerror`) → automatikusan shortCode szövegre vált
+- [x] A badge fix méretű (`w-6 h-6`)
 
 **Függőség:** US-806 (teamType + countryCode DB migráció) előfeltétel
 
@@ -806,17 +806,17 @@ A `teams` táblán lesz `teamType` enum (`national` / `club`), `countryCode` (IS
 Mint **fejlesztő**, szeretném, hogy **a `teams` táblán legyen egy `teamType` enum mező (`national` / `club`) és egy `countryCode` mező (ISO alpha-2)**, hogy **a frontend meg tudja különböztetni a válogatottakat a klub csapatoktól, és ennek megfelelően zászlót vagy klub logót tudjon megjeleníteni**.
 
 **Elfogadási kritériumok:**
-- [ ] `pgEnum('team_type', ['national', 'club'])` létrehozva a Drizzle schemában
-- [ ] `teams` tábla: `teamType: teamTypeEnum('team_type').notNull().default('national')`
-- [ ] `teams` tábla: `countryCode: varchar('country_code', { length: 10 })` — nullable (ISO alpha-2, ill. `gb-sct`, `gb-eng` speciális esetekhez)
-- [ ] Drizzle migráció generálva és elnevezve (`0003_team_type_country_code.sql`)
-- [ ] Backend `Team` és `TeamInput` típusok frissítve (`teamType`, `countryCode` mezőkkel)
-- [ ] Frontend `Team` típus frissítve
-- [ ] Admin csapatkezelő form (`AdminTeamsView`): `teamType` dropdown (Válogatott / Klub), `countryCode` input mező (csak national esetén látható)
-- [ ] `scripts/wc2026-teams.sql` futtatva: 48 VB 2026 csapat (12 csoport, A–L) bekerül a DB-be `ON CONFLICT DO NOTHING`-gal
-- [ ] A meglévő seed csapatok lecserélődnek / kiegészülnek a valós VB-s adatokkal
-- [ ] Minden meglévő csapathoz `teamType = 'national'` és a megfelelő `countryCode` beállítva (migrációs UPDATE a SQL fájlban)
-- [ ] Az összes meglévő teszt zöld marad
+- [x] `pgEnum('team_type', ['national', 'club'])` létrehozva a Drizzle schemában
+- [x] `teams` tábla: `teamType: teamTypeEnum('team_type').notNull().default('national')`
+- [x] `teams` tábla: `countryCode: varchar('country_code', { length: 10 })` — nullable (ISO alpha-2, ill. `gb-sct`, `gb-eng` speciális esetekhez)
+- [x] Drizzle migráció generálva és elnevezve (`0003_team_type_country_code.sql`)
+- [x] Backend `Team` és `TeamInput` típusok frissítve (`teamType`, `countryCode` mezőkkel)
+- [x] Frontend `Team` típus frissítve
+- [x] Admin csapatkezelő form (`AdminTeamsView`): `teamType` dropdown (Válogatott / Klub), `countryCode` input mező (csak national esetén látható)
+- [x] `scripts/wc2026-teams.sql` futtatva: 48 VB 2026 csapat (12 csoport, A–L) bekerül a DB-be `ON CONFLICT DO NOTHING`-gal
+- [x] A meglévő seed csapatok lecserélődnek / kiegészülnek a valós VB-s adatokkal
+- [x] Minden meglévő csapathoz `teamType = 'national'` és a megfelelő `countryCode` beállítva (migrációs UPDATE a SQL fájlban)
+- [x] Az összes meglévő teszt zöld marad
 
 **Technikai megjegyzés:**
 A `countryCode` ISO alpha-2 formátumban tárolódik (pl. `'hu'`, `'de'`, `'fr'`), kivéve Skócia (`gb-sct`) és Anglia (`gb-eng`) ahol a `flag-icons` csomag az összetett kódot várja. A `flagUrl` mező megmarad klub csapatokhoz. A `scripts/wc2026-teams.sql` fájl tartalmazza mind a 48 csapatot a country code-okkal kommentben — US-806 implementációjakor ezek az oszlopba kerülnek.
@@ -981,7 +981,31 @@ Mint **felhasználó**, szeretnék **az alkalmazást a saját nyelvemen használ
 
 ---
 
-#### US-1101: Donation gomb és pop-up (dummy fázis)
+#### US-1003: Lejátszott meccsek összecsomagolása a Mérkőzések oldalon
+
+**Story:**
+Mint **felhasználó**, szeretnék **a Mérkőzések oldalon az aktuális és jövőbeli meccseket azonnal látni görgetés nélkül**, hogy **ne kelljen a régi, már lejátszott meccsek listáján átgörgetni, mielőtt az érdekes tartalmakhoz érek**.
+
+**Elfogadási kritériumok:**
+- [x] A `finished` státuszú meccsnapok egyetlen „Lejátszott meccsek" összefoglaló szekció alá kerülnek, ami alapból **csukott** állapotban jelenik meg
+- [x] A szekció fejlécén látható a lejátszott napok és meccsek száma (pl. „Lejátszott meccsek – 8 nap, 24 mérkőzés")
+- [x] A szekcióra kattintva kinyílik, és azon belül a már meglévő naponkénti bontás (dátum fejléc + meccsek) jelenik meg
+- [x] Ha egy napon vegyes státuszú meccsek vannak (pl. van `finished` és `scheduled` is), az a nap **nem** kerül a „Lejátszott meccsek" szekcióba – csak a teljesen befejezett napok
+- [x] Az `active` / `scheduled` / `live` meccsnapok változatlanul, a tetején jelennek meg, naponkénti bontásban
+- [x] A szekció nyitott/csukott állapota `localStorage`-ban perzisztál (oldal-újratöltés után megmarad)
+- [x] Ha nincs egyetlen lejátszott nap sem, a „Lejátszott meccsek" szekció nem jelenik meg
+
+**Technikai megjegyzések:**
+- Frontend-only változtatás – backend API nem változik
+- A `MatchesView.vue`-ban a jelenlegi `groupedByDate` számítás kiegészül egy `finishedDayGroups` és `upcomingDayGroups` szétválasztással
+- A „Lejátszott meccsek" szekció egy `<details>`-szerű vagy `v-show` alapú kollapsibilis wrapper komponens
+- Egy nap akkor kerül a `finishedDayGroups` csoportba, ha az összes meccse `finished` státuszú
+- A `localStorage` kulcsa: `matches_finished_expanded` (boolean)
+
+**Komplexitás:** S
+**Prioritás:** Should Have
+
+---
 
 **Story:**
 Mint **bejelentkezett felhasználó**, szeretnék **látni egy diszkrét támogatási lehetőséget az alkalmazásban**, hogy **ha szeretném, könnyen megtehetem a projekt fenntartásához való hozzájárulást**.
@@ -1493,6 +1517,7 @@ Jelenleg a join endpoint IP-alapú rate limittel van védve. Ez elegendő a legt
 | US-902 | Statisztikai tipp típus konfig | L | Should Have |
 | US-1001 | Hamburger menü mobil nézeten | S | Should Have |
 | US-1002 | Felhasználói felület lokalizációja (i18n) | M | Should Have |
+| US-1003 | Lejátszott meccsek összecsomagolása | S | Should Have | ✅ Kész |
 | US-1101 | Donation gomb és pop-up | S | Should Have |
 | US-1102 | Donation átirányítás (valós link) | S | Should Have |
 | US-1201 | Futball API kiválasztása (kutatás) | S | Should Have |
@@ -1505,8 +1530,8 @@ Jelenleg a join endpoint IP-alapú rate limittel van védve. Ez elegendő a legt
 | UX-003 | Távoli jövőbeli meccsek összecsukvása a meccslistán | S | Should Have |
 | UX-004 | Focilabda kurzor ikon | S | Nice to Have |
 | UX-005 | Optimista törlés az admin listákon | S | Should Have |
-| UX-006 | Csapat zászló/logo megjelenítése (flag-icons) | S | Should Have |
-| US-806 | Csapat típus és country code mezők (DB migráció) | S | Should Have |
+| UX-006 | Csapat zászló/logo megjelenítése (flag-icons) | S | Should Have | ✅ Kész |
+| US-806 | Csapat típus és country code mezők (DB migráció) | S | Should Have | ✅ Kész |
 | US-807 | Admin használati statisztikák (dashboard) | M | Should Have |
 | DISC-001 | Landing oldal discovery (design + marketing + social) | L | Should Have |
 | SEC-001 | Row-Level Security bekapcsolása (Supabase RLS) | S | Must Have |

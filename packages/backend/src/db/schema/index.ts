@@ -9,6 +9,8 @@ import { relations } from 'drizzle-orm'
 
 export const userRoleEnum = pgEnum('user_role', ['user', 'admin'])
 
+export const teamTypeEnum = pgEnum('team_type', ['national', 'club'])
+
 export const matchStatusEnum = pgEnum('match_status', [
   'scheduled',
   'live',
@@ -56,13 +58,15 @@ export const users = pgTable('users', {
 // ─── TEAMS ────────────────────────────────────────────────────────────────────
 
 export const teams = pgTable('teams', {
-  id:        uuid('id').primaryKey().defaultRandom(),
-  name:      varchar('name', { length: 100 }).notNull(),
-  shortCode: varchar('short_code', { length: 4 }).notNull().unique(),
-  flagUrl:   text('flag_url'),
-  group:     varchar('group', { length: 1 }),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  id:          uuid('id').primaryKey().defaultRandom(),
+  name:        varchar('name', { length: 100 }).notNull(),
+  shortCode:   varchar('short_code', { length: 4 }).notNull().unique(),
+  flagUrl:     text('flag_url'),
+  group:       varchar('group', { length: 20 }),
+  teamType:    teamTypeEnum('team_type').notNull().default('national'),
+  countryCode: varchar('country_code', { length: 10 }),
+  createdAt:   timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt:   timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
 // ─── VENUES ───────────────────────────────────────────────────────────────────
@@ -84,7 +88,7 @@ export const matches = pgTable('matches', {
   awayTeamId:  uuid('away_team_id').notNull().references(() => teams.id),
   venueId:     uuid('venue_id').references(() => venues.id),
   stage:       matchStageEnum('stage').notNull(),
-  groupName:   varchar('group_name', { length: 1 }),
+  groupName:   varchar('group_name', { length: 20 }),
   matchNumber: smallint('match_number'),
   scheduledAt: timestamp('scheduled_at', { withTimezone: true }).notNull(),
   status:      matchStatusEnum('status').notNull().default('scheduled'),

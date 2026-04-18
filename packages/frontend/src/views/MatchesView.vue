@@ -67,7 +67,9 @@
                 </span>
               </div>
               <div class="flex items-center justify-center gap-4">
-                <span class="font-semibold text-gray-800 text-right flex-1">{{ match.homeTeam.name }}</span>
+                <span class="font-semibold text-gray-800 text-right flex-1">
+                  <TeamBadge :team="match.homeTeam" />
+                </span>
                 <div class="text-xl font-bold text-gray-900 min-w-[5rem] text-center">
                   <template v-if="match.result">
                     {{ match.result.homeGoals }} – {{ match.result.awayGoals }}
@@ -76,7 +78,9 @@
                     {{ formatTime(match.scheduledAt) }}
                   </template>
                 </div>
-                <span class="font-semibold text-gray-800 text-left flex-1">{{ match.awayTeam.name }}</span>
+                <span class="font-semibold text-gray-800 text-left flex-1">
+                  <TeamBadge :team="match.awayTeam" />
+                </span>
               </div>
               <div v-if="match.venue" class="text-xs text-gray-400 text-center mt-1">
                 {{ match.venue.city }}
@@ -193,7 +197,9 @@
                     </span>
                   </div>
                   <div class="flex items-center justify-center gap-4">
-                    <span class="font-semibold text-gray-800 text-right flex-1">{{ match.homeTeam.name }}</span>
+                    <span class="font-semibold text-gray-800 text-right flex-1">
+                      <TeamBadge :team="match.homeTeam" />
+                    </span>
                     <div class="text-xl font-bold text-gray-900 min-w-[5rem] text-center">
                       <template v-if="match.result">
                         {{ match.result.homeGoals }} – {{ match.result.awayGoals }}
@@ -202,7 +208,9 @@
                         {{ formatTime(match.scheduledAt) }}
                       </template>
                     </div>
-                    <span class="font-semibold text-gray-800 text-left flex-1">{{ match.awayTeam.name }}</span>
+                    <span class="font-semibold text-gray-800 text-left flex-1">
+                      <TeamBadge :team="match.awayTeam" />
+                    </span>
                   </div>
                   <div v-if="match.venue" class="text-xs text-gray-400 text-center mt-1">
                     {{ match.venue.city }}
@@ -244,6 +252,7 @@ import { useMatchesStore } from '../stores/matches.store.js'
 import { usePredictionsStore } from '../stores/predictions.store.js'
 import type { Match, MatchDateGroup, MatchOutcome, MatchStage, MatchStatus } from '../types/index.js'
 import AppLayout from '../components/AppLayout.vue'
+import TeamBadge from '../components/TeamBadge.vue'
 
 const matchesStore = useMatchesStore()
 const predictionsStore = usePredictionsStore()

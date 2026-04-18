@@ -23,6 +23,8 @@ export interface MatchTeam {
   readonly name: string
   readonly shortCode: string
   readonly flagUrl: string | null
+  readonly teamType: 'national' | 'club'
+  readonly countryCode: string | null
 }
 
 export interface MatchVenue {
@@ -85,6 +87,8 @@ export interface Team {
   readonly shortCode: string
   readonly flagUrl: string | null
   readonly group: string | null
+  readonly teamType: 'national' | 'club'
+  readonly countryCode: string | null
 }
 
 export interface TeamInput {
@@ -92,6 +96,8 @@ export interface TeamInput {
   readonly shortCode: string
   readonly flagUrl?: string | null
   readonly group?: string | null
+  readonly teamType?: 'national' | 'club'
+  readonly countryCode?: string | null
 }
 
 export interface PredictionInput {

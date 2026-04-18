@@ -49,6 +49,27 @@
         />
       </div>
       <div>
+        <label class="block text-sm font-medium mb-1">Típus</label>
+        <select
+          v-model="formData.teamType"
+          data-testid="form-team-type"
+          class="w-full border rounded px-2 py-1"
+        >
+          <option value="national">Válogatott</option>
+          <option value="club">Klub</option>
+        </select>
+      </div>
+      <div v-if="formData.teamType === 'national'">
+        <label class="block text-sm font-medium mb-1">Ország kód (ISO, pl. de, fr, gb-sct)</label>
+        <input
+          v-model="formData.countryCode"
+          data-testid="form-country-code"
+          maxlength="10"
+          placeholder="pl. de, fr, es"
+          class="w-full border rounded px-2 py-1"
+        />
+      </div>
+      <div>
         <label class="block text-sm font-medium mb-1">Csoport</label>
         <select
           v-model="formData.group"
@@ -140,7 +161,9 @@ const store = useAdminTeamsStore()
 
 const showForm = ref(false)
 const editingId = ref<string | null>(null)
-const formData = ref({ name: '', shortCode: '', group: '', flagUrl: '' })
+const formData = ref<{ name: string; shortCode: string; group: string; flagUrl: string; teamType: 'national' | 'club'; countryCode: string }>({
+  name: '', shortCode: '', group: '', flagUrl: '', teamType: 'national', countryCode: '',
+})
 
 onMounted(() => {
   void store.fetchTeams()
@@ -148,7 +171,7 @@ onMounted(() => {
 
 function openNewForm(): void {
   editingId.value = null
-  formData.value = { name: '', shortCode: '', group: '', flagUrl: '' }
+  formData.value = { name: '', shortCode: '', group: '', flagUrl: '', teamType: 'national', countryCode: '' }
   showForm.value = true
 }
 
@@ -159,6 +182,8 @@ function openEditForm(team: Team): void {
     shortCode: team.shortCode,
     group: team.group ?? '',
     flagUrl: team.flagUrl ?? '',
+    teamType: team.teamType,
+    countryCode: team.countryCode ?? '',
   }
   showForm.value = true
 }
@@ -174,6 +199,8 @@ async function submitForm(): Promise<void> {
     shortCode: formData.value.shortCode,
     group: formData.value.group || null,
     flagUrl: formData.value.flagUrl || null,
+    teamType: formData.value.teamType,
+    countryCode: formData.value.countryCode || null,
   }
 
   if (editingId.value) {

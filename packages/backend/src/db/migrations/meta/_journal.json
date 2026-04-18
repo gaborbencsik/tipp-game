@@ -22,6 +22,20 @@
       "when": 1775576506077,
       "tag": "0002_outcome_after_draw",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1776518835260,
+      "tag": "0003_smooth_risque",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1776520212292,
+      "tag": "0004_spotty_jamie_braddock",
+      "breakpoints": true
     }
   ]
 }

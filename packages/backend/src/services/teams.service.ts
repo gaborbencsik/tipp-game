@@ -19,6 +19,8 @@ function toApiTeam(row: typeof teams.$inferSelect): Team {
     shortCode: row.shortCode,
     flagUrl: row.flagUrl ?? null,
     group: row.group ?? null,
+    teamType: row.teamType,
+    countryCode: row.countryCode ?? null,
   }
 }
 
@@ -51,6 +53,8 @@ export async function createTeam(input: TeamInput): Promise<Team> {
       shortCode: input.shortCode,
       flagUrl: input.flagUrl ?? null,
       group: input.group ?? null,
+      teamType: input.teamType ?? 'national',
+      countryCode: input.countryCode ?? null,
     })
     .returning()
 
@@ -67,6 +71,8 @@ export async function updateTeam(id: string, input: Partial<TeamInput>): Promise
       ...(input.shortCode !== undefined && { shortCode: input.shortCode }),
       ...(input.flagUrl !== undefined && { flagUrl: input.flagUrl }),
       ...(input.group !== undefined && { group: input.group }),
+      ...(input.teamType !== undefined && { teamType: input.teamType }),
+      ...(input.countryCode !== undefined && { countryCode: input.countryCode }),
       updatedAt: new Date(),
     })
     .where(eq(teams.id, id))

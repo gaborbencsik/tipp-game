@@ -54,8 +54,8 @@ vi.mock('@/api/index', () => ({
   },
 }))
 
-const TEAM_1: Team = { id: 'team-1', name: 'Germany', shortCode: 'GER', flagUrl: null, group: 'A' }
-const TEAM_2: Team = { id: 'team-2', name: 'France', shortCode: 'FRA', flagUrl: null, group: 'B' }
+const TEAM_1: Team = { id: 'team-1', name: 'Germany', shortCode: 'GER', flagUrl: null, group: 'A', teamType: 'national', countryCode: 'de' }
+const TEAM_2: Team = { id: 'team-2', name: 'France', shortCode: 'FRA', flagUrl: null, group: 'B', teamType: 'national', countryCode: 'fr' }
 
 function buildRouter() {
   return createRouter({
@@ -109,7 +109,7 @@ describe('AdminTeamsView', () => {
   })
 
   it('form submit → store.createTeam called', async () => {
-    const newTeam: Team = { id: 'new-id', name: 'Spain', shortCode: 'ESP', flagUrl: null, group: 'C' }
+    const newTeam: Team = { id: 'new-id', name: 'Spain', shortCode: 'ESP', flagUrl: null, group: 'C', teamType: 'national', countryCode: 'es' }
     mockTeamsCreate.mockResolvedValue(newTeam)
     const { wrapper, store } = await mountView()
     const createSpy = vi.spyOn(store, 'createTeam').mockResolvedValue()

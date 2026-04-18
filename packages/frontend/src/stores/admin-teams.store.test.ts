@@ -57,6 +57,8 @@ const TEAM_1: Team = {
   shortCode: 'GER',
   flagUrl: 'https://example.com/ger.png',
   group: 'A',
+  teamType: 'national',
+  countryCode: 'de',
 }
 
 const TEAM_2: Team = {
@@ -65,6 +67,8 @@ const TEAM_2: Team = {
   shortCode: 'FRA',
   flagUrl: null,
   group: 'B',
+  teamType: 'national',
+  countryCode: 'fr',
 }
 
 describe('admin-teams.store', () => {

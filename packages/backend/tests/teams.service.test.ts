@@ -61,6 +61,8 @@ const TEAM_ROW = {
   shortCode: 'GER',
   flagUrl: 'https://example.com/ger.png',
   group: 'A',
+  teamType: 'national' as const,
+  countryCode: 'de',
   createdAt: new Date(),
   updatedAt: new Date(),
 }
@@ -71,6 +73,8 @@ const TEAM_API: Team = {
   shortCode: 'GER',
   flagUrl: 'https://example.com/ger.png',
   group: 'A',
+  teamType: 'national',
+  countryCode: 'de',
 }
 
 function setupSelectChain(rows: unknown[]) {

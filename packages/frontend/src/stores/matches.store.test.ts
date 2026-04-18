@@ -34,8 +34,8 @@ import { useMatchesStore } from '@/stores/matches.store'
 
 const MATCH_SCHEDULED: Match = {
   id: 'match-1',
-  homeTeam: { id: 'ht1', name: 'Germany', shortCode: 'GER', flagUrl: null },
-  awayTeam: { id: 'at1', name: 'France', shortCode: 'FRA', flagUrl: null },
+  homeTeam: { id: 'ht1', name: 'Germany', shortCode: 'GER', flagUrl: null, teamType: 'national' as const, countryCode: 'de' },
+  awayTeam: { id: 'at1', name: 'France', shortCode: 'FRA', flagUrl: null, teamType: 'national' as const, countryCode: 'fr' },
   venue: { name: 'Arena', city: 'Munich' },
   stage: 'group',
   groupName: 'A',
@@ -47,8 +47,8 @@ const MATCH_SCHEDULED: Match = {
 
 const MATCH_LIVE: Match = {
   id: 'match-2',
-  homeTeam: { id: 'ht2', name: 'Spain', shortCode: 'ESP', flagUrl: null },
-  awayTeam: { id: 'at2', name: 'Italy', shortCode: 'ITA', flagUrl: null },
+  homeTeam: { id: 'ht2', name: 'Spain', shortCode: 'ESP', flagUrl: null, teamType: 'national' as const, countryCode: 'es' },
+  awayTeam: { id: 'at2', name: 'Italy', shortCode: 'ITA', flagUrl: null, teamType: 'national' as const, countryCode: 'it' },
   venue: null,
   stage: 'group',
   groupName: 'B',
@@ -60,8 +60,8 @@ const MATCH_LIVE: Match = {
 
 const MATCH_FINISHED: Match = {
   id: 'match-3',
-  homeTeam: { id: 'ht3', name: 'Brazil', shortCode: 'BRA', flagUrl: null },
-  awayTeam: { id: 'at3', name: 'Argentina', shortCode: 'ARG', flagUrl: null },
+  homeTeam: { id: 'ht3', name: 'Brazil', shortCode: 'BRA', flagUrl: null, teamType: 'national' as const, countryCode: 'br' },
+  awayTeam: { id: 'at3', name: 'Argentina', shortCode: 'ARG', flagUrl: null, teamType: 'national' as const, countryCode: 'ar' },
   venue: { name: 'Stadium', city: 'Sao Paulo' },
   stage: 'final',
   groupName: null,

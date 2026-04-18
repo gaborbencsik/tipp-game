@@ -51,8 +51,8 @@ vi.mock('@/stores/auth.store', async (importOriginal) => {
 // scheduled match with future kickoff (tomorrow = within 7 days)
 const MATCH_SCHEDULED: Match = {
   id: 'match-sched',
-  homeTeam: { id: 'ht3', name: 'Brazil', shortCode: 'BRA', flagUrl: null },
-  awayTeam: { id: 'at3', name: 'Argentina', shortCode: 'ARG', flagUrl: null },
+  homeTeam: { id: 'ht3', name: 'Brazil', shortCode: 'BRA', flagUrl: null, teamType: 'national' as const, countryCode: 'br' },
+  awayTeam: { id: 'at3', name: 'Argentina', shortCode: 'ARG', flagUrl: null, teamType: 'national' as const, countryCode: 'ar' },
   venue: { name: 'Stadium', city: 'Sao Paulo' },
   stage: 'final',
   groupName: null,
@@ -65,8 +65,8 @@ const MATCH_SCHEDULED: Match = {
 // scheduled match far in the future (> 7 days)
 const MATCH_FAR_FUTURE: Match = {
   id: 'match-far',
-  homeTeam: { id: 'ht5', name: 'Portugal', shortCode: 'POR', flagUrl: null },
-  awayTeam: { id: 'at5', name: 'Belgium', shortCode: 'BEL', flagUrl: null },
+  homeTeam: { id: 'ht5', name: 'Portugal', shortCode: 'POR', flagUrl: null, teamType: 'national' as const, countryCode: 'pt' },
+  awayTeam: { id: 'at5', name: 'Belgium', shortCode: 'BEL', flagUrl: null, teamType: 'national' as const, countryCode: 'be' },
   venue: null,
   stage: 'group',
   groupName: 'C',
@@ -78,8 +78,8 @@ const MATCH_FAR_FUTURE: Match = {
 
 const MATCH_LIVE: Match = {
   id: 'match-live',
-  homeTeam: { id: 'ht1', name: 'Germany', shortCode: 'GER', flagUrl: null },
-  awayTeam: { id: 'at1', name: 'France', shortCode: 'FRA', flagUrl: null },
+  homeTeam: { id: 'ht1', name: 'Germany', shortCode: 'GER', flagUrl: null, teamType: 'national' as const, countryCode: 'de' },
+  awayTeam: { id: 'at1', name: 'France', shortCode: 'FRA', flagUrl: null, teamType: 'national' as const, countryCode: 'fr' },
   venue: { name: 'Arena', city: 'Munich' },
   stage: 'group',
   groupName: 'A',
@@ -91,8 +91,8 @@ const MATCH_LIVE: Match = {
 
 const MATCH_FINISHED: Match = {
   id: 'match-finished',
-  homeTeam: { id: 'ht2', name: 'Spain', shortCode: 'ESP', flagUrl: null },
-  awayTeam: { id: 'at2', name: 'Italy', shortCode: 'ITA', flagUrl: null },
+  homeTeam: { id: 'ht2', name: 'Spain', shortCode: 'ESP', flagUrl: null, teamType: 'national' as const, countryCode: 'es' },
+  awayTeam: { id: 'at2', name: 'Italy', shortCode: 'ITA', flagUrl: null, teamType: 'national' as const, countryCode: 'it' },
   venue: null,
   stage: 'group',
   groupName: 'B',

@@ -50,8 +50,8 @@ vi.mock('@/stores/auth.store', async (importOriginal) => {
 
 const MATCH_FINISHED: Match = {
   id: 'match-finished',
-  homeTeam: { id: 'ht1', name: 'Spain', shortCode: 'ESP', flagUrl: null },
-  awayTeam: { id: 'at1', name: 'Italy', shortCode: 'ITA', flagUrl: null },
+  homeTeam: { id: 'ht1', name: 'Spain', shortCode: 'ESP', flagUrl: null, teamType: 'national' as const, countryCode: 'es' },
+  awayTeam: { id: 'at1', name: 'Italy', shortCode: 'ITA', flagUrl: null, teamType: 'national' as const, countryCode: 'it' },
   venue: { name: 'Estadio Nacional', city: 'Madrid' },
   stage: 'group',
   groupName: 'B',
@@ -63,8 +63,8 @@ const MATCH_FINISHED: Match = {
 
 const MATCH_SCHEDULED: Match = {
   id: 'match-sched',
-  homeTeam: { id: 'ht2', name: 'Brazil', shortCode: 'BRA', flagUrl: null },
-  awayTeam: { id: 'at2', name: 'Argentina', shortCode: 'ARG', flagUrl: null },
+  homeTeam: { id: 'ht2', name: 'Brazil', shortCode: 'BRA', flagUrl: null, teamType: 'national' as const, countryCode: 'br' },
+  awayTeam: { id: 'at2', name: 'Argentina', shortCode: 'ARG', flagUrl: null, teamType: 'national' as const, countryCode: 'ar' },
   venue: { name: 'Maracanã', city: 'Rio de Janeiro' },
   stage: 'final',
   groupName: null,

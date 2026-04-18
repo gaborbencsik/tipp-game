@@ -16,15 +16,6 @@ interface DevSession {
   expiresAt: number
 }
 
-const MOCK_USER: User = {
-  id: '00000000-0000-0000-0000-000000000001',
-  supabaseId: '00000000-0000-0000-0000-000000000001',
-  email: 'admin@dev.local',
-  displayName: 'Dev User',
-  avatarUrl: null,
-  role: 'admin',
-}
-
 class AuthError extends Error {
   constructor(message: string) {
     super(message)
@@ -92,11 +83,12 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function login(): Promise<void> {
     if (DEV_AUTH_BYPASS) {
+      const dbUser = await api.auth.me('dev-bypass-token')
       sessionStorage.setItem(DEV_SESSION_KEY, JSON.stringify({
-        user: MOCK_USER,
+        user: dbUser,
         expiresAt: Date.now() + DEV_SESSION_TTL_MS,
       }))
-      user.value = MOCK_USER
+      user.value = dbUser
       await router.push('/')
       return
     }
@@ -120,11 +112,12 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function loginWithEmail(email: string, password: string): Promise<void> {
     if (DEV_AUTH_BYPASS) {
+      const dbUser = await api.auth.me('dev-bypass-token')
       sessionStorage.setItem(DEV_SESSION_KEY, JSON.stringify({
-        user: MOCK_USER,
+        user: dbUser,
         expiresAt: Date.now() + DEV_SESSION_TTL_MS,
       }))
-      user.value = MOCK_USER
+      user.value = dbUser
       await router.push('/')
       return
     }
@@ -136,12 +129,12 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function registerWithEmail(email: string, password: string, displayName: string): Promise<void> {
     if (DEV_AUTH_BYPASS) {
-      const mockUser = { ...MOCK_USER, email, displayName }
+      const dbUser = await api.auth.me('dev-bypass-token')
       sessionStorage.setItem(DEV_SESSION_KEY, JSON.stringify({
-        user: mockUser,
+        user: dbUser,
         expiresAt: Date.now() + DEV_SESSION_TTL_MS,
       }))
-      user.value = mockUser
+      user.value = dbUser
       await router.push('/')
       return
     }

@@ -35,7 +35,9 @@
         <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6 mb-4">
           <div class="flex items-center justify-center gap-4">
             <div class="flex-1 text-right">
-              <span class="font-semibold text-gray-800 text-lg">{{ match.homeTeam.name }}</span>
+              <span class="font-semibold text-gray-800 text-lg">
+                <TeamBadge :team="match.homeTeam" />
+              </span>
             </div>
 
             <div class="text-2xl font-bold text-gray-900 min-w-[6rem] text-center">
@@ -48,7 +50,9 @@
             </div>
 
             <div class="flex-1 text-left">
-              <span class="font-semibold text-gray-800 text-lg">{{ match.awayTeam.name }}</span>
+              <span class="font-semibold text-gray-800 text-lg">
+                <TeamBadge :team="match.awayTeam" />
+              </span>
             </div>
           </div>
 
@@ -175,6 +179,7 @@ import { useMatchesStore } from '../stores/matches.store.js'
 import { usePredictionsStore } from '../stores/predictions.store.js'
 import type { Match, MatchOutcome, MatchStage, MatchStatus } from '../types/index.js'
 import AppLayout from '../components/AppLayout.vue'
+import TeamBadge from '../components/TeamBadge.vue'
 
 const route = useRoute()
 const matchesStore = useMatchesStore()

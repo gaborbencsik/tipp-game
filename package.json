@@ -13,6 +13,7 @@
     "build": "npm run build --workspaces --if-present",
     "test": "npm test --workspaces --if-present",
     "test:coverage": "npm run test:coverage --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present"
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "db:setup": "docker compose exec backend sh -c 'npm run db:migrate && npm run db:seed'"
   }
 }

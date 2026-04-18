@@ -39,12 +39,16 @@ export async function getMatches(filters: MatchesFilters = {}): Promise<Match[]>
       name: row.home_team?.name ?? '',
       shortCode: row.home_team?.shortCode ?? '',
       flagUrl: row.home_team?.flagUrl ?? null,
+      teamType: row.home_team?.teamType ?? 'national',
+      countryCode: row.home_team?.countryCode ?? null,
     },
     awayTeam: {
       id: row.away_team?.id ?? '',
       name: row.away_team?.name ?? '',
       shortCode: row.away_team?.shortCode ?? '',
       flagUrl: row.away_team?.flagUrl ?? null,
+      teamType: row.away_team?.teamType ?? 'national',
+      countryCode: row.away_team?.countryCode ?? null,
     },
     venue: row.venues
       ? { name: row.venues.name, city: row.venues.city }
