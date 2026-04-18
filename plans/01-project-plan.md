@@ -1538,7 +1538,7 @@ Jelenleg a join endpoint IP-alapú rate limittel van védve. Ez elegendő a legt
 | US-1202 | Futball API szinkronizációs service | M | Should Have |
 | US-1203 | Automatikus adatszinkron cron job | M | Should Have |
 | US-1301 | Liga entitás bevezetése a meccsekhez | M | Should Have |
-| BUG-001 | Admin users lista: minden sornál ugyanaz a név | S | Should Have |
+| BUG-001 | Admin users lista: minden sornál ugyanaz a név | S | Should Have | ✅ Kész |
 | UX-001 | Tipp input UX javítások (autosave, select, autonext) | S | Should Have |
 | UX-002 | Befejezett meccsek összecsukvása a meccslistán | S | Should Have |
 | UX-003 | Távoli jövőbeli meccsek összecsukvása a meccslistán | S | Should Have |
