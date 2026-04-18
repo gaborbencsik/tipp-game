@@ -1007,8 +1007,22 @@ Mint **felhasználó**, szeretnék **a Mérkőzések oldalon az aktuális és j�
 
 ---
 
+#### UX-007: Lejátszott meccsek szekció felülre kerül a meccslistán
+
 **Story:**
-Mint **bejelentkezett felhasználó**, szeretnék **látni egy diszkrét támogatási lehetőséget az alkalmazásban**, hogy **ha szeretném, könnyen megtehetem a projekt fenntartásához való hozzájárulást**.
+Mint **felhasználó**, szeretném, hogy **a lejátszott meccsek összecsomagolt szekciója a lista tetején jelenjen meg, a tervezett meccsek előtt**, hogy **az eredmények és a tipppontjaim azonnal láthatók legyenek görgetés nélkül**.
+
+**Elfogadási kritériumok:**
+- [x] A „Lejátszott meccsek" összecsomagolt szekció a lista legelején jelenik meg (a tervezett meccsek felett)
+- [x] A tervezett / live meccsnapok a lejátszott szekció alatt jelennek meg
+- [x] A szekció alapból csukott marad (localStorage perzisztencia megmarad)
+- [x] A megjelenítés és a toggle viselkedés változatlan
+
+**Komplexitás:** XS
+**Prioritás:** Should Have
+
+---
+
 
 **Elfogadási kritériumok:**
 - [ ] A bal oldali navigációs sávban (AppLayout sidebar) a nav itemek alatt, az aljára rögzítve megjelenik egy "🍺 Támogasd a projektet" gomb

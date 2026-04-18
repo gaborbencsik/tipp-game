@@ -41,6 +41,88 @@
       </div>
 
       <div v-else>
+        <!-- Lejátszott meccsek – összecsomagolt szekció -->
+        <div v-if="finishedDayGroups.length > 0" class="mb-8">
+          <button
+            data-testid="finished-section-toggle"
+            class="w-full text-left flex items-center justify-between border-b border-gray-200 pb-1 mb-3 cursor-pointer select-none hover:text-gray-900 group"
+            @click="toggleFinishedSection"
+          >
+            <span class="text-lg font-semibold text-gray-500 group-hover:text-gray-700">
+              Lejátszott meccsek
+              <span class="text-sm font-normal text-gray-400 ml-2">
+                ({{ finishedDayGroups.length }} nap, {{ finishedMatchCount }} mérkőzés)
+              </span>
+            </span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="w-4 h-4 text-gray-400 transition-transform duration-200 shrink-0"
+              :class="finishedSectionOpen ? 'rotate-180' : ''"
+              fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          <template v-if="finishedSectionOpen">
+            <div v-for="group in finishedDayGroups" :key="group.date" class="mb-8">
+              <h2 class="text-base font-semibold text-gray-600 mb-3 border-b border-gray-100 pb-1">
+                {{ group.label }}
+              </h2>
+              <div
+                v-for="match in group.matches"
+                :key="match.id"
+                class="bg-white rounded-lg shadow-sm border p-4 mb-3"
+                :class="cardBorderClass(match)"
+              >
+                <router-link :to="`/matches/${match.id}`" class="block">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-medium uppercase tracking-wide text-gray-500">
+                      {{ stageLabel(match.stage) }}
+                      <span v-if="match.groupName"> – {{ match.groupName }} csoport</span>
+                    </span>
+                    <span class="text-xs font-bold px-2 py-0.5 rounded" :class="statusClass(match.status)">
+                      {{ statusLabel(match.status) }}
+                    </span>
+                  </div>
+                  <div class="flex items-center justify-center gap-4">
+                    <span class="font-semibold text-gray-800 text-right flex-1">
+                      <TeamBadge :team="match.homeTeam" />
+                    </span>
+                    <div class="text-xl font-bold text-gray-900 min-w-[5rem] text-center">
+                      <template v-if="match.result">
+                        {{ match.result.homeGoals }} – {{ match.result.awayGoals }}
+                      </template>
+                      <template v-else>
+                        {{ formatTime(match.scheduledAt) }}
+                      </template>
+                    </div>
+                    <span class="font-semibold text-gray-800 text-left flex-1">
+                      <TeamBadge :team="match.awayTeam" />
+                    </span>
+                  </div>
+                  <div v-if="match.venue" class="text-xs text-gray-400 text-center mt-1">
+                    {{ match.venue.city }}
+                  </div>
+                </router-link>
+
+                <div class="mt-3 pt-3 border-t border-gray-100">
+                  <div class="text-center text-xs text-gray-400">
+                    <template v-if="predictionsStore.predictionByMatchId(match.id)">
+                      <span class="mr-1">🔒</span>
+                      <span class="mr-2">Tippem: <strong class="text-gray-600">{{ predictionsStore.predictionByMatchId(match.id)!.homeGoals }} – {{ predictionsStore.predictionByMatchId(match.id)!.awayGoals }}</strong></span>
+                      <span v-if="predictionsStore.predictionByMatchId(match.id)!.pointsGlobal !== null">· <strong class="text-blue-600">{{ predictionsStore.predictionByMatchId(match.id)!.pointsGlobal }} pont</strong></span>
+                    </template>
+                    <template v-else>
+                      <span>❌ Nem tippeltél erre a meccsre</span>
+                    </template>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+
         <!-- Aktuális és jövőbeli meccsnapok -->
         <div
           v-for="group in visibleUpcomingGroups"
@@ -150,88 +232,6 @@
               </template>
             </div>
           </div>
-        </div>
-
-        <!-- Lejátszott meccsek – összecsomagolt szekció -->
-        <div v-if="finishedDayGroups.length > 0" class="mb-8">
-          <button
-            data-testid="finished-section-toggle"
-            class="w-full text-left flex items-center justify-between border-b border-gray-200 pb-1 mb-3 cursor-pointer select-none hover:text-gray-900 group"
-            @click="toggleFinishedSection"
-          >
-            <span class="text-lg font-semibold text-gray-500 group-hover:text-gray-700">
-              Lejátszott meccsek
-              <span class="text-sm font-normal text-gray-400 ml-2">
-                ({{ finishedDayGroups.length }} nap, {{ finishedMatchCount }} mérkőzés)
-              </span>
-            </span>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="w-4 h-4 text-gray-400 transition-transform duration-200 shrink-0"
-              :class="finishedSectionOpen ? 'rotate-180' : ''"
-              fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-
-          <template v-if="finishedSectionOpen">
-            <div v-for="group in finishedDayGroups" :key="group.date" class="mb-8">
-              <h2 class="text-base font-semibold text-gray-600 mb-3 border-b border-gray-100 pb-1">
-                {{ group.label }}
-              </h2>
-              <div
-                v-for="match in group.matches"
-                :key="match.id"
-                class="bg-white rounded-lg shadow-sm border p-4 mb-3"
-                :class="cardBorderClass(match)"
-              >
-                <router-link :to="`/matches/${match.id}`" class="block">
-                  <div class="flex items-center justify-between mb-2">
-                    <span class="text-xs font-medium uppercase tracking-wide text-gray-500">
-                      {{ stageLabel(match.stage) }}
-                      <span v-if="match.groupName"> – {{ match.groupName }} csoport</span>
-                    </span>
-                    <span class="text-xs font-bold px-2 py-0.5 rounded" :class="statusClass(match.status)">
-                      {{ statusLabel(match.status) }}
-                    </span>
-                  </div>
-                  <div class="flex items-center justify-center gap-4">
-                    <span class="font-semibold text-gray-800 text-right flex-1">
-                      <TeamBadge :team="match.homeTeam" />
-                    </span>
-                    <div class="text-xl font-bold text-gray-900 min-w-[5rem] text-center">
-                      <template v-if="match.result">
-                        {{ match.result.homeGoals }} – {{ match.result.awayGoals }}
-                      </template>
-                      <template v-else>
-                        {{ formatTime(match.scheduledAt) }}
-                      </template>
-                    </div>
-                    <span class="font-semibold text-gray-800 text-left flex-1">
-                      <TeamBadge :team="match.awayTeam" />
-                    </span>
-                  </div>
-                  <div v-if="match.venue" class="text-xs text-gray-400 text-center mt-1">
-                    {{ match.venue.city }}
-                  </div>
-                </router-link>
-
-                <div class="mt-3 pt-3 border-t border-gray-100">
-                  <div class="text-center text-xs text-gray-400">
-                    <template v-if="predictionsStore.predictionByMatchId(match.id)">
-                      <span class="mr-1">🔒</span>
-                      <span class="mr-2">Tippem: <strong class="text-gray-600">{{ predictionsStore.predictionByMatchId(match.id)!.homeGoals }} – {{ predictionsStore.predictionByMatchId(match.id)!.awayGoals }}</strong></span>
-                      <span v-if="predictionsStore.predictionByMatchId(match.id)!.pointsGlobal !== null">· <strong class="text-blue-600">{{ predictionsStore.predictionByMatchId(match.id)!.pointsGlobal }} pont</strong></span>
-                    </template>
-                    <template v-else>
-                      <span>❌ Nem tippeltél erre a meccsre</span>
-                    </template>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </template>
         </div>
 
         <!-- Távoli jövőbeli meccsek -->
