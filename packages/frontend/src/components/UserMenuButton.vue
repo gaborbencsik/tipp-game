@@ -84,7 +84,7 @@
         <div class="border-t border-gray-100" />
       </template>
       <router-link
-        to="/profile"
+        to="/app/profile"
         data-testid="menu-profile"
         class="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
         @click="menuOpen = false"

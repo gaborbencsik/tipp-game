@@ -75,7 +75,7 @@
                 class="bg-white rounded-lg shadow-sm border p-4 mb-3"
                 :class="cardBorderClass(match)"
               >
-                <router-link :to="`/matches/${match.id}`" class="block">
+                <router-link :to="`/app/matches/${match.id}`" class="block">
                   <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-medium uppercase tracking-wide text-gray-500">
                       {{ stageLabel(match.stage) }}

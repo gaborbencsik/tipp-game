@@ -192,6 +192,6 @@ describe('MatchDetailView', () => {
     const { wrapper } = await mountView('match-finished', [MATCH_FINISHED])
     const backLink = wrapper.find('[data-testid="back-link"]')
     expect(backLink.exists()).toBe(true)
-    expect(backLink.attributes('href')).toBe('/matches')
+    expect(backLink.attributes('href')).toBe('/app/matches')
   })
 })

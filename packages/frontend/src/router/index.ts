@@ -5,6 +5,11 @@ export const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
+      path: '/',
+      name: 'landing',
+      component: () => import('../views/LandingView.vue'),
+    },
+    {
       path: '/login',
       name: 'login',
       component: () => import('../views/LoginView.vue'),
@@ -15,31 +20,25 @@ export const router = createRouter({
       component: () => import('../views/AuthCallbackView.vue'),
     },
     {
-      path: '/',
+      path: '/app/matches',
       name: 'home',
       component: () => import('../views/MatchesView.vue'),
       meta: { requiresAuth: true },
     },
     {
-      path: '/groups',
+      path: '/app/groups',
       name: 'groups',
       component: () => import('../views/GroupsView.vue'),
       meta: { requiresAuth: true },
     },
     {
-      path: '/groups/:id',
+      path: '/app/groups/:id',
       name: 'group-detail',
       component: () => import('../views/GroupDetailView.vue'),
       meta: { requiresAuth: true },
     },
     {
-      path: '/matches',
-      name: 'matches',
-      component: () => import('../views/MatchesView.vue'),
-      meta: { requiresAuth: true },
-    },
-    {
-      path: '/matches/:id',
+      path: '/app/matches/:id',
       name: 'match-detail',
       component: () => import('../views/MatchDetailView.vue'),
       meta: { requiresAuth: true },
@@ -69,28 +68,40 @@ export const router = createRouter({
       meta: { requiresAuth: true, requiresAdmin: true },
     },
     {
-      path: '/my-tips',
+      path: '/app/my-tips',
       name: 'my-tips',
       component: () => import('../views/MyTipsView.vue'),
       meta: { requiresAuth: true },
     },
     {
-      path: '/leaderboard',
+      path: '/app/leaderboard',
       name: 'leaderboard',
       component: () => import('../views/LeaderboardView.vue'),
       meta: { requiresAuth: true },
     },
     {
-      path: '/profile',
+      path: '/app/profile',
       name: 'profile',
       component: () => import('../views/ProfileView.vue'),
       meta: { requiresAuth: true },
     },
     {
-      path: '/join/:code',
+      path: '/app/join/:code',
       name: 'join',
       component: () => import('../views/JoinView.vue'),
       meta: { requiresAuth: true },
+    },
+    {
+      path: '/join/:code',
+      redirect: (to) => ({ path: `/app/join/${to.params.code}` }),
+    },
+    {
+      path: '/matches/:id',
+      redirect: (to) => ({ path: `/app/matches/${to.params.id}` }),
+    },
+    {
+      path: '/groups/:id',
+      redirect: (to) => ({ path: `/app/groups/${to.params.id}` }),
     },
   ],
 })

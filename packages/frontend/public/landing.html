@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VB Tippjáték 2026 — Tippelj. Vezess. Győzz.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --blue:     #4361EE;
+  --blue-h:   #3451D1;
+  --blue-lt:  #EEF2FF;
+  --blue-mid: #C7D2FE;
+  --text:     #111827;
+  --text-2:   #6B7280;
+  --text-3:   #9CA3AF;
+  --border:   #E5E7EB;
+  --border-2: #D1D5DB;
+  --bg:       #FFFFFF;
+  --bg-2:     #F9FAFB;
+  --bg-3:     #F3F4F6;
+  --green:    #059669;
+  --green-lt: #ECFDF5;
+  --radius:   12px;
+  --radius-sm:8px;
+  --shadow-sm:0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow:   0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+  --shadow-md:0 8px 24px rgba(0,0,0,0.1), 0 4px 8px rgba(0,0,0,0.06);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,sans-serif;color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased;font-size:16px;line-height:1.6}
+a{color:inherit;text-decoration:none}
+img{display:block;max-width:100%}
+button{font-family:inherit;cursor:pointer;border:none}
+.container{width:100%;max-width:1100px;margin:0 auto;padding:0 clamp(1.25rem,5vw,2.5rem)}
+
+/* NAV */
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(255,255,255,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0.75rem 0}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;gap:1.5rem}
+.nav-logo{display:flex;align-items:center;gap:0.5rem;font-weight:700;font-size:1rem;color:var(--text)}
+.nav-logo-icon{width:30px;height:30px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1rem}
+.nav-links{display:flex;gap:1.75rem;list-style:none;font-size:0.875rem;font-weight:500;color:var(--text-2)}
+.nav-links a:hover{color:var(--text);transition:color 0.15s}
+.nav-cta{background:var(--blue);color:#fff;font-weight:600;font-size:0.875rem;padding:0.5rem 1.1rem;border-radius:8px;transition:background 0.15s,transform 0.1s;white-space:nowrap}
+.nav-cta:hover{background:var(--blue-h);transform:translateY(-1px)}
+@media(max-width:640px){.nav-links{display:none}}
+
+/* HERO */
+.hero{padding:clamp(6rem,14vw,9rem) 0 clamp(4rem,8vw,6rem);background:linear-gradient(180deg,var(--bg-2) 0%,var(--bg) 100%)}
+.hero-inner{display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:center}
+.hero-badge{display:inline-flex;align-items:center;gap:0.4rem;background:var(--blue-lt);color:var(--blue);font-size:0.8rem;font-weight:600;padding:0.3rem 0.8rem;border-radius:100px;margin-bottom:1.25rem;border:1px solid var(--blue-mid)}
+.hero h1{font-size:clamp(2.4rem,5vw,3.6rem);font-weight:800;line-height:1.1;letter-spacing:-0.03em;margin-bottom:1.25rem;color:var(--text)}
+.hero h1 em{font-style:normal;color:var(--blue)}
+.hero-sub{font-size:clamp(1rem,1.8vw,1.1rem);color:var(--text-2);line-height:1.65;margin-bottom:2rem;max-width:440px}
+.form-row{display:flex;gap:0.625rem;flex-wrap:wrap}
+.form-row input[type="email"]{flex:1 1 180px;padding:0.7rem 1rem;border:1.5px solid var(--border-2);border-radius:var(--radius-sm);font-family:inherit;font-size:0.95rem;color:var(--text);outline:none;transition:border-color 0.15s;background:var(--bg)}
+.form-row input::placeholder{color:var(--text-3)}
+.form-row input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(67,97,238,0.1)}
+.btn-primary{background:var(--blue);color:#fff;font-weight:600;font-size:0.9rem;padding:0.7rem 1.25rem;border-radius:var(--radius-sm);transition:background 0.15s,transform 0.1s,box-shadow 0.15s;white-space:nowrap}
+.btn-primary:hover{background:var(--blue-h);transform:translateY(-1px);box-shadow:0 4px 12px rgba(67,97,238,0.35)}
+.microcopy{font-size:0.8rem;color:var(--text-3);margin-top:0.75rem;display:flex;align-items:center;gap:0.35rem}
+.microcopy-dot{width:5px;height:5px;background:var(--green);border-radius:50%;flex-shrink:0}
+/* Hero visual: mock match card */
+.hero-visual{position:relative}
+.hero-mock{background:var(--bg);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow-md);overflow:hidden}
+.mock-topbar{background:var(--bg-2);border-bottom:1px solid var(--border);padding:0.75rem 1rem;display:flex;align-items:center;gap:0.5rem}
+.mock-dot{width:10px;height:10px;border-radius:50%}
+.mock-nav{display:flex;gap:0.5rem;margin-left:auto;font-size:0.75rem;color:var(--text-2)}
+.mock-nav span{padding:0.25rem 0.6rem;border-radius:6px;cursor:pointer}
+.mock-nav span.active{background:var(--blue);color:#fff}
+.mock-body{padding:1.25rem}
+.mock-date{font-size:0.75rem;font-weight:600;color:var(--text-3);margin-bottom:0.75rem;letter-spacing:0.04em;text-transform:uppercase}
+.mock-match{border:1px solid var(--border);border-radius:10px;padding:1rem 1.25rem;margin-bottom:0.625rem}
+.mock-match-row{display:flex;align-items:center;gap:0.75rem;margin-bottom:0.5rem}
+.mock-team{font-weight:600;font-size:0.9rem;flex:1}
+.mock-score{font-size:1.2rem;font-weight:800;color:var(--text);min-width:2rem;text-align:center;letter-spacing:0.05em}
+.mock-team.right{text-align:right}
+.mock-meta{display:flex;align-items:center;gap:0.5rem;font-size:0.75rem;color:var(--text-3)}
+.badge{display:inline-flex;align-items:center;padding:0.2rem 0.6rem;border-radius:5px;font-size:0.72rem;font-weight:600}
+.badge-done{background:#F0FDF4;color:#15803D;border:1px solid #BBF7D0}
+.badge-plan{background:var(--blue-lt);color:var(--blue);border:1px solid var(--blue-mid)}
+.tip-line{font-size:0.8rem;color:var(--text-2)}
+.tip-line strong{color:var(--green);font-weight:600}
+/* floating stats */
+.stat-pill{position:absolute;background:var(--bg);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow);padding:0.5rem 0.9rem;font-size:0.8rem;white-space:nowrap}
+.stat-pill-val{font-weight:700;color:var(--blue);display:block;font-size:1.1rem}
+.stat-pill-lbl{color:var(--text-3);font-size:0.73rem}
+.stat-a{top:-1.5rem;right:2rem}
+.stat-b{bottom:-1rem;left:1.5rem}
+@media(max-width:760px){
+  .hero-inner{grid-template-columns:1fr}
+  .hero-visual{display:none}
+}
+
+/* SECTIONS SHARED */
+.section{padding:clamp(4rem,8vw,6rem) 0}
+.section-label{font-size:0.78rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--blue);margin-bottom:0.5rem}
+.section-title{font-size:clamp(1.8rem,4vw,2.5rem);font-weight:800;letter-spacing:-0.025em;line-height:1.15;margin-bottom:0.75rem;color:var(--text)}
+.section-sub{color:var(--text-2);font-size:1rem;max-width:520px;line-height:1.65}
+.section-head{margin-bottom:clamp(2rem,4vw,3rem)}
+.section-bg{background:var(--bg-2)}
+
+/* HOW */
+.how-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;position:relative}
+.how-grid::before{content:'';position:absolute;top:1.5rem;left:20%;right:20%;height:1.5px;background:linear-gradient(90deg,var(--blue-mid),var(--blue-mid));opacity:0.6}
+.step-card{text-align:center;position:relative;z-index:1}
+.step-num{width:3rem;height:3rem;border-radius:50%;background:var(--blue);color:#fff;font-weight:700;font-size:1rem;display:flex;align-items:center;justify-content:center;margin:0 auto 1.1rem;box-shadow:0 4px 12px rgba(67,97,238,0.3)}
+.step-card h3{font-weight:700;font-size:1.05rem;margin-bottom:0.5rem;color:var(--text)}
+.step-card p{font-size:0.9rem;color:var(--text-2);line-height:1.6}
+@media(max-width:640px){.how-grid{grid-template-columns:1fr;gap:1.5rem}.how-grid::before{display:none}}
+
+/* FEATURES */
+.feat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem}
+.feat-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem 1.75rem;transition:box-shadow 0.2s,transform 0.2s,border-color 0.2s}
+.feat-card:hover{box-shadow:var(--shadow);transform:translateY(-2px);border-color:var(--blue-mid)}
+.feat-icon-wrap{width:2.5rem;height:2.5rem;background:var(--blue-lt);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;margin-bottom:1rem}
+.feat-card h3{font-weight:700;font-size:1rem;margin-bottom:0.4rem;color:var(--text)}
+.feat-card p{font-size:0.88rem;color:var(--text-2);line-height:1.6}
+@media(max-width:640px){.feat-grid{grid-template-columns:1fr}}
+
+/* PERSONAS */
+.persona-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
+.persona{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius);padding:2rem}
+.persona.featured{border-color:var(--blue);background:linear-gradient(135deg,#FAFBFF,var(--bg))}
+.persona-emoji{font-size:2.5rem;line-height:1;margin-bottom:1rem}
+.persona h3{font-weight:700;font-size:1.1rem;margin-bottom:0.5rem;color:var(--text)}
+.persona blockquote{font-style:italic;color:var(--text-2);font-size:0.95rem;line-height:1.6;border-left:3px solid var(--blue-mid);padding-left:1rem;margin-bottom:0.75rem}
+.persona .detail{font-size:0.85rem;color:var(--text-3)}
+@media(max-width:640px){.persona-grid{grid-template-columns:1fr}}
+
+/* SCORING MOCK */
+.scoring-grid{display:grid;grid-template-columns:1fr 1.1fr;gap:3rem;align-items:center}
+.score-rules{display:flex;flex-direction:column;gap:0;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.score-row{display:flex;align-items:center;gap:1rem;padding:0.9rem 1.25rem;border-bottom:1px solid var(--border);background:var(--bg)}
+.score-row:last-child{border-bottom:none}
+.score-pts{width:2.5rem;height:2.5rem;border-radius:8px;background:var(--blue-lt);color:var(--blue);font-weight:700;font-size:1rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.score-pts.top{background:var(--blue);color:#fff}
+.score-desc strong{font-weight:600;font-size:0.9rem;display:block;color:var(--text)}
+.score-desc span{font-size:0.82rem;color:var(--text-2)}
+
+.leaderboard-mock{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+.lb-head{background:var(--bg-2);padding:0.875rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.lb-head-title{font-weight:700;font-size:0.9rem;color:var(--text);display:flex;align-items:center;gap:0.5rem}
+.lb-head small{font-size:0.78rem;color:var(--text-3)}
+.lb-row{display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1.25rem;border-bottom:1px solid var(--border);font-size:0.88rem}
+.lb-row:last-child{border-bottom:none}
+.lb-row.me{background:#FAFBFF}
+.lb-pos{width:1.5rem;text-align:center;font-weight:600;color:var(--text-3);font-size:0.85rem}
+.lb-pos.p1{color:#F59E0B}
+.lb-avatar{width:2rem;height:2rem;border-radius:50%;background:var(--bg-3);display:flex;align-items:center;justify-content:center;font-size:0.85rem;flex-shrink:0;border:1.5px solid var(--border)}
+.lb-name{flex:1;font-weight:500;color:var(--text)}
+.lb-name.me-tag{font-weight:600;color:var(--blue)}
+.lb-pts{font-weight:700;font-size:0.95rem;color:var(--text)}
+.lb-change{font-size:0.75rem;font-weight:600;width:1.5rem;text-align:center}
+.lb-change.up{color:#059669}
+.lb-change.dn{color:#DC2626}
+
+@media(max-width:760px){.scoring-grid{grid-template-columns:1fr}}
+
+/* COMMUNITY */
+.community-section{padding:4rem 0;text-align:center;background:linear-gradient(135deg,var(--blue-lt),#F0F4FF)}
+.big-number{font-size:clamp(4rem,12vw,7rem);font-weight:800;color:var(--blue);letter-spacing:-0.03em;line-height:1}
+.community-section p{color:var(--text-2);font-size:1.1rem;margin-top:0.5rem}
+.avatar-row{display:flex;justify-content:center;margin-bottom:1.25rem}
+.av{width:2.75rem;height:2.75rem;border-radius:50%;border:2.5px solid #fff;background:var(--bg-3);display:flex;align-items:center;justify-content:center;font-size:1.25rem;margin-left:-0.75rem}
+.av:first-child{margin-left:0}
+
+/* FAQ */
+.faq-wrap{max-width:680px;margin:0 auto}
+.faq-item{border-bottom:1px solid var(--border)}
+.faq-q{width:100%;display:flex;justify-content:space-between;align-items:center;gap:1rem;background:none;color:var(--text);font-size:0.98rem;font-weight:600;text-align:left;padding:1.1rem 0;transition:color 0.15s}
+.faq-q:hover,.faq-q.open{color:var(--blue)}
+.faq-chevron{width:20px;height:20px;flex-shrink:0;transition:transform 0.3s;color:var(--text-3)}
+.faq-q.open .faq-chevron{transform:rotate(45deg);color:var(--blue)}
+.faq-a{overflow:hidden;max-height:0;transition:max-height 0.35s ease,padding 0.3s;padding-bottom:0;font-size:0.9rem;color:var(--text-2);line-height:1.7}
+.faq-a.open{max-height:200px;padding-bottom:1.25rem}
+
+/* FOOTER CTA */
+.footer-cta{padding:clamp(4rem,8vw,6rem) 0 3rem;border-top:1px solid var(--border);text-align:center}
+.footer-form{display:flex;gap:0.625rem;max-width:480px;margin:1.75rem auto 0.625rem;flex-wrap:wrap;justify-content:center}
+.footer-form input{flex:1 1 200px;padding:0.7rem 1rem;border:1.5px solid var(--border-2);border-radius:var(--radius-sm);font-family:inherit;font-size:0.95rem;color:var(--text);outline:none;transition:border-color 0.15s}
+.footer-form input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(67,97,238,0.1)}
+.footer-form input::placeholder{color:var(--text-3)}
+.footer-links{display:flex;justify-content:center;flex-wrap:wrap;gap:1.5rem;margin-top:2.5rem;font-size:0.83rem;color:var(--text-3)}
+.footer-links a:hover{color:var(--text);transition:color 0.15s}
+.footer-copy{margin-top:1.5rem;font-size:0.78rem;color:var(--text-3)}
+
+/* success */
+.form-success{display:none;align-items:center;gap:0.6rem;background:var(--green-lt);border:1px solid #BBF7D0;color:var(--green);font-weight:600;font-size:0.9rem;padding:0.75rem 1.25rem;border-radius:var(--radius-sm);margin-bottom:0.75rem}
+
+/* divider */
+.divider{height:1px;background:var(--border)}
+
+/* anim */
+.fade-up{opacity:0;transform:translateY(20px);transition:opacity 0.5s ease,transform 0.5s ease}
+.fade-up.visible{opacity:1;transform:translateY(0)}
+.fade-up:nth-child(1){transition-delay:0.05s}
+.fade-up:nth-child(2){transition-delay:0.13s}
+.fade-up:nth-child(3){transition-delay:0.21s}
+.fade-up:nth-child(4){transition-delay:0.29s}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container">
+    <div class="nav-inner">
+      <a href="#" class="nav-logo">
+        <div class="nav-logo-icon">⚽</div>
+        VB Tippjáték
+      </a>
+      <ul class="nav-links">
+        <li><a href="#hogyan">Hogyan működik?</a></li>
+        <li><a href="#funkciok">Funkciók</a></li>
+        <li><a href="#faq">FAQ</a></li>
+      </ul>
+      <a href="/login" class="nav-cta btn-primary">Bejelentkezés</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="ertesites">
+  <div class="container">
+    <div class="hero-inner">
+      <div>
+        <div class="hero-badge">⚽ VB 2026 — Hamarosan</div>
+        <h1>Tippelj. Vezess.<br><em>Győzz a barátaid között.</em></h1>
+        <p class="hero-sub">A VB 2026 legjobb tippjátéka — csoportok, ranglista, automatikus pontozás. Értesítünk, amikor elindul.</p>
+
+        <div class="form-success" id="heroSuccess">
+          <svg width="16" height="16" fill="none" viewBox="0 0 16 16"><path d="M3 8l3.5 3.5 6.5-7" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Feliratkoztál! Értesítünk, amint elindul.
+        </div>
+        <form class="form-row" id="heroForm" onsubmit="doSubmit(event,'heroForm','heroSuccess')">
+          <input type="email" placeholder="email-cím..." required autocomplete="email">
+          <button class="btn-primary" type="submit">Értesíts a megjelenéskor →</button>
+        </form>
+        <p class="microcopy"><span class="microcopy-dot"></span> Ingyenes. Spam nélkül. Leiratkozhatsz egy kattintással.</p>
+      </div>
+
+      <div class="hero-visual">
+        <div style="position:relative;padding:1.5rem 0.5rem">
+          <div class="stat-pill stat-a"><span class="stat-pill-val">1 247</span><span class="stat-pill-lbl">feliratkozott</span></div>
+          <div class="hero-mock">
+            <div class="mock-topbar">
+              <div class="mock-dot" style="background:#FF5F57"></div>
+              <div class="mock-dot" style="background:#FEBC2E;margin-left:5px"></div>
+              <div class="mock-dot" style="background:#28C840;margin-left:5px"></div>
+              <div class="mock-nav">
+                <span class="active">Meccsek</span>
+                <span>Ranglista</span>
+              </div>
+            </div>
+            <div class="mock-body">
+              <div class="mock-date">2026. április 5., vasárnap</div>
+              <div class="mock-match">
+                <div class="mock-match-row">
+                  <span class="mock-team">Diósgyőri VTK</span>
+                  <span class="mock-score">1–1</span>
+                  <span class="mock-team right">Puskás Akadémia</span>
+                </div>
+                <div class="mock-meta">
+                  <span class="badge badge-done">Befejezett</span>
+                  <span class="tip-line">🔒 Tippem: <strong>1–1 · 5 pont ✓</strong></span>
+                </div>
+              </div>
+              <div class="mock-match">
+                <div class="mock-match-row">
+                  <span class="mock-team">Debreceni VSC</span>
+                  <span class="mock-score" style="color:var(--text-3);font-size:1rem">17:00</span>
+                  <span class="mock-team right">Ferencvárosi TC</span>
+                </div>
+                <div class="mock-meta">
+                  <span class="badge badge-plan">Tervezett</span>
+                  <span class="tip-line">🔒 Tippem: 3–3</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="stat-pill stat-b"><span class="stat-pill-val">+5 pont</span><span class="stat-pill-lbl">utolsó meccs</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- HOW -->
+<section class="section section-bg" id="hogyan">
+  <div class="container">
+    <div class="section-head">
+      <p class="section-label">Három lépés</p>
+      <h2 class="section-title">Hogyan működik?</h2>
+      <p class="section-sub">Nincs Excel-tábla, nincs bonyolult regisztráció. Csak tipp, pont és verseny.</p>
+    </div>
+    <div class="how-grid">
+      <div class="step-card fade-up">
+        <div class="step-num">1</div>
+        <h3>Hozz létre egy csoportot</h3>
+        <p>Hívd meg a barátaidat vagy kollégáidat egyedi meghívó kóddal — akár percek alatt.</p>
+      </div>
+      <div class="step-card fade-up">
+        <div class="step-num">2</div>
+        <h3>Tippeld meg a meccseket</h3>
+        <p>Eredmény, hosszabbítás, tizenegyes — minden mérkőzés előtt leadhatod a tipped.</p>
+      </div>
+      <div class="step-card fade-up">
+        <div class="step-num">3</div>
+        <h3>Kövesd a ranglistát</h3>
+        <p>A pontok automatikusan számolódnak, te csak szurkolsz és élvezed a versenyt.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FEATURES -->
+<section class="section" id="funkciok">
+  <div class="container">
+    <div class="section-head">
+      <p class="section-label">Funkciók</p>
+      <h2 class="section-title">Minden, amire szükséged van.</h2>
+      <p class="section-sub">Semmi felesleg — csak a tipp, a pont, és a verseny.</p>
+    </div>
+    <div class="feat-grid">
+      <div class="feat-card fade-up">
+        <div class="feat-icon-wrap">⚽</div>
+        <h3>Csoportok</h3>
+        <p>Privát vagy publikus csoportot hozhatsz létre. A ranglista csak a tagoknak látszik.</p>
+      </div>
+      <div class="feat-card fade-up">
+        <div class="feat-icon-wrap">📊</div>
+        <h3>Automatikus pontozás</h3>
+        <p>Pontos tipp, helyes győztes, gólkülönbség — minden pontot ér. Azonnal frissül.</p>
+      </div>
+      <div class="feat-card fade-up">
+        <div class="feat-icon-wrap">🔔</div>
+        <h3>Meccs előtti figyelmeztetés</h3>
+        <p>Nem maradsz le egyetlen tippről sem. Értesítünk, mielőtt a meccs elkezdődik.</p>
+      </div>
+      <div class="feat-card fade-up">
+        <div class="feat-icon-wrap">🏆</div>
+        <h3>Globális ranglista</h3>
+        <p>Mérd össze magad az összes játékossal — ki a legjobb VB-tippelő az országban?</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PERSONAS -->
+<section class="section section-bg">
+  <div class="container">
+    <div class="section-head">
+      <p class="section-label">Kinek való?</p>
+      <h2 class="section-title">Neked való.</h2>
+    </div>
+    <div class="persona-grid">
+      <div class="persona featured fade-up">
+        <div class="persona-emoji">👨‍👩‍👧‍👦</div>
+        <h3>Baráti társaságok</h3>
+        <blockquote>"Minden VB-n van egy WhatsApp-csoport és egy Excel. Most legyen egy igazi app."</blockquote>
+        <p class="detail">Hívd meg a haverjaidat, osszátok meg a kódot, és kezdődjön a tipp-háború.</p>
+      </div>
+      <div class="persona fade-up">
+        <div class="persona-emoji">🏢</div>
+        <h3>Munkahelyek</h3>
+        <blockquote>"A legjobb csapatépítő, amit a főnök is megenged."</blockquote>
+        <p class="detail">Kollégiális verseny, nulla adminisztráció. A HR is meg lesz elégedve.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SCORING -->
+<section class="section">
+  <div class="container">
+    <div class="scoring-grid">
+      <div>
+        <div class="section-head">
+          <p class="section-label">Pontozás</p>
+          <h2 class="section-title">Minden tipp számít.</h2>
+          <p class="section-sub">Az egyszerű tipptől a pontos végeredményig — a rendszer mindent automatikusan kezel.</p>
+        </div>
+        <div class="score-rules">
+          <div class="score-row"><div class="score-pts top">5</div><div class="score-desc"><strong>Pontos végeredmény</strong><span>Telitalálat — a legjobb tipp</span></div></div>
+          <div class="score-row"><div class="score-pts">3</div><div class="score-desc"><strong>Helyes gólkülönbség</strong><span>A különbség stimmel</span></div></div>
+          <div class="score-row"><div class="score-pts">2</div><div class="score-desc"><strong>Helyes győztes</strong><span>Tudtad, ki nyer</span></div></div>
+          <div class="score-row"><div class="score-pts" style="background:var(--bg-3);color:var(--text-3)">0</div><div class="score-desc"><strong>Téves tipp</strong><span>Következő meccs, új esély</span></div></div>
+        </div>
+      </div>
+      <div class="leaderboard-mock fade-up">
+        <div class="lb-head">
+          <div class="lb-head-title">🏆 Ranglista</div>
+          <small>Osztálytársak 2026</small>
+        </div>
+        <div class="lb-row">
+          <div class="lb-pos p1">🥇</div>
+          <div class="lb-avatar">👨</div>
+          <div class="lb-name">Kovács Péter</div>
+          <div class="lb-change up">▲2</div>
+          <div class="lb-pts">142</div>
+        </div>
+        <div class="lb-row me">
+          <div class="lb-pos" style="color:var(--blue);font-weight:700">2</div>
+          <div class="lb-avatar" style="border-color:var(--blue-mid)">🎯</div>
+          <div class="lb-name me-tag">Te</div>
+          <div class="lb-change dn">▼1</div>
+          <div class="lb-pts" style="color:var(--blue)">138</div>
+        </div>
+        <div class="lb-row">
+          <div class="lb-pos">3</div>
+          <div class="lb-avatar">👩</div>
+          <div class="lb-name">Nagy Dóra</div>
+          <div class="lb-change up">▲1</div>
+          <div class="lb-pts">135</div>
+        </div>
+        <div class="lb-row">
+          <div class="lb-pos">4</div>
+          <div class="lb-avatar">🧑</div>
+          <div class="lb-name">Szabó Bence</div>
+          <div class="lb-change" style="color:var(--text-3)">—</div>
+          <div class="lb-pts">129</div>
+        </div>
+        <div class="lb-row">
+          <div class="lb-pos">5</div>
+          <div class="lb-avatar">👩‍🦰</div>
+          <div class="lb-name">Tóth Réka</div>
+          <div class="lb-change dn">▼2</div>
+          <div class="lb-pts">118</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- COMMUNITY -->
+<section class="community-section">
+  <div class="container">
+    <div class="avatar-row">
+      <div class="av">👨</div><div class="av">👩</div><div class="av">🧑</div><div class="av">👨‍🦱</div><div class="av">👩‍🦰</div>
+    </div>
+    <div class="big-number">1 247</div>
+    <p>ember már feliratkozott a várólistára.</p>
+    <p style="color:var(--text-3);font-size:0.9rem;margin-top:0.35rem">Csatlakozz te is, mielőtt a VB elindul.</p>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FAQ -->
+<section class="section section-bg" id="faq">
+  <div class="container">
+    <div class="section-head" style="text-align:center;max-width:none">
+      <p class="section-label" style="text-align:center">Kérdések</p>
+      <h2 class="section-title" style="text-align:center">Amit mindenki kérdez.</h2>
+    </div>
+    <div class="faq-wrap">
+      <div class="faq-item">
+        <button class="faq-q" onclick="faq(this)">Ingyenes a VB Tippjáték?
+          <svg class="faq-chevron" viewBox="0 0 20 20" fill="none"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
+        <div class="faq-a">Igen, teljesen ingyenes. Nem kell fizetni semmit — sem a csoportért, sem a ranglistáért.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="faq(this)">Kell külön regisztrálni?
+          <svg class="faq-chevron" viewBox="0 0 20 20" fill="none"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
+        <div class="faq-a">Nem. Google-fiókoddal egy kattintással bejelentkezhetsz — nincs jelszó, nincs hosszú regisztrációs folyamat.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="faq(this)">Mobilon is működik?
+          <svg class="faq-chevron" viewBox="0 0 20 20" fill="none"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
+        <div class="faq-a">Igen, böngészőből mobilon is tökéletesen elérhető. Az app mobilra optimalizált, külön letöltés nélkül.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="faq(this)">Mikor indul el az app?
+          <svg class="faq-chevron" viewBox="0 0 20 20" fill="none"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
+        <div class="faq-a">A VB 2026 előtt. Iratkozz fel a várólistára — értesítünk emailben, amint megnyílik a regisztráció.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="faq(this)">Kell focit érteni a tippeléshez?
+          <svg class="faq-chevron" viewBox="0 0 20 20" fill="none"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
+        <div class="faq-a">Egyáltalán nem. Elég, ha szurkolsz — vagy ha csak nyerni akarsz a barátaidnál.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FOOTER CTA -->
+<footer class="footer-cta">
+  <div class="container">
+    <p class="section-label">Ne maradj le</p>
+    <h2 class="section-title">Legyen meg a tipped, <em style="font-style:normal;color:var(--blue)">mielőtt a VB elindul.</em></h2>
+    <div class="form-success" id="footerSuccess" style="max-width:480px;margin:1.5rem auto 0;justify-content:center">
+      <svg width="16" height="16" fill="none" viewBox="0 0 16 16"><path d="M3 8l3.5 3.5 6.5-7" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Feliratkoztál! Értesítünk, amint elindul.
+    </div>
+    <form class="footer-form" id="footerForm" onsubmit="doSubmit(event,'footerForm','footerSuccess')">
+      <input type="email" placeholder="email-cím..." required autocomplete="email">
+      <button class="btn-primary" type="submit">Értesíts →</button>
+    </form>
+    <p style="font-size:0.8rem;color:var(--text-3)">Ingyenes. Spam nélkül. Leiratkozhatsz egy kattintással.</p>
+    <div class="footer-links">
+      <a href="#">⚽ VB Tippjáték</a>
+      <a href="#">Twitter / X</a>
+      <a href="#">Facebook</a>
+      <a href="#">Ko-fi ☕ Támogass</a>
+      <a href="#">Adatvédelem</a>
+    </div>
+    <p class="footer-copy">© 2025–2026 VB Tippjáték · Nem áll kapcsolatban a FIFA-val.</p>
+  </div>
+</footer>
+
+<script>
+const nav = document.querySelector('.nav');
+window.addEventListener('scroll', () => nav.style.boxShadow = window.scrollY > 40 ? '0 1px 12px rgba(0,0,0,0.08)' : '', {passive:true});
+
+function faq(btn) {
+  const a = btn.nextElementSibling, open = a.classList.contains('open');
+  document.querySelectorAll('.faq-a').forEach(x => x.classList.remove('open'));
+  document.querySelectorAll('.faq-q').forEach(x => x.classList.remove('open'));
+  if (!open) { a.classList.add('open'); btn.classList.add('open'); }
+}
+
+async function doSubmit(e, fid, sid) {
+  e.preventDefault();
+  const btn = document.getElementById(fid).querySelector('button');
+  btn.textContent = '...'; btn.disabled = true;
+  await new Promise(r => setTimeout(r, 800));
+  document.getElementById(fid).style.display = 'none';
+  const s = document.getElementById(sid); s.style.display = 'flex';
+}
+
+const obs = new IntersectionObserver(entries => entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } }), {threshold: 0.1});
+document.querySelectorAll('.fade-up').forEach(el => obs.observe(el));
+</script>
+</body>
+</html>

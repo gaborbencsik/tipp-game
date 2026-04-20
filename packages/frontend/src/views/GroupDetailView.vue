@@ -1,7 +1,7 @@
 <template>
   <AppLayout>
     <div class="flex items-center gap-3 mb-6">
-      <router-link to="/groups" class="text-blue-600 hover:text-blue-800 text-sm">← Csoportok</router-link>
+      <router-link to="/app/groups" class="text-blue-600 hover:text-blue-800 text-sm">← Csoportok</router-link>
       <h1 class="text-2xl font-bold text-gray-900">{{ groupName }}</h1>
     </div>
 
@@ -447,7 +447,7 @@ async function onConfirmRegenerate(): Promise<void> {
 async function onConfirmDelete(): Promise<void> {
   showDeleteConfirm.value = false
   await groupsStore.deleteGroup(groupId)
-  await router.push('/groups')
+  await router.push('/app/groups')
 }
 
 function copyInviteCode(): void {
@@ -461,7 +461,7 @@ function copyInviteCode(): void {
 function copyInviteUrl(): void {
   const code = currentGroup.value?.inviteCode
   if (code) {
-    navigator.clipboard.writeText(`${window.location.origin}/join/${code}`)
+    navigator.clipboard.writeText(`${window.location.origin}/app/join/${code}`)
     setCopiedInvite('url')
   }
 }

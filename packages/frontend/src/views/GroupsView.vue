@@ -132,7 +132,7 @@
           data-testid="group-item"
         >
           <router-link
-            :to="`/groups/${group.id}`"
+            :to="`/app/groups/${group.id}`"
             class="flex items-center justify-between bg-white rounded-xl border border-gray-200 px-5 py-4 hover:border-blue-300 hover:bg-blue-50/30 transition-colors cursor-pointer"
           >
             <div>

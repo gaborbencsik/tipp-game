@@ -2,7 +2,7 @@
   <AppLayout>
       <div class="flex items-center justify-between mb-6">
         <router-link
-          to="/matches"
+          to="/app/matches"
           data-testid="back-link"
           class="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
         >

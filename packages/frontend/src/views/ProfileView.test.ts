@@ -52,7 +52,7 @@ function buildRouter() {
     history: createMemoryHistory(),
     routes: [
       { path: '/profile', component: ProfileView },
-      { path: '/matches', component: { template: '<div />' } },
+      { path: '/app/matches', component: { template: '<div />' } },
     ],
   })
 }
@@ -127,7 +127,7 @@ describe('ProfileView', () => {
 
   it('back link points to /matches', async () => {
     const { wrapper } = await mountView()
-    const link = wrapper.find('a[href="/matches"]')
+    const link = wrapper.find('a[href="/app/matches"]')
     expect(link.exists()).toBe(true)
   })
 })

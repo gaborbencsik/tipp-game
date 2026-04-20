@@ -42,7 +42,7 @@
 
           <!-- Meccsek -->
           <router-link
-            to="/matches"
+            to="/app/matches"
             data-testid="nav-matches"
             class="flex items-center gap-3 py-2 rounded-full text-sm text-gray-700 hover:bg-gray-100 transition-colors"
             :class="sidebarOpen ? 'px-4' : 'px-3 justify-center'"
@@ -57,7 +57,7 @@
 
           <!-- Tippjeim -->
           <router-link
-            to="/my-tips"
+            to="/app/my-tips"
             data-testid="nav-my-tips"
             class="flex items-center gap-3 py-2 rounded-full text-sm text-gray-700 hover:bg-gray-100 transition-colors"
             :class="sidebarOpen ? 'px-4' : 'px-3 justify-center'"
@@ -72,7 +72,7 @@
 
           <!-- Csoportok -->
           <router-link
-            to="/groups"
+            to="/app/groups"
             data-testid="nav-groups"
             class="flex items-center gap-3 py-2 rounded-full text-sm text-gray-700 hover:bg-gray-100 transition-colors"
             :class="sidebarOpen ? 'px-4' : 'px-3 justify-center'"
@@ -87,7 +87,7 @@
 
           <!-- Ranglista -->
           <router-link
-            to="/leaderboard"
+            to="/app/leaderboard"
             data-testid="nav-leaderboard"
             class="flex items-center gap-3 py-2 rounded-full text-sm text-gray-700 hover:bg-gray-100 transition-colors"
             :class="sidebarOpen ? 'px-4' : 'px-3 justify-center'"
