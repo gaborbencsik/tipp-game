@@ -68,6 +68,12 @@ export const router = createRouter({
       meta: { requiresAuth: true, requiresAdmin: true },
     },
     {
+      path: '/admin/waitlist',
+      name: 'admin-waitlist',
+      component: () => import('../views/AdminWaitlistView.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true },
+    },
+    {
       path: '/app/my-tips',
       name: 'my-tips',
       component: () => import('../views/MyTipsView.vue'),

@@ -21,7 +21,9 @@ import {
 } from '../services/admin-users.service.js'
 import { upsertUser } from '../services/user.service.js'
 import { getGlobalConfig, updateGlobalConfig } from '../services/scoring-config.service.js'
+import { getWaitlistEntries } from '../services/waitlist.service.js'
 import type { MatchOutcome, TeamInput, MatchInput, ScoringConfigInput } from '../types/index.js'
+import type { WaitlistFilters } from '../services/waitlist.service.js'
 
 const adminRouter = new Router({ prefix: '/api/admin' })
 
@@ -119,6 +121,21 @@ adminRouter.put('/scoring-config', async (ctx) => {
     }
   }
   ctx.body = await updateGlobalConfig(body as unknown as ScoringConfigInput)
+})
+
+// ─── Waitlist ────────────────────────────────────────────────────────────────
+
+adminRouter.get('/waitlist', async (ctx) => {
+  const query = ctx.query as Record<string, string | undefined>
+  const source = query.source === 'hero' || query.source === 'footer' ? query.source : undefined
+  const search = typeof query.search === 'string' && query.search.trim().length > 0 ? query.search.trim() : undefined
+
+  const filters: WaitlistFilters = {
+    ...(source ? { source } : {}),
+    ...(search ? { search } : {}),
+  }
+
+  ctx.body = await getWaitlistEntries(filters)
 })
 
 export { adminRouter }

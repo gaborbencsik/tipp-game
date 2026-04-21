@@ -188,3 +188,22 @@ export interface ScoringConfigInput {
   readonly correctOutcome: number
   readonly incorrect: number
 }
+
+export type WaitlistSource = 'hero' | 'footer'
+
+export interface WaitlistEntry {
+  readonly id: string
+  readonly email: string
+  readonly source: WaitlistSource
+  readonly createdAt: string
+}
+
+export interface WaitlistFilters {
+  readonly source?: WaitlistSource
+  readonly search?: string
+}
+
+export interface WaitlistListResult {
+  readonly totalCount: number
+  readonly entries: WaitlistEntry[]
+}
