@@ -36,6 +36,8 @@ export const auditActionEnum = pgEnum('audit_action', [
   'create', 'update', 'delete', 'result_set', 'ban', 'role_change'
 ])
 
+export const waitlistSourceEnum = pgEnum('waitlist_source', ['hero', 'footer'])
+
 // ─── USERS ────────────────────────────────────────────────────────────────────
 
 export const users = pgTable('users', {
@@ -243,6 +245,15 @@ export const auditLogs = pgTable('audit_logs', {
   entityIdx:    index('audit_logs_entity_idx').on(t.entityType, t.entityId),
   createdAtIdx: index('audit_logs_created_at_idx').on(t.createdAt),
 }))
+
+// ─── WAITLIST ────────────────────────────────────────────────────────────────
+
+export const waitlistEntries = pgTable('waitlist_entries', {
+  id:        uuid('id').primaryKey().defaultRandom(),
+  email:     varchar('email', { length: 255 }).notNull().unique(),
+  source:    waitlistSourceEnum('source').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})
 
 // ─── RELATIONS ────────────────────────────────────────────────────────────────
 

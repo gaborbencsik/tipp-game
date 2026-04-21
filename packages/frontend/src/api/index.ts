@@ -214,4 +214,11 @@ export const api = {
         headers: { Authorization: `Bearer ${token}` },
       }),
   },
+  waitlist: {
+    subscribe: (email: string, source: 'hero' | 'footer', website: string, elapsed: number) =>
+      request<{ message: string }>('/waitlist', {
+        method: 'POST',
+        body: JSON.stringify({ email, source, website, _t: elapsed }),
+      }),
+  },
 }

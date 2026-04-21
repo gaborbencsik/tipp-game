@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-04-21 (US-605 kész; seed split; összesítő tábla pontosítva – hiányzó story-k pótolva, számok javítva)
+> Utoljára frissítve: 2026-04-21 (US-1103 email waitlist kész; összesítő frissítve)
 
 ## Kész user story-k
 
@@ -31,6 +31,7 @@
 | **US-402** | Konfigurálható pontrendszer | ✅ Kész |
 | **US-608** | Csoport szintű pontrendszer override | ✅ Kész |
 | **US-1003** | Lejátszott meccsek összecsomagolt szekció | ✅ Kész |
+| **US-1103** | Email waitlist – feliratkozás mentése | ✅ Kész |
 
 ### US-001 – Elfogadási kritériumok teljesítve
 
@@ -432,7 +433,7 @@
 | US-1003 | Lejátszott meccsek összecsomagolása | ✅ Kész | Should Have |
 | US-1101 | Donation gomb és pop-up | ⬜ Nem kezdett | Should Have |
 | US-1102 | Donation átirányítás | ⬜ Nem kezdett | Should Have |
-| US-1103 | Email waitlist – feliratkozás mentése | ⬜ Nem kezdett | Should Have |
+| US-1103 | Email waitlist – feliratkozás mentése | ✅ Kész | Should Have |
 | US-1201 | Futball API kiválasztása (kutatás) | ✅ Kész | Should Have |
 | US-1202 | Futball API szinkronizációs service | ⬜ Nem kezdett | Should Have |
 | US-1203 | Automatikus adatszinkron cron job | ⬜ Nem kezdett | Should Have |
@@ -457,4 +458,4 @@
 
 ---
 
-**Haladás: 46 / 65 story kész** — Must Have: 30/31 ✅, Should Have: 16/32 ✅, Nice to Have: 0/2
+**Haladás: 47 / 65 story kész** — Must Have: 30/31 ✅, Should Have: 17/32 ✅, Nice to Have: 0/2

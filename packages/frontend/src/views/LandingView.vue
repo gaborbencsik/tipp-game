@@ -55,9 +55,11 @@
               Feliratkoztál! Értesítünk, amint elindul.
             </div>
             <form v-else class="lp-form-row" @submit.prevent="handleHeroSubmit">
-              <input type="email" placeholder="email-cím..." required autocomplete="email">
-              <button class="lp-btn-primary" type="submit">Értesíts a megjelenéskor →</button>
+              <input v-model="heroEmail" type="email" placeholder="email-cím..." required autocomplete="email">
+              <input type="text" name="website" v-model="honeypot" class="lp-hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
+              <button class="lp-btn-primary" type="submit" :disabled="submitting">Értesíts induláskor →</button>
             </form>
+            <p v-if="heroError" class="lp-form-error">{{ heroError }}</p>
             <p class="lp-microcopy"><span class="lp-microcopy__dot"></span> Ingyenes. Spam nélkül. Leiratkozhatsz egy kattintással.</p>
           </div>
 
@@ -299,9 +301,11 @@
           Feliratkoztál! Értesítünk, amint elindul.
         </div>
         <form v-else class="lp-footer__form" @submit.prevent="handleFooterSubmit">
-          <input type="email" placeholder="email-cím..." required autocomplete="email">
-          <button class="lp-btn-primary" type="submit">Értesíts →</button>
+          <input v-model="footerEmail" type="email" placeholder="email-cím..." required autocomplete="email">
+          <input type="text" name="website" v-model="honeypot" class="lp-hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
+          <button class="lp-btn-primary" type="submit" :disabled="submitting">Értesíts →</button>
         </form>
+        <p v-if="footerError" class="lp-form-error">{{ footerError }}</p>
         <p class="lp-footer__microcopy">Ingyenes. Spam nélkül. Leiratkozhatsz egy kattintással.</p>
         <div class="lp-footer__links">
           <a href="#">⚽ VB Tippjáték</a>
@@ -329,6 +333,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { api } from '../api/index.js'
 
 const route = useRoute()
 const loginEnabled = computed(() => route.query['force_enable_login'] === 'true')
@@ -339,6 +344,14 @@ const activeFaq = ref<number | null>(null)
 const heroSubmitted = ref(false)
 const footerSubmitted = ref(false)
 const stickyCta = ref(false)
+
+const heroEmail = ref('')
+const footerEmail = ref('')
+const honeypot = ref('')
+const submitting = ref(false)
+const heroError = ref('')
+const footerError = ref('')
+let mountedAt = 0
 
 const faqs = [
   { q: 'Ingyenes a VB Tippjáték?', a: 'Igen, teljesen ingyenes. Nem kell fizetni semmit — sem a csoportért, sem a ranglistáért.' },
@@ -362,17 +375,36 @@ function toggleFaq(idx: number): void {
 }
 
 async function handleHeroSubmit(): Promise<void> {
-  await new Promise<void>(r => setTimeout(r, 800))
-  heroSubmitted.value = true
-  stickyCta.value = false
+  heroError.value = ''
+  submitting.value = true
+  try {
+    const elapsed = Date.now() - mountedAt
+    await api.waitlist.subscribe(heroEmail.value, 'hero', honeypot.value, elapsed)
+    heroSubmitted.value = true
+    stickyCta.value = false
+  } catch (err) {
+    heroError.value = err instanceof Error ? err.message : 'Hiba történt. Próbáld újra később.'
+  } finally {
+    submitting.value = false
+  }
 }
 
 async function handleFooterSubmit(): Promise<void> {
-  await new Promise<void>(r => setTimeout(r, 800))
-  footerSubmitted.value = true
+  footerError.value = ''
+  submitting.value = true
+  try {
+    const elapsed = Date.now() - mountedAt
+    await api.waitlist.subscribe(footerEmail.value, 'footer', honeypot.value, elapsed)
+    footerSubmitted.value = true
+  } catch (err) {
+    footerError.value = err instanceof Error ? err.message : 'Hiba történt. Próbáld újra később.'
+  } finally {
+    submitting.value = false
+  }
 }
 
 onMounted(() => {
+  mountedAt = Date.now()
   heroEl = document.getElementById('ertesites')
   window.addEventListener('scroll', onScroll, { passive: true })
   const observer = new IntersectionObserver(
@@ -785,4 +817,10 @@ button.lp-btn-primary:active { transform: scale(0.98); }
 .lp .fade-up:nth-child(2) { transition-delay: 0.1s; }
 .lp .fade-up:nth-child(3) { transition-delay: 0.16s; }
 .lp .fade-up:nth-child(4) { transition-delay: 0.22s; }
+
+/* HONEYPOT – hidden from real users */
+.lp-hp { position: absolute !important; left: -9999px; width: 1px; height: 1px; overflow: hidden; opacity: 0; }
+
+/* FORM ERROR */
+.lp-form-error { color: #DC2626; font-size: 0.82rem; margin-top: 0.35rem; }
 </style>
