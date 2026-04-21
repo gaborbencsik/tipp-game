@@ -81,6 +81,7 @@ const SAMPLE_GROUP: Group = {
   createdBy: 'user-uuid-1',
   memberCount: 3,
   isAdmin: true,
+  userRank: null,
   createdAt: '2026-01-01T00:00:00.000Z',
 }
 
@@ -158,5 +159,19 @@ describe('GroupsView', () => {
     vm.joinCode = 'ABCD1234'
     await vm.onJoinSubmit()
     expect(mockJoinGroup).toHaveBeenCalledWith({ inviteCode: 'ABCD1234' })
+  })
+
+  it('rank badge megjelenik ha userRank nem null', () => {
+    mockStoreState.groups = [{ ...SAMPLE_GROUP, userRank: 3 }]
+    const wrapper = mountView()
+    const badge = wrapper.find('[data-testid="rank-badge"]')
+    expect(badge.exists()).toBe(true)
+    expect(badge.text()).toBe('#3')
+  })
+
+  it('rank badge nem jelenik meg ha userRank null', () => {
+    mockStoreState.groups = [{ ...SAMPLE_GROUP, userRank: null }]
+    const wrapper = mountView()
+    expect(wrapper.find('[data-testid="rank-badge"]').exists()).toBe(false)
   })
 })

@@ -1,12 +1,10 @@
 import { db } from '../src/db/client.js'
-import {
-  scoringConfigs, teams, users,
-} from '../src/db/schema/index.js'
+import { scoringConfigs, teams, venues } from '../src/db/schema/index.js'
 
 async function seed(): Promise<void> {
-  console.log('Seeding database...')
+  console.log('Seeding base data...')
 
-  // Scoring config
+  // ─── Scoring config ──────────────────────────────────────────────────────
   await db.insert(scoringConfigs).values({
     name: 'Global Default',
     isGlobalDefault: true,
@@ -17,7 +15,7 @@ async function seed(): Promise<void> {
     incorrect: 0,
   }).onConflictDoNothing()
 
-  // Venues (FIFA 2026)
+  // ─── Venues (FIFA 2026) ──────────────────────────────────────────────────
   const venueData = [
     { name: 'MetLife Stadium', city: 'East Rutherford', country: 'USA', capacity: 82500 },
     { name: 'Estadio Azteca', city: 'Mexico City', country: 'Mexico', capacity: 87523 },
@@ -31,7 +29,7 @@ async function seed(): Promise<void> {
     await db.insert(venues).values(venue).onConflictDoNothing()
   }
 
-  // Teams (FIFA VB 2026 – 48 résztvevő, A–L csoport)
+  // ─── Teams (FIFA VB 2026 – 48 + NB I) ───────────────────────────────────
   const teamData = [
     // Group A
     { name: 'USA', shortCode: 'USA', group: 'A', teamType: 'national' as const, countryCode: 'us' },
@@ -112,15 +110,10 @@ async function seed(): Promise<void> {
     await db.insert(teams).values(team).onConflictDoNothing()
   }
 
-  // Admin user (dev only, mock supabase_id)
-  await db.insert(users).values({
-    supabaseId: '00000000-0000-0000-0000-000000000001',
-    email: 'admin@dev.local',
-    displayName: 'Admin',
-    role: 'admin',
-  }).onConflictDoNothing()
-
-  console.log('Seed complete.')
+  console.log('Base seed complete.')
+  console.log('  Scoring config: Global Default')
+  console.log('  Venues: 6')
+  console.log('  Teams: 48 VB + 12 NB I')
   process.exit(0)
 }
 

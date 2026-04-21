@@ -102,10 +102,15 @@ src/
 
 | Fájl | Tartalom |
 |------|----------|
+| `plans/00-status.md` | Story-k aktuális státusza (kész / folyamatban / TODO) |
 | `plans/01-project-plan.md` | User story-k (E1–E10, US-101–US-902) |
 | `plans/02-database-schema.md` | Drizzle schema, ER-diagram, indexek |
 | `plans/03-tech-stack.md` | Döntési mátrix, auth flow, projekt struktúra |
 | `plans/04-extras.md` | Nice-to-have ötletek (post-MVP) |
+
+**User story-kkal kapcsolatos munka esetén** (írás, módosítás, státusz kérdés, implementálás):
+- **Kötelező** először elolvasni: `plans/00-status.md` + `plans/01-project-plan.md`
+- Nézd meg a teljes `plans/` mappát is a kontextusért (schema, tech stack, extras)
 
 ## Prioritások
 
@@ -116,3 +121,15 @@ src/
 ## Alapelv
 
 > Először teszt. Utána egyszerű, típusos megoldás. Refaktor csak zöld tesztekkel.
+
+## Orchestrator szabály
+
+Minden felhasználói kérést először a `product-orchestrator` agenten keresztül dolgozz fel. Az orchestrator dönti el, melyik specialist agentet kell meghívni.
+
+**Kivételek** (ezeket NE küldd az orchestratornak):
+- Egyszerű, közvetlen kérdések ("mi ez a fájl?", "magyarázd el ezt a kódot")
+- Explicit agent-hívás ("hívd a story-writer-t", "kérdezd meg a system-architect-et")
+- Git műveletek (commit, push, PR, branch)
+- Fájl olvasás/szerkesztés amit a user konkrétan kér
+- Memory műveletek (remember, forget)
+- Rövid, egyértelmű bugfix vagy typo javítás

@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-04-14 (US-604-A, US-604-B, US-604-C, US-402, US-608, US-1003 kész; admin menü refactor; SEC-002 backlogba felvéve)
+> Utoljára frissítve: 2026-04-21 (US-605 kész; seed split: seed.ts prod-safe + seed-local.ts dev dummy data)
 
 ## Kész user story-k
 
@@ -47,7 +47,8 @@
 
 - ✅ `npm run db:generate` – Drizzle Kit generálja a migrációs fájlokat
 - ✅ `npm run db:migrate` – futtatja a migrációkat
-- ✅ `npm run db:seed` – 32 csapat, 10 meccs (scheduled/live/finished/cancelled), 1 admin user, 1 scoring config
+- ✅ `npm run db:seed` – scoring config, 6 helyszín, 60 csapat (48 VB + 12 NB I)
+- ✅ `npm run db:seed-local` – dev dummy adatok (6 user, 10 meccs, tippek, 2 csoport)
 - ✅ Seed idempotens (`ON CONFLICT DO NOTHING`)
 - ✅ Migrációk verziókövetésben vannak (`src/db/migrations/`)
 
@@ -414,9 +415,9 @@
 | US-604-A | Csoport tagkezelés (admin) | ✅ Kész | Must Have |
 | US-604-B | Meghívó kód kezelése (admin) | ✅ Kész | Must Have |
 | US-604-C | Csoport törlése (admin) | ✅ Kész | Should Have |
-| US-608 | Csoportszintű pontrendszer override | ⬜ Nem kezdett | Must Have |
+| US-608 | Csoportszintű pontrendszer override | ✅ Kész | Must Have |
 | US-609 | Liga filter csoportonként | ⬜ Nem kezdett | Should Have |
-| US-605 | Több csoporthoz tartozás | ⬜ Nem kezdett | Must Have |
+| US-605 | Több csoporthoz tartozás | ✅ Kész | Must Have |
 | US-606 | Csoportok navigáció (AppLayout) | ✅ Kész | Must Have |
 | US-701 | User/Admin szerepkörök | ✅ Kész | Must Have |
 | US-801 | Mérkőzés létrehozása | ✅ Kész | Must Have |
@@ -439,15 +440,15 @@
 | UX-003 | Távoli jövőbeli meccsek összecsukvása | ✅ Kész | Should Have |
 | UX-004 | Focilabda kurzor ikon | ⬜ Nem kezdett | Nice to Have |
 | UX-005 | Optimista törlés az admin listákon | ⬜ Nem kezdett | Should Have |
-| UX-006 | Csapat zászló/logo megjelenítése (flag-icons) | ⬜ Nem kezdett | Should Have |
-| US-806 | Csapat típus és country code mezők (DB migráció) | ⬜ Nem kezdett | Should Have |
+| UX-006 | Csapat zászló/logo megjelenítése (flag-icons) | ✅ Kész | Should Have |
+| US-806 | Csapat típus és country code mezők (DB migráció) | ✅ Kész | Should Have |
 | US-206 | Kedvenc csapat beállítása ligánként | ⬜ Nem kezdett | Should Have |
 | US-404 | Kedvenc csapat dupla pont számítás | ⬜ Nem kezdett | Should Have |
 | US-607 | Kedvenc csapat dupla pont szabály (csoport beállítás) | ⬜ Nem kezdett | Should Have |
-| DISC-001 | Landing oldal discovery (design + marketing + social) | ⬜ Nem kezdett | Should Have |
+| DISC-001 | Landing oldal discovery (design + marketing + social) | ✅ Kész | Should Have |
 | SEC-001 | Row-Level Security bekapcsolása (Supabase RLS) | ⬜ Nem kezdett | Must Have |
 | SEC-002 | HMAC-aláírt meghívó URL-ek | ⬜ Nem kezdett | Nice to Have |
 
 ---
 
-**Haladás: 34 / 60 story kész** — Must Have: 25/33 ✅, Should Have: 9/23 ✅, Nice to Have: 0/2
+**Haladás: 39 / 60 story kész** — Must Have: 27/33 ✅, Should Have: 12/23 ✅, Nice to Have: 0/2

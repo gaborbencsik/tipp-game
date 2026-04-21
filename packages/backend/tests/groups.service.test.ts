@@ -3,15 +3,20 @@ import type { Group, GroupMember } from '../src/types/index.js'
 
 // ─── DB mock ──────────────────────────────────────────────────────────────────
 
-const { mockSelect, mockInsert, mockDelete, mockUpdate } = vi.hoisted(() => ({
+const { mockSelect, mockInsert, mockDelete, mockUpdate, mockGetGroupLeaderboard } = vi.hoisted(() => ({
   mockSelect: vi.fn(),
   mockInsert: vi.fn(),
   mockDelete: vi.fn(),
   mockUpdate: vi.fn(),
+  mockGetGroupLeaderboard: vi.fn(),
 }))
 
 vi.mock('../src/db/client.js', () => ({
   db: { select: mockSelect, insert: mockInsert, delete: mockDelete, update: mockUpdate },
+}))
+
+vi.mock('../src/services/group-leaderboard.service.js', () => ({
+  getGroupLeaderboard: mockGetGroupLeaderboard,
 }))
 
 import { getMyGroups, createGroup, joinGroup, getGroupMembers, removeMember, setMemberAdmin, regenerateInviteCode, setInviteActive, deleteGroup } from '../src/services/groups.service.js'
@@ -132,6 +137,9 @@ describe('getMyGroups', () => {
     mockSelect
       .mockReturnValueOnce(makeSelectChain(membership))
       .mockReturnValueOnce(makeSelectChain([{ count: 2 }]))
+    mockGetGroupLeaderboard.mockResolvedValueOnce([
+      { rank: 1, userId: USER_ID, displayName: 'Alice', avatarUrl: null, totalPoints: 10, predictionCount: 3, correctCount: 2 },
+    ])
 
     const result = await getMyGroups(USER_ID)
     expect(result).toHaveLength(1)
@@ -140,6 +148,7 @@ describe('getMyGroups', () => {
       name: 'Barátok',
       memberCount: 2,
       isAdmin: true,
+      userRank: 1,
     })
   })
 
@@ -148,6 +157,45 @@ describe('getMyGroups', () => {
     mockSelect.mockReturnValueOnce(makeSelectChain([{ group: deletedGroup, isAdmin: false }]))
     const result = await getMyGroups(USER_ID)
     expect(result).toEqual([])
+  })
+
+  it('returns userRank from leaderboard', async () => {
+    const membership = [{ group: GROUP_ROW, isAdmin: false }]
+    mockSelect
+      .mockReturnValueOnce(makeSelectChain(membership))
+      .mockReturnValueOnce(makeSelectChain([{ count: 3 }]))
+    mockGetGroupLeaderboard.mockResolvedValueOnce([
+      { rank: 1, userId: 'someone-else', displayName: 'Bob', avatarUrl: null, totalPoints: 15, predictionCount: 5, correctCount: 4 },
+      { rank: 2, userId: USER_ID, displayName: 'Alice', avatarUrl: null, totalPoints: 10, predictionCount: 3, correctCount: 2 },
+    ])
+
+    const result = await getMyGroups(USER_ID)
+    expect(result).toHaveLength(1)
+    expect(result[0]?.userRank).toBe(2)
+  })
+
+  it('userRank is null when user has no leaderboard entry', async () => {
+    const membership = [{ group: GROUP_ROW, isAdmin: false }]
+    mockSelect
+      .mockReturnValueOnce(makeSelectChain(membership))
+      .mockReturnValueOnce(makeSelectChain([{ count: 1 }]))
+    mockGetGroupLeaderboard.mockResolvedValueOnce([])
+
+    const result = await getMyGroups(USER_ID)
+    expect(result).toHaveLength(1)
+    expect(result[0]?.userRank).toBeNull()
+  })
+
+  it('userRank is null when leaderboard throws', async () => {
+    const membership = [{ group: GROUP_ROW, isAdmin: false }]
+    mockSelect
+      .mockReturnValueOnce(makeSelectChain(membership))
+      .mockReturnValueOnce(makeSelectChain([{ count: 1 }]))
+    mockGetGroupLeaderboard.mockRejectedValueOnce(new Error('DB error'))
+
+    const result = await getMyGroups(USER_ID)
+    expect(result).toHaveLength(1)
+    expect(result[0]?.userRank).toBeNull()
   })
 })
 

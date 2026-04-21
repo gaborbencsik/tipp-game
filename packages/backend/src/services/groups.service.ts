@@ -2,6 +2,7 @@ import { and, eq, isNull, sql } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { groups, groupMembers, users } from '../db/schema/index.js'
 import type { Group, GroupInput, GroupMember } from '../types/index.js'
+import { getGroupLeaderboard } from './group-leaderboard.service.js'
 
 class AppError extends Error {
   readonly status: number
@@ -29,6 +30,7 @@ function toApiGroup(
   row: typeof groups.$inferSelect,
   memberCount: number,
   isAdmin: boolean,
+  userRank: number | null = null,
 ): Group {
   return {
     id: row.id,
@@ -39,6 +41,7 @@ function toApiGroup(
     createdBy: row.createdBy,
     memberCount,
     isAdmin,
+    userRank,
     createdAt: row.createdAt.toISOString(),
   }
 }
@@ -62,7 +65,17 @@ export async function getMyGroups(userId: string): Promise<Group[]> {
       .from(groupMembers)
       .where(eq(groupMembers.groupId, group.id))
     const memberCount = countRows[0]?.count ?? 0
-    result.push(toApiGroup(group, memberCount, isAdmin))
+
+    let userRank: number | null = null
+    try {
+      const leaderboard = await getGroupLeaderboard(group.id, userId)
+      const entry = leaderboard.find((e) => e.userId === userId)
+      userRank = entry?.rank ?? null
+    } catch {
+      // If leaderboard fails (e.g. no predictions yet), rank stays null
+    }
+
+    result.push(toApiGroup(group, memberCount, isAdmin, userRank))
   }
   return result
 }

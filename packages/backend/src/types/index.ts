@@ -181,6 +181,7 @@ export interface Group {
   readonly createdBy: string
   readonly memberCount: number
   readonly isAdmin: boolean
+  readonly userRank: number | null
   readonly createdAt: string
 }
 

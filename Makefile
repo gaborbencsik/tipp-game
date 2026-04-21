@@ -1,6 +1,6 @@
 .PHONY: help install dev build test typecheck \
         db-up db-down db-logs db-migrate db-seed db-reset \
-        logs ps clean
+        logs ps clean sh-backend sh-frontend sh-db
 
 # Default target
 help:
@@ -17,8 +17,14 @@ help:
 	@echo "    make db-down       Összes container leállítása (volume megmarad)"
 	@echo "    make db-shell      psql shell a local DB-ben"
 	@echo "    make db-migrate    Drizzle migrációk futtatása"
-	@echo "    make db-seed       Seed adatok betöltése"
+	@echo "    make db-seed       Seed adatok betöltése (base: teams, venues)"
+	@echo "    make db-seed-local Dummy dev adatok betöltése (users, matches, groups)"
 	@echo "    make db-reset      DB törlése és újrainicializálása"
+	@echo ""
+	@echo "  Shell"
+	@echo "    make sh-backend    Shell a backend containerben"
+	@echo "    make sh-frontend   Shell a frontend containerben"
+	@echo "    make sh-db         Shell a DB containerben"
 	@echo ""
 	@echo "  CI / minőség"
 	@echo "    make test          Tesztek futtatása (minden workspace)"
@@ -61,6 +67,9 @@ db-shell:
 db-seed:
 	npm run db:seed --workspace=packages/backend
 
+db-seed-local:
+	npm run db:seed-local --workspace=packages/backend
+
 db-reset:
 	docker compose down -v
 	docker compose up -d db
@@ -68,6 +77,14 @@ db-reset:
 	@sleep 3
 	npm run db:migrate --workspace=packages/backend
 	npm run db:seed --workspace=packages/backend
+	npm run db:seed-local --workspace=packages/backend
+
+# ─── CI / minőség ────────────────────────────────────────────────────────────
+
+# ─── Shell ───────────────────────────────────────────────────────────────────
+
+sh:
+	docker compose exec backend sh
 
 # ─── CI / minőség ────────────────────────────────────────────────────────────
 

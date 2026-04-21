@@ -76,6 +76,7 @@ const GROUP_A: Group = {
   createdBy: 'user-uuid-1',
   memberCount: 3,
   isAdmin: true,
+  userRank: null,
   createdAt: '2026-01-01T00:00:00.000Z',
 }
 
@@ -88,6 +89,7 @@ const GROUP_B: Group = {
   createdBy: 'user-uuid-2',
   memberCount: 5,
   isAdmin: false,
+  userRank: null,
   createdAt: '2026-02-01T00:00:00.000Z',
 }
 

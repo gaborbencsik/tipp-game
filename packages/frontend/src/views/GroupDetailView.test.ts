@@ -84,6 +84,7 @@ const GROUP: Group = {
   createdBy: 'user-uuid-1',
   memberCount: 2,
   isAdmin: true,
+  userRank: null,
   createdAt: '2026-01-01T00:00:00.000Z',
 }
 

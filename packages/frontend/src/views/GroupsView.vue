@@ -162,7 +162,10 @@
                 <span data-testid="invite-inactive-badge" class="text-xs px-1.5 py-0.5 bg-red-100 text-red-600 rounded font-medium">Meghívó inaktív</span>
               </div>
             </div>
-            <span class="text-sm text-gray-400 shrink-0 ml-4">{{ group.memberCount }} tag</span>
+            <div class="flex items-center gap-2 shrink-0 ml-4">
+              <span v-if="group.userRank != null" data-testid="rank-badge" class="text-xs font-semibold px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded">#{{ group.userRank }}</span>
+              <span class="text-sm text-gray-400">{{ group.memberCount }} tag</span>
+            </div>
           </router-link>
         </li>
       </ul>
