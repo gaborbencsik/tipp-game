@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-04-21 (US-605 kész; seed split: seed.ts prod-safe + seed-local.ts dev dummy data)
+> Utoljára frissítve: 2026-04-21 (US-605 kész; seed split; összesítő tábla pontosítva – hiányzó story-k pótolva, számok javítva)
 
 ## Kész user story-k
 
@@ -429,11 +429,16 @@
 | US-902 | Statisztikai tipp típus konfig | ⬜ Nem kezdett | Should Have |
 | US-1001 | Hamburger menü / AppLayout | ✅ Kész | Should Have |
 | US-1002 | Felhasználói felület lokalizációja (i18n) | ⬜ Nem kezdett | Should Have |
+| US-1003 | Lejátszott meccsek összecsomagolása | ✅ Kész | Should Have |
 | US-1101 | Donation gomb és pop-up | ⬜ Nem kezdett | Should Have |
 | US-1102 | Donation átirányítás | ⬜ Nem kezdett | Should Have |
+| US-1103 | Email waitlist – feliratkozás mentése | ⬜ Nem kezdett | Should Have |
 | US-1201 | Futball API kiválasztása (kutatás) | ✅ Kész | Should Have |
 | US-1202 | Futball API szinkronizációs service | ⬜ Nem kezdett | Should Have |
 | US-1203 | Automatikus adatszinkron cron job | ⬜ Nem kezdett | Should Have |
+| US-1301 | Liga entitás bevezetése a meccsekhez | ⬜ Nem kezdett | Should Have |
+| US-204 | Mások tippjeinek megtekintése | ⬜ Nem kezdett | Should Have |
+| US-807 | Admin használati statisztikák (dashboard) | ⬜ Nem kezdett | Should Have |
 | BUG-001 | Admin users lista: minden sornál ugyanaz a név | ✅ Kész | Should Have |
 | UX-001 | Tipp input UX javítások | ✅ Kész | Should Have |
 | UX-002 | Befejezett meccsek összecsukvása | ✅ Kész | Should Have |
@@ -441,6 +446,7 @@
 | UX-004 | Focilabda kurzor ikon | ⬜ Nem kezdett | Nice to Have |
 | UX-005 | Optimista törlés az admin listákon | ⬜ Nem kezdett | Should Have |
 | UX-006 | Csapat zászló/logo megjelenítése (flag-icons) | ✅ Kész | Should Have |
+| UX-007 | Lejátszott meccsek szekció felülre kerül | ✅ Kész | Should Have |
 | US-806 | Csapat típus és country code mezők (DB migráció) | ✅ Kész | Should Have |
 | US-206 | Kedvenc csapat beállítása ligánként | ⬜ Nem kezdett | Should Have |
 | US-404 | Kedvenc csapat dupla pont számítás | ⬜ Nem kezdett | Should Have |
@@ -451,4 +457,4 @@
 
 ---
 
-**Haladás: 39 / 60 story kész** — Must Have: 27/33 ✅, Should Have: 12/23 ✅, Nice to Have: 0/2
+**Haladás: 46 / 65 story kész** — Must Have: 30/31 ✅, Should Have: 16/32 ✅, Nice to Have: 0/2
