@@ -4,15 +4,26 @@ import { waitlistEntries } from '../db/schema/index.js'
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+export type WaitlistSource = 'hero' | 'footer' | 'admin'
+
+class AppError extends Error {
+  readonly status: number
+  constructor(status: number, message: string) {
+    super(message)
+    this.status = status
+    this.name = 'AppError'
+  }
+}
+
 export interface WaitlistEntry {
   readonly id: string
   readonly email: string
-  readonly source: 'hero' | 'footer'
+  readonly source: WaitlistSource
   readonly createdAt: string
 }
 
 export interface WaitlistFilters {
-  readonly source?: 'hero' | 'footer'
+  readonly source?: WaitlistSource
   readonly search?: string
 }
 
@@ -30,6 +41,46 @@ export async function addToWaitlist(email: string, source: 'hero' | 'footer'): P
     .insert(waitlistEntries)
     .values({ email: email.toLowerCase().trim(), source })
     .onConflictDoNothing()
+}
+
+export async function addWaitlistEntry(email: string, source: WaitlistSource): Promise<WaitlistEntry> {
+  const normalizedEmail = email.toLowerCase().trim()
+
+  if (!normalizedEmail || !isValidEmail(normalizedEmail)) {
+    throw new AppError(400, 'Invalid email')
+  }
+
+  try {
+    const rows = await db
+      .insert(waitlistEntries)
+      .values({ email: normalizedEmail, source })
+      .returning()
+
+    const row = rows[0]
+    if (!row) throw new AppError(500, 'Failed to create waitlist entry')
+
+    return {
+      id: row.id,
+      email: row.email,
+      source: row.source,
+      createdAt: row.createdAt.toISOString(),
+    }
+  } catch (err) {
+    const code = (err as { code?: string })?.code
+    if (code === '23505') throw new AppError(409, 'Email already on waitlist')
+    throw err
+  }
+}
+
+export async function deleteWaitlistEntry(id: string): Promise<void> {
+  const rows = await db
+    .delete(waitlistEntries)
+    .where(eq(waitlistEntries.id, id))
+    .returning({ id: waitlistEntries.id })
+
+  if (rows.length === 0) {
+    throw new AppError(404, 'Waitlist entry not found')
+  }
 }
 
 export async function getWaitlistEntries(filters?: WaitlistFilters): Promise<WaitlistListResult> {

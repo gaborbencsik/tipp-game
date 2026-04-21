@@ -22,6 +22,9 @@ export const useAdminWaitlistStore = defineStore('admin-waitlist', () => {
   const totalCount = ref(0)
   const isLoading = ref(false)
   const error = ref<string | null>(null)
+  const addError = ref<string | null>(null)
+  const deletingId = ref<string | null>(null)
+  const isAdding = ref(false)
   const filters = reactive<MutableWaitlistFilters>({
     source: undefined,
     search: undefined,
@@ -46,6 +49,36 @@ export const useAdminWaitlistStore = defineStore('admin-waitlist', () => {
     }
   }
 
+  async function deleteEntry(id: string): Promise<void> {
+    error.value = null
+    deletingId.value = id
+    try {
+      const token = await getAccessToken()
+      await api.admin.waitlist.delete(token, id)
+      await fetchWaitlist()
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Ismeretlen hiba'
+    } finally {
+      deletingId.value = null
+    }
+  }
+
+  async function addEntry(email: string, source: WaitlistSource): Promise<boolean> {
+    addError.value = null
+    isAdding.value = true
+    try {
+      const token = await getAccessToken()
+      await api.admin.waitlist.add(token, email, source)
+      await fetchWaitlist()
+      return true
+    } catch (err) {
+      addError.value = err instanceof Error ? err.message : 'Ismeretlen hiba'
+      return false
+    } finally {
+      isAdding.value = false
+    }
+  }
+
   function setSourceFilter(source: WaitlistSource | undefined): void {
     filters.source = source
   }
@@ -54,5 +87,5 @@ export const useAdminWaitlistStore = defineStore('admin-waitlist', () => {
     filters.search = search || undefined
   }
 
-  return { entries, totalCount, isLoading, error, filters, fetchWaitlist, setSourceFilter, setSearchFilter }
+  return { entries, totalCount, isLoading, error, addError, deletingId, isAdding, filters, fetchWaitlist, deleteEntry, addEntry, setSourceFilter, setSearchFilter }
 })

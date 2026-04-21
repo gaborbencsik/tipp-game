@@ -1,0 +1,1 @@
+ALTER TYPE "public"."waitlist_source" ADD VALUE 'admin';

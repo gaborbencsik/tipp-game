@@ -189,7 +189,7 @@ export interface ScoringConfigInput {
   readonly incorrect: number
 }
 
-export type WaitlistSource = 'hero' | 'footer'
+export type WaitlistSource = 'hero' | 'footer' | 'admin'
 
 export interface WaitlistEntry {
   readonly id: string

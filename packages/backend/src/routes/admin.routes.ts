@@ -21,9 +21,9 @@ import {
 } from '../services/admin-users.service.js'
 import { upsertUser } from '../services/user.service.js'
 import { getGlobalConfig, updateGlobalConfig } from '../services/scoring-config.service.js'
-import { getWaitlistEntries } from '../services/waitlist.service.js'
+import { getWaitlistEntries, deleteWaitlistEntry, addWaitlistEntry, isValidEmail } from '../services/waitlist.service.js'
 import type { MatchOutcome, TeamInput, MatchInput, ScoringConfigInput } from '../types/index.js'
-import type { WaitlistFilters } from '../services/waitlist.service.js'
+import type { WaitlistFilters, WaitlistSource } from '../services/waitlist.service.js'
 
 const adminRouter = new Router({ prefix: '/api/admin' })
 
@@ -125,9 +125,11 @@ adminRouter.put('/scoring-config', async (ctx) => {
 
 // ─── Waitlist ────────────────────────────────────────────────────────────────
 
+const VALID_WAITLIST_SOURCES: readonly WaitlistSource[] = ['hero', 'footer', 'admin'] as const
+
 adminRouter.get('/waitlist', async (ctx) => {
   const query = ctx.query as Record<string, string | undefined>
-  const source = query.source === 'hero' || query.source === 'footer' ? query.source : undefined
+  const source = VALID_WAITLIST_SOURCES.includes(query.source as WaitlistSource) ? query.source as WaitlistSource : undefined
   const search = typeof query.search === 'string' && query.search.trim().length > 0 ? query.search.trim() : undefined
 
   const filters: WaitlistFilters = {
@@ -136,6 +138,34 @@ adminRouter.get('/waitlist', async (ctx) => {
   }
 
   ctx.body = await getWaitlistEntries(filters)
+})
+
+adminRouter.delete('/waitlist/:id', async (ctx) => {
+  await deleteWaitlistEntry(ctx.params['id'] as string)
+  ctx.status = 204
+})
+
+adminRouter.post('/waitlist', async (ctx) => {
+  const body = ctx.request.body as Record<string, unknown>
+  const email = typeof body.email === 'string' ? body.email.trim() : ''
+
+  if (!email || !isValidEmail(email)) {
+    ctx.status = 400
+    ctx.body = { error: 'Invalid email' }
+    return
+  }
+
+  const rawSource = typeof body.source === 'string' ? body.source : 'admin'
+  if (!VALID_WAITLIST_SOURCES.includes(rawSource as WaitlistSource)) {
+    ctx.status = 400
+    ctx.body = { error: 'Invalid source' }
+    return
+  }
+
+  const source = rawSource as WaitlistSource
+  const entry = await addWaitlistEntry(email, source)
+  ctx.status = 201
+  ctx.body = entry
 })
 
 export { adminRouter }

@@ -1,21 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-const { mockInsert, mockValues, mockOnConflictDoNothing, mockSelect, mockFrom, mockWhere, mockOrderBy } = vi.hoisted(() => {
+const { mockInsert, mockValues, mockOnConflictDoNothing, mockSelect, mockFrom, mockWhere, mockOrderBy, mockReturning, mockDelete } = vi.hoisted(() => {
   const mockOnConflictDoNothing = vi.fn()
-  const mockValues = vi.fn(() => ({ onConflictDoNothing: mockOnConflictDoNothing }))
+  const mockReturning = vi.fn()
+  const mockValues = vi.fn(() => ({ onConflictDoNothing: mockOnConflictDoNothing, returning: mockReturning }))
   const mockInsert = vi.fn(() => ({ values: mockValues }))
   const mockOrderBy = vi.fn()
-  const mockWhere = vi.fn(() => ({ orderBy: mockOrderBy }))
+  const mockWhere = vi.fn(() => ({ orderBy: mockOrderBy, returning: mockReturning }))
   const mockFrom = vi.fn(() => ({ where: mockWhere }))
   const mockSelect = vi.fn(() => ({ from: mockFrom }))
-  return { mockInsert, mockValues, mockOnConflictDoNothing, mockSelect, mockFrom, mockWhere, mockOrderBy }
+  const mockDelete = vi.fn(() => ({ where: mockWhere }))
+  return { mockInsert, mockValues, mockOnConflictDoNothing, mockSelect, mockFrom, mockWhere, mockOrderBy, mockReturning, mockDelete }
 })
 
 vi.mock('../src/db/client.js', () => ({
-  db: { insert: mockInsert, select: mockSelect },
+  db: { insert: mockInsert, select: mockSelect, delete: mockDelete },
 }))
 
-import { isValidEmail, addToWaitlist, getWaitlistEntries } from '../src/services/waitlist.service.js'
+import { isValidEmail, addToWaitlist, getWaitlistEntries, addWaitlistEntry, deleteWaitlistEntry } from '../src/services/waitlist.service.js'
 import * as schema from '../src/db/schema/index.js'
 
 describe('isValidEmail', () => {
@@ -201,5 +203,123 @@ describe('getWaitlistEntries', () => {
 
     expect(result.totalCount).toBe(0)
     expect(result.entries).toEqual([])
+  })
+})
+
+describe('deleteWaitlistEntry', () => {
+  beforeEach(() => {
+    vi.resetAllMocks()
+  })
+
+  it('deletes entry by id successfully', async () => {
+    mockDelete.mockReturnValue({
+      where: vi.fn().mockReturnValue({
+        returning: vi.fn().mockResolvedValue([{ id: 'uuid-1' }]),
+      }),
+    })
+
+    await expect(deleteWaitlistEntry('uuid-1')).resolves.toBeUndefined()
+  })
+
+  it('throws 404 when entry not found', async () => {
+    mockDelete.mockReturnValue({
+      where: vi.fn().mockReturnValue({
+        returning: vi.fn().mockResolvedValue([]),
+      }),
+    })
+
+    await expect(deleteWaitlistEntry('nonexistent-id')).rejects.toThrow('Waitlist entry not found')
+
+    try {
+      await deleteWaitlistEntry('nonexistent-id')
+    } catch (err) {
+      expect((err as { status: number }).status).toBe(404)
+    }
+  })
+})
+
+describe('addWaitlistEntry', () => {
+  beforeEach(() => {
+    vi.resetAllMocks()
+  })
+
+  it('inserts entry and returns it', async () => {
+    const now = new Date('2026-04-21T12:00:00Z')
+    mockInsert.mockReturnValue({
+      values: vi.fn().mockReturnValue({
+        returning: vi.fn().mockResolvedValue([{
+          id: 'uuid-new',
+          email: 'new@example.com',
+          source: 'admin',
+          createdAt: now,
+        }]),
+      }),
+    })
+
+    const result = await addWaitlistEntry('New@Example.COM', 'admin')
+
+    expect(result).toEqual({
+      id: 'uuid-new',
+      email: 'new@example.com',
+      source: 'admin',
+      createdAt: '2026-04-21T12:00:00.000Z',
+    })
+  })
+
+  it('throws 409 on duplicate email (PG unique violation)', async () => {
+    const pgError = new Error('duplicate key') as Error & { code: string }
+    pgError.code = '23505'
+    mockInsert.mockReturnValue({
+      values: vi.fn().mockReturnValue({
+        returning: vi.fn().mockRejectedValue(pgError),
+      }),
+    })
+
+    await expect(addWaitlistEntry('dup@example.com', 'admin')).rejects.toThrow('Email already on waitlist')
+
+    try {
+      await addWaitlistEntry('dup@example.com', 'admin')
+    } catch (err) {
+      expect((err as { status: number }).status).toBe(409)
+    }
+  })
+
+  it('throws 400 on invalid email', async () => {
+    await expect(addWaitlistEntry('not-an-email', 'admin')).rejects.toThrow('Invalid email')
+
+    try {
+      await addWaitlistEntry('not-an-email', 'admin')
+    } catch (err) {
+      expect((err as { status: number }).status).toBe(400)
+    }
+  })
+
+  it('throws 400 on empty email', async () => {
+    await expect(addWaitlistEntry('', 'hero')).rejects.toThrow('Invalid email')
+
+    try {
+      await addWaitlistEntry('', 'hero')
+    } catch (err) {
+      expect((err as { status: number }).status).toBe(400)
+    }
+  })
+
+  it('normalizes email to lowercase and trimmed', async () => {
+    const now = new Date('2026-04-21T12:00:00Z')
+    const mockReturnFn = vi.fn().mockResolvedValue([{
+      id: 'uuid-new',
+      email: 'test@example.com',
+      source: 'footer',
+      createdAt: now,
+    }])
+    const mockValuesFn = vi.fn().mockReturnValue({ returning: mockReturnFn })
+    mockInsert.mockReturnValue({ values: mockValuesFn })
+
+    await addWaitlistEntry('  TEST@Example.COM  ', 'footer')
+
+    expect(mockValuesFn).toHaveBeenCalledWith({
+      email: 'test@example.com',
+      source: 'footer',
+    })
   })
 })

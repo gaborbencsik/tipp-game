@@ -8,13 +8,15 @@ vi.mock('@/lib/supabase', () => ({
   supabase: { auth: { getSession: vi.fn().mockResolvedValue({ data: { session: null } }) } },
 }))
 
-const { mockWaitlistList } = vi.hoisted(() => ({
+const { mockWaitlistList, mockWaitlistDelete, mockWaitlistAdd } = vi.hoisted(() => ({
   mockWaitlistList: vi.fn(),
+  mockWaitlistDelete: vi.fn(),
+  mockWaitlistAdd: vi.fn(),
 }))
 
 vi.mock('@/api/index', () => ({
   api: {
-    admin: { waitlist: { list: mockWaitlistList } },
+    admin: { waitlist: { list: mockWaitlistList, delete: mockWaitlistDelete, add: mockWaitlistAdd } },
   },
 }))
 
@@ -138,5 +140,100 @@ describe('admin-waitlist.store', () => {
     store.setSearchFilter('')
     await store.fetchWaitlist()
     expect(mockWaitlistList).toHaveBeenCalledWith('', {})
+  })
+
+  // ─── initial state for new fields ─────────────────────────────────────────
+
+  it('initial addError is null', () => {
+    const store = useAdminWaitlistStore()
+    expect(store.addError).toBeNull()
+  })
+
+  it('initial deletingId is null', () => {
+    const store = useAdminWaitlistStore()
+    expect(store.deletingId).toBeNull()
+  })
+
+  it('initial isAdding is false', () => {
+    const store = useAdminWaitlistStore()
+    expect(store.isAdding).toBe(false)
+  })
+
+  // ─── deleteEntry ──────────────────────────────────────────────────────────
+
+  it('deleteEntry() calls API and refreshes list', async () => {
+    mockWaitlistDelete.mockResolvedValue(undefined)
+    mockWaitlistList.mockResolvedValue(EMPTY_RESULT)
+    const store = useAdminWaitlistStore()
+    await store.deleteEntry('uuid-1')
+    expect(mockWaitlistDelete).toHaveBeenCalledWith('', 'uuid-1')
+    expect(mockWaitlistList).toHaveBeenCalled()
+  })
+
+  it('deleteEntry() sets error on failure', async () => {
+    mockWaitlistDelete.mockRejectedValue(new Error('Not found'))
+    const store = useAdminWaitlistStore()
+    await store.deleteEntry('uuid-1')
+    expect(store.error).toBe('Not found')
+  })
+
+  it('deleteEntry() sets deletingId during operation', async () => {
+    let capturedDeletingId: string | null = null
+    mockWaitlistDelete.mockImplementation(async () => {
+      capturedDeletingId = store.deletingId
+    })
+    mockWaitlistList.mockResolvedValue(EMPTY_RESULT)
+    const store = useAdminWaitlistStore()
+    await store.deleteEntry('uuid-1')
+    expect(capturedDeletingId).toBe('uuid-1')
+    expect(store.deletingId).toBeNull()
+  })
+
+  it('deleteEntry() resets deletingId on error', async () => {
+    mockWaitlistDelete.mockRejectedValue(new Error('fail'))
+    const store = useAdminWaitlistStore()
+    await store.deleteEntry('uuid-1')
+    expect(store.deletingId).toBeNull()
+  })
+
+  // ─── addEntry ─────────────────────────────────────────────────────────────
+
+  it('addEntry() calls API and refreshes list', async () => {
+    const newEntry = { id: 'uuid-new', email: 'new@example.com', source: 'admin' as const, createdAt: '2026-04-21T12:00:00.000Z' }
+    mockWaitlistAdd.mockResolvedValue(newEntry)
+    mockWaitlistList.mockResolvedValue(MOCK_RESULT)
+    const store = useAdminWaitlistStore()
+    const result = await store.addEntry('new@example.com', 'admin')
+    expect(result).toBe(true)
+    expect(mockWaitlistAdd).toHaveBeenCalledWith('', 'new@example.com', 'admin')
+    expect(mockWaitlistList).toHaveBeenCalled()
+  })
+
+  it('addEntry() sets addError on 409 duplicate', async () => {
+    mockWaitlistAdd.mockRejectedValue(new Error('Email already on waitlist'))
+    const store = useAdminWaitlistStore()
+    const result = await store.addEntry('dup@example.com', 'admin')
+    expect(result).toBe(false)
+    expect(store.addError).toBe('Email already on waitlist')
+  })
+
+  it('addEntry() sets isAdding during operation', async () => {
+    let capturedIsAdding = false
+    mockWaitlistAdd.mockImplementation(async () => {
+      capturedIsAdding = store.isAdding
+      return { id: 'uuid-new', email: 'new@example.com', source: 'admin' as const, createdAt: '2026-04-21T12:00:00.000Z' }
+    })
+    mockWaitlistList.mockResolvedValue(EMPTY_RESULT)
+    const store = useAdminWaitlistStore()
+    await store.addEntry('new@example.com', 'admin')
+    expect(capturedIsAdding).toBe(true)
+    expect(store.isAdding).toBe(false)
+  })
+
+  it('addEntry() resets isAdding on error', async () => {
+    mockWaitlistAdd.mockRejectedValue(new Error('fail'))
+    const store = useAdminWaitlistStore()
+    await store.addEntry('fail@example.com', 'admin')
+    expect(store.isAdding).toBe(false)
   })
 })

@@ -1,4 +1,4 @@
-import type { User, Match, MatchesFilters, MatchInput, MatchResultInput, Prediction, PredictionInput, Team, TeamInput, AdminUser, Group, GroupInput, GroupMember, JoinGroupInput, LeaderboardEntry, ScoringConfigFull, ScoringConfigInput, WaitlistListResult, WaitlistFilters } from '../types/index.js'
+import type { User, Match, MatchesFilters, MatchInput, MatchResultInput, Prediction, PredictionInput, Team, TeamInput, AdminUser, Group, GroupInput, GroupMember, JoinGroupInput, LeaderboardEntry, ScoringConfigFull, ScoringConfigInput, WaitlistListResult, WaitlistFilters, WaitlistEntry, WaitlistSource } from '../types/index.js'
 
 const BASE_URL = (import.meta.env.VITE_API_URL ?? '') + '/api'
 
@@ -217,6 +217,17 @@ export const api = {
           headers: { Authorization: `Bearer ${token}` },
         })
       },
+      delete: (token: string, id: string) =>
+        request<void>(`/admin/waitlist/${id}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      add: (token: string, email: string, source?: WaitlistSource) =>
+        request<WaitlistEntry>('/admin/waitlist', {
+          method: 'POST',
+          body: JSON.stringify({ email, ...(source ? { source } : {}) }),
+          headers: { Authorization: `Bearer ${token}` },
+        }),
     },
   },
   leaderboard: {

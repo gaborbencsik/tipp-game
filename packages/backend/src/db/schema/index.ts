@@ -36,7 +36,7 @@ export const auditActionEnum = pgEnum('audit_action', [
   'create', 'update', 'delete', 'result_set', 'ban', 'role_change'
 ])
 
-export const waitlistSourceEnum = pgEnum('waitlist_source', ['hero', 'footer'])
+export const waitlistSourceEnum = pgEnum('waitlist_source', ['hero', 'footer', 'admin'])
 
 // ─── USERS ────────────────────────────────────────────────────────────────────
 
