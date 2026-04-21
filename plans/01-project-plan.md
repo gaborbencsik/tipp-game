@@ -1546,6 +1546,37 @@ A `waitlist_entries` tábla már létezik a DB-ben (US-1103). Jelenleg az admin 
 **Komplexitás:** S
 **Prioritás:** Should Have
 
+---
+
+#### US-1105: Admin waitlist CRUD – törlés és hozzáadás
+
+**Story:**
+Mint **platform admin**, szeretnék **a waitlist táblázatban egyedi bejegyzéseket törölni és új email-címeket manuálisan hozzáadni**, hogy **a waitlist adatait karbantarthassam**.
+
+**Kontextus:**
+Az US-1104 implementálta az `/admin/waitlist` read-only dashboardot. Ez a story bővíti a műveletek körét: egyedi törlés és manuális hozzáadás. A `waitlist_source` enum egy `'admin'` értékkel bővül.
+
+**Elfogadási kritériumok:**
+
+*Backend:*
+- [ ] `DELETE /api/admin/waitlist/:id` — sikeres: 204, nem létező: 404
+- [ ] `POST /api/admin/waitlist` — body: `{ email, source? }` — default source: `'admin'`; duplikált: 409; sikeres: 201
+- [ ] `waitlist_source` pgEnum bővítése `'admin'` értékkel + Drizzle migráció
+- [ ] `waitlist.service.ts` bővítése: `deleteWaitlistEntry(id)`, `addWaitlistEntry(email, source)`
+
+*Frontend:*
+- [ ] Táblázat soronként trash ikon gomb + megerősítő dialog törlés előtt
+- [ ] „+ Email hozzáadása" gomb + inline form (email + source dropdown)
+- [ ] Admin-waitlist store bővítése: `deleteEntry()`, `addEntry()` akciók
+- [ ] API client: `api.admin.waitlist.delete()`, `api.admin.waitlist.add()`
+
+*Tesztek:*
+- [ ] Backend: törlés siker/404, hozzáadás siker/409/400
+- [ ] Frontend: store akciók, komponens tesztek (dialog, form, hibakezelés)
+
+**Komplexitás:** S
+**Prioritás:** Should Have
+
 #### SEC-002: HMAC-aláírt meghívó URL-ek
 
 **Story:**
@@ -1638,6 +1669,7 @@ Jelenleg a join endpoint IP-alapú rate limittel van védve. Ez elegendő a legt
 | DISC-001 | Landing oldal discovery (design + marketing + social) | L | Should Have |
 | US-1103 | Email waitlist – feliratkozás mentése | S | Should Have |
 | US-1104 | Admin waitlist dashboard | S | Should Have |
+| US-1105 | Admin waitlist CRUD (törlés + hozzáadás) | S | Should Have |
 | SEC-001 | Row-Level Security bekapcsolása (Supabase RLS) | S | Must Have |
 | SEC-002 | HMAC-aláírt meghívó URL-ek | S | Nice to Have |
 
