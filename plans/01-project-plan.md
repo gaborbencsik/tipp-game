@@ -1511,7 +1511,40 @@ A `LandingView.vue`-ban két email form van (hero + footer szekció), de jelenle
 
 ---
 
-### E14 – Biztonság (kiegészítés)
+#### US-1104: Admin waitlist dashboard – feliratkozott email-ek megtekintése
+
+**Story:**
+Mint **platform admin**, szeretnék **egy admin dashboardon látni az összes feliratkozott waitlist email-címet és a teljes számot**, hogy **áttekintetésem legyen a landing oldal teljesítményéről és a feliratkozók számáról**.
+
+**Kontextus:**
+A `waitlist_entries` tábla már létezik a DB-ben (US-1103). Jelenleg az admin felületen nincs mód megtekinteni a feliratkozott email-címeket. Ez a story egy új admin nézetet és a hozzá tartozó backend endpointot vezeti be. Az admin szekció pill tab navigációja egy új "Waitlist" tabbal bővül.
+
+**Elfogadási kritériumok:**
+
+*Backend:*
+- [ ] `GET /api/admin/waitlist` endpoint — `authMiddleware + adminMiddleware`
+- [ ] Response: `{ totalCount: number, entries: WaitlistEntry[] }` — `createdAt` csökkenő sorrendben
+- [ ] Szűrők: `source` (hero/footer), `search` (email ILIKE)
+- [ ] `waitlist.service.ts` bővítése: `getWaitlistEntries(filters?)`
+
+*Frontend:*
+- [ ] `/admin/waitlist` route — `requiresAuth + requiresAdmin`
+- [ ] `AdminWaitlistView.vue`: számláló kártya felül + szűrhető táblázat (email, forrás badge, dátum)
+- [ ] Admin pill tab navigáció: új "Waitlist" tab
+- [ ] `admin-waitlist.store.ts` Pinia store
+- [ ] `api.admin.waitlist.list(token, filters?)` API client metódus
+
+*Tesztek:*
+- [ ] Backend unit tesztek: lista lekérés, source szűrés, email keresés, üres eredmény
+- [ ] Frontend tesztek: store fetch, táblázat renderelés, szűrés, üres állapot
+
+**Technikai megjegyzések:**
+- A `waitlist.service.ts` már létezik — bővítjük a `getWaitlistEntries` függvénnyel
+- A `totalCount` a szűrés UTÁNI értéket mutatja
+- Admin route-ok: `/api/admin` prefix, `adminRouter` az `admin.routes.ts`-ben
+
+**Komplexitás:** S
+**Prioritás:** Should Have
 
 #### SEC-002: HMAC-aláírt meghívó URL-ek
 
@@ -1604,6 +1637,7 @@ Jelenleg a join endpoint IP-alapú rate limittel van védve. Ez elegendő a legt
 | US-807 | Admin használati statisztikák (dashboard) | M | Should Have |
 | DISC-001 | Landing oldal discovery (design + marketing + social) | L | Should Have |
 | US-1103 | Email waitlist – feliratkozás mentése | S | Should Have |
+| US-1104 | Admin waitlist dashboard | S | Should Have |
 | SEC-001 | Row-Level Security bekapcsolása (Supabase RLS) | S | Must Have |
 | SEC-002 | HMAC-aláírt meghívó URL-ek | S | Nice to Have |
 
