@@ -34,6 +34,7 @@
 | **US-1103** | Email waitlist – feliratkozás mentése | ✅ Kész |
 | **US-1104** | Admin waitlist dashboard | ✅ Kész |
 | **US-1105** | Admin waitlist CRUD (törlés + hozzáadás) | ✅ Kész |
+| **SEC-001** | Row-Level Security bekapcsolása (Supabase RLS) | ✅ Kész |
 
 ### US-001 – Elfogadási kritériumok teljesítve
 
@@ -463,9 +464,9 @@
 | US-404 | Kedvenc csapat dupla pont számítás | ⬜ Nem kezdett | Should Have |
 | US-607 | Kedvenc csapat dupla pont szabály (csoport beállítás) | ⬜ Nem kezdett | Should Have |
 | DISC-001 | Landing oldal discovery (design + marketing + social) | ✅ Kész | Should Have |
-| SEC-001 | Row-Level Security bekapcsolása (Supabase RLS) | ⬜ Nem kezdett | Must Have |
+| SEC-001 | Row-Level Security bekapcsolása (Supabase RLS) | ✅ Kész | Must Have |
 | SEC-002 | HMAC-aláírt meghívó URL-ek | ⬜ Nem kezdett | Nice to Have |
 
 ---
 
-**Haladás: 49 / 73 story kész** — Must Have: 30/31, Should Have: 19/39, Nice to Have: 0/3
+**Haladás: 50 / 73 story kész** — Must Have: 31/31, Should Have: 19/39, Nice to Have: 0/3
