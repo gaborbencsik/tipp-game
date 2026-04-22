@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-04-21 (UX-008 onboarding flow story hozzáadva)
+> Utoljára frissítve: 2026-04-21 (UX-009..UX-013 meccsek redesign story-k hozzáadva)
 
 ## Kész user story-k
 
@@ -453,6 +453,11 @@
 | UX-006 | Csapat zászló/logo megjelenítése (flag-icons) | ✅ Kész | Should Have |
 | UX-007 | Lejátszott meccsek szekció felülre kerül | ✅ Kész | Should Have |
 | UX-008 | Regisztráció utáni onboarding flow (3 lépés) | ⬜ Nem kezdett | Should Have |
+| UX-009 | Match card vizuális redesign | ⬜ Nem kezdett | Should Have |
+| UX-010 | Filter tabs (segmented control) redesign | ⬜ Nem kezdett | Should Have |
+| UX-011 | Sidebar redesign (szekciócímkék, admin nav, mini LB) | ⬜ Nem kezdett | Should Have |
+| UX-012 | Toast notification rendszer | ⬜ Nem kezdett | Should Have |
+| UX-013 | Értesítési rendszer (notification bell + panel) | ⬜ Nem kezdett | Nice to Have |
 | US-806 | Csapat típus és country code mezők (DB migráció) | ✅ Kész | Should Have |
 | US-206 | Kedvenc csapat beállítása ligánként | ⬜ Nem kezdett | Should Have |
 | US-404 | Kedvenc csapat dupla pont számítás | ⬜ Nem kezdett | Should Have |
@@ -463,4 +468,4 @@
 
 ---
 
-**Haladás: 49 / 68 story kész** — Must Have: 30/31 ✅, Should Have: 19/35 ✅, Nice to Have: 0/2
+**Haladás: 49 / 73 story kész** — Must Have: 30/31, Should Have: 19/39, Nice to Have: 0/3

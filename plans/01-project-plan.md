@@ -1705,16 +1705,21 @@ Jelenleg a join endpoint IP-alapú rate limittel van védve. Ez elegendő a legt
 | US-1105 | Admin waitlist CRUD (törlés + hozzáadás) | S | Should Have |
 | SEC-001 | Row-Level Security bekapcsolása (Supabase RLS) | S | Must Have |
 | SEC-002 | HMAC-aláírt meghívó URL-ek | S | Nice to Have |
+| UX-009 | Match card vizuális redesign | M | Should Have |
+| UX-010 | Filter tabs (segmented control) redesign | S | Should Have |
+| UX-011 | Sidebar redesign (szekciócímkék, admin nav, mini LB) | M | Should Have |
+| UX-012 | Toast notification rendszer | S | Should Have |
+| UX-013 | Értesítési rendszer (notification bell + panel) | L | Nice to Have |
 
 **Összesítés:**
 - Must Have: 30 story (4 technikai + 26 product)
-- Should Have: 25 story
-- Nice to Have: 2 (UX-004, SEC-002 + ld. E10 epic – részletezés a 04-extras.md-ben)
+- Should Have: 29 story
+- Nice to Have: 3 (UX-004, SEC-002, UX-013 + ld. E10 epic – részletezés a 04-extras.md-ben)
 
 **Méret szerinti bontás:**
-- S (Small): 12 story
-- M (Medium): 20 story
-- L (Large): 5 story
+- S (Small): 14 story
+- M (Medium): 22 story
+- L (Large): 6 story
 
 ## 4. Story map (vázlat)
 
