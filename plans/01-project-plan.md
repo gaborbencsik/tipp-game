@@ -1033,6 +1033,37 @@ Mint **felhasználó**, szeretném, hogy **a lejátszott meccsek összecsomagolt
 
 ---
 
+#### UX-008: Regisztráció utáni onboarding flow (3 lépés)
+
+**Story:**
+Mint **új felhasználó**, szeretnék **az első bejelentkezés után egy rövid, 3 lépéses onboarding flow-t látni**, hogy **megértsem az app lényegét és gyorsan elkezdhessek tippelni**.
+
+**Kontextus:**
+Jelenleg a regisztráció után a user egyenesen a meccslistára kerül, kontextus nélkül. Az onboarding egy full-screen overlay, ami `localStorage`-ban jelöli, hogy már lefutott — nincs backend függőség.
+
+**Elfogadási kritériumok:**
+
+*3 lépés:*
+- [ ] 1. lépés: Üdvözlés + tippelés bemutatása (mit csinál az app, tipp kártya illusztráció)
+- [ ] 2. lépés: Határidő tudatosítás (tipp a meccs ELŐTT kell, vizuális idővonal)
+- [ ] 3. lépés: Csoportok CTA ("Csoport létrehozása" / "Van meghívó kódom" / "Később")
+
+*Trigger + viselkedés:*
+- [ ] Csak első bejelentkezéskor jelenik meg (`localStorage` flag)
+- [ ] Mindig átugorható (skip gomb minden lépésen)
+- [ ] Mobile-first full-screen overlay, desktop-on max-width korlátozás
+- [ ] Accessibility: focus trap, keyboard navigáció, aria-labelek
+
+*Tesztek:*
+- [ ] Megjelenik első login-nál, nem jelenik meg második login-nál
+- [ ] Skip gomb bezárja és beállítja a localStorage flaget
+- [ ] 3. lépés gombjai a megfelelő oldalakra navigálnak
+
+**Komplexitás:** S
+**Prioritás:** Should Have
+
+---
+
 
 **Elfogadási kritériumok:**
 - [ ] A bal oldali navigációs sávban (AppLayout sidebar) a nav itemek alatt, az aljára rögzítve megjelenik egy "🍺 Támogasd a projektet" gomb
@@ -1664,6 +1695,8 @@ Jelenleg a join endpoint IP-alapú rate limittel van védve. Ez elegendő a legt
 | UX-004 | Focilabda kurzor ikon | S | Nice to Have |
 | UX-005 | Optimista törlés az admin listákon | S | Should Have |
 | UX-006 | Csapat zászló/logo megjelenítése (flag-icons) | S | Should Have | ✅ Kész |
+| UX-007 | Lejátszott meccsek szekció felülre kerül | XS | Should Have | ✅ Kész |
+| UX-008 | Regisztráció utáni onboarding flow (3 lépés) | S | Should Have |
 | US-806 | Csapat típus és country code mezők (DB migráció) | S | Should Have | ✅ Kész |
 | US-807 | Admin használati statisztikák (dashboard) | M | Should Have |
 | DISC-001 | Landing oldal discovery (design + marketing + social) | L | Should Have |

@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-04-21 (US-1105 admin waitlist CRUD kész)
+> Utoljára frissítve: 2026-04-21 (UX-008 onboarding flow story hozzáadva)
 
 ## Kész user story-k
 
@@ -318,7 +318,7 @@
 - ✅ Backend API validáció: `outcomeAfterDraw` opcionálisan fogadva `POST /api/predictions` és admin result endpoint-on
 - ✅ `MatchesView` + `MatchDetailView`: egyenes kieséses meccsnél döntetlen tipp esetén 4 gombos outcome selector jelenik meg (Hossz./Tizenegyes × Hazai/Vendég); toggle-olható
 - ✅ `AdminMatchesView`: döntetlen eredmény rögzítésekor outcome dropdown jelenik meg knockout meccsekre
-- ✅ `MyTipsView`: lezárt meccsnél az outcome tipp megjelenik a tipp mellett (pl. „1–1 · H+hossz.")
+- ✅ `MyTipsView`: lezárt meccsnél az outcome tipp megjelenik a tipp mellett (pl. „1-1 . H+hossz.")
 - ✅ 120 backend + 212 frontend teszt, typecheck CLEAN
 
 ### US-604-A – Elfogadási kritériumok teljesítve
@@ -344,7 +344,7 @@
 - ✅ `groups.store.ts`: `regenerateInvite`, `setInviteActive` actions (frissítik a `groups` listát)
 - ✅ `GroupDetailView.vue`: "Meghívó kód" szekció (csak admin, Tagok tab alján) — kód display, Kód másolás, Link másolása, Deaktiválás/Aktiválás, Újragenerálás (confirm dialoggal)
 - ✅ `GroupsView.vue`: inaktív meghívójú csoportnál admin usernek piros "Meghívó inaktív" badge
-- ✅ Másolás gombokon zöld ✓ animáció 2 másodpercig (`copiedInvite` / `copiedState` ref)
+- ✅ Másolás gombokon zöld animáció 2 másodpercig (`copiedInvite` / `copiedState` ref)
 - ✅ `/join/:code` route + `JoinView.vue` — automatikusan join-ol és a csoport detail oldalra irányít
 - ✅ Router guard: `redirect` query param megőrzése bejelentkezés előtt; `LoginView` bejelentkezés után visszairányít
 - ✅ Join URL = `window.location.origin + /join/` + kód (dinamikus, domain-független)
@@ -452,6 +452,7 @@
 | UX-005 | Optimista törlés az admin listákon | ⬜ Nem kezdett | Should Have |
 | UX-006 | Csapat zászló/logo megjelenítése (flag-icons) | ✅ Kész | Should Have |
 | UX-007 | Lejátszott meccsek szekció felülre kerül | ✅ Kész | Should Have |
+| UX-008 | Regisztráció utáni onboarding flow (3 lépés) | ⬜ Nem kezdett | Should Have |
 | US-806 | Csapat típus és country code mezők (DB migráció) | ✅ Kész | Should Have |
 | US-206 | Kedvenc csapat beállítása ligánként | ⬜ Nem kezdett | Should Have |
 | US-404 | Kedvenc csapat dupla pont számítás | ⬜ Nem kezdett | Should Have |
@@ -462,4 +463,4 @@
 
 ---
 
-**Haladás: 49 / 67 story kész** — Must Have: 30/31 ✅, Should Have: 19/34 ✅, Nice to Have: 0/2
+**Haladás: 49 / 68 story kész** — Must Have: 30/31 ✅, Should Have: 19/35 ✅, Nice to Have: 0/2
