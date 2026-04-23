@@ -63,7 +63,7 @@ describe('AuthCallbackView', () => {
     await flushPromises()
 
     expect(mockHandleSession).toHaveBeenCalledWith(mockSession)
-    expect(mockPush).toHaveBeenCalledWith('/')
+    expect(mockPush).toHaveBeenCalledWith({ name: 'home' })
   })
 
   it('getSession session present (fallback) → handleSession called, navigates /', async () => {
@@ -76,7 +76,7 @@ describe('AuthCallbackView', () => {
     await flushPromises()
 
     expect(mockHandleSession).toHaveBeenCalledWith(mockSession)
-    expect(mockPush).toHaveBeenCalledWith('/')
+    expect(mockPush).toHaveBeenCalledWith({ name: 'home' })
   })
 
   it('no session → handleSession not called, navigates /', async () => {
@@ -91,6 +91,6 @@ describe('AuthCallbackView', () => {
     await flushPromises()
 
     expect(mockHandleSession).not.toHaveBeenCalled()
-    expect(mockPush).toHaveBeenCalledWith('/')
+    expect(mockPush).toHaveBeenCalledWith({ name: 'home' })
   })
 })
