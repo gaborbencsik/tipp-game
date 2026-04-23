@@ -3,6 +3,7 @@ import { authMiddleware } from '../middleware/auth.middleware.js'
 import { upsertUser } from '../services/user.service.js'
 import { listActiveTypes, createType, updateType, deactivateType } from '../services/special-prediction-types.service.js'
 import { getMyPredictions, upsertPrediction } from '../services/special-predictions.service.js'
+import { setCorrectAnswer } from '../services/special-prediction-evaluation.service.js'
 import type { SpecialTypeInput } from '../types/index.js'
 
 const router = new Router()
@@ -49,6 +50,19 @@ router.delete('/api/groups/:groupId/special-types/:typeId', authMiddleware, asyn
   await deactivateType(ctx.params.groupId, ctx.params.typeId, dbUser.id)
   ctx.status = 204
   ctx.body = null
+})
+
+router.put('/api/groups/:groupId/special-types/:typeId/answer', authMiddleware, async (ctx) => {
+  const dbUser = await upsertUser(ctx.state.user)
+  const body = ctx.request.body as Record<string, unknown>
+
+  if (typeof body.correctAnswer !== 'string' || body.correctAnswer.trim().length === 0) {
+    ctx.status = 400
+    ctx.body = { error: 'correctAnswer is required' }
+    return
+  }
+
+  ctx.body = await setCorrectAnswer(ctx.params.groupId, ctx.params.typeId, dbUser.id, body.correctAnswer.trim())
 })
 
 // ─── Special Predictions (member submit/fetch) ───────────────────────────────
