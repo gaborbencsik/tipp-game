@@ -64,6 +64,13 @@
       "when": 1777123200000,
       "tag": "0008_onboarding_flag",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1777209600000,
+      "tag": "0009_special_prediction_types_group_id",
+      "breakpoints": true
     }
   ]
 }

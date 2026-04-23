@@ -454,8 +454,8 @@
 | US-804 | Csapatok kezelése | ✅ Kész | Must Have |
 | US-805 | Felhasználók kezelése | ✅ Kész | Must Have |
 | US-901 | Statisztikai tipp leadása | ⬜ Lebontva (US-901-A..E, US-902-A..B) | Should Have |
-| US-901-A | DB migráció: groupId FK a special_prediction_types-ra | ⬜ Nem kezdett | Should Have |
-| US-901-B | Backend: stat tipp típus CRUD | ⬜ Nem kezdett | Should Have |
+| US-901-A | DB migráció: groupId FK a special_prediction_types-ra | ✅ Kész | Should Have |
+| US-901-B | Backend: stat tipp típus CRUD | 🔄 Következő | Should Have |
 | US-901-C | Backend: stat tipp beküldés/lekérdezés | ⬜ Nem kezdett | Should Have |
 | US-901-D | Backend: kiértékelés (helyes válasz + pontszámítás) | ⬜ Nem kezdett | Should Have |
 | US-901-E | Backend: csoport ranglista integráció | ⬜ Nem kezdett | Should Have |

@@ -202,6 +202,7 @@ export const groupPredictionPoints = pgTable('group_prediction_points', {
 
 export const specialPredictionTypes = pgTable('special_prediction_types', {
   id:            uuid('id').primaryKey().defaultRandom(),
+  groupId:       uuid('group_id').notNull().references(() => groups.id, { onDelete: 'cascade' }),
   name:          varchar('name', { length: 100 }).notNull(),
   description:   text('description'),
   inputType:     specialPredictionInputTypeEnum('input_type').notNull(),
@@ -212,7 +213,9 @@ export const specialPredictionTypes = pgTable('special_prediction_types', {
   isActive:      boolean('is_active').notNull().default(true),
   createdAt:     timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt:     timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-})
+}, (t) => ({
+  groupIdx: index('spt_group_idx').on(t.groupId),
+}))
 
 // ─── SPECIAL PREDICTIONS ──────────────────────────────────────────────────────
 
@@ -294,6 +297,7 @@ export const groupsRelations = relations(groups, ({ one, many }) => ({
   scoringConfig: one(scoringConfigs, { fields: [groups.scoringConfigId], references: [scoringConfigs.id] }),
   members: many(groupMembers),
   groupPoints: many(groupPredictionPoints),
+  specialTypes: many(specialPredictionTypes),
 }))
 
 export const groupMembersRelations = relations(groupMembers, ({ one }) => ({
@@ -301,7 +305,8 @@ export const groupMembersRelations = relations(groupMembers, ({ one }) => ({
   user: one(users, { fields: [groupMembers.userId], references: [users.id] }),
 }))
 
-export const specialPredictionTypesRelations = relations(specialPredictionTypes, ({ many }) => ({
+export const specialPredictionTypesRelations = relations(specialPredictionTypes, ({ one, many }) => ({
+  group: one(groups, { fields: [specialPredictionTypes.groupId], references: [groups.id] }),
   predictions: many(specialPredictions),
 }))
 
