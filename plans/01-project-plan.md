@@ -1677,8 +1677,8 @@ Jelenleg a join endpoint IP-alapú rate limittel van védve. Ez elegendő a legt
 | US-803 | Eredmény rögzítése | M | Must Have |
 | US-804 | Csapatok kezelése | M | Must Have |
 | US-805 | Felhasználók kezelése | M | Must Have |
-| US-901 | Statisztikai tipp leadása | L | Should Have |
-| US-902 | Statisztikai tipp típus konfig | L | Should Have |
+| US-901 | Statisztikai tipp leadása | L | Should Have | Lebontva → US-901-A..E, US-902-A..B (plans/stories/US-901-902-stat-predictions.md) |
+| US-902 | Statisztikai tipp típus konfig | L | Should Have | Lebontva → lásd fent |
 | US-1001 | Hamburger menü mobil nézeten | S | Should Have |
 | US-1002 | Felhasználói felület lokalizációja (i18n) | M | Should Have |
 | US-1003 | Lejátszott meccsek összecsomagolása | S | Should Have | ✅ Kész |

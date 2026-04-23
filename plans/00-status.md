@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-04-23 (UX-008 onboarding flow kész)
+> Utoljára frissítve: 2026-04-23 (US-901/902 stat tippek lebontva 7 story-ra)
 
 ## Kész user story-k
 
@@ -453,8 +453,15 @@
 | US-803 | Eredmény rögzítése | ✅ Kész | Must Have |
 | US-804 | Csapatok kezelése | ✅ Kész | Must Have |
 | US-805 | Felhasználók kezelése | ✅ Kész | Must Have |
-| US-901 | Statisztikai tipp leadása | ⬜ Nem kezdett | Should Have |
-| US-902 | Statisztikai tipp típus konfig | ⬜ Nem kezdett | Should Have |
+| US-901 | Statisztikai tipp leadása | ⬜ Lebontva (US-901-A..E, US-902-A..B) | Should Have |
+| US-901-A | DB migráció: groupId FK a special_prediction_types-ra | ⬜ Nem kezdett | Should Have |
+| US-901-B | Backend: stat tipp típus CRUD | ⬜ Nem kezdett | Should Have |
+| US-901-C | Backend: stat tipp beküldés/lekérdezés | ⬜ Nem kezdett | Should Have |
+| US-901-D | Backend: kiértékelés (helyes válasz + pontszámítás) | ⬜ Nem kezdett | Should Have |
+| US-901-E | Backend: csoport ranglista integráció | ⬜ Nem kezdett | Should Have |
+| US-902 | Statisztikai tipp típus konfig | ⬜ Lebontva (US-902-A..B) | Should Have |
+| US-902-A | Frontend: admin stat tipp konfig UI | ⬜ Nem kezdett | Should Have |
+| US-902-B | Frontend: tag stat tipp leadási UI | ⬜ Nem kezdett | Should Have |
 | US-1001 | Hamburger menü / AppLayout | ✅ Kész | Should Have |
 | US-1002 | Felhasználói felület lokalizációja (i18n) | ⬜ Nem kezdett | Should Have |
 | US-1003 | Lejátszott meccsek összecsomagolása | ✅ Kész | Should Have |
