@@ -89,7 +89,7 @@ export const useAuthStore = defineStore('auth', () => {
         expiresAt: Date.now() + DEV_SESSION_TTL_MS,
       }))
       user.value = dbUser
-      await router.push('/')
+      await router.push({ name: 'home' })
       return
     }
     await supabase.auth.signInWithOAuth({
@@ -118,13 +118,13 @@ export const useAuthStore = defineStore('auth', () => {
         expiresAt: Date.now() + DEV_SESSION_TTL_MS,
       }))
       user.value = dbUser
-      await router.push('/')
+      await router.push({ name: 'home' })
       return
     }
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw new AuthError(error.message)
     await handleSession(data.session as Session)
-    await router.push('/')
+    await router.push({ name: 'home' })
   }
 
   async function registerWithEmail(email: string, password: string, displayName: string): Promise<void> {
@@ -135,7 +135,7 @@ export const useAuthStore = defineStore('auth', () => {
         expiresAt: Date.now() + DEV_SESSION_TTL_MS,
       }))
       user.value = dbUser
-      await router.push('/')
+      await router.push({ name: 'home' })
       return
     }
     const { data, error } = await supabase.auth.signUp({
@@ -151,7 +151,7 @@ export const useAuthStore = defineStore('auth', () => {
       throw new AuthError('Erősítsd meg az email címedet, majd jelentkezz be!')
     }
     await handleSession(data.session)
-    await router.push('/')
+    await router.push({ name: 'home' })
   }
 
   async function updateProfile(displayName: string): Promise<void> {

@@ -120,6 +120,9 @@ router.beforeEach(async (to) => {
   if (to.name === 'login' && authStore.isAuthenticated()) {
     return { name: 'home' }
   }
+  if (to.name === 'landing' && authStore.isAuthenticated()) {
+    return { name: 'home' }
+  }
   if (to.meta.requiresAuth && !authStore.isAuthenticated()) {
     return { name: 'login', query: { redirect: to.fullPath } }
   }

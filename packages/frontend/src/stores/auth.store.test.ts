@@ -161,11 +161,11 @@ describe('auth.store', () => {
     const store = useAuthStore()
     vi.spyOn(store, 'login').mockImplementation(async () => {
       store.user = MOCK_USER
-      await mockPush('/')
+      await mockPush({ name: 'home' })
     })
     await store.login()
     expect(store.user).toEqual(MOCK_USER)
-    expect(mockPush).toHaveBeenCalledWith('/')
+    expect(mockPush).toHaveBeenCalledWith({ name: 'home' })
   })
 
   it('isAuthenticated() returns true after login() (via spy)', async () => {
@@ -351,15 +351,15 @@ describe('auth.store', () => {
 
   // ─── loginWithEmail DEV_AUTH_BYPASS ──────────────────────────────────────────
 
-  it('loginWithEmail() bypass spy → MOCK_USER set, navigates /', async () => {
+  it('loginWithEmail() bypass spy → MOCK_USER set, navigates home', async () => {
     const store = useAuthStore()
     vi.spyOn(store, 'loginWithEmail').mockImplementation(async () => {
       store.user = MOCK_USER
-      await mockPush('/')
+      await mockPush({ name: 'home' })
     })
     await store.loginWithEmail('any@email.com', 'anypassword')
     expect(store.user).toEqual(MOCK_USER)
-    expect(mockPush).toHaveBeenCalledWith('/')
+    expect(mockPush).toHaveBeenCalledWith({ name: 'home' })
     expect(mockSignInWithPassword).not.toHaveBeenCalled()
   })
 
@@ -396,16 +396,16 @@ describe('auth.store', () => {
 
   // ─── registerWithEmail DEV_AUTH_BYPASS ───────────────────────────────────────
 
-  it('registerWithEmail() bypass spy → user set with email+displayName, navigates /', async () => {
+  it('registerWithEmail() bypass spy → user set with email+displayName, navigates home', async () => {
     const store = useAuthStore()
     vi.spyOn(store, 'registerWithEmail').mockImplementation(async (_email, _password, displayName) => {
       store.user = { ...MOCK_USER, email: 'new@example.com', displayName }
-      await mockPush('/')
+      await mockPush({ name: 'home' })
     })
     await store.registerWithEmail('new@example.com', 'pass', 'New User')
     expect(store.user?.displayName).toBe('New User')
     expect(store.user?.email).toBe('new@example.com')
-    expect(mockPush).toHaveBeenCalledWith('/')
+    expect(mockPush).toHaveBeenCalledWith({ name: 'home' })
     expect(mockSignUp).not.toHaveBeenCalled()
   })
 
@@ -511,7 +511,7 @@ describe('auth.store', () => {
           expiresAt: Date.now() + 90 * 24 * 60 * 60 * 1000,
         }))
         store.user = MOCK_USER
-        await mockPush('/')
+        await mockPush({ name: 'home' })
       })
 
       await store.login()

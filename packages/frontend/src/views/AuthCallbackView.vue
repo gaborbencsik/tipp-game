@@ -21,7 +21,7 @@ onMounted(async () => {
     if (session) {
       await authStore.handleSession(session)
     }
-    await router.push('/')
+    await router.push({ name: 'home' })
   })
   unsubscribeFn = () => result.data.subscription.unsubscribe()
 
@@ -30,7 +30,7 @@ onMounted(async () => {
   if (data.session) {
     unsubscribeFn()
     await authStore.handleSession(data.session)
-    await router.push('/')
+    await router.push({ name: 'home' })
   }
 })
 </script>
