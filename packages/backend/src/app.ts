@@ -12,6 +12,7 @@ import { adminRouter } from './routes/admin.routes.js'
 import { groupsRouter } from './routes/groups.routes.js'
 import { leaderboardRouter } from './routes/leaderboard.routes.js'
 import { waitlistRouter } from './routes/waitlist.routes.js'
+import { specialPredictionsRouter } from './routes/special-predictions.routes.js'
 
 const allowedOrigins = (process.env.CORS_ORIGIN ?? 'http://localhost:5173').split(',').map(o => o.trim())
 
@@ -44,6 +45,8 @@ app.use(leaderboardRouter.routes())
 app.use(leaderboardRouter.allowedMethods())
 app.use(waitlistRouter.routes())
 app.use(waitlistRouter.allowedMethods())
+app.use(specialPredictionsRouter.routes())
+app.use(specialPredictionsRouter.allowedMethods())
 
 app.on('error', (err: Error, ctx: Koa.Context) => {
   const entry: Record<string, unknown> = {
