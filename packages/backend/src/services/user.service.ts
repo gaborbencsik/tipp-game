@@ -62,6 +62,7 @@ export async function upsertUser(user: AuthenticatedUser): Promise<DbUser> {
     displayName: row.displayName,
     avatarUrl: row.avatarUrl ?? null,
     role: row.role,
+    onboardingCompletedAt: row.onboardingCompletedAt?.toISOString() ?? null,
   }
 }
 
@@ -82,5 +83,27 @@ export async function updateProfile(userId: string, displayName: string): Promis
     displayName: row.displayName,
     avatarUrl: row.avatarUrl ?? null,
     role: row.role,
+    onboardingCompletedAt: row.onboardingCompletedAt?.toISOString() ?? null,
+  }
+}
+
+export async function completeOnboarding(userId: string): Promise<DbUser> {
+  const rows = await db
+    .update(users)
+    .set({ onboardingCompletedAt: new Date(), updatedAt: new Date() })
+    .where(and(eq(users.id, userId), isNull(users.deletedAt)))
+    .returning()
+
+  const row = rows[0]
+  if (!row) throw new AppError(404, 'User not found')
+
+  return {
+    id: row.id,
+    supabaseId: row.supabaseId,
+    email: row.email,
+    displayName: row.displayName,
+    avatarUrl: row.avatarUrl ?? null,
+    role: row.role,
+    onboardingCompletedAt: row.onboardingCompletedAt?.toISOString() ?? null,
   }
 }

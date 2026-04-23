@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { createRouter, createMemoryHistory } from 'vue-router'
 import AdminMatchesView from '@/views/AdminMatchesView.vue'
 import { useAdminMatchesStore } from '@/stores/admin-matches.store'
 import type { Match } from '@/types/index'
+import { buildTestRouter } from '@/test-utils/router'
 
 vi.mock('vue-router', async (importOriginal) => {
   const actual = await importOriginal<typeof import('vue-router')>()
@@ -68,13 +68,7 @@ const MATCH: Match = {
 }
 
 function buildRouter() {
-  return createRouter({
-    history: createMemoryHistory(),
-    routes: [
-      { path: '/admin/matches', component: AdminMatchesView },
-      { path: '/admin/teams', component: { template: '<div />' } },
-    ],
-  })
+  return buildTestRouter({ '/admin/matches': AdminMatchesView })
 }
 
 async function mountView(matches: Match[] = []) {

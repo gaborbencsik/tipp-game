@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { createRouter, createMemoryHistory } from 'vue-router'
 import UserMenuButton from '@/components/UserMenuButton.vue'
+import { buildTestRouter } from '@/test-utils/router'
 
 vi.mock('vue-router', async (importOriginal) => {
   const actual = await importOriginal<typeof import('vue-router')>()
@@ -35,15 +35,7 @@ vi.mock('@/stores/auth.store', async (importOriginal) => {
 import { useAuthStore } from '@/stores/auth.store'
 
 function buildRouter() {
-  return createRouter({
-    history: createMemoryHistory(),
-    routes: [
-      { path: '/', component: { template: '<div />' } },
-      { path: '/profile', component: { template: '<div />' } },
-      { path: '/admin/matches', component: { template: '<div />' } },
-      { path: '/admin/teams', component: { template: '<div />' } },
-    ],
-  })
+  return buildTestRouter()
 }
 
 function mountAsAdmin() {

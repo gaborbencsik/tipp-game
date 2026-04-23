@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-04-21 (UX-009..UX-013 meccsek redesign story-k hozzáadva)
+> Utoljára frissítve: 2026-04-23 (UX-008 onboarding flow kész)
 
 ## Kész user story-k
 
@@ -391,9 +391,33 @@
 - ✅ `GroupDetailView.vue`: "Beállítások" tab (group admin only), egyedi pontrendszer form (6 mező, előtöltve), mentési visszajelzés
 - ✅ 164 backend + 267 frontend teszt, typecheck CLEAN
 
+### UX-008 – Elfogadási kritériumok teljesítve
+
+- ✅ DB migráció: `users.onboarding_completed_at` TIMESTAMPTZ oszlop hozzáadva (`0008_onboarding_flag.sql`)
+- ✅ Backend: `completeOnboarding(userId)` service + `PUT /api/users/me/onboarding` route
+- ✅ Backend: `upsertUser` és `updateProfile` return-ben `onboardingCompletedAt` mező
+- ✅ Frontend: `User` type bővítve `onboardingCompletedAt: string | null`
+- ✅ Frontend: `api.users.completeOnboarding(token)` API client metódus
+- ✅ Frontend: `auth.store` — `completeOnboarding()` (DB write) + `resetOnboarding()` (memory-only reset)
+- ✅ `OnboardingOverlay.vue`: 3 lépéses full-screen overlay (z-50, backdrop blur)
+  - 1. lépés: Üdvözlés + meccskártya illusztráció + „Hogyan működik?" CTA
+  - 2. lépés: Tippelési idővonalon (nyitva → meccs kezdés → zárva) + „Értem, tovább!" CTA
+  - 3. lépés: Csoportok CTA-k (Csoport létrehozása / Meghívó kód beváltása / Egyedül kezdek)
+- ✅ Accessibility: focus trap, Escape bezárás, `aria-modal`, `aria-live`, keyboard navigáció
+- ✅ Progress indikátor: 3 pont (kitöltött/üres)
+- ✅ Minden lépésen skip lehetőség
+- ✅ `AppLayout.vue`: overlay integráció (`v-if="showOnboarding"`, `@complete` → `completeOnboarding()`)
+- ✅ `UserMenuButton.vue`: „Bemutató újranézése" gomb → `resetOnboarding()` (memory-only)
+- ✅ `GroupsView.vue`: `?action=create` / `?action=join` query param kezelés
+- ✅ Shared test router helper: `buildTestRouter(overrides)` — 15 tesztfájl migrálva, Vue Router warn eliminálva
+- ✅ Marketing-reviewed copy: inkluzív szövegezés (nem csak barátokra céloz), erős CTA-k
+- ✅ Backend: 2 új unit teszt (`completeOnboarding`)
+- ✅ Frontend: 11 új unit teszt (`OnboardingOverlay.spec.ts`)
+- ✅ Dev bypass: sessionStorage szinkron `completeOnboarding`/`resetOnboarding`-ben
+
 ---
 
-| US-001 | Monorepo és dev környezet | ✅ Kész | Must Have |
+
 | US-002 | DB schema és seed adatok | ✅ Kész | Must Have |
 | US-003 | Tesztelési infrastruktúra | ✅ Kész | Must Have |
 | US-004 | Production deploy pipeline | ✅ Kész | Must Have |
@@ -453,7 +477,7 @@
 | UX-005 | Optimista törlés az admin listákon | ⬜ Nem kezdett | Should Have |
 | UX-006 | Csapat zászló/logo megjelenítése (flag-icons) | ✅ Kész | Should Have |
 | UX-007 | Lejátszott meccsek szekció felülre kerül | ✅ Kész | Should Have |
-| UX-008 | Regisztráció utáni onboarding flow (3 lépés) | ⬜ Nem kezdett | Should Have |
+| UX-008 | Regisztráció utáni onboarding flow (3 lépés) | ✅ Kész | Should Have |
 | UX-009 | Match card vizuális redesign | ⬜ Nem kezdett | Should Have |
 | UX-010 | Filter tabs (segmented control) redesign | ⬜ Nem kezdett | Should Have |
 | UX-011 | Sidebar redesign (szekciócímkék, admin nav, mini LB) | ⬜ Nem kezdett | Should Have |
@@ -466,7 +490,8 @@
 | DISC-001 | Landing oldal discovery (design + marketing + social) | ✅ Kész | Should Have |
 | SEC-001 | Row-Level Security bekapcsolása (Supabase RLS) | ✅ Kész | Must Have |
 | SEC-002 | HMAC-aláírt meghívó URL-ek | ⬜ Nem kezdett | Nice to Have |
+| US-1401 | Stadion banner kép a meccs részletes nézeten | ⬜ Nem kezdett | Should Have |
 
 ---
 
-**Haladás: 50 / 73 story kész** — Must Have: 31/31, Should Have: 19/39, Nice to Have: 0/3
+**Haladás: 51 / 74 story kész** — Must Have: 31/31, Should Have: 20/40, Nice to Have: 0/3

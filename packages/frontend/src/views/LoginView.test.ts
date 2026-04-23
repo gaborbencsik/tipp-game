@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { createRouter, createMemoryHistory } from 'vue-router'
 import LoginView from '@/views/LoginView.vue'
 import { useAuthStore } from '@/stores/auth.store'
+import { buildTestRouter } from '@/test-utils/router'
 
 const mockPush = vi.fn().mockResolvedValue(undefined)
 vi.mock('vue-router', async (importOriginal) => {
@@ -35,13 +35,7 @@ vi.mock('@/api/index', () => ({
 }))
 
 function buildRouter() {
-  return createRouter({
-    history: createMemoryHistory(),
-    routes: [
-      { path: '/', component: { template: '<div>Home</div>' } },
-      { path: '/login', component: LoginView },
-    ],
-  })
+  return buildTestRouter({ '/login': LoginView })
 }
 
 describe('LoginView', () => {
@@ -152,6 +146,7 @@ describe('LoginView', () => {
         displayName: 'Dev User',
         avatarUrl: null,
         role: 'admin',
+        onboardingCompletedAt: '2026-01-01T00:00:00.000Z',
       }
     })
     await wrapper.find('input[type="email"]').setValue('dev@local')

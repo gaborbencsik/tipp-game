@@ -37,6 +37,11 @@ export const api = {
         body: JSON.stringify({ displayName }),
         headers: { Authorization: `Bearer ${token}` },
       }),
+    completeOnboarding: (token: string) =>
+      request<User>('/users/me/onboarding', {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` },
+      }),
   },
   matches: {
     list: (token: string, filters?: MatchesFilters) => {

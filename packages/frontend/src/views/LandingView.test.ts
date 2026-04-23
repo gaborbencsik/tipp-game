@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { createRouter, createMemoryHistory } from 'vue-router'
 import LandingView from '@/views/LandingView.vue'
+import { buildTestRouter } from '@/test-utils/router'
 
 vi.mock('@/lib/supabase', () => ({
   supabase: {
@@ -20,13 +20,7 @@ vi.mock('@/api/index', () => ({
 }))
 
 function buildRouter(query = '') {
-  const router = createRouter({
-    history: createMemoryHistory(),
-    routes: [
-      { path: '/', component: LandingView },
-      { path: '/login', component: { template: '<div>Login</div>' } },
-    ],
-  })
+  const router = buildTestRouter({ '/': LandingView })
   return { router, path: query ? `/?${query}` : '/' }
 }
 

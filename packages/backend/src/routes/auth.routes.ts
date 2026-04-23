@@ -1,6 +1,6 @@
 import Router from '@koa/router'
 import { authMiddleware } from '../middleware/auth.middleware.js'
-import { upsertUser, updateProfile } from '../services/user.service.js'
+import { upsertUser, updateProfile, completeOnboarding } from '../services/user.service.js'
 
 const router = new Router()
 
@@ -19,6 +19,12 @@ router.put('/api/users/me', authMiddleware, async (ctx) => {
     return
   }
   const updated = await updateProfile(dbUser.id, displayName.trim())
+  ctx.body = updated
+})
+
+router.put('/api/users/me/onboarding', authMiddleware, async (ctx) => {
+  const dbUser = await upsertUser(ctx.state.user)
+  const updated = await completeOnboarding(dbUser.id)
   ctx.body = updated
 })
 

@@ -58,6 +58,7 @@ const MOCK_USER: User = {
   displayName: 'Dev User',
   avatarUrl: null,
   role: 'admin',
+  onboardingCompletedAt: '2026-01-01T00:00:00.000Z',
 }
 
 const MOCK_SESSION = {

@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { createRouter, createMemoryHistory } from 'vue-router'
 import MatchDetailView from '@/views/MatchDetailView.vue'
 import { useMatchesStore } from '@/stores/matches.store'
 import { usePredictionsStore } from '@/stores/predictions.store'
 import type { Match, Prediction } from '@/types/index'
+import { buildTestRouter } from '@/test-utils/router'
 
 vi.mock('vue-router', async (importOriginal) => {
   const actual = await importOriginal<typeof import('vue-router')>()
@@ -41,7 +41,7 @@ vi.mock('@/stores/auth.store', async (importOriginal) => {
   return {
     ...actual,
     useAuthStore: () => ({
-      user: { id: 'db-user-uuid-001', role: 'user' },
+      user: { id: 'db-user-uuid-001', role: 'user', onboardingCompletedAt: '2026-01-01T00:00:00.000Z' },
       isAuthenticated: () => true,
       logout: vi.fn(),
     }),
@@ -87,13 +87,7 @@ const PREDICTION_FOR_FINISHED: Prediction = {
 }
 
 function buildRouter(_matchId?: string) {
-  return createRouter({
-    history: createMemoryHistory(),
-    routes: [
-      { path: '/matches', component: { template: '<div>Matches</div>' } },
-      { path: '/matches/:id', component: MatchDetailView },
-    ],
-  })
+  return buildTestRouter({ '/app/matches/:id': MatchDetailView })
 }
 
 async function mountView(
@@ -115,7 +109,7 @@ async function mountView(
   }
 
   const router = buildRouter(matchId)
-  await router.push(`/matches/${matchId}`)
+  await router.push(`/app/matches/${matchId}`)
   await router.isReady()
 
   const wrapper = mount(MatchDetailView, {
@@ -141,7 +135,7 @@ describe('MatchDetailView', () => {
     const pinia = createPinia()
     setActivePinia(pinia)
     const router = buildRouter('match-finished')
-    await router.push('/matches/match-finished')
+    await router.push('/app/matches/match-finished')
     await router.isReady()
     const wrapper = mount(MatchDetailView, { global: { plugins: [pinia, router] } })
     await wrapper.vm.$nextTick()

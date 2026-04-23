@@ -11,7 +11,7 @@ Jelenleg az elso belepes utan a felhasznalo kozvetlenul a meccslistara kerul (Ma
 - Hogy a tipp csak a meccs ELOTT adhato le (hataridő)
 - Hogy leteznek csoportok es miert erdemes csatlakozni
 
-Ez a story egy 3 lepeses onboarding overlayt vezet be, amely kizarolag az elso belepeskor jelenik meg.
+Ez a story egy 3 lepeses onboarding overlayt vezet be, amely kizarolag az elso belepeskor jelenik meg. Az onboarding allapot a DB-ben tarolodik (user-specifikus, eszközfuggetlen), es a felhasznalo barmikor ujra elorhivhatja a menubol.
 
 ## UX Terv (a ux-design-expert ajanlasa alapjan)
 
@@ -44,32 +44,52 @@ Ez a story egy 3 lepeses onboarding overlayt vezet be, amely kizarolag az elso b
 
 ## Elfogadasi kriteriumok
 
-### Megjelenes es trigger
-- [ ] Az onboarding KIZAROLAG az elso belepeskor jelenik meg (nem minden session-nel)
-- [ ] Trigger: `localStorage`-ban nincs `onboarding_completed` kulcs ES a felhasznalo authenticated
-- [ ] Az onboarding befejezese (utolso lepes CTA vagy barmely "Kihagy") utan: `localStorage.setItem('onboarding_completed', 'true')`
-- [ ] Kovetkezo belepeskor az onboarding nem jelenik meg
+### 1. Adatbazis migracio
 
-### Komponens
+- [ ] A `users` tablara uj mezo: `onboarding_completed_at TIMESTAMPTZ` (nullable, default NULL)
+- [ ] Drizzle schema frissitese: `onboardingCompletedAt: timestamp('onboarding_completed_at', { withTimezone: true })`
+- [ ] Drizzle migracio generalva (pl. `0008_onboarding_flag.sql`)
+- [ ] NULL = meg nem latta / resetelte, nem-NULL = befejezve (mikor)
+
+### 2. Backend
+
+- [ ] `PUT /api/users/me/onboarding` — `authMiddleware`
+  - Nem kell request body — a hivas beallitja `onboardingCompletedAt = now()`
+  - Response: 200 + frissitett user objektum
+- [ ] A `POST /api/auth/me` (vagy `GET /api/users/me`) valaszban az `onboardingCompletedAt` mezo megjelenik
+- [ ] `user.service.ts` bovitese: `completeOnboarding(userId)`
+
+### 3. Frontend — auth store
+
+- [ ] A `User` tipus bovitese: `onboardingCompletedAt: string | null`
+- [ ] `auth.store.ts`: a `handleSession()` / `restoreSession()` utan az `onboardingCompletedAt` ertek elerheto a `user` ref-bol
+- [ ] `auth.store.ts`: `completeOnboarding()` action — `PUT /api/users/me/onboarding`, frissiti a `user.value`-t
+- [ ] `auth.store.ts`: `resetOnboarding()` action — csak memoriaban allitja `user.value.onboardingCompletedAt = null`-ra (nincs API hivas, nem irodik DB-be)
+
+### 4. Frontend — OnboardingOverlay komponens
+
 - [ ] `OnboardingOverlay.vue` komponens letrehozva — full-screen overlay, 3 lepes
 - [ ] `currentStep` ref (0, 1, 2) vezerli a lepeseket
 - [ ] Progress indikator (3 pont) a tetején, vizualisan jelzi a haladast
 - [ ] Minden lepesnek van "Tovabb" (vagy CTA) es "Kihagy"/"Kesobb" gombja
 - [ ] Az overlay felett semmilyen mas elem nem kattinthato (focus trap)
+- [ ] Befejezeskor (utolso lepes CTA vagy "Kihagy"): meghivja `authStore.completeOnboarding()`-t
 
-### 1. lepes: Udvozles
+### 5. Lepesek tartalma
+
+**1. lepes: Udvozles**
 - [ ] Headline: "Udvozlunk a VB Tippjatekban!"
 - [ ] Rovid szoveg a tippeles lenyegerol (1-2 mondat)
 - [ ] Illusztracio (SVG/inline): meccskartya szambeviteli mezokkel
 - [ ] "Tovabb" gomb es "Kihagy" link
 
-### 2. lepes: Hataridő
+**2. lepes: Hataridő**
 - [ ] Headline: "A tippelesi hataridet ne feledd!"
 - [ ] Vizualis idovonal: tipp nyitva -> meccs kezdes -> zarva (szines gradiens)
 - [ ] 1-2 mondat: a tippet a meccs elott kell leadni
 - [ ] "Tovabb" gomb es "Kihagy" link
 
-### 3. lepes: Csoportok
+**3. lepes: Csoportok**
 - [ ] Headline: "Jatssz egyutt a barataiddal!"
 - [ ] 1-2 mondat: csoport letrehozas, meghivo kod, sajat ranglista
 - [ ] Ket CTA gomb egymas mellett: "Csoport letrehozasa" es "Van meghivo kodom"
@@ -78,35 +98,54 @@ Ez a story egy 3 lepeses onboarding overlayt vezet be, amely kizarolag az elso b
 - [ ] "Van meghivo kodom" -> `/app/groups?action=join` navigacio
 - [ ] "Kesobb" -> `/app/matches` navigacio (alapertelmezett fooldal)
 
-### Responsivity
+### 6. Trigger logika
+
+- [ ] Az overlay megjelenik ha: user authenticated ES `user.onboardingCompletedAt === null`
+- [ ] Az overlay NEM jelenik meg ha: `onboardingCompletedAt` nem null (mar vegigment)
+- [ ] Az overlay az `AppLayout` szintjen renderelodik, a router guard utan
+- [ ] Dev bypass modban: a mock user `onboardingCompletedAt: null` alapbol → az onboarding megjelenik egyszer
+
+### 7. Ujra elohivas a menubol
+
+- [ ] A `UserMenuButton` dropdownban (a profil link alatt) megjelenik: "Bemutatot ujranezese" link
+- [ ] Kattintasra meghivja `authStore.resetOnboarding()`-t (csak memoriaban nullazza a flaget, nincs API hivas), majd az overlay azonnal megjelenik
+- [ ] Az ujranezett onboarding befejezese (CTA vagy Kihagy) ismet meghivja `completeOnboarding()`-t (ez irja a DB-t)
+
+### 8. Responsivity
+
 - [ ] Mobil (< 768px): full-screen, fuggoleges kozepigazitas, 24px padding
 - [ ] Desktop (>= 768px): kozepre igazitott kartya (max-width 480px), backdrop blur hatter
 - [ ] Illusztraciok SVG/inline (nincs kulon kep betoltes)
 - [ ] Atmeneti animaciok: lepesek kozt balrol-jobbra csuszas (200ms ease-in)
 
-### Accessibility
+### 9. Accessibility
+
 - [ ] Focus trap az overlay-en belul (Tab/Shift+Tab nem lep ki)
 - [ ] Escape billentyu bezarja az overlayt (megegyezik "Kihagy"-gyal)
 - [ ] Minden gomb rendelkezik `aria-label`-lel
 - [ ] `aria-live` region jelzi a lepesvaltast screen readereknek
 
-### Integracio
-- [ ] Az overlay a `MatchesView` (vagy az `AppLayout`) szintjen renderelodik, a router guard utan
-- [ ] A `GroupsView` kezeli a `?action=create` es `?action=join` query parametereket (a megfelelo form automatikusan megnyilik)
-- [ ] Az onboarding nem fugg backend valtozastol — kizarolag frontend implementacio
+### 10. Integracio
 
-### Tesztek
-- [ ] Unit tesztek: `OnboardingOverlay` rendereles, lepesvaltas, localStorage iras/olvasas
-- [ ] Unit teszt: `onboarding_completed` flag jelenletekor az overlay nem jelenik meg
-- [ ] Unit teszt: "Kihagy" es "Kesobb" beallitja a flaget es bezarja az overlayt
-- [ ] Unit teszt: 3. lepes CTA-k helyes navigaciot triggerelnek
-- [ ] Unit teszt: Escape billentyu bezarasa
+- [ ] A `GroupsView` kezeli a `?action=create` es `?action=join` query parametereket (a megfelelo form automatikusan megnyilik)
+
+### 11. Tesztek
+
+- [ ] **Backend unit teszt:** `completeOnboarding(userId)` beallitja a timestampet
+- [ ] **Backend unit teszt:** `PUT /api/users/me/onboarding` — 200 valasz + frissitett user
+- [ ] **Frontend unit teszt:** `OnboardingOverlay` rendereles ha `onboardingCompletedAt === null`
+- [ ] **Frontend unit teszt:** NEM renderelodik ha `onboardingCompletedAt` nem null
+- [ ] **Frontend unit teszt:** lepesvaltas (0 -> 1 -> 2)
+- [ ] **Frontend unit teszt:** "Kihagy" meghivja `completeOnboarding()`-t es bezar
+- [ ] **Frontend unit teszt:** 3. lepes CTA-k helyes navigaciot triggerelnek
+- [ ] **Frontend unit teszt:** Escape billentyu bezarasa
+- [ ] **Frontend unit teszt:** "Bemutatot ujranezese" meghivja `resetOnboarding()`-t (memoriaban nullazza) es megnyitja az overlayt
+- [ ] Typecheck CLEAN mindket package-ben
 
 ## Technikai megjegyzesek
 
-- Nincs backend valtozas — kizarolag frontend story
-- Az `onboarding_completed` flag `localStorage`-ban tarolodik (nem sessionStorage — torolodne kijelentkezeskor)
-- Ha a user mas eszkozon/bongeszőben lep be, ujra latja az onboardingot — ez elfogadhato, mert a flow rovid es kihaghato
+- A `POST /api/auth/me` response-ban az `onboardingCompletedAt` mezo part of the user objektum — a frontend az auth store-bol olvassa
+- Dev bypass modban a mock user `onboardingCompletedAt: null` → az onboarding megjelenik. A `completeOnboarding()` dev bypass modban a `sessionStorage`-ban frissiti a mock usert (hasonloan a `updateProfile`-hoz)
 - A `GroupsView`-ban mar van create es join form — a query parameter csupan auto-nyitja a megfelelo formot
 - Az illusztraciok lehetnek egyszeru SVG ikonok vagy stilizalt Tailwind komponensek — nem kell kulon designer asset
 
@@ -119,9 +158,9 @@ Ez a story egy 3 lepeses onboarding overlayt vezet be, amely kizarolag az elso b
 
 ## Fuggesegek
 
-- Nincs backend fuggeseg
-- A `GroupsView` `?action=create` / `?action=join` query param kezeles minor bovites (nem kulon story, az onboardinggal egyutt implementalhato)
+- Nincs mas story-tol valo fuggeseg — onalloan implementalhato
+- A `GroupsView` `?action=create` / `?action=join` query param kezeles minor bovites (az onboardinggal egyutt implementalhato)
 
-## Komplexitas: S
+## Komplexitas: S-M
 ## Prioritas: Should Have
 ## Epic: E10 – UX / Polish

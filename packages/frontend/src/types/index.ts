@@ -5,6 +5,7 @@ export interface User {
   readonly displayName: string
   readonly avatarUrl: string | null
   readonly role: 'user' | 'admin'
+  readonly onboardingCompletedAt: string | null
 }
 
 export interface ApiResponse<T> {

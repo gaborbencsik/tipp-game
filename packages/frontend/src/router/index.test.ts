@@ -46,6 +46,7 @@ const MOCK_USER: User = {
   displayName: 'Test User',
   avatarUrl: null,
   role: 'user',
+  onboardingCompletedAt: '2026-01-01T00:00:00.000Z',
 }
 void MOCK_USER
 

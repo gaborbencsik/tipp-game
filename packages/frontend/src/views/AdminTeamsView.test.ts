@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { createRouter, createMemoryHistory } from 'vue-router'
 import AdminTeamsView from '@/views/AdminTeamsView.vue'
 import { useAdminTeamsStore } from '@/stores/admin-teams.store'
 import type { Team } from '@/types/index'
+import { buildTestRouter } from '@/test-utils/router'
 
 vi.mock('vue-router', async (importOriginal) => {
   const actual = await importOriginal<typeof import('vue-router')>()
@@ -58,10 +58,7 @@ const TEAM_1: Team = { id: 'team-1', name: 'Germany', shortCode: 'GER', flagUrl:
 const TEAM_2: Team = { id: 'team-2', name: 'France', shortCode: 'FRA', flagUrl: null, group: 'B', teamType: 'national', countryCode: 'fr' }
 
 function buildRouter() {
-  return createRouter({
-    history: createMemoryHistory(),
-    routes: [{ path: '/admin/teams', component: AdminTeamsView }],
-  })
+  return buildTestRouter({ '/admin/teams': AdminTeamsView })
 }
 
 async function mountView(teams: Team[] = []) {

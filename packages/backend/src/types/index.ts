@@ -22,6 +22,7 @@ export interface DbUser {
   readonly displayName: string
   readonly avatarUrl: string | null
   readonly role: 'user' | 'admin'
+  readonly onboardingCompletedAt: string | null
 }
 
 export type MatchOutcome = 'extra_time_home' | 'extra_time_away' | 'penalties_home' | 'penalties_away'

@@ -179,10 +179,12 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import AppLayout from '../components/AppLayout.vue'
 import { useGroupsStore } from '../stores/groups.store.js'
 
 const store = useGroupsStore()
+const route = useRoute()
 
 const showCreateForm = ref(false)
 const showJoinForm = ref(false)
@@ -217,6 +219,12 @@ async function copyUrl(groupId: string, code: string): Promise<void> {
 
 onMounted(async () => {
   await store.fetchMyGroups()
+  const action = route.query.action
+  if (action === 'create') {
+    showCreateForm.value = true
+  } else if (action === 'join') {
+    showJoinForm.value = true
+  }
 })
 
 function closeCreateForm(): void {

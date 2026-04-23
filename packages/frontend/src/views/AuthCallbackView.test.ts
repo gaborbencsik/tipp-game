@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { createRouter, createMemoryHistory } from 'vue-router'
 import AuthCallbackView from '@/views/AuthCallbackView.vue'
 import { mount, flushPromises } from '@vue/test-utils'
+import { buildTestRouter } from '@/test-utils/router'
 
 const mockPush = vi.fn().mockResolvedValue(undefined)
 vi.mock('vue-router', async (importOriginal) => {
@@ -38,13 +38,7 @@ vi.mock('@/stores/auth.store', async (importOriginal) => {
 })
 
 function buildRouter() {
-  return createRouter({
-    history: createMemoryHistory(),
-    routes: [
-      { path: '/auth/callback', component: AuthCallbackView },
-      { path: '/', component: { template: '<div>Home</div>' } },
-    ],
-  })
+  return buildTestRouter({ '/auth/callback': AuthCallbackView })
 }
 
 describe('AuthCallbackView', () => {

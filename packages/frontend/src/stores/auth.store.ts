@@ -178,6 +178,46 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  return { user, ready, isAuthenticated, isAdmin, handleSession, restoreSession, login, logout, loginWithEmail, registerWithEmail, updateProfile }
+  async function completeOnboarding(): Promise<void> {
+    let token: string
+    if (DEV_AUTH_BYPASS) {
+      token = 'dev-bypass-token'
+    } else {
+      const { data: { session } } = await supabase.auth.getSession()
+      token = session?.access_token ?? ''
+    }
+    const updated = await api.users.completeOnboarding(token)
+    if (user.value) {
+      user.value = { ...user.value, onboardingCompletedAt: updated.onboardingCompletedAt }
+    }
+    if (DEV_AUTH_BYPASS) {
+      const raw = sessionStorage.getItem(DEV_SESSION_KEY)
+      if (raw) {
+        const parsed = JSON.parse(raw) as DevSession
+        sessionStorage.setItem(DEV_SESSION_KEY, JSON.stringify({
+          ...parsed,
+          user: { ...parsed.user, onboardingCompletedAt: updated.onboardingCompletedAt },
+        }))
+      }
+    }
+  }
+
+  function resetOnboarding(): void {
+    if (user.value) {
+      user.value = { ...user.value, onboardingCompletedAt: null }
+    }
+    if (DEV_AUTH_BYPASS) {
+      const raw = sessionStorage.getItem(DEV_SESSION_KEY)
+      if (raw) {
+        const parsed = JSON.parse(raw) as DevSession
+        sessionStorage.setItem(DEV_SESSION_KEY, JSON.stringify({
+          ...parsed,
+          user: { ...parsed.user, onboardingCompletedAt: null },
+        }))
+      }
+    }
+  }
+
+  return { user, ready, isAuthenticated, isAdmin, handleSession, restoreSession, login, logout, loginWithEmail, registerWithEmail, updateProfile, completeOnboarding, resetOnboarding }
 })
 

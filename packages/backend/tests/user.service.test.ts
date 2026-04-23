@@ -22,7 +22,7 @@ vi.mock('../src/db/client.js', () => ({
   db: { insert: mockInsert, update: mockUpdate },
 }))
 
-import { upsertUser, updateProfile } from '../src/services/user.service.js'
+import { upsertUser, updateProfile, completeOnboarding } from '../src/services/user.service.js'
 import * as schema from '../src/db/schema/index.js'
 
 const BASE_USER: AuthenticatedUser = {
@@ -40,6 +40,7 @@ const RETURNED_ROW: DbUser = {
   displayName: 'John Doe',
   avatarUrl: 'https://avatar.example.com/john.png',
   role: 'user',
+  onboardingCompletedAt: null,
 }
 
 describe('upsertUser', () => {
@@ -172,6 +173,41 @@ describe('updateProfile', () => {
     mockUpdateReturning.mockResolvedValue([])
 
     await expect(updateProfile('nonexistent-id', 'Name')).rejects.toMatchObject({
+      status: 404,
+      message: 'User not found',
+    })
+  })
+})
+
+describe('completeOnboarding', () => {
+  beforeEach(() => {
+    vi.resetAllMocks()
+    mockUpdateReturning.mockResolvedValue([RETURNED_ROW])
+    mockWhere.mockReturnValue({ returning: mockUpdateReturning })
+    mockSet.mockReturnValue({ where: mockWhere })
+    mockUpdate.mockReturnValue({ set: mockSet })
+  })
+
+  it('valid userId → sets onboardingCompletedAt and returns DbUser', async () => {
+    const completedRow = { ...RETURNED_ROW, onboardingCompletedAt: new Date('2026-04-23T12:00:00.000Z') }
+    mockUpdateReturning.mockResolvedValue([completedRow])
+
+    const result = await completeOnboarding('db-uuid-123')
+
+    expect(mockUpdate).toHaveBeenCalledWith(schema.users)
+    expect(mockSet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        onboardingCompletedAt: expect.any(Date),
+        updatedAt: expect.any(Date),
+      })
+    )
+    expect(result.onboardingCompletedAt).toBe('2026-04-23T12:00:00.000Z')
+  })
+
+  it('user not found (empty rows) → throws 404 AppError', async () => {
+    mockUpdateReturning.mockResolvedValue([])
+
+    await expect(completeOnboarding('nonexistent-id')).rejects.toMatchObject({
       status: 404,
       message: 'User not found',
     })

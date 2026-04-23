@@ -111,12 +111,29 @@
       </div>
 
     </div>
+
+    <!-- Onboarding overlay -->
+    <OnboardingOverlay
+      v-if="showOnboarding"
+      @complete="onOnboardingComplete"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import UserMenuButton from './UserMenuButton.vue'
+import OnboardingOverlay from './OnboardingOverlay.vue'
+import { useAuthStore } from '../stores/auth.store.js'
 
+const authStore = useAuthStore()
 const sidebarOpen = ref(false)
+
+const showOnboarding = computed((): boolean => {
+  return !!authStore.user && !authStore.user.onboardingCompletedAt
+})
+
+async function onOnboardingComplete(): Promise<void> {
+  await authStore.completeOnboarding()
+}
 </script>

@@ -1696,7 +1696,7 @@ Jelenleg a join endpoint IP-alapú rate limittel van védve. Ez elegendő a legt
 | UX-005 | Optimista törlés az admin listákon | S | Should Have |
 | UX-006 | Csapat zászló/logo megjelenítése (flag-icons) | S | Should Have | ✅ Kész |
 | UX-007 | Lejátszott meccsek szekció felülre kerül | XS | Should Have | ✅ Kész |
-| UX-008 | Regisztráció utáni onboarding flow (3 lépés) | S | Should Have |
+| UX-008 | Regisztráció utáni onboarding flow (3 lépés) | S | Should Have | ✅ Kész |
 | US-806 | Csapat típus és country code mezők (DB migráció) | S | Should Have | ✅ Kész |
 | US-807 | Admin használati statisztikák (dashboard) | M | Should Have |
 | DISC-001 | Landing oldal discovery (design + marketing + social) | L | Should Have |
@@ -1710,14 +1710,15 @@ Jelenleg a join endpoint IP-alapú rate limittel van védve. Ez elegendő a legt
 | UX-011 | Sidebar redesign (szekciócímkék, admin nav, mini LB) | M | Should Have |
 | UX-012 | Toast notification rendszer | S | Should Have |
 | UX-013 | Értesítési rendszer (notification bell + panel) | L | Nice to Have |
+| US-1401 | Stadion banner kép a meccs részletes nézeten | S | Should Have |
 
 **Összesítés:**
 - Must Have: 30 story (4 technikai + 26 product)
-- Should Have: 29 story
+- Should Have: 30 story
 - Nice to Have: 3 (UX-004, SEC-002, UX-013 + ld. E10 epic – részletezés a 04-extras.md-ben)
 
 **Méret szerinti bontás:**
-- S (Small): 14 story
+- S (Small): 15 story
 - M (Medium): 22 story
 - L (Large): 6 story
 

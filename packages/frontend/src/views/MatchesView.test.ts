@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { createRouter, createMemoryHistory } from 'vue-router'
 import MatchesView from '@/views/MatchesView.vue'
 import { useMatchesStore } from '@/stores/matches.store'
 import { usePredictionsStore } from '@/stores/predictions.store'
 import type { Match, Prediction } from '@/types/index'
+import { buildTestRouter } from '@/test-utils/router'
 
 vi.mock('vue-router', async (importOriginal) => {
   const actual = await importOriginal<typeof import('vue-router')>()
@@ -41,7 +41,7 @@ vi.mock('@/stores/auth.store', async (importOriginal) => {
   return {
     ...actual,
     useAuthStore: () => ({
-      user: { id: 'db-user-uuid-001', role: 'user' },
+      user: { id: 'db-user-uuid-001', role: 'user', onboardingCompletedAt: '2026-01-01T00:00:00.000Z' },
       isAuthenticated: () => true,
       logout: vi.fn(),
     }),
@@ -115,13 +115,7 @@ const EXISTING_PREDICTION: Prediction = {
 }
 
 function buildRouter() {
-  return createRouter({
-    history: createMemoryHistory(),
-    routes: [
-      { path: '/', component: { template: '<div>Home</div>' } },
-      { path: '/matches', component: MatchesView },
-    ],
-  })
+  return buildTestRouter({ '/app/matches': MatchesView })
 }
 
 async function mountView(apiMatches: Match[] = [], apiPredictions: Prediction[] = []) {

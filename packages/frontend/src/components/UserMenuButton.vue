@@ -91,6 +91,13 @@
       >
         Profil
       </router-link>
+      <button
+        data-testid="menu-replay-onboarding"
+        class="flex items-center w-full px-4 py-2.5 text-sm text-gray-500 hover:bg-gray-50"
+        @click="menuOpen = false; authStore.resetOnboarding()"
+      >
+        Bemutató újranézése
+      </button>
       <div class="border-t border-gray-100" />
       <button
         data-testid="menu-logout"

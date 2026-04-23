@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { createRouter, createMemoryHistory } from 'vue-router'
 import ProfileView from '@/views/ProfileView.vue'
 import { useAuthStore } from '@/stores/auth.store'
 import type { User } from '@/types/index'
+import { buildTestRouter } from '@/test-utils/router'
 
 vi.mock('vue-router', async (importOriginal) => {
   const actual = await importOriginal<typeof import('vue-router')>()
@@ -45,16 +45,11 @@ const MOCK_USER: User = {
   displayName: 'Test User',
   avatarUrl: 'https://example.com/avatar.png',
   role: 'user',
+  onboardingCompletedAt: '2026-01-01T00:00:00.000Z',
 }
 
 function buildRouter() {
-  return createRouter({
-    history: createMemoryHistory(),
-    routes: [
-      { path: '/profile', component: ProfileView },
-      { path: '/app/matches', component: { template: '<div />' } },
-    ],
-  })
+  return buildTestRouter({ '/app/profile': ProfileView })
 }
 
 async function mountView(user: User | null = MOCK_USER) {

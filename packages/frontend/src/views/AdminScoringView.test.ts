@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { createRouter, createMemoryHistory } from 'vue-router'
 import AdminScoringView from '@/views/AdminScoringView.vue'
 import { useAdminScoringStore } from '@/stores/admin-scoring.store'
 import type { ScoringConfigFull } from '@/types/index'
+import { buildTestRouter } from '@/test-utils/router'
 
 const {
   mockGetSession,
@@ -49,7 +49,7 @@ vi.mock('@/stores/auth.store', async (importOriginal) => {
   return {
     ...actual,
     useAuthStore: () => ({
-      user: { id: 'user-uuid-1', role: 'admin' },
+      user: { id: 'user-uuid-1', role: 'admin', onboardingCompletedAt: '2026-01-01T00:00:00.000Z' },
       isAuthenticated: () => true,
       logout: vi.fn(),
     }),
@@ -68,10 +68,7 @@ const CONFIG: ScoringConfigFull = {
 }
 
 function buildRouter() {
-  return createRouter({
-    history: createMemoryHistory(),
-    routes: [{ path: '/admin/scoring', component: AdminScoringView }],
-  })
+  return buildTestRouter({ '/admin/scoring': AdminScoringView })
 }
 
 async function mountView(config: ScoringConfigFull | null = CONFIG) {

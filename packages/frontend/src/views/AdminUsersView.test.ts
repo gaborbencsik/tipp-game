@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { createRouter, createMemoryHistory } from 'vue-router'
 import AdminUsersView from '@/views/AdminUsersView.vue'
 import { useAdminUsersStore } from '@/stores/admin-users.store'
 import type { AdminUser } from '@/types/index'
+import { buildTestRouter } from '@/test-utils/router'
 
 vi.mock('vue-router', async (importOriginal) => {
   const actual = await importOriginal<typeof import('vue-router')>()
@@ -59,7 +59,7 @@ vi.mock('@/stores/auth.store', async (importOriginal) => {
   return {
     ...actual,
     useAuthStore: () => ({
-      user: { id: CURRENT_USER_ID, role: 'admin' },
+      user: { id: CURRENT_USER_ID, role: 'admin', onboardingCompletedAt: '2026-01-01T00:00:00.000Z' },
       isAuthenticated: () => true,
       isAdmin: () => true,
       ready: true,
@@ -87,10 +87,7 @@ const USER_2: AdminUser = {
 }
 
 function buildRouter() {
-  return createRouter({
-    history: createMemoryHistory(),
-    routes: [{ path: '/admin/users', component: AdminUsersView }],
-  })
+  return buildTestRouter({ '/admin/users': AdminUsersView })
 }
 
 async function mountView(users: AdminUser[] = []) {

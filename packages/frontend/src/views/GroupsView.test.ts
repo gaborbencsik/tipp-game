@@ -2,9 +2,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { nextTick } from 'vue'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { createRouter, createMemoryHistory } from 'vue-router'
 import type { Group } from '@/types/index'
 import GroupsView from '@/views/GroupsView.vue'
+import { buildTestRouter } from '@/test-utils/router'
 
 vi.mock('vue-router', async (importOriginal) => {
   const actual = await importOriginal<typeof import('vue-router')>()
@@ -29,7 +29,7 @@ vi.mock('@/stores/auth.store', async (importOriginal) => {
   return {
     ...actual,
     useAuthStore: () => ({
-      user: { id: 'u1', role: 'user' },
+      user: { id: 'u1', role: 'user', onboardingCompletedAt: '2026-01-01T00:00:00.000Z' },
       isAuthenticated: () => true,
       isAdmin: () => false,
       ready: true,
@@ -57,13 +57,7 @@ vi.mock('@/stores/groups.store', () => ({
 }))
 
 function buildRouter() {
-  return createRouter({
-    history: createMemoryHistory(),
-    routes: [
-      { path: '/groups', component: GroupsView },
-      { path: '/matches', component: { template: '<div />' } },
-    ],
-  })
+  return buildTestRouter({ '/app/groups': GroupsView })
 }
 
 function mountView() {

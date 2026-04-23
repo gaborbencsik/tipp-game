@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { createRouter, createMemoryHistory } from 'vue-router'
 import HomeView from '@/views/HomeView.vue'
+import { buildTestRouter } from '@/test-utils/router'
 import { useAuthStore } from '@/stores/auth.store'
 
 const mockPush = vi.fn().mockResolvedValue(undefined)
@@ -33,13 +33,7 @@ vi.mock('@/api/index', () => ({
 }))
 
 function buildRouter() {
-  return createRouter({
-    history: createMemoryHistory(),
-    routes: [
-      { path: '/', component: HomeView },
-      { path: '/login', component: { template: '<div>Login</div>' } },
-    ],
-  })
+  return buildTestRouter({ '/': HomeView })
 }
 
 function mountWithUser() {
@@ -53,6 +47,7 @@ function mountWithUser() {
     displayName: 'Dev User',
     avatarUrl: null,
     role: 'admin',
+    onboardingCompletedAt: '2026-01-01T00:00:00.000Z',
   }
   return mount(HomeView, { global: { plugins: [pinia, buildRouter()] } })
 }
@@ -110,6 +105,7 @@ describe('HomeView', () => {
       displayName: 'Regular User',
       avatarUrl: null,
       role: 'user',
+      onboardingCompletedAt: '2026-01-01T00:00:00.000Z',
     }
     const wrapper = mount(HomeView, { global: { plugins: [pinia, buildRouter()] } })
     expect(wrapper.text()).not.toContain('Admin – Csapatok')
