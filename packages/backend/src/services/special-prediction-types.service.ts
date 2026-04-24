@@ -164,7 +164,7 @@ export async function updateType(
     updates['description'] = input.description?.trim() || null
   }
   if (input.inputType !== undefined) {
-    if (!VALID_INPUT_TYPES.has(input.inputType)) throw new AppError(400, "inputType must be 'text' or 'dropdown'")
+    if (!VALID_INPUT_TYPES.has(input.inputType)) throw new AppError(400, "inputType must be 'text', 'dropdown', or 'team_select'")
     updates['inputType'] = input.inputType
   }
   if (input.options !== undefined) {
