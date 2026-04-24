@@ -114,6 +114,7 @@ const LEADERBOARD_ENTRY: LeaderboardEntry = {
   totalPoints: 10,
   predictionCount: 5,
   correctCount: 3,
+  specialPredictionPoints: 0,
 }
 
 function buildRouter() {

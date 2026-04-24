@@ -168,6 +168,54 @@ export interface LeaderboardEntry {
   readonly totalPoints: number
   readonly predictionCount: number
   readonly correctCount: number
+  readonly specialPredictionPoints: number
+}
+
+export type SpecialPredictionInputType = 'text' | 'dropdown'
+
+export interface SpecialPredictionType {
+  readonly id: string
+  readonly groupId: string
+  readonly name: string
+  readonly description: string | null
+  readonly inputType: SpecialPredictionInputType
+  readonly options: string[] | null
+  readonly deadline: string
+  readonly points: number
+  readonly correctAnswer: string | null
+  readonly isActive: boolean
+  readonly createdAt: string
+  readonly updatedAt: string
+}
+
+export interface SpecialTypeInput {
+  readonly name: string
+  readonly description?: string | null
+  readonly inputType: SpecialPredictionInputType
+  readonly options?: string[] | null
+  readonly deadline: string
+  readonly points: number
+}
+
+export interface SpecialPredictionWithType {
+  readonly id: string | null
+  readonly typeId: string
+  readonly typeName: string
+  readonly typeDescription: string | null
+  readonly inputType: SpecialPredictionInputType
+  readonly options: string[] | null
+  readonly deadline: string
+  readonly maxPoints: number
+  readonly answer: string | null
+  readonly points: number | null
+  readonly correctAnswer: string | null
+  readonly createdAt: string | null
+  readonly updatedAt: string | null
+}
+
+export interface SpecialPredictionInput {
+  readonly typeId: string
+  readonly answer: string
 }
 
 export interface ScoringConfigFull {

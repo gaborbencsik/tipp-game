@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { supabase } from '../lib/supabase.js'
 import { api } from '../api/index.js'
-import type { Group, GroupInput, GroupMember, JoinGroupInput, ScoringConfigFull, ScoringConfigInput } from '../types/index.js'
+import type { Group, GroupInput, GroupMember, JoinGroupInput, ScoringConfigFull, ScoringConfigInput, SpecialPredictionType, SpecialTypeInput, SpecialPredictionWithType, SpecialPredictionInput } from '../types/index.js'
 
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
 
@@ -23,6 +23,16 @@ export const useGroupsStore = defineStore('groups', () => {
   const groupScoringLoading = ref(false)
   const groupScoringError = ref<string | null>(null)
   const groupScoringSaveStatus = ref<'idle' | 'saving' | 'saved' | 'error'>('idle')
+
+  // Special prediction types (admin)
+  const specialTypesMap = ref<Record<string, SpecialPredictionType[]>>({})
+  const specialTypesLoading = ref(false)
+  const specialTypesError = ref<string | null>(null)
+
+  // Special predictions (member)
+  const specialPredictionsMap = ref<Record<string, SpecialPredictionWithType[]>>({})
+  const specialPredictionsLoading = ref(false)
+  const specialPredictionsError = ref<string | null>(null)
 
   async function fetchMyGroups(): Promise<void> {
     isLoading.value = true
@@ -122,6 +132,70 @@ export const useGroupsStore = defineStore('groups', () => {
     }
   }
 
+  // ─── Special prediction types (admin) ────────────────────────────────────────
+
+  async function fetchSpecialTypes(groupId: string): Promise<void> {
+    specialTypesLoading.value = true
+    specialTypesError.value = null
+    try {
+      const token = await getAccessToken()
+      specialTypesMap.value[groupId] = await api.groups.specialTypes.list(token, groupId)
+    } catch (err) {
+      specialTypesError.value = err instanceof Error ? err.message : 'Ismeretlen hiba'
+    } finally {
+      specialTypesLoading.value = false
+    }
+  }
+
+  async function createSpecialType(groupId: string, input: SpecialTypeInput): Promise<SpecialPredictionType> {
+    const token = await getAccessToken()
+    const created = await api.groups.specialTypes.create(token, groupId, input)
+    specialTypesMap.value[groupId] = [...(specialTypesMap.value[groupId] ?? []), created]
+    return created
+  }
+
+  async function updateSpecialType(groupId: string, typeId: string, input: SpecialTypeInput): Promise<SpecialPredictionType> {
+    const token = await getAccessToken()
+    const updated = await api.groups.specialTypes.update(token, groupId, typeId, input)
+    specialTypesMap.value[groupId] = (specialTypesMap.value[groupId] ?? []).map(t => t.id === typeId ? updated : t)
+    return updated
+  }
+
+  async function deactivateSpecialType(groupId: string, typeId: string): Promise<void> {
+    const token = await getAccessToken()
+    await api.groups.specialTypes.deactivate(token, groupId, typeId)
+    specialTypesMap.value[groupId] = (specialTypesMap.value[groupId] ?? []).filter(t => t.id !== typeId)
+  }
+
+  async function setSpecialTypeAnswer(groupId: string, typeId: string, correctAnswer: string): Promise<void> {
+    const token = await getAccessToken()
+    const updated = await api.groups.specialTypes.setAnswer(token, groupId, typeId, correctAnswer)
+    specialTypesMap.value[groupId] = (specialTypesMap.value[groupId] ?? []).map(t => t.id === typeId ? updated : t)
+  }
+
+  // ─── Special predictions (member) ────────────────────────────────────────────
+
+  async function fetchSpecialPredictions(groupId: string): Promise<void> {
+    specialPredictionsLoading.value = true
+    specialPredictionsError.value = null
+    try {
+      const token = await getAccessToken()
+      specialPredictionsMap.value[groupId] = await api.groups.specialPredictions.list(token, groupId)
+    } catch (err) {
+      specialPredictionsError.value = err instanceof Error ? err.message : 'Ismeretlen hiba'
+    } finally {
+      specialPredictionsLoading.value = false
+    }
+  }
+
+  async function upsertSpecialPrediction(groupId: string, input: SpecialPredictionInput): Promise<void> {
+    const token = await getAccessToken()
+    const updated = await api.groups.specialPredictions.upsert(token, groupId, input)
+    specialPredictionsMap.value[groupId] = (specialPredictionsMap.value[groupId] ?? []).map(p =>
+      p.typeId === input.typeId ? updated : p,
+    )
+  }
+
   return {
     groups,
     isLoading,
@@ -133,6 +207,12 @@ export const useGroupsStore = defineStore('groups', () => {
     groupScoringLoading,
     groupScoringError,
     groupScoringSaveStatus,
+    specialTypesMap,
+    specialTypesLoading,
+    specialTypesError,
+    specialPredictionsMap,
+    specialPredictionsLoading,
+    specialPredictionsError,
     fetchMyGroups,
     createGroup,
     joinGroup,
@@ -144,5 +224,12 @@ export const useGroupsStore = defineStore('groups', () => {
     deleteGroup,
     fetchGroupScoringConfig,
     setGroupScoringConfig,
+    fetchSpecialTypes,
+    createSpecialType,
+    updateSpecialType,
+    deactivateSpecialType,
+    setSpecialTypeAnswer,
+    fetchSpecialPredictions,
+    upsertSpecialPrediction,
   }
 })

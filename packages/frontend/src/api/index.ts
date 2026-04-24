@@ -1,4 +1,4 @@
-import type { User, Match, MatchesFilters, MatchInput, MatchResultInput, Prediction, PredictionInput, Team, TeamInput, AdminUser, Group, GroupInput, GroupMember, JoinGroupInput, LeaderboardEntry, ScoringConfigFull, ScoringConfigInput, WaitlistListResult, WaitlistFilters, WaitlistEntry, WaitlistSource } from '../types/index.js'
+import type { User, Match, MatchesFilters, MatchInput, MatchResultInput, Prediction, PredictionInput, Team, TeamInput, AdminUser, Group, GroupInput, GroupMember, JoinGroupInput, LeaderboardEntry, ScoringConfigFull, ScoringConfigInput, WaitlistListResult, WaitlistFilters, WaitlistEntry, WaitlistSource, SpecialPredictionType, SpecialTypeInput, SpecialPredictionWithType, SpecialPredictionInput } from '../types/index.js'
 
 const BASE_URL = (import.meta.env.VITE_API_URL ?? '') + '/api'
 
@@ -128,6 +128,47 @@ export const api = {
         body: JSON.stringify(input),
         headers: { Authorization: `Bearer ${token}` },
       }),
+    specialTypes: {
+      list: (token: string, groupId: string) =>
+        request<SpecialPredictionType[]>(`/groups/${groupId}/special-types`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      create: (token: string, groupId: string, input: SpecialTypeInput) =>
+        request<SpecialPredictionType>(`/groups/${groupId}/special-types`, {
+          method: 'POST',
+          body: JSON.stringify(input),
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      update: (token: string, groupId: string, typeId: string, input: SpecialTypeInput) =>
+        request<SpecialPredictionType>(`/groups/${groupId}/special-types/${typeId}`, {
+          method: 'PUT',
+          body: JSON.stringify(input),
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      deactivate: (token: string, groupId: string, typeId: string) =>
+        request<void>(`/groups/${groupId}/special-types/${typeId}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      setAnswer: (token: string, groupId: string, typeId: string, correctAnswer: string) =>
+        request<SpecialPredictionType>(`/groups/${groupId}/special-types/${typeId}/answer`, {
+          method: 'PUT',
+          body: JSON.stringify({ correctAnswer }),
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+    },
+    specialPredictions: {
+      list: (token: string, groupId: string) =>
+        request<SpecialPredictionWithType[]>(`/groups/${groupId}/special-predictions`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      upsert: (token: string, groupId: string, input: SpecialPredictionInput) =>
+        request<SpecialPredictionWithType>(`/groups/${groupId}/special-predictions`, {
+          method: 'POST',
+          body: JSON.stringify(input),
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+    },
   },
   admin: {
     teams: {

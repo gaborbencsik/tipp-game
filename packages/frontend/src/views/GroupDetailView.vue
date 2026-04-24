@@ -15,6 +15,14 @@
         Ranglista
       </button>
       <button
+        data-testid="tab-special"
+        class="px-4 py-2 text-sm font-medium"
+        :class="activeTab === 'special' ? 'border-b-2 border-blue-600 text-blue-700 font-semibold' : 'text-gray-500'"
+        @click="switchToSpecialTab"
+      >
+        Stat tippek
+      </button>
+      <button
         v-if="currentUserIsGroupAdmin"
         data-testid="tab-members"
         class="px-4 py-2 text-sm font-medium"
@@ -46,6 +54,7 @@
             <col />
             <col class="w-16" />
             <col class="w-16" />
+            <col class="w-14" />
             <col class="w-16" />
           </colgroup>
           <thead>
@@ -54,6 +63,7 @@
               <th class="px-4 py-3">Játékos</th>
               <th class="px-4 py-3 text-right">Tipp</th>
               <th class="px-4 py-3 text-right">Helyes</th>
+              <th class="px-4 py-3 text-right" title="Stat tipp pontok">Stat</th>
               <th class="px-4 py-3 text-right font-semibold">Pont</th>
             </tr>
           </thead>
@@ -78,6 +88,7 @@
               </td>
               <td class="px-4 py-3 text-right text-gray-600">{{ entry.predictionCount }}</td>
               <td class="px-4 py-3 text-right text-gray-600">{{ entry.correctCount }}</td>
+              <td class="px-4 py-3 text-right text-gray-500">{{ entry.specialPredictionPoints ?? 0 }}</td>
               <td class="px-4 py-3 text-right font-bold text-blue-700">{{ entry.totalPoints }}</td>
             </tr>
           </tbody>
@@ -249,6 +260,240 @@
           </div>
         </form>
       </div>
+
+      <!-- Stat tipp típusok kezelése (admin) -->
+      <div class="mt-8 max-w-lg">
+        <h3 class="text-base font-semibold text-gray-800 mb-1">Stat tipp típusok</h3>
+        <p class="text-sm text-gray-500 mb-4">Hozz létre egyedi stat tippeket a csoport számára (pl. Gólkirály, Legjobb csapat).</p>
+
+        <div v-if="groupsStore.specialTypesLoading" class="text-gray-500 text-sm">Betöltés...</div>
+        <div v-else-if="groupsStore.specialTypesError" class="text-red-600 text-sm">{{ groupsStore.specialTypesError }}</div>
+        <div v-else>
+          <!-- Existing types list -->
+          <div v-if="specialTypes.length > 0" class="space-y-3 mb-4">
+            <div
+              v-for="st in specialTypes"
+              :key="st.id"
+              class="border rounded-lg p-3 bg-white"
+            >
+              <div class="flex items-start justify-between gap-2">
+                <div class="min-w-0">
+                  <p class="font-medium text-gray-800 text-sm">{{ st.name }}</p>
+                  <p v-if="st.description" class="text-xs text-gray-500 mt-0.5">{{ st.description }}</p>
+                  <div class="flex flex-wrap gap-2 mt-1 text-xs text-gray-500">
+                    <span>{{ st.inputType === 'dropdown' ? 'Legördülő' : 'Szabad szöveg' }}</span>
+                    <span>·</span>
+                    <span>{{ st.points }} pont</span>
+                    <span>·</span>
+                    <span>Határidő: {{ formatDateTime(st.deadline) }}</span>
+                  </div>
+                  <div v-if="st.options?.length" class="mt-1 text-xs text-gray-400">
+                    Opciók: {{ st.options.join(', ') }}
+                  </div>
+                  <div v-if="st.correctAnswer" class="mt-1 text-xs text-green-600 font-medium">
+                    Helyes válasz: {{ st.correctAnswer }}
+                  </div>
+                </div>
+                <div class="flex gap-1 shrink-0">
+                  <button
+                    v-if="!st.correctAnswer"
+                    class="text-xs px-2 py-1 rounded border border-green-300 text-green-600 hover:bg-green-50"
+                    @click="openSetAnswer(st)"
+                  >
+                    Kiértékel
+                  </button>
+                  <button
+                    class="text-xs px-2 py-1 rounded border border-blue-300 text-blue-600 hover:bg-blue-50"
+                    @click="openEditType(st)"
+                  >
+                    Szerkeszt
+                  </button>
+                  <button
+                    class="text-xs px-2 py-1 rounded border border-red-300 text-red-600 hover:bg-red-50"
+                    @click="confirmDeactivateTypeId = st.id"
+                  >
+                    Törlés
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div v-else class="text-sm text-gray-400 mb-4">Még nincs stat tipp típus.</div>
+
+          <!-- Create / Edit form -->
+          <button
+            v-if="!showTypeForm"
+            class="text-sm px-3 py-1.5 rounded border border-blue-300 text-blue-600 hover:bg-blue-50"
+            @click="openNewTypeForm"
+          >
+            + Új stat tipp típus
+          </button>
+
+          <form v-if="showTypeForm" class="border rounded-lg p-4 bg-gray-50 space-y-3" @submit.prevent="submitTypeForm">
+            <div>
+              <label class="text-xs font-medium text-gray-600 block mb-1">Név *</label>
+              <input v-model="typeDraft.name" type="text" maxlength="100" required class="w-full border rounded px-2 py-1 text-sm" placeholder="pl. Gólkirály" />
+            </div>
+            <div>
+              <label class="text-xs font-medium text-gray-600 block mb-1">Leírás</label>
+              <input v-model="typeDraft.description" type="text" class="w-full border rounded px-2 py-1 text-sm" placeholder="Opcionális leírás" />
+            </div>
+            <div class="flex gap-4">
+              <div class="flex-1">
+                <label class="text-xs font-medium text-gray-600 block mb-1">Típus</label>
+                <select v-model="typeDraft.inputType" class="w-full border rounded px-2 py-1 text-sm">
+                  <option value="text">Szabad szöveg</option>
+                  <option value="dropdown">Legördülő</option>
+                </select>
+              </div>
+              <div class="w-24">
+                <label class="text-xs font-medium text-gray-600 block mb-1">Pont</label>
+                <input v-model.number="typeDraft.points" type="number" min="1" max="100" required class="w-full border rounded px-2 py-1 text-sm text-center" />
+              </div>
+            </div>
+            <div v-if="typeDraft.inputType === 'dropdown'">
+              <label class="text-xs font-medium text-gray-600 block mb-1">Opciók (vesszővel elválasztva)</label>
+              <input v-model="typeDraft.optionsRaw" type="text" class="w-full border rounded px-2 py-1 text-sm" placeholder="Messi, Ronaldo, Mbappé" />
+            </div>
+            <div>
+              <label class="text-xs font-medium text-gray-600 block mb-1">Határidő *</label>
+              <input v-model="typeDraft.deadline" type="datetime-local" required class="w-full border rounded px-2 py-1 text-sm" />
+            </div>
+            <div v-if="typeFormError" class="text-xs text-red-600">{{ typeFormError }}</div>
+            <div class="flex gap-2 pt-1">
+              <button type="submit" class="text-sm px-3 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50" :disabled="typeFormSaving">
+                {{ editingTypeId ? 'Mentés' : 'Létrehozás' }}
+              </button>
+              <button type="button" class="text-sm px-3 py-1.5 rounded border border-gray-300 text-gray-600" @click="showTypeForm = false">
+                Mégse
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stat tippek tab (member) -->
+    <div v-if="activeTab === 'special'" data-testid="special-tab">
+      <div v-if="groupsStore.specialPredictionsLoading" class="text-gray-500">Betöltés...</div>
+      <div v-else-if="groupsStore.specialPredictionsError" class="text-red-600">{{ groupsStore.specialPredictionsError }}</div>
+      <div v-else-if="specialPredictions.length === 0" class="text-gray-500 text-sm">Ebben a csoportban még nincsenek stat tippek.</div>
+      <div v-else class="space-y-3 max-w-lg">
+        <div
+          v-for="sp in specialPredictions"
+          :key="sp.typeId"
+          class="bg-white rounded-xl border border-gray-200 p-4"
+        >
+          <div class="flex items-start justify-between gap-2 mb-2">
+            <div>
+              <p class="font-medium text-gray-800 text-sm">{{ sp.typeName }}</p>
+              <p v-if="sp.typeDescription" class="text-xs text-gray-500 mt-0.5">{{ sp.typeDescription }}</p>
+            </div>
+            <span class="text-xs font-semibold px-2 py-0.5 rounded-full shrink-0" :class="predictionStatusClass(sp)">
+              {{ predictionStatusLabel(sp) }}
+            </span>
+          </div>
+
+          <div class="flex flex-wrap gap-2 text-xs text-gray-500 mb-3">
+            <span>Max {{ sp.maxPoints }} pont</span>
+            <span>·</span>
+            <span>Határidő: {{ formatDateTime(sp.deadline) }}</span>
+          </div>
+
+          <!-- Already evaluated -->
+          <div v-if="sp.points !== null" class="text-sm">
+            <p class="text-gray-600">Tipped: <span class="font-medium text-gray-800">{{ sp.answer ?? '–' }}</span></p>
+            <p v-if="sp.correctAnswer" class="text-gray-600">Helyes válasz: <span class="font-medium text-green-700">{{ sp.correctAnswer }}</span></p>
+            <p class="mt-1 font-semibold" :class="sp.points > 0 ? 'text-green-600' : 'text-gray-400'">
+              {{ sp.points > 0 ? `+${sp.points} pont` : '0 pont' }}
+            </p>
+          </div>
+
+          <!-- Before deadline: submit/edit -->
+          <div v-else-if="!isDeadlinePassed(sp.deadline)">
+            <div v-if="sp.inputType === 'dropdown' && sp.options?.length">
+              <select
+                :value="pendingAnswers[sp.typeId] ?? sp.answer ?? ''"
+                class="w-full border rounded px-2 py-1.5 text-sm mb-2"
+                @change="pendingAnswers[sp.typeId] = ($event.target as HTMLSelectElement).value"
+              >
+                <option value="" disabled>Válassz...</option>
+                <option v-for="opt in sp.options" :key="opt" :value="opt">{{ opt }}</option>
+              </select>
+            </div>
+            <div v-else>
+              <input
+                :value="pendingAnswers[sp.typeId] ?? sp.answer ?? ''"
+                type="text"
+                maxlength="500"
+                class="w-full border rounded px-2 py-1.5 text-sm mb-2"
+                placeholder="Írd be a tipped..."
+                @input="pendingAnswers[sp.typeId] = ($event.target as HTMLInputElement).value"
+              />
+            </div>
+            <div class="flex items-center gap-2">
+              <button
+                class="text-sm px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                :disabled="!canSubmitPrediction(sp)"
+                @click="submitPrediction(sp.typeId)"
+              >
+                {{ sp.answer ? 'Módosít' : 'Leadás' }}
+              </button>
+              <span v-if="sp.answer" class="text-xs text-gray-400">Jelenlegi: {{ sp.answer }}</span>
+              <span v-if="predictionSaveStatus[sp.typeId] === 'saved'" class="text-xs text-green-600">Mentve!</span>
+              <span v-else-if="predictionSaveStatus[sp.typeId] === 'error'" class="text-xs text-red-600">Hiba</span>
+            </div>
+          </div>
+
+          <!-- After deadline, not yet evaluated -->
+          <div v-else class="text-sm">
+            <p class="text-gray-600">Tipped: <span class="font-medium text-gray-800">{{ sp.answer ?? 'Nem adtál le tippet' }}</span></p>
+            <p class="text-xs text-gray-400 mt-1">A határidő lejárt, kiértékelésre vár.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Set correct answer dialog -->
+    <div v-if="setAnswerTypeId !== null" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+      <div class="bg-white rounded-xl p-6 shadow-xl max-w-sm w-full mx-4">
+        <p class="text-gray-800 mb-1 font-semibold">Helyes válasz megadása</p>
+        <p class="text-gray-500 text-sm mb-3">{{ setAnswerTypeName }}</p>
+        <input
+          v-model="setAnswerValue"
+          type="text"
+          class="w-full border rounded px-3 py-2 text-sm mb-3"
+          placeholder="Helyes válasz..."
+        />
+        <div v-if="setAnswerError" class="text-xs text-red-600 mb-2">{{ setAnswerError }}</div>
+        <div class="flex gap-3 justify-end">
+          <button class="px-4 py-2 text-sm rounded border border-gray-300 text-gray-700" @click="setAnswerTypeId = null">
+            Mégse
+          </button>
+          <button
+            class="px-4 py-2 text-sm rounded bg-green-600 text-white font-medium disabled:opacity-50"
+            :disabled="!setAnswerValue.trim() || setAnswerSaving"
+            @click="submitSetAnswer"
+          >
+            Kiértékelés
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Deactivate type confirm dialog -->
+    <div v-if="confirmDeactivateTypeId !== null" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+      <div class="bg-white rounded-xl p-6 shadow-xl max-w-sm w-full mx-4">
+        <p class="text-gray-800 mb-4">Biztosan törölni szeretnéd ezt a stat tipp típust?</p>
+        <div class="flex gap-3 justify-end">
+          <button class="px-4 py-2 text-sm rounded border border-gray-300 text-gray-700" @click="confirmDeactivateTypeId = null">
+            Mégse
+          </button>
+          <button class="px-4 py-2 text-sm rounded bg-red-600 text-white font-medium" @click="onConfirmDeactivate">
+            Törlés
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Confirm dialog -->    <div v-if="confirmRemoveUserId !== null" data-testid="confirm-dialog" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
@@ -331,9 +576,9 @@ import { useGroupsStore } from '../stores/groups.store.js'
 import { useAuthStore } from '../stores/auth.store.js'
 import { api } from '../api/index.js'
 import { supabase } from '../lib/supabase.js'
-import type { GroupMember, LeaderboardEntry, ScoringConfigInput } from '../types/index.js'
+import type { GroupMember, LeaderboardEntry, ScoringConfigInput, SpecialTypeInput } from '../types/index.js'
 
-type Tab = 'leaderboard' | 'members' | 'settings'
+type Tab = 'leaderboard' | 'members' | 'settings' | 'special'
 
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
 
@@ -371,6 +616,36 @@ const canManageSettings = computed(() => currentUserIsGroupAdmin.value || isGlob
 const showInviteConfirm = ref(false)
 const showDeleteConfirm = ref(false)
 const copiedInvite = ref<'code' | 'url' | null>(null)
+
+// ─── Special prediction types (admin) ────────────────────────────────────────
+const showTypeForm = ref(false)
+const editingTypeId = ref<string | null>(null)
+const typeFormSaving = ref(false)
+const typeFormError = ref<string | null>(null)
+const confirmDeactivateTypeId = ref<string | null>(null)
+
+const typeDraft = reactive({
+  name: '',
+  description: '',
+  inputType: 'text' as 'text' | 'dropdown',
+  optionsRaw: '',
+  points: 5,
+  deadline: '',
+})
+
+const specialTypes = computed(() => groupsStore.specialTypesMap[groupId] ?? [])
+
+// ─── Set correct answer dialog ───────────────────────────────────────────────
+const setAnswerTypeId = ref<string | null>(null)
+const setAnswerTypeName = ref('')
+const setAnswerValue = ref('')
+const setAnswerSaving = ref(false)
+const setAnswerError = ref<string | null>(null)
+
+// ─── Special predictions (member) ────────────────────────────────────────────
+const specialPredictions = computed(() => groupsStore.specialPredictionsMap[groupId] ?? [])
+const pendingAnswers = reactive<Record<string, string>>({})
+const predictionSaveStatus = reactive<Record<string, 'idle' | 'saving' | 'saved' | 'error'>>({})
 
 const scoringFields: Array<{ key: keyof ScoringConfigInput; label: string }> = [
   { key: 'exactScore', label: 'Pontos találat' },
@@ -466,6 +741,140 @@ function copyInviteUrl(): void {
   }
 }
 
+function formatDateTime(iso: string): string {
+  return new Date(iso).toLocaleString('hu-HU', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+}
+
+function isDeadlinePassed(deadline: string): boolean {
+  return new Date(deadline).getTime() < Date.now()
+}
+
+// ─── Special type form ───────────────────────────────────────────────────────
+
+function openNewTypeForm(): void {
+  editingTypeId.value = null
+  typeDraft.name = ''
+  typeDraft.description = ''
+  typeDraft.inputType = 'text'
+  typeDraft.optionsRaw = ''
+  typeDraft.points = 5
+  typeDraft.deadline = ''
+  typeFormError.value = null
+  showTypeForm.value = true
+}
+
+function openEditType(st: { id: string; name: string; description: string | null; inputType: string; options: string[] | null; points: number; deadline: string }): void {
+  editingTypeId.value = st.id
+  typeDraft.name = st.name
+  typeDraft.description = st.description ?? ''
+  typeDraft.inputType = st.inputType as 'text' | 'dropdown'
+  typeDraft.optionsRaw = st.options?.join(', ') ?? ''
+  typeDraft.points = st.points
+  typeDraft.deadline = st.deadline.slice(0, 16)
+  typeFormError.value = null
+  showTypeForm.value = true
+}
+
+async function submitTypeForm(): Promise<void> {
+  typeFormError.value = null
+  typeFormSaving.value = true
+  try {
+    const options = typeDraft.inputType === 'dropdown'
+      ? typeDraft.optionsRaw.split(',').map(s => s.trim()).filter(Boolean)
+      : undefined
+    const input: SpecialTypeInput = {
+      name: typeDraft.name,
+      description: typeDraft.description || undefined,
+      inputType: typeDraft.inputType,
+      options,
+      deadline: new Date(typeDraft.deadline).toISOString(),
+      points: typeDraft.points,
+    }
+    if (editingTypeId.value) {
+      await groupsStore.updateSpecialType(groupId, editingTypeId.value, input)
+    } else {
+      await groupsStore.createSpecialType(groupId, input)
+    }
+    showTypeForm.value = false
+  } catch (err) {
+    typeFormError.value = err instanceof Error ? err.message : 'Hiba'
+  } finally {
+    typeFormSaving.value = false
+  }
+}
+
+async function onConfirmDeactivate(): Promise<void> {
+  if (!confirmDeactivateTypeId.value) return
+  const id = confirmDeactivateTypeId.value
+  confirmDeactivateTypeId.value = null
+  await groupsStore.deactivateSpecialType(groupId, id)
+}
+
+function openSetAnswer(st: { id: string; name: string }): void {
+  setAnswerTypeId.value = st.id
+  setAnswerTypeName.value = st.name
+  setAnswerValue.value = ''
+  setAnswerError.value = null
+}
+
+async function submitSetAnswer(): Promise<void> {
+  if (!setAnswerTypeId.value || !setAnswerValue.value.trim()) return
+  setAnswerSaving.value = true
+  setAnswerError.value = null
+  try {
+    await groupsStore.setSpecialTypeAnswer(groupId, setAnswerTypeId.value, setAnswerValue.value.trim())
+    setAnswerTypeId.value = null
+  } catch (err) {
+    setAnswerError.value = err instanceof Error ? err.message : 'Hiba'
+  } finally {
+    setAnswerSaving.value = false
+  }
+}
+
+// ─── Special predictions (member) ────────────────────────────────────────────
+
+function predictionStatusClass(sp: { points: number | null; answer: string | null; deadline: string }): string {
+  if (sp.points !== null) return sp.points > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+  if (isDeadlinePassed(sp.deadline)) return 'bg-yellow-100 text-yellow-700'
+  if (sp.answer) return 'bg-blue-100 text-blue-700'
+  return 'bg-gray-100 text-gray-500'
+}
+
+function predictionStatusLabel(sp: { points: number | null; answer: string | null; deadline: string }): string {
+  if (sp.points !== null) return sp.points > 0 ? `+${sp.points}` : '0 pont'
+  if (isDeadlinePassed(sp.deadline)) return 'Kiértékelésre vár'
+  if (sp.answer) return 'Leadva'
+  return 'Nyitott'
+}
+
+function canSubmitPrediction(sp: { typeId: string; answer: string | null }): boolean {
+  const pending = pendingAnswers[sp.typeId]
+  if (!pending) return false
+  if (!pending.trim()) return false
+  return pending.trim() !== (sp.answer ?? '')
+}
+
+async function submitPrediction(typeId: string): Promise<void> {
+  const answer = pendingAnswers[typeId]?.trim()
+  if (!answer) return
+  predictionSaveStatus[typeId] = 'saving'
+  try {
+    await groupsStore.upsertSpecialPrediction(groupId, { typeId, answer })
+    predictionSaveStatus[typeId] = 'saved'
+    delete pendingAnswers[typeId]
+    setTimeout(() => { predictionSaveStatus[typeId] = 'idle' }, 2000)
+  } catch {
+    predictionSaveStatus[typeId] = 'error'
+  }
+}
+
+async function switchToSpecialTab(): Promise<void> {
+  activeTab.value = 'special'
+  if (!groupsStore.specialPredictionsMap[groupId]) {
+    await groupsStore.fetchSpecialPredictions(groupId)
+  }
+}
+
 onMounted(async () => {
   isLoading.value = true
   error.value = null
@@ -476,6 +885,7 @@ onMounted(async () => {
     await groupsStore.fetchGroupMembers(groupId)
     if (canManageSettings.value) {
       await groupsStore.fetchGroupScoringConfig(groupId)
+      await groupsStore.fetchSpecialTypes(groupId)
     }
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Ismeretlen hiba'
