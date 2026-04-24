@@ -458,7 +458,7 @@
 | US-901-B | Backend: stat tipp típus CRUD | ✅ Kész | Should Have |
 | US-901-C | Backend: stat tipp beküldés/lekérdezés | ✅ Kész | Should Have |
 | US-901-D | Backend: kiértékelés (helyes válasz + pontszámítás) | ✅ Kész | Should Have |
-| US-901-E | Backend: csoport ranglista integráció | 🔄 Következő | Should Have |
+| US-901-E | Backend: csoport ranglista integráció | ✅ Kész | Should Have |
 | US-902 | Statisztikai tipp típus konfig | ⬜ Lebontva (US-902-A..B) | Should Have |
 | US-902-A | Frontend: admin stat tipp konfig UI | ⬜ Nem kezdett | Should Have |
 | US-902-B | Frontend: tag stat tipp leadási UI | ⬜ Nem kezdett | Should Have |

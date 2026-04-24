@@ -10,6 +10,7 @@ export interface LeaderboardEntry {
   readonly totalPoints: number
   readonly predictionCount: number
   readonly correctCount: number
+  readonly specialPredictionPoints: number
 }
 
 export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
@@ -41,6 +42,7 @@ export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
       totalPoints: Number(row.totalPoints),
       predictionCount: Number(row.predictionCount),
       correctCount: Number(row.correctCount),
+      specialPredictionPoints: 0,
     }
   })
 }

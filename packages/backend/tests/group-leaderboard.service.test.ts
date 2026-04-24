@@ -6,6 +6,7 @@ const {
   mockOrderBy, mockGroupBy, mockLeftJoin,
   mockInnerJoin, mockLeaderboardWhere, mockLeaderboardFrom,
   mockLeftJoin2,
+  mockStatGroupBy, mockStatWhere, mockStatInnerJoin, mockStatFrom,
 } = vi.hoisted(() => ({
   mockLimit: vi.fn(),
   mockMemberWhere: vi.fn(),
@@ -20,6 +21,10 @@ const {
   mockLeaderboardWhere: vi.fn(),
   mockLeaderboardFrom: vi.fn(),
   mockLeftJoin2: vi.fn(),
+  mockStatGroupBy: vi.fn(),
+  mockStatWhere: vi.fn(),
+  mockStatInnerJoin: vi.fn(),
+  mockStatFrom: vi.fn(),
 }))
 
 vi.mock('../src/db/client.js', () => ({
@@ -33,6 +38,8 @@ vi.mock('../src/db/schema/index.js', () => ({
   groupMembers: { groupId: 'groupMembers.groupId', userId: 'groupMembers.userId' },
   groupPredictionPoints: { points: 'gpp.points', id: 'gpp.id', predictionId: 'gpp.predictionId', groupId: 'gpp.groupId' },
   scoringConfigs: {},
+  specialPredictions: { userId: 'sp.userId', typeId: 'sp.typeId', points: 'sp.points' },
+  specialPredictionTypes: { id: 'spt.id', groupId: 'spt.groupId' },
 }))
 
 vi.mock('drizzle-orm', () => ({
@@ -55,7 +62,20 @@ const LEADERBOARD_ROWS = [
   { userId: 'user-uuid-2', displayName: 'Bob', avatarUrl: null, totalPoints: 5, predictionCount: 2, correctCount: 1 },
 ]
 
-function setupLeaderboardSelectChain(groupRow: unknown, memberRows: unknown[], leaderboardRows: unknown[], withConfig = false) {
+function setupStatChain(statRows: unknown[] = []) {
+  mockStatGroupBy.mockResolvedValueOnce(statRows)
+  mockStatWhere.mockReturnValue({ groupBy: mockStatGroupBy })
+  mockStatInnerJoin.mockReturnValue({ where: mockStatWhere })
+  mockStatFrom.mockReturnValue({ innerJoin: mockStatInnerJoin })
+}
+
+function setupLeaderboardSelectChain(
+  groupRow: unknown,
+  memberRows: unknown[],
+  leaderboardRows: unknown[],
+  withConfig = false,
+  statRows: unknown[] = [],
+) {
   mockLimit.mockResolvedValueOnce([groupRow])
   mockGroupWhere.mockReturnValue({ limit: mockLimit })
   mockGroupFrom.mockReturnValue({ where: mockGroupWhere })
@@ -68,21 +88,22 @@ function setupLeaderboardSelectChain(groupRow: unknown, memberRows: unknown[], l
   mockLeaderboardWhere.mockReturnValue({ groupBy: mockGroupBy })
 
   if (withConfig) {
-    // has 2 leftJoins (predictions + groupPredictionPoints)
     mockLeftJoin2.mockReturnValue({ where: mockLeaderboardWhere })
     mockLeftJoin.mockReturnValue({ leftJoin: mockLeftJoin2 })
   } else {
-    // has 1 leftJoin (predictions only)
     mockLeftJoin.mockReturnValue({ where: mockLeaderboardWhere })
   }
 
   mockInnerJoin.mockReturnValue({ leftJoin: mockLeftJoin })
   mockLeaderboardFrom.mockReturnValue({ innerJoin: mockInnerJoin })
 
+  setupStatChain(statRows)
+
   mockSelect
-    .mockReturnValueOnce({ from: mockGroupFrom })
-    .mockReturnValueOnce({ from: mockMemberFrom })
-    .mockReturnValueOnce({ from: mockLeaderboardFrom })
+    .mockReturnValueOnce({ from: mockGroupFrom })       // group lookup
+    .mockReturnValueOnce({ from: mockMemberFrom })       // membership check
+    .mockReturnValueOnce({ from: mockLeaderboardFrom })  // leaderboard query
+    .mockReturnValueOnce({ from: mockStatFrom })         // stat points query
 }
 
 describe('getGroupLeaderboard', () => {
@@ -96,8 +117,8 @@ describe('getGroupLeaderboard', () => {
     const result = await getGroupLeaderboard(GROUP_ID, REQUESTER_ID)
 
     expect(result).toHaveLength(2)
-    expect(result[0]).toMatchObject({ rank: 1, userId: REQUESTER_ID, totalPoints: 10 })
-    expect(result[1]).toMatchObject({ rank: 2, userId: 'user-uuid-2', totalPoints: 5 })
+    expect(result[0]).toMatchObject({ rank: 1, userId: REQUESTER_ID, totalPoints: 10, specialPredictionPoints: 0 })
+    expect(result[1]).toMatchObject({ rank: 2, userId: 'user-uuid-2', totalPoints: 5, specialPredictionPoints: 0 })
   })
 
   it('uses groupPredictionPoints when group has scoring config', async () => {
@@ -106,7 +127,7 @@ describe('getGroupLeaderboard', () => {
     const result = await getGroupLeaderboard(GROUP_ID, REQUESTER_ID)
 
     expect(result).toHaveLength(2)
-    expect(result[0]).toMatchObject({ rank: 1, userId: REQUESTER_ID, totalPoints: 10 })
+    expect(result[0]).toMatchObject({ rank: 1, userId: REQUESTER_ID, totalPoints: 10, specialPredictionPoints: 0 })
   })
 
   it('throws 404 if group not found', async () => {
@@ -145,5 +166,44 @@ describe('getGroupLeaderboard', () => {
     expect(result[0]?.rank).toBe(1)
     expect(result[1]?.rank).toBe(1)
     expect(result[2]?.rank).toBe(3)
+  })
+
+  // ─── New: stat prediction points tests ─────────────────────────────────────
+
+  it('stat points are added to totalPoints', async () => {
+    const statRows = [
+      { userId: REQUESTER_ID, statPoints: 15 },
+      { userId: 'user-uuid-2', statPoints: 3 },
+    ]
+    setupLeaderboardSelectChain(GROUP_ROW_NO_CONFIG, MEMBER_ROWS, LEADERBOARD_ROWS, false, statRows)
+
+    const result = await getGroupLeaderboard(GROUP_ID, REQUESTER_ID)
+
+    // Alice: 10 match + 15 stat = 25, Bob: 5 match + 3 stat = 8
+    expect(result[0]).toMatchObject({ userId: REQUESTER_ID, totalPoints: 25, specialPredictionPoints: 15 })
+    expect(result[1]).toMatchObject({ userId: 'user-uuid-2', totalPoints: 8, specialPredictionPoints: 3 })
+  })
+
+  it('member with no stat predictions gets specialPredictionPoints = 0', async () => {
+    setupLeaderboardSelectChain(GROUP_ROW_NO_CONFIG, MEMBER_ROWS, LEADERBOARD_ROWS, false, [])
+
+    const result = await getGroupLeaderboard(GROUP_ID, REQUESTER_ID)
+
+    expect(result[0]?.specialPredictionPoints).toBe(0)
+    expect(result[1]?.specialPredictionPoints).toBe(0)
+  })
+
+  it('stat points can change rank order', async () => {
+    // Bob has fewer match points but more stat points, overtaking Alice
+    const statRows = [
+      { userId: 'user-uuid-2', statPoints: 20 },
+    ]
+    setupLeaderboardSelectChain(GROUP_ROW_NO_CONFIG, MEMBER_ROWS, LEADERBOARD_ROWS, false, statRows)
+
+    const result = await getGroupLeaderboard(GROUP_ID, REQUESTER_ID)
+
+    // Alice: 10+0=10, Bob: 5+20=25 → Bob first
+    expect(result[0]).toMatchObject({ userId: 'user-uuid-2', rank: 1, totalPoints: 25 })
+    expect(result[1]).toMatchObject({ userId: REQUESTER_ID, rank: 2, totalPoints: 10 })
   })
 })

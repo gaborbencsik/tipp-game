@@ -1,6 +1,6 @@
 import { eq, isNull, sql, count } from 'drizzle-orm'
 import { db } from '../db/client.js'
-import { users, predictions, groupMembers, groups, scoringConfigs, groupPredictionPoints } from '../db/schema/index.js'
+import { users, predictions, groupMembers, groups, scoringConfigs, groupPredictionPoints, specialPredictions, specialPredictionTypes } from '../db/schema/index.js'
 import type { LeaderboardEntry } from './leaderboard.service.js'
 
 class AppError extends Error {
@@ -78,19 +78,52 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
       .orderBy(sql`coalesce(sum(${predictions.pointsGlobal}), 0) desc`)
   }
 
+  // Fetch stat prediction points per user for this group
+  const statPointRows = await db
+    .select({
+      userId: specialPredictions.userId,
+      statPoints: sql<number>`coalesce(sum(${specialPredictions.points}), 0)`,
+    })
+    .from(specialPredictions)
+    .innerJoin(specialPredictionTypes, eq(specialPredictions.typeId, specialPredictionTypes.id))
+    .where(eq(specialPredictionTypes.groupId, groupId))
+    .groupBy(specialPredictions.userId)
+
+  const statPointsByUser = new Map(statPointRows.map(r => [r.userId, Number(r.statPoints)]))
+
+  // Merge stat points and compute total
+  const merged = rows.map(row => {
+    const matchPoints = Number(row.totalPoints)
+    const statPoints = statPointsByUser.get(row.userId) ?? 0
+    return {
+      userId: row.userId,
+      displayName: row.displayName,
+      avatarUrl: row.avatarUrl ?? null,
+      matchPoints,
+      specialPredictionPoints: statPoints,
+      totalPoints: matchPoints + statPoints,
+      predictionCount: Number(row.predictionCount),
+      correctCount: Number(row.correctCount),
+    }
+  })
+
+  // Sort by total (match + stat) descending
+  merged.sort((a, b) => b.totalPoints - a.totalPoints)
+
   let rank = 1
-  return rows.map((row, i) => {
-    if (i > 0 && row.totalPoints < rows[i - 1]!.totalPoints) {
+  return merged.map((row, i) => {
+    if (i > 0 && row.totalPoints < merged[i - 1]!.totalPoints) {
       rank = i + 1
     }
     return {
       rank,
       userId: row.userId,
       displayName: row.displayName,
-      avatarUrl: row.avatarUrl ?? null,
-      totalPoints: Number(row.totalPoints),
-      predictionCount: Number(row.predictionCount),
-      correctCount: Number(row.correctCount),
+      avatarUrl: row.avatarUrl,
+      totalPoints: row.totalPoints,
+      predictionCount: row.predictionCount,
+      correctCount: row.correctCount,
+      specialPredictionPoints: row.specialPredictionPoints,
     }
   })
 }
