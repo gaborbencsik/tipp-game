@@ -171,7 +171,7 @@ export interface LeaderboardEntry {
   readonly specialPredictionPoints: number
 }
 
-export type SpecialPredictionInputType = 'text' | 'dropdown'
+export type SpecialPredictionInputType = 'text' | 'dropdown' | 'team_select'
 
 export interface SpecialPredictionType {
   readonly id: string
@@ -216,6 +216,15 @@ export interface SpecialPredictionWithType {
 export interface SpecialPredictionInput {
   readonly typeId: string
   readonly answer: string
+}
+
+export interface StatPredictionTemplate {
+  readonly id: string
+  readonly name: string
+  readonly description: string
+  readonly inputType: SpecialPredictionInputType
+  readonly options: string[] | null
+  readonly defaultPoints: number
 }
 
 export interface ScoringConfigFull {

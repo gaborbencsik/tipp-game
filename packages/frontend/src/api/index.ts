@@ -1,4 +1,4 @@
-import type { User, Match, MatchesFilters, MatchInput, MatchResultInput, Prediction, PredictionInput, Team, TeamInput, AdminUser, Group, GroupInput, GroupMember, JoinGroupInput, LeaderboardEntry, ScoringConfigFull, ScoringConfigInput, WaitlistListResult, WaitlistFilters, WaitlistEntry, WaitlistSource, SpecialPredictionType, SpecialTypeInput, SpecialPredictionWithType, SpecialPredictionInput } from '../types/index.js'
+import type { User, Match, MatchesFilters, MatchInput, MatchResultInput, Prediction, PredictionInput, Team, TeamInput, AdminUser, Group, GroupInput, GroupMember, JoinGroupInput, LeaderboardEntry, ScoringConfigFull, ScoringConfigInput, WaitlistListResult, WaitlistFilters, WaitlistEntry, WaitlistSource, SpecialPredictionType, SpecialTypeInput, SpecialPredictionWithType, SpecialPredictionInput, StatPredictionTemplate } from '../types/index.js'
 
 const BASE_URL = (import.meta.env.VITE_API_URL ?? '') + '/api'
 
@@ -27,6 +27,18 @@ export const api = {
     me: (token: string) =>
       request<User>('/auth/me', {
         method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+  },
+  teams: {
+    list: (token: string) =>
+      request<Team[]>('/teams', {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+  },
+  statPredictionTemplates: {
+    list: (token: string) =>
+      request<StatPredictionTemplate[]>('/stat-prediction-templates', {
         headers: { Authorization: `Bearer ${token}` },
       }),
   },

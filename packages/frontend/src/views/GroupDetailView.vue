@@ -281,7 +281,7 @@
                   <p class="font-medium text-gray-800 text-sm">{{ st.name }}</p>
                   <p v-if="st.description" class="text-xs text-gray-500 mt-0.5">{{ st.description }}</p>
                   <div class="flex flex-wrap gap-2 mt-1 text-xs text-gray-500">
-                    <span>{{ st.inputType === 'dropdown' ? 'Legördülő' : 'Szabad szöveg' }}</span>
+                    <span>{{ st.inputType === 'dropdown' ? 'Legördülő' : st.inputType === 'team_select' ? 'Csapatválasztó' : 'Szabad szöveg' }}</span>
                     <span>·</span>
                     <span>{{ st.points }} pont</span>
                     <span>·</span>
@@ -291,7 +291,7 @@
                     Opciók: {{ st.options.join(', ') }}
                   </div>
                   <div v-if="st.correctAnswer" class="mt-1 text-xs text-green-600 font-medium">
-                    Helyes válasz: {{ st.correctAnswer }}
+                    Helyes válasz: {{ st.inputType === 'team_select' ? teamName(st.correctAnswer) : st.correctAnswer }}
                   </div>
                 </div>
                 <div class="flex gap-1 shrink-0">
@@ -320,6 +320,21 @@
           </div>
           <div v-else class="text-sm text-gray-400 mb-4">Még nincs stat tipp típus.</div>
 
+          <!-- Template picker -->
+          <div v-if="templates.length > 0 && !showTypeForm" class="mb-4">
+            <p class="text-xs font-medium text-gray-600 mb-2">Sablon választása:</p>
+            <div class="flex flex-wrap gap-2">
+              <button
+                v-for="tpl in templates"
+                :key="tpl.id"
+                class="text-xs px-3 py-1.5 rounded-full border border-gray-300 text-gray-700 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                @click="applyTemplate(tpl)"
+              >
+                {{ tpl.name }} ({{ tpl.defaultPoints }}p)
+              </button>
+            </div>
+          </div>
+
           <!-- Create / Edit form -->
           <button
             v-if="!showTypeForm"
@@ -341,9 +356,10 @@
             <div class="flex gap-4">
               <div class="flex-1">
                 <label class="text-xs font-medium text-gray-600 block mb-1">Típus</label>
-                <select v-model="typeDraft.inputType" class="w-full border rounded px-2 py-1 text-sm">
+                <select v-model="typeDraft.inputType" class="w-full border rounded px-2 py-1 text-sm" @change="onInputTypeChange">
                   <option value="text">Szabad szöveg</option>
                   <option value="dropdown">Legördülő</option>
+                  <option value="team_select">Csapatválasztó</option>
                 </select>
               </div>
               <div class="w-24">
@@ -402,8 +418,8 @@
 
           <!-- Already evaluated -->
           <div v-if="sp.points !== null" class="text-sm">
-            <p class="text-gray-600">Tipped: <span class="font-medium text-gray-800">{{ sp.answer ?? '–' }}</span></p>
-            <p v-if="sp.correctAnswer" class="text-gray-600">Helyes válasz: <span class="font-medium text-green-700">{{ sp.correctAnswer }}</span></p>
+            <p class="text-gray-600">Tipped: <span class="font-medium text-gray-800">{{ sp.inputType === 'team_select' && sp.answer ? teamName(sp.answer) : (sp.answer ?? '–') }}</span></p>
+            <p v-if="sp.correctAnswer" class="text-gray-600">Helyes válasz: <span class="font-medium text-green-700">{{ sp.inputType === 'team_select' ? teamName(sp.correctAnswer) : sp.correctAnswer }}</span></p>
             <p class="mt-1 font-semibold" :class="sp.points > 0 ? 'text-green-600' : 'text-gray-400'">
               {{ sp.points > 0 ? `+${sp.points} pont` : '0 pont' }}
             </p>
@@ -411,7 +427,17 @@
 
           <!-- Before deadline: submit/edit -->
           <div v-else-if="!isDeadlinePassed(sp.deadline)">
-            <div v-if="sp.inputType === 'dropdown' && sp.options?.length">
+            <div v-if="sp.inputType === 'team_select'">
+              <select
+                :value="pendingAnswers[sp.typeId] ?? sp.answer ?? ''"
+                class="w-full border rounded px-2 py-1.5 text-sm mb-2"
+                @change="pendingAnswers[sp.typeId] = ($event.target as HTMLSelectElement).value"
+              >
+                <option value="" disabled>Válassz csapatot...</option>
+                <option v-for="t in teams" :key="t.id" :value="t.id">{{ t.name }}</option>
+              </select>
+            </div>
+            <div v-else-if="sp.inputType === 'dropdown' && sp.options?.length">
               <select
                 :value="pendingAnswers[sp.typeId] ?? sp.answer ?? ''"
                 class="w-full border rounded px-2 py-1.5 text-sm mb-2"
@@ -439,7 +465,7 @@
               >
                 {{ sp.answer ? 'Módosít' : 'Leadás' }}
               </button>
-              <span v-if="sp.answer" class="text-xs text-gray-400">Jelenlegi: {{ sp.answer }}</span>
+              <span v-if="sp.answer" class="text-xs text-gray-400">Jelenlegi: {{ sp.inputType === 'team_select' ? teamName(sp.answer) : sp.answer }}</span>
               <span v-if="predictionSaveStatus[sp.typeId] === 'saved'" class="text-xs text-green-600">Mentve!</span>
               <span v-else-if="predictionSaveStatus[sp.typeId] === 'error'" class="text-xs text-red-600">Hiba</span>
             </div>
@@ -447,7 +473,7 @@
 
           <!-- After deadline, not yet evaluated -->
           <div v-else class="text-sm">
-            <p class="text-gray-600">Tipped: <span class="font-medium text-gray-800">{{ sp.answer ?? 'Nem adtál le tippet' }}</span></p>
+            <p class="text-gray-600">Tipped: <span class="font-medium text-gray-800">{{ sp.inputType === 'team_select' && sp.answer ? teamName(sp.answer) : (sp.answer ?? 'Nem adtál le tippet') }}</span></p>
             <p class="text-xs text-gray-400 mt-1">A határidő lejárt, kiértékelésre vár.</p>
           </div>
         </div>
@@ -459,7 +485,16 @@
       <div class="bg-white rounded-xl p-6 shadow-xl max-w-sm w-full mx-4">
         <p class="text-gray-800 mb-1 font-semibold">Helyes válasz megadása</p>
         <p class="text-gray-500 text-sm mb-3">{{ setAnswerTypeName }}</p>
+        <select
+          v-if="setAnswerInputType === 'team_select'"
+          v-model="setAnswerValue"
+          class="w-full border rounded px-3 py-2 text-sm mb-3"
+        >
+          <option value="" disabled>Válassz csapatot...</option>
+          <option v-for="t in teams" :key="t.id" :value="t.id">{{ t.name }}</option>
+        </select>
         <input
+          v-else
           v-model="setAnswerValue"
           type="text"
           class="w-full border rounded px-3 py-2 text-sm mb-3"
@@ -576,7 +611,7 @@ import { useGroupsStore } from '../stores/groups.store.js'
 import { useAuthStore } from '../stores/auth.store.js'
 import { api } from '../api/index.js'
 import { supabase } from '../lib/supabase.js'
-import type { GroupMember, LeaderboardEntry, ScoringConfigInput, SpecialTypeInput } from '../types/index.js'
+import type { GroupMember, LeaderboardEntry, ScoringConfigInput, SpecialTypeInput, Team, StatPredictionTemplate } from '../types/index.js'
 
 type Tab = 'leaderboard' | 'members' | 'settings' | 'special'
 
@@ -602,6 +637,28 @@ const entries = ref<LeaderboardEntry[]>([])
 const isLoading = ref(false)
 const error = ref<string | null>(null)
 const activeTab = ref<Tab>('leaderboard')
+
+// ─── Teams (for team_select input type) ─────────────────────────────────────
+const teams = ref<Team[]>([])
+const teamsLoaded = ref(false)
+const teamsMap = computed(() => {
+  const map = new Map<string, Team>()
+  for (const t of teams.value) map.set(t.id, t)
+  return map
+})
+
+async function loadTeamsIfNeeded(): Promise<void> {
+  if (teamsLoaded.value) return
+  try {
+    const token = await getAccessToken()
+    teams.value = await api.teams.list(token)
+    teamsLoaded.value = true
+  } catch { /* ignore */ }
+}
+
+function teamName(teamId: string): string {
+  return teamsMap.value.get(teamId)?.name ?? teamId
+}
 const confirmRemoveUserId = ref<string | null>(null)
 
 const groupName = computed(() => groupsStore.groups.find(g => g.id === groupId)?.name ?? 'Csoport')
@@ -624,10 +681,35 @@ const typeFormSaving = ref(false)
 const typeFormError = ref<string | null>(null)
 const confirmDeactivateTypeId = ref<string | null>(null)
 
+// ─── Templates ──────────────────────────────────────────────────────────────
+const templates = ref<StatPredictionTemplate[]>([])
+const templatesLoaded = ref(false)
+
+async function loadTemplatesIfNeeded(): Promise<void> {
+  if (templatesLoaded.value) return
+  try {
+    const token = await getAccessToken()
+    templates.value = await api.statPredictionTemplates.list(token)
+    templatesLoaded.value = true
+  } catch { /* ignore */ }
+}
+
+function applyTemplate(tpl: StatPredictionTemplate): void {
+  typeDraft.name = tpl.name
+  typeDraft.description = tpl.description
+  typeDraft.inputType = tpl.inputType
+  typeDraft.optionsRaw = tpl.options?.join(', ') ?? ''
+  typeDraft.points = tpl.defaultPoints
+  editingTypeId.value = null
+  typeFormError.value = null
+  showTypeForm.value = true
+  if (tpl.inputType === 'team_select') loadTeamsIfNeeded()
+}
+
 const typeDraft = reactive({
   name: '',
   description: '',
-  inputType: 'text' as 'text' | 'dropdown',
+  inputType: 'text' as 'text' | 'dropdown' | 'team_select',
   optionsRaw: '',
   points: 5,
   deadline: '',
@@ -638,6 +720,7 @@ const specialTypes = computed(() => groupsStore.specialTypesMap[groupId] ?? [])
 // ─── Set correct answer dialog ───────────────────────────────────────────────
 const setAnswerTypeId = ref<string | null>(null)
 const setAnswerTypeName = ref('')
+const setAnswerInputType = ref<string>('text')
 const setAnswerValue = ref('')
 const setAnswerSaving = ref(false)
 const setAnswerError = ref<string | null>(null)
@@ -763,11 +846,15 @@ function openNewTypeForm(): void {
   showTypeForm.value = true
 }
 
+function onInputTypeChange(): void {
+  if (typeDraft.inputType === 'team_select') loadTeamsIfNeeded()
+}
+
 function openEditType(st: { id: string; name: string; description: string | null; inputType: string; options: string[] | null; points: number; deadline: string }): void {
   editingTypeId.value = st.id
   typeDraft.name = st.name
   typeDraft.description = st.description ?? ''
-  typeDraft.inputType = st.inputType as 'text' | 'dropdown'
+  typeDraft.inputType = st.inputType as 'text' | 'dropdown' | 'team_select'
   typeDraft.optionsRaw = st.options?.join(', ') ?? ''
   typeDraft.points = st.points
   typeDraft.deadline = st.deadline.slice(0, 16)
@@ -810,11 +897,13 @@ async function onConfirmDeactivate(): Promise<void> {
   await groupsStore.deactivateSpecialType(groupId, id)
 }
 
-function openSetAnswer(st: { id: string; name: string }): void {
+function openSetAnswer(st: { id: string; name: string; inputType: string }): void {
   setAnswerTypeId.value = st.id
   setAnswerTypeName.value = st.name
+  setAnswerInputType.value = st.inputType
   setAnswerValue.value = ''
   setAnswerError.value = null
+  if (st.inputType === 'team_select') loadTeamsIfNeeded()
 }
 
 async function submitSetAnswer(): Promise<void> {
@@ -873,6 +962,10 @@ async function switchToSpecialTab(): Promise<void> {
   if (!groupsStore.specialPredictionsMap[groupId]) {
     await groupsStore.fetchSpecialPredictions(groupId)
   }
+  const preds = groupsStore.specialPredictionsMap[groupId] ?? []
+  if (preds.some(p => p.inputType === 'team_select')) {
+    await loadTeamsIfNeeded()
+  }
 }
 
 onMounted(async () => {
@@ -886,6 +979,11 @@ onMounted(async () => {
     if (canManageSettings.value) {
       await groupsStore.fetchGroupScoringConfig(groupId)
       await groupsStore.fetchSpecialTypes(groupId)
+      await loadTemplatesIfNeeded()
+      const types = groupsStore.specialTypesMap[groupId] ?? []
+      if (types.some(t => t.inputType === 'team_select')) {
+        await loadTeamsIfNeeded()
+      }
     }
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Ismeretlen hiba'

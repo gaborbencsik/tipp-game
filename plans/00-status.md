@@ -462,13 +462,8 @@
 | US-902 | Statisztikai tipp típus konfig | ⬜ Lebontva (US-902-A..B) | Should Have |
 | US-902-A | Frontend: admin stat tipp konfig UI | ✅ Kész | Should Have |
 | US-902-B | Frontend: tag stat tipp leadási UI | ✅ Kész | Should Have |
-| US-903 | DB migráció: group_id nullable (globális stat tipp) | ⬜ Nem kezdett | Should Have |
-| US-904 | Backend: globális stat tipp típus CRUD (admin) | ⬜ Nem kezdett | Should Have |
-| US-905 | Backend: globális stat tipp beküldés/lekérdezés | ⬜ Nem kezdett | Should Have |
-| US-906 | Backend: globális stat tipp kiértékelés (admin) | ⬜ Nem kezdett | Should Have |
-| US-907 | Backend: globális ranglista integráció (stat pontok) | ⬜ Nem kezdett | Should Have |
-| US-908 | Frontend: admin globális stat tipp kezelő UI | ⬜ Nem kezdett | Should Have |
-| US-909 | Frontend: globális stat tipp leadási UI | ⬜ Nem kezdett | Should Have |
+| US-910 | `team_select` input típus stat tippekhez | ⬜ Nem kezdett | Should Have |
+| US-911 | Sablon (preset) stat tipp típusok | ⬜ Nem kezdett | Should Have |
 | US-1001 | Hamburger menü / AppLayout | ✅ Kész | Should Have |
 | US-1002 | Felhasználói felület lokalizációja (i18n) | ⬜ Nem kezdett | Should Have |
 | US-1003 | Lejátszott meccsek összecsomagolása | ✅ Kész | Should Have |

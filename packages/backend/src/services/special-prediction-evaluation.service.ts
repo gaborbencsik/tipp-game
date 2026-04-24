@@ -74,7 +74,7 @@ export async function setCorrectAnswer(
     groupId: updatedType.groupId,
     name: updatedType.name,
     description: updatedType.description ?? null,
-    inputType: updatedType.inputType as 'text' | 'dropdown',
+    inputType: updatedType.inputType as 'text' | 'dropdown' | 'team_select',
     options: updatedType.options as string[] | null,
     deadline: updatedType.deadline.toISOString(),
     points: updatedType.points,

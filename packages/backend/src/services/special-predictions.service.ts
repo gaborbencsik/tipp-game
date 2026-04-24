@@ -1,6 +1,6 @@
 import { and, eq, isNull } from 'drizzle-orm'
 import { db } from '../db/client.js'
-import { groups, groupMembers, specialPredictionTypes, specialPredictions } from '../db/schema/index.js'
+import { groups, groupMembers, specialPredictionTypes, specialPredictions, teams } from '../db/schema/index.js'
 import type { SpecialPrediction, SpecialPredictionInput, SpecialPredictionWithType } from '../types/index.js'
 
 class AppError extends Error {
@@ -60,7 +60,7 @@ export async function getMyPredictions(
       typeId: t.id,
       typeName: t.name,
       typeDescription: t.description ?? null,
-      inputType: t.inputType as 'text' | 'dropdown',
+      inputType: t.inputType as 'text' | 'dropdown' | 'team_select',
       options: t.options as string[] | null,
       deadline: t.deadline.toISOString(),
       maxPoints: t.points,
@@ -110,6 +110,21 @@ export async function upsertPrediction(
     const options = type.options as string[] | null
     if (!options || !options.includes(answer)) {
       throw new AppError(400, 'answer must be one of the available options')
+    }
+  }
+
+  if (type.inputType === 'team_select') {
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    if (!UUID_RE.test(answer)) {
+      throw new AppError(400, 'Invalid team id')
+    }
+    const teamRows = await db
+      .select({ id: teams.id })
+      .from(teams)
+      .where(eq(teams.id, answer))
+      .limit(1)
+    if (!teamRows[0]) {
+      throw new AppError(400, 'Invalid team id')
     }
   }
 

@@ -223,7 +223,7 @@ export interface Prediction {
   readonly updatedAt: string
 }
 
-export type SpecialPredictionInputType = 'text' | 'dropdown'
+export type SpecialPredictionInputType = 'text' | 'dropdown' | 'team_select'
 
 export interface SpecialPredictionType {
   readonly id: string

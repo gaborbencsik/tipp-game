@@ -12,7 +12,7 @@ class AppError extends Error {
   }
 }
 
-const VALID_INPUT_TYPES = new Set(['text', 'dropdown'])
+const VALID_INPUT_TYPES = new Set(['text', 'dropdown', 'team_select'])
 
 function toApi(row: typeof specialPredictionTypes.$inferSelect): SpecialPredictionType {
   return {
@@ -20,7 +20,7 @@ function toApi(row: typeof specialPredictionTypes.$inferSelect): SpecialPredicti
     groupId: row.groupId,
     name: row.name,
     description: row.description ?? null,
-    inputType: row.inputType as 'text' | 'dropdown',
+    inputType: row.inputType as 'text' | 'dropdown' | 'team_select',
     options: row.options as string[] | null,
     deadline: row.deadline.toISOString(),
     points: row.points,
@@ -67,7 +67,7 @@ function validateInput(input: SpecialTypeInput): void {
     throw new AppError(400, 'name must be at most 100 characters')
   }
   if (!VALID_INPUT_TYPES.has(input.inputType)) {
-    throw new AppError(400, "inputType must be 'text' or 'dropdown'")
+    throw new AppError(400, "inputType must be 'text', 'dropdown', or 'team_select'")
   }
   if (input.inputType === 'dropdown') {
     if (!Array.isArray(input.options) || input.options.length < 2) {

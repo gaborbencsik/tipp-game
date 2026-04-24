@@ -4,9 +4,23 @@ import { upsertUser } from '../services/user.service.js'
 import { listActiveTypes, createType, updateType, deactivateType } from '../services/special-prediction-types.service.js'
 import { getMyPredictions, upsertPrediction } from '../services/special-predictions.service.js'
 import { setCorrectAnswer } from '../services/special-prediction-evaluation.service.js'
+import { getTeams } from '../services/teams.service.js'
+import { STAT_PREDICTION_TEMPLATES } from '../constants/stat-prediction-templates.js'
 import type { SpecialTypeInput } from '../types/index.js'
 
 const router = new Router()
+
+// ─── Public teams list (for team_select input type) ─────────────────────────
+
+router.get('/api/teams', authMiddleware, async (ctx) => {
+  ctx.body = await getTeams()
+})
+
+// ─── Stat prediction templates ──────────────────────────────────────────────
+
+router.get('/api/stat-prediction-templates', authMiddleware, async (ctx) => {
+  ctx.body = STAT_PREDICTION_TEMPLATES
+})
 
 router.get('/api/groups/:groupId/special-types', authMiddleware, async (ctx) => {
   const dbUser = await upsertUser(ctx.state.user)
