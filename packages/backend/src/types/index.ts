@@ -164,6 +164,25 @@ export interface TeamInput {
   readonly countryCode?: string | null
 }
 
+export interface Player {
+  readonly id: string
+  readonly name: string
+  readonly teamId: string | null
+  readonly teamName: string | null
+  readonly teamShortCode: string | null
+  readonly position: string | null
+  readonly shirtNumber: number | null
+  readonly createdAt: string
+  readonly updatedAt: string
+}
+
+export interface PlayerInput {
+  readonly name: string
+  readonly teamId?: string | null
+  readonly position?: string | null
+  readonly shirtNumber?: number | null
+}
+
 export interface AdminUser {
   readonly id: string
   readonly email: string

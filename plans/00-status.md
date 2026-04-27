@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-04-23 (US-901/902 stat tippek lebontva 7 story-ra)
+> Utoljára frissítve: 2026-04-24 (US-910, US-911, US-920 kész)
 
 ## Kész user story-k
 
@@ -462,8 +462,11 @@
 | US-902 | Statisztikai tipp típus konfig | ⬜ Lebontva (US-902-A..B) | Should Have |
 | US-902-A | Frontend: admin stat tipp konfig UI | ✅ Kész | Should Have |
 | US-902-B | Frontend: tag stat tipp leadási UI | ✅ Kész | Should Have |
-| US-910 | `team_select` input típus stat tippekhez | ⬜ Nem kezdett | Should Have |
-| US-911 | Sablon (preset) stat tipp típusok | ⬜ Nem kezdett | Should Have |
+| US-910 | `team_select` input típus stat tippekhez | ✅ Kész | Should Have |
+| US-911 | Sablon (preset) stat tipp típusok | ✅ Kész | Should Have |
+| US-920 | Játékosok kezelése (admin CRUD) | ✅ Kész | Should Have |
+| US-921 | `player_select` input típus stat tippekhez | ⬜ Nem kezdett | Should Have |
+| US-922 | Gólkirály sablon → player_select | ⬜ Nem kezdett | Should Have |
 | US-1001 | Hamburger menü / AppLayout | ✅ Kész | Should Have |
 | US-1002 | Felhasználói felület lokalizációja (i18n) | ⬜ Nem kezdett | Should Have |
 | US-1003 | Lejátszott meccsek összecsomagolása | ✅ Kész | Should Have |
@@ -503,4 +506,4 @@
 
 ---
 
-**Haladás: 51 / 74 story kész** — Must Have: 31/31, Should Have: 20/40, Nice to Have: 0/3
+**Haladás: 54 / 77 story kész** — Must Have: 31/31, Should Have: 23/43, Nice to Have: 0/3

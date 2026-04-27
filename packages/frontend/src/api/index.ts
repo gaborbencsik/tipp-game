@@ -1,4 +1,4 @@
-import type { User, Match, MatchesFilters, MatchInput, MatchResultInput, Prediction, PredictionInput, Team, TeamInput, AdminUser, Group, GroupInput, GroupMember, JoinGroupInput, LeaderboardEntry, ScoringConfigFull, ScoringConfigInput, WaitlistListResult, WaitlistFilters, WaitlistEntry, WaitlistSource, SpecialPredictionType, SpecialTypeInput, SpecialPredictionWithType, SpecialPredictionInput, StatPredictionTemplate } from '../types/index.js'
+import type { User, Match, MatchesFilters, MatchInput, MatchResultInput, Prediction, PredictionInput, Team, TeamInput, AdminUser, Group, GroupInput, GroupMember, JoinGroupInput, LeaderboardEntry, ScoringConfigFull, ScoringConfigInput, WaitlistListResult, WaitlistFilters, WaitlistEntry, WaitlistSource, SpecialPredictionType, SpecialTypeInput, SpecialPredictionWithType, SpecialPredictionInput, StatPredictionTemplate, Player, PlayerInput } from '../types/index.js'
 
 const BASE_URL = (import.meta.env.VITE_API_URL ?? '') + '/api'
 
@@ -262,6 +262,37 @@ export const api = {
         request<ScoringConfigFull>('/admin/scoring-config', {
           method: 'PUT',
           body: JSON.stringify(input),
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+    },
+    players: {
+      list: (token: string, teamId?: string) => {
+        const params = new URLSearchParams()
+        if (teamId) params.set('teamId', teamId)
+        const query = params.toString() ? `?${params.toString()}` : ''
+        return request<Player[]>(`/admin/players${query}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+      },
+      get: (token: string, id: string) =>
+        request<Player>(`/admin/players/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      create: (token: string, input: PlayerInput) =>
+        request<Player>('/admin/players', {
+          method: 'POST',
+          body: JSON.stringify(input),
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      update: (token: string, id: string, input: Partial<PlayerInput>) =>
+        request<Player>(`/admin/players/${id}`, {
+          method: 'PUT',
+          body: JSON.stringify(input),
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      delete: (token: string, id: string) =>
+        request<void>(`/admin/players/${id}`, {
+          method: 'DELETE',
           headers: { Authorization: `Bearer ${token}` },
         }),
     },

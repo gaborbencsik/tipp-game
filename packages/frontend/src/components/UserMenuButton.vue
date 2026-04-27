@@ -65,6 +65,15 @@
         </router-link>
         <router-link
           v-show="adminOpen"
+          to="/admin/players"
+          data-testid="menu-admin-players"
+          class="flex items-center pl-6 pr-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+          @click="menuOpen = false"
+        >
+          Játékosok
+        </router-link>
+        <router-link
+          v-show="adminOpen"
           to="/admin/users"
           data-testid="menu-admin-users"
           class="flex items-center pl-6 pr-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"

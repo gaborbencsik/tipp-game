@@ -9,6 +9,13 @@ import {
   deleteTeam,
 } from '../services/teams.service.js'
 import {
+  getPlayers,
+  getPlayerById,
+  createPlayer,
+  updatePlayer,
+  deletePlayer,
+} from '../services/players.service.js'
+import {
   createMatch,
   updateMatch,
   deleteMatch,
@@ -22,7 +29,7 @@ import {
 import { upsertUser } from '../services/user.service.js'
 import { getGlobalConfig, updateGlobalConfig } from '../services/scoring-config.service.js'
 import { getWaitlistEntries, deleteWaitlistEntry, addWaitlistEntry, isValidEmail } from '../services/waitlist.service.js'
-import type { MatchOutcome, TeamInput, MatchInput, ScoringConfigInput } from '../types/index.js'
+import type { MatchOutcome, TeamInput, MatchInput, ScoringConfigInput, PlayerInput } from '../types/index.js'
 import type { WaitlistFilters, WaitlistSource } from '../services/waitlist.service.js'
 
 const adminRouter = new Router({ prefix: '/api/admin' })
@@ -121,6 +128,33 @@ adminRouter.put('/scoring-config', async (ctx) => {
     }
   }
   ctx.body = await updateGlobalConfig(body as unknown as ScoringConfigInput)
+})
+
+// ─── Players ─────────────────────────────────────────────────────────────────
+
+adminRouter.get('/players', async (ctx) => {
+  const teamId = typeof ctx.query['teamId'] === 'string' ? ctx.query['teamId'] : undefined
+  ctx.body = await getPlayers(teamId)
+})
+
+adminRouter.get('/players/:id', async (ctx) => {
+  ctx.body = await getPlayerById(ctx.params['id'] as string)
+})
+
+adminRouter.post('/players', async (ctx) => {
+  const input = ctx.request.body as PlayerInput
+  ctx.status = 201
+  ctx.body = await createPlayer(input)
+})
+
+adminRouter.put('/players/:id', async (ctx) => {
+  const input = ctx.request.body as Partial<PlayerInput>
+  ctx.body = await updatePlayer(ctx.params['id'] as string, input)
+})
+
+adminRouter.delete('/players/:id', async (ctx) => {
+  await deletePlayer(ctx.params['id'] as string)
+  ctx.status = 204
 })
 
 // ─── Waitlist ────────────────────────────────────────────────────────────────

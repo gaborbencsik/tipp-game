@@ -71,6 +71,13 @@
       "when": 1777209600000,
       "tag": "0009_special_prediction_types_group_id",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1777032938507,
+      "tag": "0010_right_revanche",
+      "breakpoints": true
     }
   ]
 }
