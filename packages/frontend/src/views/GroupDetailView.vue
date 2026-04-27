@@ -20,7 +20,7 @@
         :class="activeTab === 'special' ? 'border-b-2 border-blue-600 text-blue-700 font-semibold' : 'text-gray-500'"
         @click="switchToSpecialTab"
       >
-        Stat tippek
+        Torna tippek
       </button>
       <button
         v-if="currentUserIsGroupAdmin"
@@ -63,7 +63,7 @@
               <th class="px-4 py-3">Játékos</th>
               <th class="px-4 py-3 text-right">Tipp</th>
               <th class="px-4 py-3 text-right">Helyes</th>
-              <th class="px-4 py-3 text-right" title="Stat tipp pontok">Stat</th>
+              <th class="px-4 py-3 text-right" title="Torna tipp pontok">Torna</th>
               <th class="px-4 py-3 text-right font-semibold">Pont</th>
             </tr>
           </thead>
@@ -261,14 +261,14 @@
         </form>
       </div>
 
-      <!-- Globális stat tippek kezelése (admin) -->
+      <!-- Hivatalos torna tippek kezelése (admin) -->
       <div class="mt-8 max-w-lg">
-        <h3 class="text-base font-semibold text-gray-800 mb-1">Globális stat tippek</h3>
+        <h3 class="text-base font-semibold text-gray-800 mb-1">Hivatalos torna tippek</h3>
         <p class="text-sm text-gray-500 mb-4">Kapcsold be, amelyekre a tagok tippelhetnek.</p>
 
         <div v-if="groupsStore.globalSubscriptionsLoading" class="text-gray-500 text-sm">Betöltés...</div>
         <div v-else-if="groupsStore.globalSubscriptionsError" class="text-red-600 text-sm">{{ groupsStore.globalSubscriptionsError }}</div>
-        <div v-else-if="globalSubscriptions.length === 0" class="text-sm text-gray-400">Nincs elérhető globális stat tipp típus.</div>
+        <div v-else-if="globalSubscriptions.length === 0" class="text-sm text-gray-400">Nincs elérhető hivatalos torna tipp típus.</div>
         <div v-else class="space-y-2">
           <div
             v-for="gt in globalSubscriptions"
@@ -306,10 +306,10 @@
         </div>
       </div>
 
-      <!-- Stat tipp típusok kezelése (admin) -->
+      <!-- Egyedi torna tipp típusok kezelése (admin) -->
       <div class="mt-8 max-w-lg">
-        <h3 class="text-base font-semibold text-gray-800 mb-1">Stat tipp típusok</h3>
-        <p class="text-sm text-gray-500 mb-4">Hozz létre egyedi stat tippeket a csoport számára (pl. Gólkirály, Legjobb csapat).</p>
+        <h3 class="text-base font-semibold text-gray-800 mb-1">Egyedi torna tipp típusok</h3>
+        <p class="text-sm text-gray-500 mb-4">Hozz létre egyedi torna tippeket a csoport számára (pl. Gólkirály, Legjobb csapat).</p>
 
         <div v-if="groupsStore.specialTypesLoading" class="text-gray-500 text-sm">Betöltés...</div>
         <div v-else-if="groupsStore.specialTypesError" class="text-red-600 text-sm">{{ groupsStore.specialTypesError }}</div>
@@ -363,7 +363,7 @@
               </div>
             </div>
           </div>
-          <div v-else class="text-sm text-gray-400 mb-4">Még nincs stat tipp típus.</div>
+          <div v-else class="text-sm text-gray-400 mb-4">Még nincs egyedi torna tipp típus.</div>
 
           <!-- Template picker -->
           <div v-if="templates.length > 0 && !showTypeForm" class="mb-4">
@@ -386,7 +386,7 @@
             class="text-sm px-3 py-1.5 rounded border border-blue-300 text-blue-600 hover:bg-blue-50"
             @click="openNewTypeForm"
           >
-            + Új stat tipp típus
+            + Új torna tipp típus
           </button>
 
           <form v-if="showTypeForm" class="border rounded-lg p-4 bg-gray-50 space-y-3" @submit.prevent="submitTypeForm">
@@ -435,11 +435,11 @@
       </div>
     </div>
 
-    <!-- Stat tippek tab (member) -->
+    <!-- Torna tippek tab (member) -->
     <div v-if="activeTab === 'special'" data-testid="special-tab">
       <div v-if="groupsStore.specialPredictionsLoading" class="text-gray-500">Betöltés...</div>
       <div v-else-if="groupsStore.specialPredictionsError" class="text-red-600">{{ groupsStore.specialPredictionsError }}</div>
-      <div v-else-if="specialPredictions.length === 0" class="text-gray-500 text-sm">Ebben a csoportban még nincsenek stat tippek.</div>
+      <div v-else-if="specialPredictions.length === 0" class="text-gray-500 text-sm">Ebben a csoportban még nincsenek torna tippek.</div>
       <div v-else class="space-y-3 max-w-lg">
         <div
           v-for="sp in specialPredictions"
@@ -448,10 +448,7 @@
         >
           <div class="flex items-start justify-between gap-2 mb-2">
             <div>
-              <div class="flex items-center gap-1.5">
-                <p class="font-medium text-gray-800 text-sm">{{ sp.typeName }}</p>
-                <span v-if="sp.isGlobal" class="text-xs px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 font-medium">Platform</span>
-              </div>
+              <p class="font-medium text-gray-800 text-sm">{{ sp.typeName }}</p>
               <p v-if="sp.typeDescription" class="text-xs text-gray-500 mt-0.5">{{ sp.typeDescription }}</p>
             </div>
             <span class="text-xs font-semibold px-2 py-0.5 rounded-full shrink-0" :class="predictionStatusClass(sp)">
@@ -459,10 +456,12 @@
             </span>
           </div>
 
-          <div class="flex flex-wrap gap-2 text-xs text-gray-500 mb-3">
-            <span>Max {{ sp.maxPoints }} pont</span>
-            <span>·</span>
-            <span>Határidő: {{ formatDateTime(sp.deadline) }}</span>
+          <div class="flex flex-wrap gap-2 text-xs mb-3">
+            <span class="text-gray-500">Max {{ sp.maxPoints }} pont</span>
+            <span class="text-gray-500">·</span>
+            <span :class="formatRelativeDeadline(sp.deadline, now).cssClass">
+              {{ formatRelativeDeadline(sp.deadline, now).label }}
+            </span>
           </div>
 
           <!-- Already evaluated -->
@@ -514,9 +513,8 @@
                 :disabled="!canSubmitPrediction(sp)"
                 @click="submitPrediction(sp.typeId)"
               >
-                {{ sp.answer ? 'Módosít' : 'Leadás' }}
+                {{ sp.answer ? 'Módosít' : 'Küldés' }}
               </button>
-              <span v-if="sp.answer" class="text-xs text-gray-400">Jelenlegi: {{ sp.answerLabel ?? sp.answer }}</span>
               <span v-if="predictionSaveStatus[sp.typeId] === 'saved'" class="text-xs text-green-600">Mentve!</span>
               <span v-else-if="predictionSaveStatus[sp.typeId] === 'error'" class="text-xs text-red-600">Hiba</span>
             </div>
@@ -574,7 +572,7 @@
     <!-- Deactivate type confirm dialog -->
     <div v-if="confirmDeactivateTypeId !== null" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div class="bg-white rounded-xl p-6 shadow-xl max-w-sm w-full mx-4">
-        <p class="text-gray-800 mb-4">Biztosan törölni szeretnéd ezt a stat tipp típust?</p>
+        <p class="text-gray-800 mb-4">Biztosan törölni szeretnéd ezt a torna tipp típust?</p>
         <div class="flex gap-3 justify-end">
           <button class="px-4 py-2 text-sm rounded border border-gray-300 text-gray-700" @click="confirmDeactivateTypeId = null">
             Mégse
@@ -658,9 +656,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, reactive, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, reactive, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppLayout from '../components/AppLayout.vue'
+import { formatRelativeDeadline } from '../lib/deadline.js'
 import TeamSelectDropdown from '../components/predictions/TeamSelectDropdown.vue'
 import PlayerSelectCombobox from '../components/predictions/PlayerSelectCombobox.vue'
 import { dicebearUrl } from '../lib/avatar.js'
@@ -690,6 +689,11 @@ const groupsStore = useGroupsStore()
 const authStore = useAuthStore()
 
 const groupId = route.params.id as string
+
+const now = ref(Date.now())
+let deadlineTimer: ReturnType<typeof setInterval> | null = null
+onMounted(() => { deadlineTimer = setInterval(() => { now.value = Date.now() }, 60_000) })
+onUnmounted(() => { if (deadlineTimer) clearInterval(deadlineTimer) })
 const entries = ref<LeaderboardEntry[]>([])
 const isLoading = ref(false)
 const error = ref<string | null>(null)
