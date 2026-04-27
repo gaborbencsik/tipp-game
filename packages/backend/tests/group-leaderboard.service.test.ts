@@ -38,8 +38,9 @@ vi.mock('../src/db/schema/index.js', () => ({
   groupMembers: { groupId: 'groupMembers.groupId', userId: 'groupMembers.userId' },
   groupPredictionPoints: { points: 'gpp.points', id: 'gpp.id', predictionId: 'gpp.predictionId', groupId: 'gpp.groupId' },
   scoringConfigs: {},
-  specialPredictions: { userId: 'sp.userId', typeId: 'sp.typeId', points: 'sp.points' },
-  specialPredictionTypes: { id: 'spt.id', groupId: 'spt.groupId' },
+  specialPredictions: { userId: 'sp.userId', typeId: 'sp.typeId', points: 'sp.points', groupId: 'sp.groupId' },
+  specialPredictionTypes: { id: 'spt.id', groupId: 'spt.groupId', isGlobal: 'spt.isGlobal' },
+  groupGlobalTypeSubscriptions: { globalTypeId: 'ggts.globalTypeId', groupId: 'ggts.groupId' },
 }))
 
 vi.mock('drizzle-orm', () => ({
@@ -47,6 +48,8 @@ vi.mock('drizzle-orm', () => ({
   isNull: vi.fn(),
   sql: Object.assign(vi.fn(() => 'sql-expr'), { raw: vi.fn() }),
   count: vi.fn(() => 'count-expr'),
+  and: vi.fn(),
+  or: vi.fn(),
 }))
 
 import { getGroupLeaderboard } from '../src/services/group-leaderboard.service.js'

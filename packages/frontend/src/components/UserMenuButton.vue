@@ -90,6 +90,15 @@
         >
           Pontrendszer
         </router-link>
+        <router-link
+          v-show="adminOpen"
+          to="/admin/global-types"
+          data-testid="menu-admin-global-types"
+          class="flex items-center pl-6 pr-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+          @click="menuOpen = false"
+        >
+          Stat tippek
+        </router-link>
         <div class="border-t border-gray-100" />
       </template>
       <router-link

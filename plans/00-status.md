@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-04-24 (US-910, US-911, US-920 kész)
+> Utoljára frissítve: 2026-04-27 (US-925, US-926, US-927 kész)
 
 ## Kész user story-k
 
@@ -467,6 +467,9 @@
 | US-920 | Játékosok kezelése (admin CRUD) | ✅ Kész | Should Have |
 | US-921 | `player_select` input típus stat tippekhez | ⬜ Nem kezdett | Should Have |
 | US-922 | Gólkirály sablon → player_select | ⬜ Nem kezdett | Should Have |
+| US-925 | Globális stat tipp típusok (platform admin CRUD) | ✅ Kész | Should Have |
+| US-926 | Csoport admin feliratkozás globális típusokra | ✅ Kész | Should Have |
+| US-927 | Globális stat tipp kiértékelés és pontszámítás | ✅ Kész | Should Have |
 | US-1001 | Hamburger menü / AppLayout | ✅ Kész | Should Have |
 | US-1002 | Felhasználói felület lokalizációja (i18n) | ⬜ Nem kezdett | Should Have |
 | US-1003 | Lejátszott meccsek összecsomagolása | ✅ Kész | Should Have |
@@ -506,4 +509,4 @@
 
 ---
 
-**Haladás: 54 / 77 story kész** — Must Have: 31/31, Should Have: 23/43, Nice to Have: 0/3
+**Haladás: 57 / 80 story kész** — Must Have: 31/31, Should Have: 26/46, Nice to Have: 0/3

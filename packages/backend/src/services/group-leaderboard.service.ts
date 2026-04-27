@@ -1,6 +1,6 @@
-import { eq, isNull, sql, count } from 'drizzle-orm'
+import { eq, isNull, sql, count, and, or } from 'drizzle-orm'
 import { db } from '../db/client.js'
-import { users, predictions, groupMembers, groups, scoringConfigs, groupPredictionPoints, specialPredictions, specialPredictionTypes } from '../db/schema/index.js'
+import { users, predictions, groupMembers, groups, scoringConfigs, groupPredictionPoints, specialPredictions, specialPredictionTypes, groupGlobalTypeSubscriptions } from '../db/schema/index.js'
 import type { LeaderboardEntry } from './leaderboard.service.js'
 
 class AppError extends Error {
@@ -79,6 +79,7 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
   }
 
   // Fetch stat prediction points per user for this group
+  // Includes both group-scoped types AND subscribed global types, filtered by sp.groupId
   const statPointRows = await db
     .select({
       userId: specialPredictions.userId,
@@ -86,7 +87,18 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
     })
     .from(specialPredictions)
     .innerJoin(specialPredictionTypes, eq(specialPredictions.typeId, specialPredictionTypes.id))
-    .where(eq(specialPredictionTypes.groupId, groupId))
+    .where(and(
+      eq(specialPredictions.groupId, groupId),
+      or(
+        // Group-scoped types belonging to this group
+        and(eq(specialPredictionTypes.groupId, groupId), eq(specialPredictionTypes.isGlobal, false)),
+        // Global types subscribed by this group
+        sql`(${specialPredictionTypes.isGlobal} = true AND ${specialPredictionTypes.id} IN (
+          SELECT ${groupGlobalTypeSubscriptions.globalTypeId} FROM ${groupGlobalTypeSubscriptions}
+          WHERE ${groupGlobalTypeSubscriptions.groupId} = ${groupId}::uuid
+        ))`,
+      ),
+    ))
     .groupBy(specialPredictions.userId)
 
   const statPointsByUser = new Map(statPointRows.map(r => [r.userId, Number(r.statPoints)]))

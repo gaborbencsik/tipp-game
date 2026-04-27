@@ -216,7 +216,7 @@ export const groupPredictionPoints = pgTable('group_prediction_points', {
 
 export const specialPredictionTypes = pgTable('special_prediction_types', {
   id:            uuid('id').primaryKey().defaultRandom(),
-  groupId:       uuid('group_id').notNull().references(() => groups.id, { onDelete: 'cascade' }),
+  groupId:       uuid('group_id').references(() => groups.id, { onDelete: 'cascade' }),
   name:          varchar('name', { length: 100 }).notNull(),
   description:   text('description'),
   inputType:     specialPredictionInputTypeEnum('input_type').notNull(),
@@ -224,6 +224,7 @@ export const specialPredictionTypes = pgTable('special_prediction_types', {
   deadline:      timestamp('deadline', { withTimezone: true }).notNull(),
   points:        smallint('points').notNull().default(5),
   correctAnswer: text('correct_answer'),
+  isGlobal:      boolean('is_global').notNull().default(false),
   isActive:      boolean('is_active').notNull().default(true),
   createdAt:     timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt:     timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -237,13 +238,28 @@ export const specialPredictions = pgTable('special_predictions', {
   id:        uuid('id').primaryKey().defaultRandom(),
   userId:    uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   typeId:    uuid('type_id').notNull().references(() => specialPredictionTypes.id),
+  groupId:   uuid('group_id').references(() => groups.id),
   answer:    text('answer').notNull(),
   points:    smallint('points'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({
-  uniqueSpecialPred: uniqueIndex('special_predictions_unique').on(t.userId, t.typeId),
+  uniqueSpecialPred: uniqueIndex('special_predictions_unique').on(t.userId, t.typeId, t.groupId),
   userIdx:           index('special_predictions_user_idx').on(t.userId),
+  groupIdx:          index('special_predictions_group_idx').on(t.groupId),
+}))
+
+// ─── GROUP GLOBAL TYPE SUBSCRIPTIONS ─────────────────────────────────────────
+
+export const groupGlobalTypeSubscriptions = pgTable('group_global_type_subscriptions', {
+  id:           uuid('id').primaryKey().defaultRandom(),
+  groupId:      uuid('group_id').notNull().references(() => groups.id, { onDelete: 'cascade' }),
+  globalTypeId: uuid('global_type_id').notNull().references(() => specialPredictionTypes.id, { onDelete: 'cascade' }),
+  subscribedAt: timestamp('subscribed_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  uniqueSub:     uniqueIndex('ggts_unique').on(t.groupId, t.globalTypeId),
+  groupIdx:      index('ggts_group_idx').on(t.groupId),
+  globalTypeIdx: index('ggts_global_type_idx').on(t.globalTypeId),
 }))
 
 // ─── AUDIT LOGS ───────────────────────────────────────────────────────────────
@@ -317,6 +333,7 @@ export const groupsRelations = relations(groups, ({ one, many }) => ({
   members: many(groupMembers),
   groupPoints: many(groupPredictionPoints),
   specialTypes: many(specialPredictionTypes),
+  globalTypeSubscriptions: many(groupGlobalTypeSubscriptions),
 }))
 
 export const groupMembersRelations = relations(groupMembers, ({ one }) => ({
@@ -327,9 +344,16 @@ export const groupMembersRelations = relations(groupMembers, ({ one }) => ({
 export const specialPredictionTypesRelations = relations(specialPredictionTypes, ({ one, many }) => ({
   group: one(groups, { fields: [specialPredictionTypes.groupId], references: [groups.id] }),
   predictions: many(specialPredictions),
+  subscriptions: many(groupGlobalTypeSubscriptions),
 }))
 
 export const specialPredictionsRelations = relations(specialPredictions, ({ one }) => ({
   user: one(users, { fields: [specialPredictions.userId], references: [users.id] }),
   type: one(specialPredictionTypes, { fields: [specialPredictions.typeId], references: [specialPredictionTypes.id] }),
+  group: one(groups, { fields: [specialPredictions.groupId], references: [groups.id] }),
+}))
+
+export const groupGlobalTypeSubscriptionsRelations = relations(groupGlobalTypeSubscriptions, ({ one }) => ({
+  group: one(groups, { fields: [groupGlobalTypeSubscriptions.groupId], references: [groups.id] }),
+  globalType: one(specialPredictionTypes, { fields: [groupGlobalTypeSubscriptions.globalTypeId], references: [specialPredictionTypes.id] }),
 }))

@@ -175,7 +175,7 @@ export type SpecialPredictionInputType = 'text' | 'dropdown' | 'team_select'
 
 export interface SpecialPredictionType {
   readonly id: string
-  readonly groupId: string
+  readonly groupId: string | null
   readonly name: string
   readonly description: string | null
   readonly inputType: SpecialPredictionInputType
@@ -183,6 +183,7 @@ export interface SpecialPredictionType {
   readonly deadline: string
   readonly points: number
   readonly correctAnswer: string | null
+  readonly isGlobal: boolean
   readonly isActive: boolean
   readonly createdAt: string
   readonly updatedAt: string
@@ -209,6 +210,7 @@ export interface SpecialPredictionWithType {
   readonly answer: string | null
   readonly points: number | null
   readonly correctAnswer: string | null
+  readonly isGlobal: boolean
   readonly createdAt: string | null
   readonly updatedAt: string | null
 }
@@ -216,6 +218,21 @@ export interface SpecialPredictionWithType {
 export interface SpecialPredictionInput {
   readonly typeId: string
   readonly answer: string
+}
+
+export interface GlobalTypeWithSubscription {
+  readonly id: string
+  readonly name: string
+  readonly description: string | null
+  readonly inputType: SpecialPredictionInputType
+  readonly options: string[] | null
+  readonly deadline: string
+  readonly points: number
+  readonly correctAnswer: string | null
+  readonly isActive: boolean
+  readonly createdAt: string
+  readonly updatedAt: string
+  readonly subscribed: boolean
 }
 
 export interface StatPredictionTemplate {

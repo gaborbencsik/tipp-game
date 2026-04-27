@@ -261,6 +261,51 @@
         </form>
       </div>
 
+      <!-- Globális stat tippek kezelése (admin) -->
+      <div class="mt-8 max-w-lg">
+        <h3 class="text-base font-semibold text-gray-800 mb-1">Globális stat tippek</h3>
+        <p class="text-sm text-gray-500 mb-4">Kapcsold be, amelyekre a tagok tippelhetnek.</p>
+
+        <div v-if="groupsStore.globalSubscriptionsLoading" class="text-gray-500 text-sm">Betöltés...</div>
+        <div v-else-if="groupsStore.globalSubscriptionsError" class="text-red-600 text-sm">{{ groupsStore.globalSubscriptionsError }}</div>
+        <div v-else-if="globalSubscriptions.length === 0" class="text-sm text-gray-400">Nincs elérhető globális stat tipp típus.</div>
+        <div v-else class="space-y-2">
+          <div
+            v-for="gt in globalSubscriptions"
+            :key="gt.id"
+            class="flex items-center justify-between border rounded-lg p-3 bg-white"
+          >
+            <div class="min-w-0">
+              <p class="font-medium text-gray-800 text-sm">{{ gt.name }}</p>
+              <p v-if="gt.description" class="text-xs text-gray-500 mt-0.5">{{ gt.description }}</p>
+              <div class="flex flex-wrap gap-2 mt-1 text-xs text-gray-500">
+                <span>{{ gt.points }} pont</span>
+                <span>·</span>
+                <span>Határidő: {{ formatDateTime(gt.deadline) }}</span>
+              </div>
+            </div>
+            <label class="inline-flex items-center gap-2 shrink-0 cursor-pointer" :class="{ 'opacity-50 pointer-events-none': subscriptionToggling[gt.id] }">
+              <button
+                type="button"
+                role="switch"
+                :aria-checked="gt.subscribed"
+                class="relative w-9 h-5 rounded-full transition-colors duration-150"
+                :class="gt.subscribed ? 'bg-green-500' : 'bg-gray-300'"
+                @click="toggleGlobalSubscription(gt)"
+              >
+                <span
+                  class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-150"
+                  :class="gt.subscribed ? 'translate-x-4' : 'translate-x-0'"
+                />
+              </button>
+              <span class="text-xs font-medium" :class="gt.subscribed ? 'text-green-700' : 'text-gray-400'">
+                {{ gt.subscribed ? 'Aktív' : 'Inaktív' }}
+              </span>
+            </label>
+          </div>
+        </div>
+      </div>
+
       <!-- Stat tipp típusok kezelése (admin) -->
       <div class="mt-8 max-w-lg">
         <h3 class="text-base font-semibold text-gray-800 mb-1">Stat tipp típusok</h3>
@@ -402,7 +447,10 @@
         >
           <div class="flex items-start justify-between gap-2 mb-2">
             <div>
-              <p class="font-medium text-gray-800 text-sm">{{ sp.typeName }}</p>
+              <div class="flex items-center gap-1.5">
+                <p class="font-medium text-gray-800 text-sm">{{ sp.typeName }}</p>
+                <span v-if="sp.isGlobal" class="text-xs px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 font-medium">Platform</span>
+              </div>
               <p v-if="sp.typeDescription" class="text-xs text-gray-500 mt-0.5">{{ sp.typeDescription }}</p>
             </div>
             <span class="text-xs font-semibold px-2 py-0.5 rounded-full shrink-0" :class="predictionStatusClass(sp)">
@@ -611,7 +659,7 @@ import { useGroupsStore } from '../stores/groups.store.js'
 import { useAuthStore } from '../stores/auth.store.js'
 import { api } from '../api/index.js'
 import { supabase } from '../lib/supabase.js'
-import type { GroupMember, LeaderboardEntry, ScoringConfigInput, SpecialTypeInput, Team, StatPredictionTemplate } from '../types/index.js'
+import type { GroupMember, LeaderboardEntry, ScoringConfigInput, SpecialTypeInput, Team, StatPredictionTemplate, GlobalTypeWithSubscription } from '../types/index.js'
 
 type Tab = 'leaderboard' | 'members' | 'settings' | 'special'
 
@@ -729,6 +777,22 @@ const setAnswerError = ref<string | null>(null)
 const specialPredictions = computed(() => groupsStore.specialPredictionsMap[groupId] ?? [])
 const pendingAnswers = reactive<Record<string, string>>({})
 const predictionSaveStatus = reactive<Record<string, 'idle' | 'saving' | 'saved' | 'error'>>({})
+
+// ─── Global type subscriptions (admin) ──────────────────────────────────────
+const globalSubscriptions = computed(() => groupsStore.globalSubscriptionsMap[groupId] ?? [])
+const subscriptionToggling = reactive<Record<string, boolean>>({})
+
+async function toggleGlobalSubscription(gt: GlobalTypeWithSubscription): Promise<void> {
+  subscriptionToggling[gt.id] = true
+  try {
+    if (gt.subscribed) {
+      await groupsStore.unsubscribeGlobalType(groupId, gt.id)
+    } else {
+      await groupsStore.subscribeGlobalType(groupId, gt.id)
+    }
+  } catch { /* error handled by store */ }
+  subscriptionToggling[gt.id] = false
+}
 
 const scoringFields: Array<{ key: keyof ScoringConfigInput; label: string }> = [
   { key: 'exactScore', label: 'Pontos találat' },
@@ -979,6 +1043,7 @@ onMounted(async () => {
     if (canManageSettings.value) {
       await groupsStore.fetchGroupScoringConfig(groupId)
       await groupsStore.fetchSpecialTypes(groupId)
+      await groupsStore.fetchGlobalSubscriptions(groupId)
       await loadTemplatesIfNeeded()
       const types = groupsStore.specialTypesMap[groupId] ?? []
       if (types.some(t => t.inputType === 'team_select')) {

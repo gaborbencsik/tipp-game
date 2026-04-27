@@ -80,6 +80,12 @@ export const router = createRouter({
       meta: { requiresAuth: true, requiresAdmin: true },
     },
     {
+      path: '/admin/global-types',
+      name: 'admin-global-types',
+      component: () => import('../views/AdminGlobalTypesView.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true },
+    },
+    {
       path: '/app/my-tips',
       name: 'my-tips',
       component: () => import('../views/MyTipsView.vue'),

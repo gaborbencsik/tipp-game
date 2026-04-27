@@ -71,7 +71,7 @@ export async function setCorrectAnswer(
 
   return {
     id: updatedType.id,
-    groupId: updatedType.groupId,
+    groupId: updatedType.groupId ?? null,
     name: updatedType.name,
     description: updatedType.description ?? null,
     inputType: updatedType.inputType as 'text' | 'dropdown' | 'team_select',
@@ -79,6 +79,60 @@ export async function setCorrectAnswer(
     deadline: updatedType.deadline.toISOString(),
     points: updatedType.points,
     correctAnswer: updatedType.correctAnswer ?? null,
+    isGlobal: updatedType.isGlobal,
+    isActive: updatedType.isActive,
+    createdAt: updatedType.createdAt.toISOString(),
+    updatedAt: updatedType.updatedAt.toISOString(),
+  }
+}
+
+export async function evaluateGlobalType(
+  typeId: string,
+  correctAnswer: string,
+): Promise<SpecialPredictionType> {
+  const typeRows = await db
+    .select()
+    .from(specialPredictionTypes)
+    .where(and(eq(specialPredictionTypes.id, typeId), eq(specialPredictionTypes.isGlobal, true)))
+    .limit(1)
+  if (!typeRows[0]) throw new AppError(404, 'Global special prediction type not found')
+
+  const type = typeRows[0]
+  const maxPoints = type.points
+
+  const updated = await db
+    .update(specialPredictionTypes)
+    .set({ correctAnswer, updatedAt: new Date() })
+    .where(eq(specialPredictionTypes.id, typeId))
+    .returning()
+
+  const updatedType = updated[0]
+  if (!updatedType) throw new AppError(500, 'Failed to update correct answer')
+
+  const preds = await db
+    .select()
+    .from(specialPredictions)
+    .where(eq(specialPredictions.typeId, typeId))
+
+  for (const pred of preds) {
+    const points = evaluateSpecialPrediction(pred.answer, correctAnswer, maxPoints)
+    await db
+      .update(specialPredictions)
+      .set({ points, updatedAt: new Date() })
+      .where(eq(specialPredictions.id, pred.id))
+  }
+
+  return {
+    id: updatedType.id,
+    groupId: null,
+    name: updatedType.name,
+    description: updatedType.description ?? null,
+    inputType: updatedType.inputType as 'text' | 'dropdown' | 'team_select',
+    options: updatedType.options as string[] | null,
+    deadline: updatedType.deadline.toISOString(),
+    points: updatedType.points,
+    correctAnswer: updatedType.correctAnswer ?? null,
+    isGlobal: true,
     isActive: updatedType.isActive,
     createdAt: updatedType.createdAt.toISOString(),
     updatedAt: updatedType.updatedAt.toISOString(),

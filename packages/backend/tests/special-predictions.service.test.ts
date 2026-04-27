@@ -104,11 +104,12 @@ describe('getMyPredictions', () => {
   beforeEach(() => { vi.resetAllMocks() })
 
   it('returns types with user predictions merged', async () => {
-    // 1. assertGroupExists, 2. assertGroupMember, 3. select types, 4. select predictions
+    // 1. assertGroupExists, 2. assertGroupMember, 3. group-scoped types, 4. global subscribed types, 5. predictions
     setupSelectSequence([
       [GROUP_ROW],
       [MEMBER_ROW],
       [TYPE_ROW],
+      [],
       [PRED_ROW],
     ])
 
@@ -126,6 +127,7 @@ describe('getMyPredictions', () => {
       [MEMBER_ROW],
       [TYPE_ROW],
       [],
+      [],
     ])
 
     const result = await getMyPredictions(GROUP_ID, USER_ID)
@@ -140,6 +142,7 @@ describe('getMyPredictions', () => {
       [GROUP_ROW],
       [MEMBER_ROW],
       [],
+      [],
     ])
 
     const result = await getMyPredictions(GROUP_ID, USER_ID)
@@ -153,6 +156,7 @@ describe('getMyPredictions', () => {
       [MEMBER_ROW],
       [{ ...TYPE_ROW, correctAnswer: 'Mbappe' }],
       [],
+      [],
     ])
 
     const result = await getMyPredictions(GROUP_ID, USER_ID)
@@ -165,6 +169,7 @@ describe('getMyPredictions', () => {
       [GROUP_ROW],
       [MEMBER_ROW],
       [{ ...TYPE_ROW_EXPIRED, correctAnswer: 'Mbappe' }],
+      [],
       [],
     ])
 
@@ -262,9 +267,11 @@ describe('upsertPrediction', () => {
   })
 
   it('throws 404 if type not found or belongs to another group', async () => {
+    // 1. assertGroupExists, 2. assertGroupMember, 3. group-scoped type (empty), 4. global type fallback (empty)
     setupSelectSequence([
       [GROUP_ROW],
       [MEMBER_ROW],
+      [],
       [],
     ])
 

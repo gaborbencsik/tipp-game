@@ -4,6 +4,7 @@ import { upsertUser } from '../services/user.service.js'
 import { listActiveTypes, createType, updateType, deactivateType } from '../services/special-prediction-types.service.js'
 import { getMyPredictions, upsertPrediction } from '../services/special-predictions.service.js'
 import { setCorrectAnswer } from '../services/special-prediction-evaluation.service.js'
+import { listAvailableGlobalTypes, subscribeGroup, unsubscribeGroup } from '../services/global-type-subscriptions.service.js'
 import { getTeams } from '../services/teams.service.js'
 import { STAT_PREDICTION_TEMPLATES } from '../constants/stat-prediction-templates.js'
 import type { SpecialTypeInput } from '../types/index.js'
@@ -100,6 +101,27 @@ router.post('/api/groups/:groupId/special-predictions', authMiddleware, async (c
     typeId: body.typeId,
     answer: body.answer,
   })
+})
+
+// ─── Global Type Subscriptions ──────────────────────────────────────────────
+
+router.get('/api/groups/:groupId/global-type-subscriptions', authMiddleware, async (ctx) => {
+  const dbUser = await upsertUser(ctx.state.user)
+  ctx.body = await listAvailableGlobalTypes(ctx.params.groupId, dbUser.id)
+})
+
+router.post('/api/groups/:groupId/global-type-subscriptions/:typeId', authMiddleware, async (ctx) => {
+  const dbUser = await upsertUser(ctx.state.user)
+  await subscribeGroup(ctx.params.groupId, ctx.params.typeId, dbUser.id)
+  ctx.status = 201
+  ctx.body = { ok: true }
+})
+
+router.delete('/api/groups/:groupId/global-type-subscriptions/:typeId', authMiddleware, async (ctx) => {
+  const dbUser = await upsertUser(ctx.state.user)
+  await unsubscribeGroup(ctx.params.groupId, ctx.params.typeId, dbUser.id)
+  ctx.status = 204
+  ctx.body = null
 })
 
 export { router as specialPredictionsRouter }

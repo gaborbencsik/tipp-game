@@ -1,4 +1,4 @@
-import type { User, Match, MatchesFilters, MatchInput, MatchResultInput, Prediction, PredictionInput, Team, TeamInput, AdminUser, Group, GroupInput, GroupMember, JoinGroupInput, LeaderboardEntry, ScoringConfigFull, ScoringConfigInput, WaitlistListResult, WaitlistFilters, WaitlistEntry, WaitlistSource, SpecialPredictionType, SpecialTypeInput, SpecialPredictionWithType, SpecialPredictionInput, StatPredictionTemplate, Player, PlayerInput } from '../types/index.js'
+import type { User, Match, MatchesFilters, MatchInput, MatchResultInput, Prediction, PredictionInput, Team, TeamInput, AdminUser, Group, GroupInput, GroupMember, JoinGroupInput, LeaderboardEntry, ScoringConfigFull, ScoringConfigInput, WaitlistListResult, WaitlistFilters, WaitlistEntry, WaitlistSource, SpecialPredictionType, SpecialTypeInput, SpecialPredictionWithType, SpecialPredictionInput, StatPredictionTemplate, Player, PlayerInput, GlobalTypeWithSubscription } from '../types/index.js'
 
 const BASE_URL = (import.meta.env.VITE_API_URL ?? '') + '/api'
 
@@ -181,6 +181,22 @@ export const api = {
           headers: { Authorization: `Bearer ${token}` },
         }),
     },
+    globalTypeSubscriptions: {
+      list: (token: string, groupId: string) =>
+        request<GlobalTypeWithSubscription[]>(`/groups/${groupId}/global-type-subscriptions`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      subscribe: (token: string, groupId: string, typeId: string) =>
+        request<{ ok: boolean }>(`/groups/${groupId}/global-type-subscriptions/${typeId}`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      unsubscribe: (token: string, groupId: string, typeId: string) =>
+        request<void>(`/groups/${groupId}/global-type-subscriptions/${typeId}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+    },
   },
   admin: {
     teams: {
@@ -293,6 +309,35 @@ export const api = {
       delete: (token: string, id: string) =>
         request<void>(`/admin/players/${id}`, {
           method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+    },
+    globalSpecialTypes: {
+      list: (token: string) =>
+        request<SpecialPredictionType[]>('/admin/global-special-types', {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      create: (token: string, input: SpecialTypeInput) =>
+        request<SpecialPredictionType>('/admin/global-special-types', {
+          method: 'POST',
+          body: JSON.stringify(input),
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      update: (token: string, typeId: string, input: Partial<SpecialTypeInput>) =>
+        request<SpecialPredictionType>(`/admin/global-special-types/${typeId}`, {
+          method: 'PUT',
+          body: JSON.stringify(input),
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      deactivate: (token: string, typeId: string) =>
+        request<void>(`/admin/global-special-types/${typeId}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      setAnswer: (token: string, typeId: string, correctAnswer: string) =>
+        request<SpecialPredictionType>(`/admin/global-special-types/${typeId}/answer`, {
+          method: 'PUT',
+          body: JSON.stringify({ correctAnswer }),
           headers: { Authorization: `Bearer ${token}` },
         }),
     },

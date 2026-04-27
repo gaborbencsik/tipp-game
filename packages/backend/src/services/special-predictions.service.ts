@@ -1,6 +1,6 @@
 import { and, eq, isNull } from 'drizzle-orm'
 import { db } from '../db/client.js'
-import { groups, groupMembers, specialPredictionTypes, specialPredictions, teams } from '../db/schema/index.js'
+import { groups, groupMembers, specialPredictionTypes, specialPredictions, teams, groupGlobalTypeSubscriptions } from '../db/schema/index.js'
 import type { SpecialPrediction, SpecialPredictionInput, SpecialPredictionWithType } from '../types/index.js'
 
 class AppError extends Error {
@@ -37,22 +37,43 @@ export async function getMyPredictions(
   await assertGroupExists(groupId)
   await assertGroupMember(groupId, userId)
 
-  const types = await db
+  // Group-scoped types
+  const groupTypes = await db
     .select()
     .from(specialPredictionTypes)
-    .where(and(eq(specialPredictionTypes.groupId, groupId), eq(specialPredictionTypes.isActive, true)))
+    .where(and(
+      eq(specialPredictionTypes.groupId, groupId),
+      eq(specialPredictionTypes.isActive, true),
+      eq(specialPredictionTypes.isGlobal, false),
+    ))
     .orderBy(specialPredictionTypes.createdAt)
 
-  if (types.length === 0) return []
+  // Subscribed global types
+  const globalTypeRows = await db
+    .select({ spt: specialPredictionTypes })
+    .from(groupGlobalTypeSubscriptions)
+    .innerJoin(specialPredictionTypes, eq(groupGlobalTypeSubscriptions.globalTypeId, specialPredictionTypes.id))
+    .where(and(
+      eq(groupGlobalTypeSubscriptions.groupId, groupId),
+      eq(specialPredictionTypes.isActive, true),
+      eq(specialPredictionTypes.isGlobal, true),
+    ))
+
+  const allTypes = [
+    ...globalTypeRows.map(r => ({ ...r.spt, _isGlobal: true as const })),
+    ...groupTypes.map(t => ({ ...t, _isGlobal: false as const })),
+  ]
+
+  if (allTypes.length === 0) return []
 
   const preds = await db
     .select()
     .from(specialPredictions)
-    .where(eq(specialPredictions.userId, userId))
+    .where(and(eq(specialPredictions.userId, userId), eq(specialPredictions.groupId, groupId)))
 
   const predByTypeId = new Map(preds.map(p => [p.typeId, p]))
 
-  return types.map(t => {
+  return allTypes.map(t => {
     const pred = predByTypeId.get(t.id)
     const deadlinePassed = t.deadline <= new Date()
     return {
@@ -67,6 +88,7 @@ export async function getMyPredictions(
       answer: pred?.answer ?? null,
       points: pred?.points ?? null,
       correctAnswer: (deadlinePassed || pred?.points !== null && pred?.points !== undefined) ? (t.correctAnswer ?? null) : null,
+      isGlobal: t._isGlobal,
       createdAt: pred?.createdAt.toISOString() ?? null,
       updatedAt: pred?.updatedAt.toISOString() ?? null,
     }
@@ -81,15 +103,33 @@ export async function upsertPrediction(
   await assertGroupExists(groupId)
   await assertGroupMember(groupId, userId)
 
-  const typeRows = await db
+  // Try group-scoped type first
+  let typeRows = await db
     .select()
     .from(specialPredictionTypes)
     .where(and(
       eq(specialPredictionTypes.id, input.typeId),
       eq(specialPredictionTypes.groupId, groupId),
       eq(specialPredictionTypes.isActive, true),
+      eq(specialPredictionTypes.isGlobal, false),
     ))
     .limit(1)
+
+  // If not found, try global type with active subscription
+  if (!typeRows[0]) {
+    typeRows = await db
+      .select({ spt: specialPredictionTypes })
+      .from(specialPredictionTypes)
+      .innerJoin(groupGlobalTypeSubscriptions, eq(groupGlobalTypeSubscriptions.globalTypeId, specialPredictionTypes.id))
+      .where(and(
+        eq(specialPredictionTypes.id, input.typeId),
+        eq(specialPredictionTypes.isGlobal, true),
+        eq(specialPredictionTypes.isActive, true),
+        eq(groupGlobalTypeSubscriptions.groupId, groupId),
+      ))
+      .limit(1)
+      .then(rows => rows.map(r => r.spt))
+  }
 
   const type = typeRows[0]
   if (!type) throw new AppError(404, 'Special prediction type not found')
@@ -133,10 +173,11 @@ export async function upsertPrediction(
     .values({
       userId,
       typeId: input.typeId,
+      groupId,
       answer,
     })
     .onConflictDoUpdate({
-      target: [specialPredictions.userId, specialPredictions.typeId],
+      target: [specialPredictions.userId, specialPredictions.typeId, specialPredictions.groupId],
       set: {
         answer,
         updatedAt: new Date(),

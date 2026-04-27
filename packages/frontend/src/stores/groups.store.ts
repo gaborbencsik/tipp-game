@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { supabase } from '../lib/supabase.js'
 import { api } from '../api/index.js'
-import type { Group, GroupInput, GroupMember, JoinGroupInput, ScoringConfigFull, ScoringConfigInput, SpecialPredictionType, SpecialTypeInput, SpecialPredictionWithType, SpecialPredictionInput } from '../types/index.js'
+import type { Group, GroupInput, GroupMember, JoinGroupInput, ScoringConfigFull, ScoringConfigInput, SpecialPredictionType, SpecialTypeInput, SpecialPredictionWithType, SpecialPredictionInput, GlobalTypeWithSubscription } from '../types/index.js'
 
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
 
@@ -33,6 +33,11 @@ export const useGroupsStore = defineStore('groups', () => {
   const specialPredictionsMap = ref<Record<string, SpecialPredictionWithType[]>>({})
   const specialPredictionsLoading = ref(false)
   const specialPredictionsError = ref<string | null>(null)
+
+  // Global type subscriptions (admin)
+  const globalSubscriptionsMap = ref<Record<string, GlobalTypeWithSubscription[]>>({})
+  const globalSubscriptionsLoading = ref(false)
+  const globalSubscriptionsError = ref<string | null>(null)
 
   async function fetchMyGroups(): Promise<void> {
     isLoading.value = true
@@ -196,6 +201,39 @@ export const useGroupsStore = defineStore('groups', () => {
     )
   }
 
+  // ─── Global type subscriptions (admin) ──────────────────────────────────────
+
+  async function fetchGlobalSubscriptions(groupId: string): Promise<void> {
+    globalSubscriptionsLoading.value = true
+    globalSubscriptionsError.value = null
+    try {
+      const token = await getAccessToken()
+      globalSubscriptionsMap.value[groupId] = await api.groups.globalTypeSubscriptions.list(token, groupId)
+    } catch (err) {
+      globalSubscriptionsError.value = err instanceof Error ? err.message : 'Ismeretlen hiba'
+    } finally {
+      globalSubscriptionsLoading.value = false
+    }
+  }
+
+  async function subscribeGlobalType(groupId: string, typeId: string): Promise<void> {
+    const token = await getAccessToken()
+    await api.groups.globalTypeSubscriptions.subscribe(token, groupId, typeId)
+    globalSubscriptionsMap.value[groupId] = (globalSubscriptionsMap.value[groupId] ?? []).map(t =>
+      t.id === typeId ? { ...t, subscribed: true } : t,
+    )
+    delete specialPredictionsMap.value[groupId]
+  }
+
+  async function unsubscribeGlobalType(groupId: string, typeId: string): Promise<void> {
+    const token = await getAccessToken()
+    await api.groups.globalTypeSubscriptions.unsubscribe(token, groupId, typeId)
+    globalSubscriptionsMap.value[groupId] = (globalSubscriptionsMap.value[groupId] ?? []).map(t =>
+      t.id === typeId ? { ...t, subscribed: false } : t,
+    )
+    delete specialPredictionsMap.value[groupId]
+  }
+
   return {
     groups,
     isLoading,
@@ -213,6 +251,9 @@ export const useGroupsStore = defineStore('groups', () => {
     specialPredictionsMap,
     specialPredictionsLoading,
     specialPredictionsError,
+    globalSubscriptionsMap,
+    globalSubscriptionsLoading,
+    globalSubscriptionsError,
     fetchMyGroups,
     createGroup,
     joinGroup,
@@ -231,5 +272,8 @@ export const useGroupsStore = defineStore('groups', () => {
     setSpecialTypeAnswer,
     fetchSpecialPredictions,
     upsertSpecialPrediction,
+    fetchGlobalSubscriptions,
+    subscribeGlobalType,
+    unsubscribeGlobalType,
   }
 })

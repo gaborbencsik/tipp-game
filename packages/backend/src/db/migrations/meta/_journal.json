@@ -78,6 +78,13 @@
       "when": 1777032938507,
       "tag": "0010_right_revanche",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1777280930143,
+      "tag": "0011_legal_spencer_smythe",
+      "breakpoints": true
     }
   ]
 }

@@ -16,6 +16,13 @@ import {
   deletePlayer,
 } from '../services/players.service.js'
 import {
+  listGlobalTypes,
+  createGlobalType,
+  updateGlobalType,
+  deactivateGlobalType,
+} from '../services/global-special-types.service.js'
+import { evaluateGlobalType } from '../services/special-prediction-evaluation.service.js'
+import {
   createMatch,
   updateMatch,
   deleteMatch,
@@ -29,7 +36,7 @@ import {
 import { upsertUser } from '../services/user.service.js'
 import { getGlobalConfig, updateGlobalConfig } from '../services/scoring-config.service.js'
 import { getWaitlistEntries, deleteWaitlistEntry, addWaitlistEntry, isValidEmail } from '../services/waitlist.service.js'
-import type { MatchOutcome, TeamInput, MatchInput, ScoringConfigInput, PlayerInput } from '../types/index.js'
+import type { MatchOutcome, TeamInput, MatchInput, ScoringConfigInput, PlayerInput, SpecialTypeInput } from '../types/index.js'
 import type { WaitlistFilters, WaitlistSource } from '../services/waitlist.service.js'
 
 const adminRouter = new Router({ prefix: '/api/admin' })
@@ -155,6 +162,53 @@ adminRouter.put('/players/:id', async (ctx) => {
 adminRouter.delete('/players/:id', async (ctx) => {
   await deletePlayer(ctx.params['id'] as string)
   ctx.status = 204
+})
+
+// ─── Global Special Types ───────────────────────────────────────────────────
+
+adminRouter.get('/global-special-types', async (ctx) => {
+  ctx.body = await listGlobalTypes()
+})
+
+adminRouter.post('/global-special-types', async (ctx) => {
+  const body = ctx.request.body as Record<string, unknown>
+  const input: SpecialTypeInput = {
+    name: body.name as string,
+    description: typeof body.description === 'string' ? body.description : undefined,
+    inputType: body.inputType as 'text' | 'dropdown' | 'team_select',
+    options: Array.isArray(body.options) ? body.options as string[] : undefined,
+    deadline: body.deadline as string,
+    points: body.points as number,
+  }
+  ctx.status = 201
+  ctx.body = await createGlobalType(input)
+})
+
+adminRouter.put('/global-special-types/:typeId', async (ctx) => {
+  const body = ctx.request.body as Record<string, unknown>
+  const input: Partial<SpecialTypeInput> = {}
+  if (body.name !== undefined) (input as Record<string, unknown>).name = body.name
+  if (body.description !== undefined) (input as Record<string, unknown>).description = body.description
+  if (body.inputType !== undefined) (input as Record<string, unknown>).inputType = body.inputType
+  if (body.options !== undefined) (input as Record<string, unknown>).options = body.options
+  if (body.deadline !== undefined) (input as Record<string, unknown>).deadline = body.deadline
+  if (body.points !== undefined) (input as Record<string, unknown>).points = body.points
+  ctx.body = await updateGlobalType(ctx.params['typeId'] as string, input)
+})
+
+adminRouter.delete('/global-special-types/:typeId', async (ctx) => {
+  await deactivateGlobalType(ctx.params['typeId'] as string)
+  ctx.status = 204
+})
+
+adminRouter.put('/global-special-types/:typeId/answer', async (ctx) => {
+  const body = ctx.request.body as Record<string, unknown>
+  if (typeof body.correctAnswer !== 'string' || body.correctAnswer.trim().length === 0) {
+    ctx.status = 400
+    ctx.body = { error: 'correctAnswer is required' }
+    return
+  }
+  ctx.body = await evaluateGlobalType(ctx.params['typeId'] as string, body.correctAnswer.trim())
 })
 
 // ─── Waitlist ────────────────────────────────────────────────────────────────

@@ -1,23 +1,13 @@
 import { and, eq, isNull } from 'drizzle-orm'
 import { db } from '../db/client.js'
-import { groups, groupMembers, specialPredictionTypes } from '../db/schema/index.js'
+import { groups, groupMembers, specialPredictionTypes, groupGlobalTypeSubscriptions } from '../db/schema/index.js'
 import type { SpecialPredictionType, SpecialTypeInput } from '../types/index.js'
-
-class AppError extends Error {
-  readonly status: number
-  constructor(status: number, message: string) {
-    super(message)
-    this.status = status
-    this.name = 'AppError'
-  }
-}
-
-const VALID_INPUT_TYPES = new Set(['text', 'dropdown', 'team_select'])
+import { AppError, validateSpecialTypeInput, VALID_INPUT_TYPES } from './special-prediction-validation.js'
 
 function toApi(row: typeof specialPredictionTypes.$inferSelect): SpecialPredictionType {
   return {
     id: row.id,
-    groupId: row.groupId,
+    groupId: row.groupId ?? null,
     name: row.name,
     description: row.description ?? null,
     inputType: row.inputType as 'text' | 'dropdown' | 'team_select',
@@ -25,6 +15,7 @@ function toApi(row: typeof specialPredictionTypes.$inferSelect): SpecialPredicti
     deadline: row.deadline.toISOString(),
     points: row.points,
     correctAnswer: row.correctAnswer ?? null,
+    isGlobal: row.isGlobal,
     isActive: row.isActive,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
@@ -60,47 +51,41 @@ async function assertGroupAdmin(groupId: string, userId: string): Promise<void> 
 }
 
 function validateInput(input: SpecialTypeInput): void {
-  if (!input.name || input.name.trim().length === 0) {
-    throw new AppError(400, 'name is required')
-  }
-  if (input.name.length > 100) {
-    throw new AppError(400, 'name must be at most 100 characters')
-  }
-  if (!VALID_INPUT_TYPES.has(input.inputType)) {
-    throw new AppError(400, "inputType must be 'text', 'dropdown', or 'team_select'")
-  }
-  if (input.inputType === 'dropdown') {
-    if (!Array.isArray(input.options) || input.options.length < 2) {
-      throw new AppError(400, 'dropdown type requires at least 2 options')
-    }
-    if (input.options.length > 20) {
-      throw new AppError(400, 'dropdown type allows at most 20 options')
-    }
-    for (const opt of input.options) {
-      if (typeof opt !== 'string' || opt.length > 100) {
-        throw new AppError(400, 'each option must be a string of at most 100 characters')
-      }
-    }
-  }
-  if (typeof input.points !== 'number' || input.points < 1 || input.points > 100) {
-    throw new AppError(400, 'points must be an integer between 1 and 100')
-  }
-  if (!input.deadline) {
-    throw new AppError(400, 'deadline is required')
-  }
+  validateSpecialTypeInput(input)
 }
 
 export async function listActiveTypes(groupId: string, requesterId: string): Promise<SpecialPredictionType[]> {
   await assertGroupExists(groupId)
   await assertGroupMember(groupId, requesterId)
 
-  const rows = await db
+  // Group-scoped types
+  const groupRows = await db
     .select()
     .from(specialPredictionTypes)
-    .where(and(eq(specialPredictionTypes.groupId, groupId), eq(specialPredictionTypes.isActive, true)))
+    .where(and(
+      eq(specialPredictionTypes.groupId, groupId),
+      eq(specialPredictionTypes.isActive, true),
+      eq(specialPredictionTypes.isGlobal, false),
+    ))
     .orderBy(specialPredictionTypes.createdAt)
 
-  return rows.map(toApi)
+  // Subscribed global types
+  const globalRows = await db
+    .select({ spt: specialPredictionTypes })
+    .from(groupGlobalTypeSubscriptions)
+    .innerJoin(specialPredictionTypes, eq(groupGlobalTypeSubscriptions.globalTypeId, specialPredictionTypes.id))
+    .where(and(
+      eq(groupGlobalTypeSubscriptions.groupId, groupId),
+      eq(specialPredictionTypes.isActive, true),
+      eq(specialPredictionTypes.isGlobal, true),
+    ))
+
+  const result = [
+    ...globalRows.map(r => toApi(r.spt)),
+    ...groupRows.map(toApi),
+  ]
+
+  return result
 }
 
 export async function createType(
