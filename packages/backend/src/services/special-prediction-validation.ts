@@ -9,7 +9,7 @@ export class AppError extends Error {
   }
 }
 
-export const VALID_INPUT_TYPES = new Set(['text', 'dropdown', 'team_select'])
+export const VALID_INPUT_TYPES = new Set(['text', 'dropdown', 'team_select', 'player_select'])
 
 export function validateSpecialTypeInput(input: SpecialTypeInput): void {
   if (!input.name || input.name.trim().length === 0) {
@@ -19,7 +19,7 @@ export function validateSpecialTypeInput(input: SpecialTypeInput): void {
     throw new AppError(400, 'name must be at most 100 characters')
   }
   if (!VALID_INPUT_TYPES.has(input.inputType)) {
-    throw new AppError(400, "inputType must be 'text', 'dropdown', or 'team_select'")
+    throw new AppError(400, "inputType must be 'text', 'dropdown', 'team_select', or 'player_select'")
   }
   if (input.inputType === 'dropdown') {
     if (!Array.isArray(input.options) || input.options.length < 2) {
@@ -33,6 +33,9 @@ export function validateSpecialTypeInput(input: SpecialTypeInput): void {
         throw new AppError(400, 'each option must be a string of at most 100 characters')
       }
     }
+  }
+  if (input.inputType === 'player_select' && input.options != null) {
+    throw new AppError(400, 'player_select type does not accept options')
   }
   if (typeof input.points !== 'number' || input.points < 1 || input.points > 100) {
     throw new AppError(400, 'points must be an integer between 1 and 100')

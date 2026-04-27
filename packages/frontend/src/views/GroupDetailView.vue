@@ -326,7 +326,7 @@
                   <p class="font-medium text-gray-800 text-sm">{{ st.name }}</p>
                   <p v-if="st.description" class="text-xs text-gray-500 mt-0.5">{{ st.description }}</p>
                   <div class="flex flex-wrap gap-2 mt-1 text-xs text-gray-500">
-                    <span>{{ st.inputType === 'dropdown' ? 'Legördülő' : st.inputType === 'team_select' ? 'Csapatválasztó' : 'Szabad szöveg' }}</span>
+                    <span>{{ st.inputType === 'dropdown' ? 'Legördülő' : st.inputType === 'team_select' ? 'Csapatválasztó' : st.inputType === 'player_select' ? 'Játékosválasztó' : 'Szabad szöveg' }}</span>
                     <span>·</span>
                     <span>{{ st.points }} pont</span>
                     <span>·</span>
@@ -336,7 +336,7 @@
                     Opciók: {{ st.options.join(', ') }}
                   </div>
                   <div v-if="st.correctAnswer" class="mt-1 text-xs text-green-600 font-medium">
-                    Helyes válasz: {{ st.inputType === 'team_select' ? teamName(st.correctAnswer) : st.correctAnswer }}
+                    Helyes válasz: {{ resolveAnswerLabel(st.inputType, st.correctAnswer) }}
                   </div>
                 </div>
                 <div class="flex gap-1 shrink-0">
@@ -401,10 +401,11 @@
             <div class="flex gap-4">
               <div class="flex-1">
                 <label class="text-xs font-medium text-gray-600 block mb-1">Típus</label>
-                <select v-model="typeDraft.inputType" class="w-full border rounded px-2 py-1 text-sm" @change="onInputTypeChange">
+                <select v-model="typeDraft.inputType" class="w-full border rounded px-2 py-1 text-sm">
                   <option value="text">Szabad szöveg</option>
                   <option value="dropdown">Legördülő</option>
                   <option value="team_select">Csapatválasztó</option>
+                  <option value="player_select">Játékosválasztó</option>
                 </select>
               </div>
               <div class="w-24">
@@ -466,8 +467,8 @@
 
           <!-- Already evaluated -->
           <div v-if="sp.points !== null" class="text-sm">
-            <p class="text-gray-600">Tipped: <span class="font-medium text-gray-800">{{ sp.inputType === 'team_select' && sp.answer ? teamName(sp.answer) : (sp.answer ?? '–') }}</span></p>
-            <p v-if="sp.correctAnswer" class="text-gray-600">Helyes válasz: <span class="font-medium text-green-700">{{ sp.inputType === 'team_select' ? teamName(sp.correctAnswer) : sp.correctAnswer }}</span></p>
+            <p class="text-gray-600">Tipped: <span class="font-medium text-gray-800">{{ sp.answerLabel ?? sp.answer ?? '–' }}</span></p>
+            <p v-if="sp.correctAnswer" class="text-gray-600">Helyes válasz: <span class="font-medium text-green-700">{{ sp.correctAnswer }}</span></p>
             <p class="mt-1 font-semibold" :class="sp.points > 0 ? 'text-green-600' : 'text-gray-400'">
               {{ sp.points > 0 ? `+${sp.points} pont` : '0 pont' }}
             </p>
@@ -475,15 +476,17 @@
 
           <!-- Before deadline: submit/edit -->
           <div v-else-if="!isDeadlinePassed(sp.deadline)">
-            <div v-if="sp.inputType === 'team_select'">
-              <select
-                :value="pendingAnswers[sp.typeId] ?? sp.answer ?? ''"
-                class="w-full border rounded px-2 py-1.5 text-sm mb-2"
-                @change="pendingAnswers[sp.typeId] = ($event.target as HTMLSelectElement).value"
-              >
-                <option value="" disabled>Válassz csapatot...</option>
-                <option v-for="t in teams" :key="t.id" :value="t.id">{{ t.name }}</option>
-              </select>
+            <div v-if="sp.inputType === 'team_select'" class="mb-2">
+              <TeamSelectDropdown
+                :model-value="pendingAnswers[sp.typeId] ?? sp.answer ?? null"
+                @update:model-value="v => { if (v) pendingAnswers[sp.typeId] = v; else delete pendingAnswers[sp.typeId] }"
+              />
+            </div>
+            <div v-else-if="sp.inputType === 'player_select'" class="mb-2">
+              <PlayerSelectCombobox
+                :model-value="pendingAnswers[sp.typeId] ?? sp.answer ?? null"
+                @update:model-value="v => { if (v) pendingAnswers[sp.typeId] = v; else delete pendingAnswers[sp.typeId] }"
+              />
             </div>
             <div v-else-if="sp.inputType === 'dropdown' && sp.options?.length">
               <select
@@ -513,7 +516,7 @@
               >
                 {{ sp.answer ? 'Módosít' : 'Leadás' }}
               </button>
-              <span v-if="sp.answer" class="text-xs text-gray-400">Jelenlegi: {{ sp.inputType === 'team_select' ? teamName(sp.answer) : sp.answer }}</span>
+              <span v-if="sp.answer" class="text-xs text-gray-400">Jelenlegi: {{ sp.answerLabel ?? sp.answer }}</span>
               <span v-if="predictionSaveStatus[sp.typeId] === 'saved'" class="text-xs text-green-600">Mentve!</span>
               <span v-else-if="predictionSaveStatus[sp.typeId] === 'error'" class="text-xs text-red-600">Hiba</span>
             </div>
@@ -521,7 +524,7 @@
 
           <!-- After deadline, not yet evaluated -->
           <div v-else class="text-sm">
-            <p class="text-gray-600">Tipped: <span class="font-medium text-gray-800">{{ sp.inputType === 'team_select' && sp.answer ? teamName(sp.answer) : (sp.answer ?? 'Nem adtál le tippet') }}</span></p>
+            <p class="text-gray-600">Tipped: <span class="font-medium text-gray-800">{{ sp.answerLabel ?? sp.answer ?? 'Nem adtál le tippet' }}</span></p>
             <p class="text-xs text-gray-400 mt-1">A határidő lejárt, kiértékelésre vár.</p>
           </div>
         </div>
@@ -533,14 +536,18 @@
       <div class="bg-white rounded-xl p-6 shadow-xl max-w-sm w-full mx-4">
         <p class="text-gray-800 mb-1 font-semibold">Helyes válasz megadása</p>
         <p class="text-gray-500 text-sm mb-3">{{ setAnswerTypeName }}</p>
-        <select
-          v-if="setAnswerInputType === 'team_select'"
-          v-model="setAnswerValue"
-          class="w-full border rounded px-3 py-2 text-sm mb-3"
-        >
-          <option value="" disabled>Válassz csapatot...</option>
-          <option v-for="t in teams" :key="t.id" :value="t.id">{{ t.name }}</option>
-        </select>
+        <div v-if="setAnswerInputType === 'team_select'" class="mb-3">
+          <TeamSelectDropdown
+            :model-value="setAnswerValue || null"
+            @update:model-value="v => { setAnswerValue = v ?? '' }"
+          />
+        </div>
+        <div v-else-if="setAnswerInputType === 'player_select'" class="mb-3">
+          <PlayerSelectCombobox
+            :model-value="setAnswerValue || null"
+            @update:model-value="v => { setAnswerValue = v ?? '' }"
+          />
+        </div>
         <input
           v-else
           v-model="setAnswerValue"
@@ -654,12 +661,14 @@
 import { ref, computed, onMounted, reactive, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppLayout from '../components/AppLayout.vue'
+import TeamSelectDropdown from '../components/predictions/TeamSelectDropdown.vue'
+import PlayerSelectCombobox from '../components/predictions/PlayerSelectCombobox.vue'
 import { dicebearUrl } from '../lib/avatar.js'
 import { useGroupsStore } from '../stores/groups.store.js'
 import { useAuthStore } from '../stores/auth.store.js'
 import { api } from '../api/index.js'
 import { supabase } from '../lib/supabase.js'
-import type { GroupMember, LeaderboardEntry, ScoringConfigInput, SpecialTypeInput, Team, StatPredictionTemplate, GlobalTypeWithSubscription } from '../types/index.js'
+import type { GroupMember, LeaderboardEntry, ScoringConfigInput, SpecialTypeInput, StatPredictionTemplate, GlobalTypeWithSubscription } from '../types/index.js'
 
 type Tab = 'leaderboard' | 'members' | 'settings' | 'special'
 
@@ -686,28 +695,35 @@ const isLoading = ref(false)
 const error = ref<string | null>(null)
 const activeTab = ref<Tab>('leaderboard')
 
-// ─── Teams (for team_select input type) ─────────────────────────────────────
-const teams = ref<Team[]>([])
-const teamsLoaded = ref(false)
-const teamsMap = computed(() => {
-  const map = new Map<string, Team>()
-  for (const t of teams.value) map.set(t.id, t)
-  return map
-})
-
-async function loadTeamsIfNeeded(): Promise<void> {
-  if (teamsLoaded.value) return
-  try {
-    const token = await getAccessToken()
-    teams.value = await api.teams.list(token)
-    teamsLoaded.value = true
-  } catch { /* ignore */ }
-}
-
-function teamName(teamId: string): string {
-  return teamsMap.value.get(teamId)?.name ?? teamId
-}
 const confirmRemoveUserId = ref<string | null>(null)
+
+// ─── Lightweight name resolution for admin display ─────────────────────────
+const teamNameCache = ref<Map<string, string>>(new Map())
+const playerNameCache = ref<Map<string, string>>(new Map())
+
+function resolveAnswerLabel(inputType: string, value: string | null): string {
+  if (!value) return '–'
+  if (inputType === 'team_select') return teamNameCache.value.get(value) ?? value
+  if (inputType === 'player_select') return playerNameCache.value.get(value) ?? value
+  return value
+}
+
+async function loadNameCachesIfNeeded(): Promise<void> {
+  if (teamNameCache.value.size === 0) {
+    try {
+      const token = await getAccessToken()
+      const teams = await api.teams.list(token)
+      for (const t of teams) teamNameCache.value.set(t.id, t.name)
+    } catch { /* ignore */ }
+  }
+  if (playerNameCache.value.size === 0) {
+    try {
+      const token = await getAccessToken()
+      const players = await api.players.list(token)
+      for (const p of players) playerNameCache.value.set(p.id, p.name)
+    } catch { /* ignore */ }
+  }
+}
 
 const groupName = computed(() => groupsStore.groups.find(g => g.id === groupId)?.name ?? 'Csoport')
 const currentGroup = computed(() => groupsStore.groups.find(g => g.id === groupId))
@@ -745,19 +761,18 @@ async function loadTemplatesIfNeeded(): Promise<void> {
 function applyTemplate(tpl: StatPredictionTemplate): void {
   typeDraft.name = tpl.name
   typeDraft.description = tpl.description
-  typeDraft.inputType = tpl.inputType
+  typeDraft.inputType = tpl.inputType as typeof typeDraft.inputType
   typeDraft.optionsRaw = tpl.options?.join(', ') ?? ''
   typeDraft.points = tpl.defaultPoints
   editingTypeId.value = null
   typeFormError.value = null
   showTypeForm.value = true
-  if (tpl.inputType === 'team_select') loadTeamsIfNeeded()
 }
 
 const typeDraft = reactive({
   name: '',
   description: '',
-  inputType: 'text' as 'text' | 'dropdown' | 'team_select',
+  inputType: 'text' as 'text' | 'dropdown' | 'team_select' | 'player_select',
   optionsRaw: '',
   points: 5,
   deadline: '',
@@ -910,15 +925,11 @@ function openNewTypeForm(): void {
   showTypeForm.value = true
 }
 
-function onInputTypeChange(): void {
-  if (typeDraft.inputType === 'team_select') loadTeamsIfNeeded()
-}
-
 function openEditType(st: { id: string; name: string; description: string | null; inputType: string; options: string[] | null; points: number; deadline: string }): void {
   editingTypeId.value = st.id
   typeDraft.name = st.name
   typeDraft.description = st.description ?? ''
-  typeDraft.inputType = st.inputType as 'text' | 'dropdown' | 'team_select'
+  typeDraft.inputType = st.inputType as typeof typeDraft.inputType
   typeDraft.optionsRaw = st.options?.join(', ') ?? ''
   typeDraft.points = st.points
   typeDraft.deadline = st.deadline.slice(0, 16)
@@ -967,7 +978,6 @@ function openSetAnswer(st: { id: string; name: string; inputType: string }): voi
   setAnswerInputType.value = st.inputType
   setAnswerValue.value = ''
   setAnswerError.value = null
-  if (st.inputType === 'team_select') loadTeamsIfNeeded()
 }
 
 async function submitSetAnswer(): Promise<void> {
@@ -1026,10 +1036,6 @@ async function switchToSpecialTab(): Promise<void> {
   if (!groupsStore.specialPredictionsMap[groupId]) {
     await groupsStore.fetchSpecialPredictions(groupId)
   }
-  const preds = groupsStore.specialPredictionsMap[groupId] ?? []
-  if (preds.some(p => p.inputType === 'team_select')) {
-    await loadTeamsIfNeeded()
-  }
 }
 
 onMounted(async () => {
@@ -1045,10 +1051,7 @@ onMounted(async () => {
       await groupsStore.fetchSpecialTypes(groupId)
       await groupsStore.fetchGlobalSubscriptions(groupId)
       await loadTemplatesIfNeeded()
-      const types = groupsStore.specialTypesMap[groupId] ?? []
-      if (types.some(t => t.inputType === 'team_select')) {
-        await loadTeamsIfNeeded()
-      }
+      await loadNameCachesIfNeeded()
     }
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Ismeretlen hiba'

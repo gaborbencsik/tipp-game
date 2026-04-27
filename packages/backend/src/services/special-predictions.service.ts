@@ -1,7 +1,7 @@
-import { and, eq, isNull } from 'drizzle-orm'
+import { and, eq, isNull, inArray } from 'drizzle-orm'
 import { db } from '../db/client.js'
-import { groups, groupMembers, specialPredictionTypes, specialPredictions, teams, groupGlobalTypeSubscriptions } from '../db/schema/index.js'
-import type { SpecialPrediction, SpecialPredictionInput, SpecialPredictionWithType } from '../types/index.js'
+import { groups, groupMembers, specialPredictionTypes, specialPredictions, teams, players, groupGlobalTypeSubscriptions } from '../db/schema/index.js'
+import type { SpecialPrediction, SpecialPredictionInput, SpecialPredictionInputType, SpecialPredictionWithType } from '../types/index.js'
 
 class AppError extends Error {
   readonly status: number
@@ -73,19 +73,47 @@ export async function getMyPredictions(
 
   const predByTypeId = new Map(preds.map(p => [p.typeId, p]))
 
+  // Batch resolve answerLabels for team_select and player_select
+  const teamIds: string[] = []
+  const playerIds: string[] = []
+  for (const t of allTypes) {
+    const pred = predByTypeId.get(t.id)
+    if (!pred?.answer) continue
+    if (t.inputType === 'team_select') teamIds.push(pred.answer)
+    if (t.inputType === 'player_select') playerIds.push(pred.answer)
+  }
+
+  const teamNameMap = new Map<string, string>()
+  if (teamIds.length > 0) {
+    const teamRows = await db.select({ id: teams.id, name: teams.name }).from(teams).where(inArray(teams.id, teamIds))
+    for (const r of teamRows) teamNameMap.set(r.id, r.name)
+  }
+
+  const playerNameMap = new Map<string, string>()
+  if (playerIds.length > 0) {
+    const playerRows = await db.select({ id: players.id, name: players.name, teamId: players.teamId }).from(players).where(inArray(players.id, playerIds))
+    for (const r of playerRows) playerNameMap.set(r.id, r.name)
+  }
+
   return allTypes.map(t => {
     const pred = predByTypeId.get(t.id)
     const deadlinePassed = t.deadline <= new Date()
+    let answerLabel: string | null = null
+    if (pred?.answer) {
+      if (t.inputType === 'team_select') answerLabel = teamNameMap.get(pred.answer) ?? null
+      if (t.inputType === 'player_select') answerLabel = playerNameMap.get(pred.answer) ?? null
+    }
     return {
       id: pred?.id ?? null,
       typeId: t.id,
       typeName: t.name,
       typeDescription: t.description ?? null,
-      inputType: t.inputType as 'text' | 'dropdown' | 'team_select',
+      inputType: t.inputType as SpecialPredictionInputType,
       options: t.options as string[] | null,
       deadline: t.deadline.toISOString(),
       maxPoints: t.points,
       answer: pred?.answer ?? null,
+      answerLabel,
       points: pred?.points ?? null,
       correctAnswer: (deadlinePassed || pred?.points !== null && pred?.points !== undefined) ? (t.correctAnswer ?? null) : null,
       isGlobal: t._isGlobal,
@@ -165,6 +193,21 @@ export async function upsertPrediction(
       .limit(1)
     if (!teamRows[0]) {
       throw new AppError(400, 'Invalid team id')
+    }
+  }
+
+  if (type.inputType === 'player_select') {
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    if (!UUID_RE.test(answer)) {
+      throw new AppError(400, 'Invalid player id')
+    }
+    const playerRows = await db
+      .select({ id: players.id })
+      .from(players)
+      .where(eq(players.id, answer))
+      .limit(1)
+    if (!playerRows[0]) {
+      throw new AppError(400, 'Invalid player id')
     }
   }
 

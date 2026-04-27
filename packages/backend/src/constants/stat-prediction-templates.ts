@@ -2,7 +2,7 @@ export interface StatPredictionTemplate {
   readonly id: string
   readonly name: string
   readonly description: string
-  readonly inputType: 'text' | 'dropdown' | 'team_select'
+  readonly inputType: 'text' | 'dropdown' | 'team_select' | 'player_select'
   readonly options: string[] | null
   readonly defaultPoints: number
 }
@@ -28,7 +28,7 @@ export const STAT_PREDICTION_TEMPLATES: readonly StatPredictionTemplate[] = [
     id: 'golden_boot',
     name: 'Gólkirály',
     description: 'Ki lesz a torna gólkirálya?',
-    inputType: 'text',
+    inputType: 'player_select',
     options: null,
     defaultPoints: 8,
   },

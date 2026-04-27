@@ -44,6 +44,7 @@
             <option value="text">Szabad szöveg</option>
             <option value="dropdown">Legördülő</option>
             <option value="team_select">Csapatválasztó</option>
+            <option value="player_select">Játékosválasztó</option>
           </select>
         </div>
         <div class="w-24">
@@ -202,7 +203,7 @@ const formSaving = ref(false)
 const formData = ref({
   name: '',
   description: '',
-  inputType: 'text' as 'text' | 'dropdown' | 'team_select',
+  inputType: 'text' as 'text' | 'dropdown' | 'team_select' | 'player_select',
   optionsRaw: '',
   points: 5,
   deadline: '',
@@ -229,6 +230,7 @@ function inputTypeLabel(inputType: string): string {
   switch (inputType) {
     case 'dropdown': return 'Legördülő'
     case 'team_select': return 'Csapatválasztó'
+    case 'player_select': return 'Játékosválasztó'
     default: return 'Szabad szöveg'
   }
 }

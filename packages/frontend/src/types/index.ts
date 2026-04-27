@@ -171,7 +171,7 @@ export interface LeaderboardEntry {
   readonly specialPredictionPoints: number
 }
 
-export type SpecialPredictionInputType = 'text' | 'dropdown' | 'team_select'
+export type SpecialPredictionInputType = 'text' | 'dropdown' | 'team_select' | 'player_select'
 
 export interface SpecialPredictionType {
   readonly id: string
@@ -208,6 +208,7 @@ export interface SpecialPredictionWithType {
   readonly deadline: string
   readonly maxPoints: number
   readonly answer: string | null
+  readonly answerLabel: string | null
   readonly points: number | null
   readonly correctAnswer: string | null
   readonly isGlobal: boolean

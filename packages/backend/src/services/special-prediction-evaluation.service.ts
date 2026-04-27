@@ -1,7 +1,7 @@
 import { and, eq } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { groupMembers, specialPredictionTypes, specialPredictions } from '../db/schema/index.js'
-import type { SpecialPredictionType } from '../types/index.js'
+import type { SpecialPredictionType, SpecialPredictionInputType } from '../types/index.js'
 
 class AppError extends Error {
   readonly status: number
@@ -74,7 +74,7 @@ export async function setCorrectAnswer(
     groupId: updatedType.groupId ?? null,
     name: updatedType.name,
     description: updatedType.description ?? null,
-    inputType: updatedType.inputType as 'text' | 'dropdown' | 'team_select',
+    inputType: updatedType.inputType as SpecialPredictionInputType,
     options: updatedType.options as string[] | null,
     deadline: updatedType.deadline.toISOString(),
     points: updatedType.points,
@@ -127,7 +127,7 @@ export async function evaluateGlobalType(
     groupId: null,
     name: updatedType.name,
     description: updatedType.description ?? null,
-    inputType: updatedType.inputType as 'text' | 'dropdown' | 'team_select',
+    inputType: updatedType.inputType as SpecialPredictionInputType,
     options: updatedType.options as string[] | null,
     deadline: updatedType.deadline.toISOString(),
     points: updatedType.points,

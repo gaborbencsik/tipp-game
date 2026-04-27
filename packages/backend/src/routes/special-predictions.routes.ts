@@ -6,6 +6,7 @@ import { getMyPredictions, upsertPrediction } from '../services/special-predicti
 import { setCorrectAnswer } from '../services/special-prediction-evaluation.service.js'
 import { listAvailableGlobalTypes, subscribeGroup, unsubscribeGroup } from '../services/global-type-subscriptions.service.js'
 import { getTeams } from '../services/teams.service.js'
+import { getPlayers } from '../services/players.service.js'
 import { STAT_PREDICTION_TEMPLATES } from '../constants/stat-prediction-templates.js'
 import type { SpecialTypeInput } from '../types/index.js'
 
@@ -15,6 +16,12 @@ const router = new Router()
 
 router.get('/api/teams', authMiddleware, async (ctx) => {
   ctx.body = await getTeams()
+})
+
+// ─── Public players list (for player_select input type) ────────────────────
+
+router.get('/api/players', authMiddleware, async (ctx) => {
+  ctx.body = await getPlayers()
 })
 
 // ─── Stat prediction templates ──────────────────────────────────────────────

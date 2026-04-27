@@ -36,6 +36,12 @@ export const api = {
         headers: { Authorization: `Bearer ${token}` },
       }),
   },
+  players: {
+    list: (token: string) =>
+      request<Player[]>('/players', {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+  },
   statPredictionTemplates: {
     list: (token: string) =>
       request<StatPredictionTemplate[]>('/stat-prediction-templates', {

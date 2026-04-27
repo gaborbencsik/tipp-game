@@ -55,6 +55,18 @@ const TYPE_ROW_EXPIRED = {
   deadline: PAST,
 }
 
+const TYPE_ROW_PLAYER_SELECT = {
+  ...TYPE_ROW,
+  id: 'type-uuid-4',
+  name: 'Gólkirály',
+  inputType: 'player_select',
+  options: null,
+}
+
+const VALID_PLAYER_UUID = '11111111-2222-3333-4444-555555555555'
+
+const PLAYER_ROW = { id: VALID_PLAYER_UUID, name: 'Messi', teamId: 'team-uuid-1' }
+
 const PRED_ROW = {
   id: PRED_ID,
   userId: USER_ID,
@@ -299,5 +311,46 @@ describe('upsertPrediction', () => {
     const longAnswer = 'a'.repeat(501)
     await expect(upsertPrediction(GROUP_ID, USER_ID, { typeId: TYPE_ID, answer: longAnswer }))
       .rejects.toMatchObject({ status: 400, message: 'answer must be at most 500 characters' })
+  })
+
+  it('accepts player_select with valid player UUID', async () => {
+    const predRow = { ...PRED_ROW, typeId: 'type-uuid-4', answer: VALID_PLAYER_UUID }
+    // 1. assertGroupExists, 2. assertGroupMember, 3. select type, 4. select player (UUID lookup)
+    setupSelectSequence([
+      [GROUP_ROW],
+      [MEMBER_ROW],
+      [TYPE_ROW_PLAYER_SELECT],
+      [PLAYER_ROW],
+    ])
+    const { insertFn } = makeInsertChain([predRow])
+    mockInsert.mockImplementation(insertFn)
+
+    const result = await upsertPrediction(GROUP_ID, USER_ID, { typeId: 'type-uuid-4', answer: VALID_PLAYER_UUID })
+
+    expect(result.answer).toBe(VALID_PLAYER_UUID)
+  })
+
+  it('throws 400 for player_select with invalid UUID format', async () => {
+    setupSelectSequence([
+      [GROUP_ROW],
+      [MEMBER_ROW],
+      [TYPE_ROW_PLAYER_SELECT],
+    ])
+
+    await expect(upsertPrediction(GROUP_ID, USER_ID, { typeId: 'type-uuid-4', answer: 'not-a-uuid' }))
+      .rejects.toMatchObject({ status: 400, message: 'Invalid player id' })
+  })
+
+  it('throws 400 for player_select with non-existent player UUID', async () => {
+    // 1. assertGroupExists, 2. assertGroupMember, 3. select type, 4. select player (empty)
+    setupSelectSequence([
+      [GROUP_ROW],
+      [MEMBER_ROW],
+      [TYPE_ROW_PLAYER_SELECT],
+      [],
+    ])
+
+    await expect(upsertPrediction(GROUP_ID, USER_ID, { typeId: 'type-uuid-4', answer: VALID_PLAYER_UUID }))
+      .rejects.toMatchObject({ status: 400, message: 'Invalid player id' })
   })
 })
