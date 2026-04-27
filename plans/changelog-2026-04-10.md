@@ -1,4 +1,4 @@
-# Changelog (2026-04-10 – 2026-04-24)
+# Changelog (2026-04-10 – 2026-04-27)
 
 ## Csoport kezelés
 
@@ -20,6 +20,18 @@
 - **US-901-E** — Backend: csoport ranglista integráció (stat pontok hozzáadva a ranglistához)
 - **US-902-A** — Frontend: admin stat tipp típus kezelő UI a Beállítások tabban
 - **US-902-B** — Frontend: tag stat tipp leadási UI ("Stat tippek" tab)
+- **US-910** — `team_select` input típus: stat tipp típusok támogatják a csapat kiválasztó dropdown-ot (csapatnév + zászló)
+- **US-911** — Sablon (preset) stat tipp típusok: előre definiált sablonok (pl. Világbajnok, Gólkirály) egy kattintással létrehozhatók
+
+## Stat tippek (globális / platform szintű)
+
+- **US-925** — Globális stat tipp típusok: platform admin CRUD (Stat tippek admin nézet, `/admin/global-types`)
+- **US-926** — Csoport feliratkozás: csoport admin toggle switch-csel behúzhatja a globális típusokat; a "Stat tippek" tab azonnal frissül
+- **US-927** — Globális kiértékelés: platform admin egyszer értékeli ki, a pontok minden feliratkozott csoportban kiosztódnak
+
+## Játékosok kezelése
+
+- **US-920** — Játékosok admin CRUD: játékosok listázása, létrehozása, szerkesztése, törlése; csapathoz rendelés; admin nézet (`/admin/players`)
 
 ## UX fejlesztések
 
@@ -42,7 +54,7 @@
 ## Admin UX
 
 - Összecsukható admin menü szekció a sidebarban
-- Admin pill tab navigáció (Mérkőzések / Csapatok / Felhasználók / Pontrendszer / Waitlist)
+- Admin pill tab navigáció (Mérkőzések / Csapatok / Felhasználók / Pontrendszer / Waitlist / Stat tippek)
 
 ## Egyéb
 
@@ -54,5 +66,6 @@
 ## Tervdokumentumok
 
 - US-903–909 story-k megírva: globális/fix stat tippek (Gólkirály, Világbajnok csapat — `team_select` inputType)
+- US-925–927 story megírva és implementálva: globális stat tipp típusok platform admin kezeléssel
 - AI insights terv + stadion banner story
 - Meccsek redesign UX review story-k (UX-009–UX-013)
