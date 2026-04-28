@@ -27,7 +27,7 @@ tipp-game/
 └── docker-compose.yml  # Teljes stack: frontend + backend + PG 18.3
 ```
 
-**Hosting:** Vercel (frontend) + Railway (backend + PG)
+**Hosting:** Vercel (frontend) + Render (backend) + Supabase (DB + Auth)
 
 ## Tech stack
 
@@ -119,22 +119,32 @@ src/
 
 | Fájl                          | Tartalom                                              |
 | ----------------------------- | ----------------------------------------------------- |
-| `plans/00-status.md`          | Story-k aktuális státusza (kész / folyamatban / TODO) |
-| `plans/01-project-plan.md`    | User story-k (E1–E10, US-101–US-902)                  |
+| `plans/00-backlog.md`         | Nyitott story-k (ID, cím, prioritás, függőségek)      |
+| `plans/00-history.md`         | Kész story-k kompakt listája                          |
+| `plans/stories/<ID>.md`       | Egyedi story fájlok (elfogadási kritériumok, tech)    |
 | `plans/02-database-schema.md` | Drizzle schema, ER-diagram, indexek                   |
 | `plans/03-tech-stack.md`      | Döntési mátrix, auth flow, projekt struktúra          |
 | `plans/04-extras.md`          | Nice-to-have ötletek (post-MVP)                       |
 
 **User story-kkal kapcsolatos munka esetén** (írás, módosítás, státusz kérdés, implementálás):
 
-- **Kötelező** először elolvasni: `plans/00-status.md` + `plans/01-project-plan.md`
-- Nézd meg a teljes `plans/` mappát is a kontextusért (schema, tech stack, extras)
+- **Kötelező** először elolvasni: `plans/00-backlog.md`
+- Aztán nyisd meg a konkrét story fájlt: `plans/stories/<ID>.md`
+- Referencia (csak ha kell): `02-database-schema.md`, `03-tech-stack.md`
+
+**Story lezárása** (amikor egy story implementálása kész és a tesztek zöldek):
+
+1. Töröld a sort a `plans/00-backlog.md` táblából
+2. Add hozzá a sort a `plans/00-history.md` tábla végéhez (ID, cím, prioritás)
+3. Frissítsd a `00-backlog.md` fejlécében a "Haladás" számlálót
+4. Mozgasd a story fájlt: `plans/stories/<ID>.md` → `plans/stories/archive/<ID>.md`
+
+**`plans/stories/archive/`** — kész story-k archívuma. Csak explicit kérésre olvasd (pl. "nézd meg a régi US-201 story-t").
 
 ## Prioritások
 
-- **Must Have (22 story):** E1–E8 epic-ek – ezek az MVP
-- **Should Have (6 story):** stat tippek, email auth, mások tippjei, profil szerk.
-- **Nice to Have:** E10 epic (lásd 04-extras.md) – csak az MVP után
+- **Must Have:** mind kész (31/31)
+- **Nyitott feladatok:** lásd `plans/00-backlog.md` (prioritás + függőségek)
 
 ## Alapelv
 
