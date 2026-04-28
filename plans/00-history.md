@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 61 story kész (Must Have: 31/31, Should Have: 30/52)
+> 68 story kész (Must Have: 31/31, Should Have: 37/63)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -33,7 +33,6 @@
 | US-605 | Több csoporthoz tartozás | Must Have |
 | US-606 | Csoportok navigáció (AppLayout) | Must Have |
 | US-608 | Csoportszintű pontrendszer override | Must Have |
-| US-609 | Liga filter csoportonként | Should Have |
 | US-701 | User/Admin szerepkörök | Must Have |
 | US-801 | Mérkőzés létrehozása | Must Have |
 | US-802 | Mérkőzés szerkesztése/törlése | Must Have |

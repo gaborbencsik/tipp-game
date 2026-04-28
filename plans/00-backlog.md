@@ -12,8 +12,6 @@
 | US-607 | Kedvenc csapat dupla pont szabály (csoport beállítás) | Should Have | US-404 |
 | US-609 | Liga filter csoportonként | Should Have | US-1301 |
 | US-807 | Admin használati statisztikák (dashboard) | Should Have | — |
-| US-901 | Statisztikai tipp leadása (parent) | Should Have | Lebontva → US-901-A..E, US-902-A..B (mind kész) |
-| US-902 | Statisztikai tipp típus konfig (parent) | Should Have | Lebontva → US-902-A..B (mind kész) |
 | US-940 | Pending speciális tipp összesítő composable | Should Have | — |
 | US-941 | Speciális tippek banner komponens | Should Have | US-940 |
 | US-942 | Banner integrálása a MatchesView-ba | Should Have | US-941 |
@@ -25,6 +23,10 @@
 | US-1203 | Automatikus adatszinkron cron job | Should Have | US-1202 |
 | US-1301 | Liga entitás bevezetése a meccsekhez | Should Have | — |
 | US-1401 | Stadion banner kép a meccs részletes nézeten | Should Have | — |
+| US-932 | Új csoportok automatikus feliratkozása globális típusokra | Should Have | — |
+| US-933 | Badge counter a speciális tippek tabon | Should Have | — |
+| US-934 | Mások tippjeinek megjelenítése (speciális) | Should Have | — |
+| BUG-002 | Helyes válasz UUID feloldás team/player_select típusoknál | Should Have | — |
 | UX-004 | Focilabda kurzor ikon | Nice to Have | — |
 | UX-005 | Optimista törlés az admin listákon | Should Have | — |
 | UX-009 | Match card vizuális redesign | Should Have | — |
@@ -36,4 +38,4 @@
 
 ---
 
-**Haladás: 61 / 86 story kész** — Must Have: 31/31, Should Have: 30/52, Nice to Have: 0/3
+**Haladás: 68 / 97 story kész** — Must Have: 31/31, Should Have: 37/63, Nice to Have: 0/3
