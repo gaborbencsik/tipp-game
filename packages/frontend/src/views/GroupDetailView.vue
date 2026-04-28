@@ -1062,5 +1062,9 @@ onMounted(async () => {
   } finally {
     isLoading.value = false
   }
+
+  if (route.query.tab === 'special') {
+    await switchToSpecialTab()
+  }
 })
 </script>

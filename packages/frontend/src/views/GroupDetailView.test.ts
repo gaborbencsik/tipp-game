@@ -10,7 +10,7 @@ vi.mock('vue-router', async (importOriginal) => {
   const actual = await importOriginal<typeof import('vue-router')>()
   return {
     ...actual,
-    useRoute: () => ({ params: { id: 'group-uuid-1' }, path: '/groups/group-uuid-1' }),
+    useRoute: () => ({ params: { id: 'group-uuid-1' }, path: '/groups/group-uuid-1', query: {} }),
     useRouter: () => ({ push: vi.fn() }),
   }
 })

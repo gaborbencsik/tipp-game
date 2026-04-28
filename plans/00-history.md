@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 69 story kész (Must Have: 31/31, Should Have: 38/63)
+> 73 story kész (Must Have: 31/31, Should Have: 42/63)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -73,3 +73,7 @@
 | DISC-001 | Landing oldal discovery | Should Have |
 | SEC-001 | Row-Level Security (Supabase RLS) | Must Have |
 | BUG-002 | Helyes válasz UUID feloldás team/player_select típusoknál | Should Have |
+| US-940 | Pending speciális tipp összesítő composable | Should Have |
+| US-941 | Speciális tippek banner komponens | Should Have |
+| US-942 | Banner integrálása a MatchesView-ba | Should Have |
+| US-943 | GroupDetailView `?tab=special` query param | Should Have |

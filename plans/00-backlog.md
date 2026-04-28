@@ -12,10 +12,6 @@
 | US-607 | Kedvenc csapat dupla pont szabály (csoport beállítás) | Should Have | US-404 |
 | US-609 | Liga filter csoportonként | Should Have | US-1301 |
 | US-807 | Admin használati statisztikák (dashboard) | Should Have | — |
-| US-940 | Pending speciális tipp összesítő composable | Should Have | — |
-| US-941 | Speciális tippek banner komponens | Should Have | US-940 |
-| US-942 | Banner integrálása a MatchesView-ba | Should Have | US-941 |
-| US-943 | GroupDetailView `?tab=special` query param | Should Have | — |
 | US-1002 | Felhasználói felület lokalizációja (i18n) | Should Have | — |
 | US-1101 | Donation gomb és pop-up | Should Have | — |
 | US-1102 | Donation átirányítás | Should Have | US-1101 |
@@ -37,4 +33,4 @@
 
 ---
 
-**Haladás: 69 / 97 story kész** — Must Have: 31/31, Should Have: 38/63, Nice to Have: 0/3
+**Haladás: 73 / 97 story kész** — Must Have: 31/31, Should Have: 42/63, Nice to Have: 0/3

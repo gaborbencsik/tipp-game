@@ -4,6 +4,14 @@
         <h1 class="text-2xl font-bold text-gray-900">Mérkőzések</h1>
       </div>
 
+      <SpecialPendingBanner
+        v-if="totalPendingCount > 0"
+        :pending-groups="pendingGroups"
+        :total-pending-count="totalPendingCount"
+        :now="pendingNow"
+        class="mb-4"
+      />
+
       <div class="flex gap-2 mb-6">
         <button
           class="px-3 py-1 text-sm rounded"
@@ -250,12 +258,17 @@
 import { onMounted, ref, nextTick, computed } from 'vue'
 import { useMatchesStore } from '../stores/matches.store.js'
 import { usePredictionsStore } from '../stores/predictions.store.js'
+import { useGroupsStore } from '../stores/groups.store.js'
 import type { Match, MatchDateGroup, MatchOutcome, MatchStage, MatchStatus } from '../types/index.js'
 import AppLayout from '../components/AppLayout.vue'
 import TeamBadge from '../components/TeamBadge.vue'
+import SpecialPendingBanner from '../components/SpecialPendingBanner.vue'
+import { usePendingSpecialTips } from '../composables/usePendingSpecialTips.js'
 
 const matchesStore = useMatchesStore()
 const predictionsStore = usePredictionsStore()
+const groupsStore = useGroupsStore()
+const { pendingGroups, totalPendingCount, now: pendingNow } = usePendingSpecialTips()
 
 const now = ref(new Date())
 const draftGoals = ref<Record<string, { home: number | null, away: number | null }>>({})
@@ -333,6 +346,15 @@ onMounted(async () => {
   await matchesStore.fetchMatches()
   await predictionsStore.fetchMyPredictions()
   initDrafts()
+
+  try {
+    if (groupsStore.groups.length === 0) await groupsStore.fetchMyGroups()
+    await Promise.all(
+      groupsStore.groups.map(g => groupsStore.fetchSpecialPredictions(g.id))
+    )
+  } catch {
+    // silent — banner simply won't show
+  }
 })
 
 function initDrafts(): void {
