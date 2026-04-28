@@ -219,7 +219,7 @@ describe('createType', () => {
 
     const invalidInput = { ...VALID_TEXT_INPUT, inputType: 'number' as 'text' }
     await expect(createType(GROUP_ID, USER_ID, invalidInput))
-      .rejects.toMatchObject({ status: 400, message: "inputType must be 'text', 'dropdown', or 'team_select'" })
+      .rejects.toMatchObject({ status: 400, message: "inputType must be 'text', 'dropdown', 'team_select', or 'player_select'" })
   })
 
   it('throws 400 for dropdown without enough options', async () => {

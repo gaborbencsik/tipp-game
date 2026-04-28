@@ -83,8 +83,8 @@ export async function updateGlobalType(
     updates['description'] = input.description?.trim() || null
   }
   if (input.inputType !== undefined) {
-    const validTypes = new Set(['text', 'dropdown', 'team_select'])
-    if (!validTypes.has(input.inputType)) throw new AppError(400, "inputType must be 'text', 'dropdown', or 'team_select'")
+    const validTypes = new Set(['text', 'dropdown', 'team_select', 'player_select'])
+    if (!validTypes.has(input.inputType)) throw new AppError(400, "inputType must be 'text', 'dropdown', 'team_select', or 'player_select'")
     updates['inputType'] = input.inputType
   }
   if (input.options !== undefined) {
