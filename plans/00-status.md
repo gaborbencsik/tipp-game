@@ -1,6 +1,6 @@
 # VB Tippjáték – Implementációs státusz
 
-> Utoljára frissítve: 2026-04-27 (US-925, US-926, US-927 kész)
+> Utoljára frissítve: 2026-04-27 (US-921, US-922, US-930, US-931 kész; US-940–943 story-k létrehozva)
 
 ## Kész user story-k
 
@@ -465,11 +465,17 @@
 | US-910 | `team_select` input típus stat tippekhez | ✅ Kész | Should Have |
 | US-911 | Sablon (preset) stat tipp típusok | ✅ Kész | Should Have |
 | US-920 | Játékosok kezelése (admin CRUD) | ✅ Kész | Should Have |
-| US-921 | `player_select` input típus stat tippekhez | ⬜ Nem kezdett | Should Have |
-| US-922 | Gólkirály sablon → player_select | ⬜ Nem kezdett | Should Have |
+| US-921 | `player_select` input típus stat tippekhez | ✅ Kész | Should Have |
+| US-922 | Gólkirály sablon → player_select | ✅ Kész | Should Have |
 | US-925 | Globális stat tipp típusok (platform admin CRUD) | ✅ Kész | Should Have |
 | US-926 | Csoport admin feliratkozás globális típusokra | ✅ Kész | Should Have |
 | US-927 | Globális stat tipp kiértékelés és pontszámítás | ✅ Kész | Should Have |
+| US-930 | Átnevezés: "Stat tippek" → "Speciális tippek" | ✅ Kész | Should Have |
+| US-931 | Deadline sürgősségi indikátorok | ✅ Kész | Should Have |
+| US-940 | Pending speciális tipp összesítő composable | ⬜ Nem kezdett | Should Have |
+| US-941 | Speciális tippek banner komponens | ⬜ Nem kezdett | Should Have |
+| US-942 | Banner integrálása a MatchesView-ba | ⬜ Nem kezdett | Should Have |
+| US-943 | GroupDetailView `?tab=special` query param kezelés | ⬜ Nem kezdett | Should Have |
 | US-1001 | Hamburger menü / AppLayout | ✅ Kész | Should Have |
 | US-1002 | Felhasználói felület lokalizációja (i18n) | ⬜ Nem kezdett | Should Have |
 | US-1003 | Lejátszott meccsek összecsomagolása | ✅ Kész | Should Have |
@@ -509,4 +515,4 @@
 
 ---
 
-**Haladás: 57 / 80 story kész** — Must Have: 31/31, Should Have: 26/46, Nice to Have: 0/3
+**Haladás: 61 / 86 story kész** — Must Have: 31/31, Should Have: 30/52, Nice to Have: 0/3

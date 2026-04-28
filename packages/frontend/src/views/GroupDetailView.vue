@@ -20,7 +20,7 @@
         :class="activeTab === 'special' ? 'border-b-2 border-blue-600 text-blue-700 font-semibold' : 'text-gray-500'"
         @click="switchToSpecialTab"
       >
-        Torna tippek
+        Speciális tippek
       </button>
       <button
         v-if="currentUserIsGroupAdmin"
@@ -63,7 +63,7 @@
               <th class="px-4 py-3">Játékos</th>
               <th class="px-4 py-3 text-right">Tipp</th>
               <th class="px-4 py-3 text-right">Helyes</th>
-              <th class="px-4 py-3 text-right" title="Torna tipp pontok">Torna</th>
+              <th class="px-4 py-3 text-right" title="Speciális tipp pontok">Speciális</th>
               <th class="px-4 py-3 text-right font-semibold">Pont</th>
             </tr>
           </thead>
@@ -261,14 +261,14 @@
         </form>
       </div>
 
-      <!-- Hivatalos torna tippek kezelése (admin) -->
+      <!-- Hivatalos speciális tippek kezelése (admin) -->
       <div class="mt-8 max-w-lg">
-        <h3 class="text-base font-semibold text-gray-800 mb-1">Hivatalos torna tippek</h3>
+        <h3 class="text-base font-semibold text-gray-800 mb-1">Hivatalos speciális tippek</h3>
         <p class="text-sm text-gray-500 mb-4">Kapcsold be, amelyekre a tagok tippelhetnek.</p>
 
         <div v-if="groupsStore.globalSubscriptionsLoading" class="text-gray-500 text-sm">Betöltés...</div>
         <div v-else-if="groupsStore.globalSubscriptionsError" class="text-red-600 text-sm">{{ groupsStore.globalSubscriptionsError }}</div>
-        <div v-else-if="globalSubscriptions.length === 0" class="text-sm text-gray-400">Nincs elérhető hivatalos torna tipp típus.</div>
+        <div v-else-if="globalSubscriptions.length === 0" class="text-sm text-gray-400">Nincs elérhető hivatalos speciális tipp típus.</div>
         <div v-else class="space-y-2">
           <div
             v-for="gt in globalSubscriptions"
@@ -306,10 +306,10 @@
         </div>
       </div>
 
-      <!-- Egyedi torna tipp típusok kezelése (admin) -->
+      <!-- Egyedi speciális tipp típusok kezelése (admin) -->
       <div class="mt-8 max-w-lg">
-        <h3 class="text-base font-semibold text-gray-800 mb-1">Egyedi torna tipp típusok</h3>
-        <p class="text-sm text-gray-500 mb-4">Hozz létre egyedi torna tippeket a csoport számára (pl. Gólkirály, Legjobb csapat).</p>
+        <h3 class="text-base font-semibold text-gray-800 mb-1">Egyedi speciális tipp típusok</h3>
+        <p class="text-sm text-gray-500 mb-4">Hozz létre egyedi speciális tippeket a csoport számára (pl. Gólkirály, Legjobb csapat).</p>
 
         <div v-if="groupsStore.specialTypesLoading" class="text-gray-500 text-sm">Betöltés...</div>
         <div v-else-if="groupsStore.specialTypesError" class="text-red-600 text-sm">{{ groupsStore.specialTypesError }}</div>
@@ -363,7 +363,7 @@
               </div>
             </div>
           </div>
-          <div v-else class="text-sm text-gray-400 mb-4">Még nincs egyedi torna tipp típus.</div>
+          <div v-else class="text-sm text-gray-400 mb-4">Még nincs egyedi speciális tipp típus.</div>
 
           <!-- Template picker -->
           <div v-if="templates.length > 0 && !showTypeForm" class="mb-4">
@@ -386,7 +386,7 @@
             class="text-sm px-3 py-1.5 rounded border border-blue-300 text-blue-600 hover:bg-blue-50"
             @click="openNewTypeForm"
           >
-            + Új torna tipp típus
+            + Új speciális tipp típus
           </button>
 
           <form v-if="showTypeForm" class="border rounded-lg p-4 bg-gray-50 space-y-3" @submit.prevent="submitTypeForm">
@@ -435,11 +435,11 @@
       </div>
     </div>
 
-    <!-- Torna tippek tab (member) -->
+    <!-- Speciális tippek tab (member) -->
     <div v-if="activeTab === 'special'" data-testid="special-tab">
       <div v-if="groupsStore.specialPredictionsLoading" class="text-gray-500">Betöltés...</div>
       <div v-else-if="groupsStore.specialPredictionsError" class="text-red-600">{{ groupsStore.specialPredictionsError }}</div>
-      <div v-else-if="specialPredictions.length === 0" class="text-gray-500 text-sm">Ebben a csoportban még nincsenek torna tippek.</div>
+      <div v-else-if="specialPredictions.length === 0" class="text-gray-500 text-sm">Ebben a csoportban még nincsenek speciális tippek.</div>
       <div v-else class="space-y-3 max-w-lg">
         <div
           v-for="sp in specialPredictions"
@@ -572,7 +572,7 @@
     <!-- Deactivate type confirm dialog -->
     <div v-if="confirmDeactivateTypeId !== null" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div class="bg-white rounded-xl p-6 shadow-xl max-w-sm w-full mx-4">
-        <p class="text-gray-800 mb-4">Biztosan törölni szeretnéd ezt a torna tipp típust?</p>
+        <p class="text-gray-800 mb-4">Biztosan törölni szeretnéd ezt a speciális tipp típust?</p>
         <div class="flex gap-3 justify-end">
           <button class="px-4 py-2 text-sm rounded border border-gray-300 text-gray-700" @click="confirmDeactivateTypeId = null">
             Mégse

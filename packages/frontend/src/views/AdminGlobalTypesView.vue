@@ -1,7 +1,7 @@
 <template>
   <AppLayout>
     <div class="flex items-center justify-between mb-4">
-      <h1 class="text-2xl font-bold text-gray-900">Hivatalos torna tippek</h1>
+      <h1 class="text-2xl font-bold text-gray-900">Hivatalos speciális tippek</h1>
     </div>
     <div class="flex gap-2 mb-6 flex-wrap">
       <router-link to="/admin/matches" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Meccsek</router-link>
@@ -10,7 +10,7 @@
       <router-link to="/admin/users" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Felhasználók</router-link>
       <router-link to="/admin/scoring" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Pontrendszer</router-link>
       <router-link to="/admin/waitlist" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Waitlist</router-link>
-      <router-link to="/admin/global-types" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Torna tippek</router-link>
+      <router-link to="/admin/global-types" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Speciális tippek</router-link>
     </div>
 
     <div v-if="store.error" class="mb-4 p-3 bg-red-100 text-red-700 rounded">
@@ -72,7 +72,7 @@
 
     <div v-if="store.isLoading" class="text-center py-8">Betöltés...</div>
 
-    <div v-else-if="store.globalTypes.length === 0" class="text-gray-500 text-sm">Még nincs hivatalos torna tipp típus.</div>
+    <div v-else-if="store.globalTypes.length === 0" class="text-gray-500 text-sm">Még nincs hivatalos speciális tipp típus.</div>
 
     <div v-else class="space-y-3 max-w-2xl">
       <div
@@ -165,7 +165,7 @@
     <!-- Confirm deactivate dialog -->
     <div v-if="confirmDeactivateId !== null" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div class="bg-white rounded-xl p-6 shadow-xl max-w-sm w-full mx-4">
-        <p class="text-gray-800 mb-4">Biztosan deaktiválod ezt a hivatalos torna tipp típust?</p>
+        <p class="text-gray-800 mb-4">Biztosan deaktiválod ezt a hivatalos speciális tipp típust?</p>
         <div class="flex gap-3 justify-end">
           <button class="px-4 py-2 text-sm rounded border border-gray-300 text-gray-700" @click="confirmDeactivateId = null">
             Mégse
