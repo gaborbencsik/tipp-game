@@ -63,6 +63,14 @@ const TYPE_ROW_PLAYER_SELECT = {
   options: null,
 }
 
+const TYPE_ROW_TEAM_SELECT = {
+  ...TYPE_ROW,
+  id: 'type-uuid-5',
+  name: 'Győztes',
+  inputType: 'team_select',
+  options: null,
+}
+
 const VALID_PLAYER_UUID = '11111111-2222-3333-4444-555555555555'
 
 const PLAYER_ROW = { id: VALID_PLAYER_UUID, name: 'Messi', teamId: 'team-uuid-1' }
@@ -205,6 +213,60 @@ describe('getMyPredictions', () => {
 
     await expect(getMyPredictions(GROUP_ID, 'stranger'))
       .rejects.toMatchObject({ status: 403, message: 'Not a member of this group' })
+  })
+
+  it('returns correctAnswerLabel for team_select type after deadline', async () => {
+    const TEAM_UUID = '22222222-3333-4444-5555-666666666666'
+    const typeRow = { ...TYPE_ROW_TEAM_SELECT, deadline: PAST, correctAnswer: TEAM_UUID }
+    // 1. group, 2. member, 3. group types, 4. global types, 5. predictions, 6. teams batch
+    setupSelectSequence([
+      [GROUP_ROW],
+      [MEMBER_ROW],
+      [typeRow],
+      [],
+      [],
+      [{ id: TEAM_UUID, name: 'Argentína' }],
+    ])
+
+    const result = await getMyPredictions(GROUP_ID, USER_ID)
+
+    expect(result[0]?.correctAnswer).toBe(TEAM_UUID)
+    expect(result[0]?.correctAnswerLabel).toBe('Argentína')
+  })
+
+  it('returns correctAnswerLabel for player_select type after deadline', async () => {
+    const typeRow = { ...TYPE_ROW_PLAYER_SELECT, deadline: PAST, correctAnswer: VALID_PLAYER_UUID }
+    // 1. group, 2. member, 3. group types, 4. global types, 5. predictions, 6. players batch
+    setupSelectSequence([
+      [GROUP_ROW],
+      [MEMBER_ROW],
+      [typeRow],
+      [],
+      [],
+      [PLAYER_ROW],
+    ])
+
+    const result = await getMyPredictions(GROUP_ID, USER_ID)
+
+    expect(result[0]?.correctAnswer).toBe(VALID_PLAYER_UUID)
+    expect(result[0]?.correctAnswerLabel).toBe('Messi')
+  })
+
+  it('returns correctAnswerLabel null for text type', async () => {
+    const typeRow = { ...TYPE_ROW_EXPIRED, correctAnswer: 'Mbappé' }
+    // 1. group, 2. member, 3. group types, 4. global types, 5. predictions
+    setupSelectSequence([
+      [GROUP_ROW],
+      [MEMBER_ROW],
+      [typeRow],
+      [],
+      [],
+    ])
+
+    const result = await getMyPredictions(GROUP_ID, USER_ID)
+
+    expect(result[0]?.correctAnswer).toBe('Mbappé')
+    expect(result[0]?.correctAnswerLabel).toBeNull()
   })
 })
 

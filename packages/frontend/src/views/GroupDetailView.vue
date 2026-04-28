@@ -467,7 +467,7 @@
           <!-- Already evaluated -->
           <div v-if="sp.points !== null" class="text-sm">
             <p class="text-gray-600">Tipped: <span class="font-medium text-gray-800">{{ sp.answerLabel ?? sp.answer ?? '–' }}</span></p>
-            <p v-if="sp.correctAnswer" class="text-gray-600">Helyes válasz: <span class="font-medium text-green-700">{{ sp.correctAnswer }}</span></p>
+            <p v-if="sp.correctAnswer" class="text-gray-600">Helyes válasz: <span class="font-medium text-green-700">{{ sp.correctAnswerLabel ?? sp.correctAnswer }}</span></p>
             <p class="mt-1 font-semibold" :class="sp.points > 0 ? 'text-green-600' : 'text-gray-400'">
               {{ sp.points > 0 ? `+${sp.points} pont` : '0 pont' }}
             </p>

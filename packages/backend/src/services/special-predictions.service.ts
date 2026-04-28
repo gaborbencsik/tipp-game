@@ -73,14 +73,19 @@ export async function getMyPredictions(
 
   const predByTypeId = new Map(preds.map(p => [p.typeId, p]))
 
-  // Batch resolve answerLabels for team_select and player_select
+  // Batch resolve answerLabels and correctAnswerLabels for team_select and player_select
   const teamIds: string[] = []
   const playerIds: string[] = []
   for (const t of allTypes) {
     const pred = predByTypeId.get(t.id)
-    if (!pred?.answer) continue
-    if (t.inputType === 'team_select') teamIds.push(pred.answer)
-    if (t.inputType === 'player_select') playerIds.push(pred.answer)
+    if (t.inputType === 'team_select') {
+      if (pred?.answer) teamIds.push(pred.answer)
+      if (t.correctAnswer) teamIds.push(t.correctAnswer)
+    }
+    if (t.inputType === 'player_select') {
+      if (pred?.answer) playerIds.push(pred.answer)
+      if (t.correctAnswer) playerIds.push(t.correctAnswer)
+    }
   }
 
   const teamNameMap = new Map<string, string>()
@@ -116,6 +121,13 @@ export async function getMyPredictions(
       answerLabel,
       points: pred?.points ?? null,
       correctAnswer: (deadlinePassed || pred?.points !== null && pred?.points !== undefined) ? (t.correctAnswer ?? null) : null,
+      correctAnswerLabel: (deadlinePassed || pred?.points !== null && pred?.points !== undefined)
+        ? t.inputType === 'team_select'
+          ? (t.correctAnswer ? teamNameMap.get(t.correctAnswer) ?? null : null)
+          : t.inputType === 'player_select'
+            ? (t.correctAnswer ? playerNameMap.get(t.correctAnswer) ?? null : null)
+            : null
+        : null,
       isGlobal: t._isGlobal,
       createdAt: pred?.createdAt.toISOString() ?? null,
       updatedAt: pred?.updatedAt.toISOString() ?? null,

@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 68 story kész (Must Have: 31/31, Should Have: 37/63)
+> 69 story kész (Must Have: 31/31, Should Have: 38/63)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -72,3 +72,4 @@
 | UX-008 | Regisztráció utáni onboarding flow | Should Have |
 | DISC-001 | Landing oldal discovery | Should Have |
 | SEC-001 | Row-Level Security (Supabase RLS) | Must Have |
+| BUG-002 | Helyes válasz UUID feloldás team/player_select típusoknál | Should Have |

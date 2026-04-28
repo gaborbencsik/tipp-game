@@ -26,7 +26,6 @@
 | US-932 | Új csoportok automatikus feliratkozása globális típusokra | Should Have | — |
 | US-933 | Badge counter a speciális tippek tabon | Should Have | — |
 | US-934 | Mások tippjeinek megjelenítése (speciális) | Should Have | — |
-| BUG-002 | Helyes válasz UUID feloldás team/player_select típusoknál | Should Have | — |
 | UX-004 | Focilabda kurzor ikon | Nice to Have | — |
 | UX-005 | Optimista törlés az admin listákon | Should Have | — |
 | UX-009 | Match card vizuális redesign | Should Have | — |
@@ -38,4 +37,4 @@
 
 ---
 
-**Haladás: 68 / 97 story kész** — Must Have: 31/31, Should Have: 37/63, Nice to Have: 0/3
+**Haladás: 69 / 97 story kész** — Must Have: 31/31, Should Have: 38/63, Nice to Have: 0/3

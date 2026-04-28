@@ -211,6 +211,7 @@ export interface SpecialPredictionWithType {
   readonly answerLabel: string | null
   readonly points: number | null
   readonly correctAnswer: string | null
+  readonly correctAnswerLabel: string | null
   readonly isGlobal: boolean
   readonly createdAt: string | null
   readonly updatedAt: string | null
