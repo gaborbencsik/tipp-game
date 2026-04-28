@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VB Tippjáték – Projekt Státusz</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen p-6">
+  <div id="app" class="max-w-5xl mx-auto">
+    <div class="flex items-center justify-between mb-8">
+      <h1 class="text-3xl font-bold text-gray-900">VB Tippjáték – Projekt Státusz</h1>
+      <button onclick="loadData()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
+        ↻ Frissítés
+      </button>
+    </div>
+
+    <div id="loading" class="text-center py-16 text-gray-500">Betöltés...</div>
+    <div id="error" class="hidden bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-6"></div>
+    <div id="content" class="hidden">
+      <!-- Progress -->
+      <div id="progress-section" class="mb-8"></div>
+      <!-- Summary cards -->
+      <div id="summary-cards" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8"></div>
+      <!-- Open stories -->
+      <div id="open-section" class="mb-8"></div>
+      <!-- Done stories -->
+      <div id="done-section" class="mb-8"></div>
+      <!-- Footer -->
+      <div id="footer" class="text-xs text-gray-400 text-center mt-8"></div>
+    </div>
+  </div>
+
+  <script>
+    const BASE = 'https://raw.githubusercontent.com/gaborbencsik/tipp-game/main/plans'
+
+    async function loadData() {
+      const loading = document.getElementById('loading')
+      const error = document.getElementById('error')
+      const content = document.getElementById('content')
+
+      loading.classList.remove('hidden')
+      error.classList.add('hidden')
+      content.classList.add('hidden')
+
+      try {
+        const [backlogMd, historyMd] = await Promise.all([
+          fetch(`${BASE}/00-backlog.md`).then(r => { if (!r.ok) throw new Error('Backlog fetch failed'); return r.text() }),
+          fetch(`${BASE}/00-history.md`).then(r => { if (!r.ok) throw new Error('History fetch failed'); return r.text() }),
+        ])
+
+        const backlog = parseBacklog(backlogMd)
+        const history = parseHistory(historyMd)
+        const stats = parseStats(backlogMd)
+
+        render(backlog, history, stats)
+
+        loading.classList.add('hidden')
+        content.classList.remove('hidden')
+      } catch (e) {
+        loading.classList.add('hidden')
+        error.textContent = `Hiba: ${e.message}. Ellenőrizd, hogy a GitHub repo elérhető-e.`
+        error.classList.remove('hidden')
+      }
+    }
+
+    function parseBacklog(md) {
+      const lines = md.split('\n')
+      const rows = []
+      for (const line of lines) {
+        const m = line.match(/^\|\s*(US-\S+|UX-\S+|BUG-\S+|SEC-\S+|DISC-\S+)\s*\|(.+)$/)
+        if (m) {
+          const cells = line.split('|').map(c => c.trim()).filter(Boolean)
+          if (cells.length >= 3) {
+            rows.push({ id: cells[0], title: cells[1], priority: cells[2], dependency: cells[3] || '—' })
+          }
+        }
+      }
+      return rows
+    }
+
+    function parseHistory(md) {
+      const lines = md.split('\n')
+      const rows = []
+      for (const line of lines) {
+        const m = line.match(/^\|\s*(US-\S+|UX-\S+|BUG-\S+|SEC-\S+|DISC-\S+)\s*\|(.+)$/)
+        if (m) {
+          const cells = line.split('|').map(c => c.trim()).filter(Boolean)
+          if (cells.length >= 3) {
+            rows.push({ id: cells[0], title: cells[1], priority: cells[2] })
+          }
+        }
+      }
+      return rows
+    }
+
+    function parseStats(md) {
+      const m = md.match(/(\d+)\s*\/\s*(\d+)\s*story kész/)
+      const done = m ? parseInt(m[1]) : 0
+      const total = m ? parseInt(m[2]) : 0
+
+      const mh = md.match(/Must Have:\s*(\d+)\/(\d+)/)
+      const sh = md.match(/Should Have:\s*(\d+)\/(\d+)/)
+      const nh = md.match(/Nice to Have:\s*(\d+)\/(\d+)/)
+
+      return {
+        done, total,
+        mustHave: mh ? { done: +mh[1], total: +mh[2] } : { done: 0, total: 0 },
+        shouldHave: sh ? { done: +sh[1], total: +sh[2] } : { done: 0, total: 0 },
+        niceToHave: nh ? { done: +nh[1], total: +nh[2] } : { done: 0, total: 0 },
+      }
+    }
+
+    function priorityBadge(priority) {
+      const p = priority.toLowerCase()
+      if (p.includes('must')) return '<span class="px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">Must Have</span>'
+      if (p.includes('nice')) return '<span class="px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">Nice to Have</span>'
+      return '<span class="px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">Should Have</span>'
+    }
+
+    function render(backlog, history, stats) {
+      const pct = stats.total > 0 ? Math.round((stats.done / stats.total) * 100) : 0
+
+      document.getElementById('progress-section').innerHTML = `
+        <div class="bg-white rounded-xl shadow-sm border p-6">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-lg font-semibold text-gray-800">Összesített haladás</span>
+            <span class="text-2xl font-bold text-blue-700">${stats.done}/${stats.total}</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+            <div class="bg-blue-600 h-4 rounded-full transition-all" style="width: ${pct}%"></div>
+          </div>
+          <p class="text-sm text-gray-500 mt-1">${pct}% kész</p>
+        </div>
+      `
+
+      document.getElementById('summary-cards').innerHTML = `
+        ${summaryCard('Must Have', stats.mustHave, 'bg-red-50 border-red-200', 'text-red-700')}
+        ${summaryCard('Should Have', stats.shouldHave, 'bg-amber-50 border-amber-200', 'text-amber-700')}
+        ${summaryCard('Nice to Have', stats.niceToHave, 'bg-gray-50 border-gray-200', 'text-gray-600')}
+      `
+
+      document.getElementById('open-section').innerHTML = `
+        <h2 class="text-xl font-bold text-gray-800 mb-3">Nyitott story-k (${backlog.length})</h2>
+        <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 border-b">
+              <tr>
+                <th class="text-left px-4 py-2 font-medium text-gray-600">ID</th>
+                <th class="text-left px-4 py-2 font-medium text-gray-600">Cím</th>
+                <th class="text-left px-4 py-2 font-medium text-gray-600">Prioritás</th>
+                <th class="text-left px-4 py-2 font-medium text-gray-600">Függőség</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              ${backlog.map(r => `
+                <tr class="hover:bg-gray-50">
+                  <td class="px-4 py-2 font-mono text-xs text-gray-700">${r.id}</td>
+                  <td class="px-4 py-2 text-gray-800">${r.title}</td>
+                  <td class="px-4 py-2">${priorityBadge(r.priority)}</td>
+                  <td class="px-4 py-2 text-xs text-gray-500">${r.dependency}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `
+
+      document.getElementById('done-section').innerHTML = `
+        <details>
+          <summary class="text-xl font-bold text-gray-800 mb-3 cursor-pointer">Kész story-k (${history.length})</summary>
+          <div class="bg-white rounded-xl shadow-sm border overflow-hidden mt-3">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50 border-b">
+                <tr>
+                  <th class="text-left px-4 py-2 font-medium text-gray-600">ID</th>
+                  <th class="text-left px-4 py-2 font-medium text-gray-600">Cím</th>
+                  <th class="text-left px-4 py-2 font-medium text-gray-600">Prioritás</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                ${history.map(r => `
+                  <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-2 font-mono text-xs text-gray-700">${r.id}</td>
+                    <td class="px-4 py-2 text-gray-800">${r.title}</td>
+                    <td class="px-4 py-2">${priorityBadge(r.priority)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </details>
+      `
+
+      document.getElementById('footer').textContent = `Utolsó frissítés: ${new Date().toLocaleString('hu-HU')} · Forrás: GitHub main branch`
+    }
+
+    function summaryCard(label, data, bgClass, textClass) {
+      const pct = data.total > 0 ? Math.round((data.done / data.total) * 100) : 0
+      return `
+        <div class="border rounded-xl p-4 ${bgClass}">
+          <p class="text-sm font-medium text-gray-600">${label}</p>
+          <p class="text-2xl font-bold ${textClass}">${data.done}/${data.total}</p>
+          <div class="w-full bg-white/50 rounded-full h-2 mt-2 overflow-hidden">
+            <div class="${textClass.replace('text-', 'bg-')} h-2 rounded-full" style="width: ${pct}%"></div>
+          </div>
+        </div>
+      `
+    }
+
+    loadData()
+  </script>
+</body>
+</html>
