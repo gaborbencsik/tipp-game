@@ -95,6 +95,7 @@ export interface Match {
   readonly homeTeam: MatchTeam
   readonly awayTeam: MatchTeam
   readonly venue: MatchVenue | null
+  readonly league: { id: string; name: string; shortName: string } | null
   readonly stage: MatchStage
   readonly groupName: string | null
   readonly matchNumber: number | null
@@ -106,12 +107,14 @@ export interface Match {
 export interface MatchesFilters {
   readonly stage?: MatchStage
   readonly status?: MatchStatus
+  readonly leagueId?: string
 }
 
 export interface MatchInput {
   readonly homeTeamId: string
   readonly awayTeamId: string
   readonly venueId?: string | null
+  readonly leagueId?: string | null
   readonly stage: MatchStage
   readonly groupName?: string | null
   readonly matchNumber?: number | null
@@ -124,6 +127,7 @@ export interface MatchRow {
   readonly homeTeamId: string
   readonly awayTeamId: string
   readonly venueId: string | null
+  readonly leagueId: string | null
   readonly stage: MatchStage
   readonly groupName: string | null
   readonly matchNumber: number | null
@@ -296,6 +300,19 @@ export interface SpecialPredictionWithType {
   readonly isGlobal: boolean
   readonly createdAt: string | null
   readonly updatedAt: string | null
+}
+
+export interface League {
+  readonly id: string
+  readonly name: string
+  readonly shortName: string
+  readonly createdAt: string
+  readonly updatedAt: string
+}
+
+export interface LeagueInput {
+  readonly name: string
+  readonly shortName: string
 }
 
 export interface SpecialPredictionInput {

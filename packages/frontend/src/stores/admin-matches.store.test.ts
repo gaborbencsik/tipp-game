@@ -48,6 +48,7 @@ const MATCH: Match = {
   homeTeam: { id: 'ht', name: 'Germany', shortCode: 'GER', flagUrl: null, teamType: 'national' as const, countryCode: 'de' },
   awayTeam: { id: 'at', name: 'France', shortCode: 'FRA', flagUrl: null, teamType: 'national' as const, countryCode: 'fr' },
   venue: null,
+  league: null,
   stage: 'group',
   groupName: 'A',
   matchNumber: 1,

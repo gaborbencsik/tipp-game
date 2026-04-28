@@ -1,4 +1,4 @@
-import type { User, Match, MatchesFilters, MatchInput, MatchResultInput, Prediction, PredictionInput, Team, TeamInput, AdminUser, Group, GroupInput, GroupMember, JoinGroupInput, LeaderboardEntry, ScoringConfigFull, ScoringConfigInput, WaitlistListResult, WaitlistFilters, WaitlistEntry, WaitlistSource, SpecialPredictionType, SpecialTypeInput, SpecialPredictionWithType, SpecialPredictionInput, StatPredictionTemplate, Player, PlayerInput, GlobalTypeWithSubscription } from '../types/index.js'
+import type { User, Match, MatchesFilters, MatchInput, MatchResultInput, Prediction, PredictionInput, Team, TeamInput, AdminUser, Group, GroupInput, GroupMember, JoinGroupInput, LeaderboardEntry, ScoringConfigFull, ScoringConfigInput, WaitlistListResult, WaitlistFilters, WaitlistEntry, WaitlistSource, SpecialPredictionType, SpecialTypeInput, SpecialPredictionWithType, SpecialPredictionInput, StatPredictionTemplate, Player, PlayerInput, GlobalTypeWithSubscription, League, LeagueInput } from '../types/index.js'
 
 const BASE_URL = (import.meta.env.VITE_API_URL ?? '') + '/api'
 
@@ -39,6 +39,12 @@ export const api = {
   players: {
     list: (token: string) =>
       request<Player[]>('/players', {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+  },
+  leagues: {
+    list: (token: string) =>
+      request<League[]>('/leagues', {
         headers: { Authorization: `Bearer ${token}` },
       }),
   },
@@ -314,6 +320,29 @@ export const api = {
         }),
       delete: (token: string, id: string) =>
         request<void>(`/admin/players/${id}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+    },
+    leagues: {
+      list: (token: string) =>
+        request<League[]>('/admin/leagues', {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      create: (token: string, input: LeagueInput) =>
+        request<League>('/admin/leagues', {
+          method: 'POST',
+          body: JSON.stringify(input),
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      update: (token: string, id: string, input: Partial<LeagueInput>) =>
+        request<League>(`/admin/leagues/${id}`, {
+          method: 'PUT',
+          body: JSON.stringify(input),
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      delete: (token: string, id: string) =>
+        request<void>(`/admin/leagues/${id}`, {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${token}` },
         }),

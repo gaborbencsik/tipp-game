@@ -1,5 +1,5 @@
 import { db } from '../src/db/client.js'
-import { scoringConfigs, teams, venues } from '../src/db/schema/index.js'
+import { scoringConfigs, teams, venues, leagues } from '../src/db/schema/index.js'
 
 async function seed(): Promise<void> {
   console.log('Seeding base data...')
@@ -110,10 +110,21 @@ async function seed(): Promise<void> {
     await db.insert(teams).values(team).onConflictDoNothing()
   }
 
+  // ─── Leagues ────────────────────────────────────────────────────────────
+  const leagueData = [
+    { name: 'FIFA World Cup 2026', shortName: 'WC2026' },
+    { name: 'NB I 2025/26', shortName: 'NB I' },
+  ]
+
+  for (const league of leagueData) {
+    await db.insert(leagues).values(league).onConflictDoNothing()
+  }
+
   console.log('Base seed complete.')
   console.log('  Scoring config: Global Default')
   console.log('  Venues: 6')
   console.log('  Teams: 48 VB + 12 NB I')
+  console.log('  Leagues: 2')
   process.exit(0)
 }
 

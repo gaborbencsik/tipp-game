@@ -1,7 +1,7 @@
 import { alias } from 'drizzle-orm/pg-core'
 import { and, eq, isNull } from 'drizzle-orm'
 import { db } from '../db/client.js'
-import { matches, teams, venues, matchResults } from '../db/schema/index.js'
+import { matches, teams, venues, matchResults, leagues } from '../db/schema/index.js'
 import { calculateAndSavePoints, calculateAndSaveGroupPoints } from './scoring.service.js'
 import type { Match, MatchesFilters, MatchInput, MatchOutcome, MatchRow, MatchResultRow } from '../types/index.js'
 
@@ -21,6 +21,7 @@ export async function getMatches(filters: MatchesFilters = {}): Promise<Match[]>
   const conditions = [isNull(matches.deletedAt)]
   if (filters.stage) conditions.push(eq(matches.stage, filters.stage))
   if (filters.status) conditions.push(eq(matches.status, filters.status))
+  if (filters.leagueId) conditions.push(eq(matches.leagueId, filters.leagueId))
 
   const rows = await db
     .select()
@@ -28,6 +29,7 @@ export async function getMatches(filters: MatchesFilters = {}): Promise<Match[]>
     .leftJoin(homeTeamAlias, eq(matches.homeTeamId, homeTeamAlias.id))
     .leftJoin(awayTeamAlias, eq(matches.awayTeamId, awayTeamAlias.id))
     .leftJoin(venues, eq(matches.venueId, venues.id))
+    .leftJoin(leagues, eq(matches.leagueId, leagues.id))
     .leftJoin(matchResults, eq(matchResults.matchId, matches.id))
     .where(and(...conditions))
     .orderBy(matches.scheduledAt)
@@ -53,6 +55,9 @@ export async function getMatches(filters: MatchesFilters = {}): Promise<Match[]>
     venue: row.venues
       ? { name: row.venues.name, city: row.venues.city }
       : null,
+    league: row.leagues
+      ? { id: row.leagues.id, name: row.leagues.name, shortName: row.leagues.shortName }
+      : null,
     stage: row.matches.stage,
     groupName: row.matches.groupName ?? null,
     matchNumber: row.matches.matchNumber ?? null,
@@ -75,6 +80,7 @@ export async function createMatch(input: MatchInput): Promise<MatchRow> {
       homeTeamId: input.homeTeamId,
       awayTeamId: input.awayTeamId,
       venueId: input.venueId ?? null,
+      leagueId: input.leagueId ?? null,
       stage: input.stage,
       groupName: input.groupName ?? null,
       matchNumber: input.matchNumber ?? null,
@@ -95,6 +101,7 @@ export async function updateMatch(id: string, input: Partial<MatchInput>): Promi
       ...(input.homeTeamId !== undefined && { homeTeamId: input.homeTeamId }),
       ...(input.awayTeamId !== undefined && { awayTeamId: input.awayTeamId }),
       ...(input.venueId !== undefined && { venueId: input.venueId }),
+      ...(input.leagueId !== undefined && { leagueId: input.leagueId }),
       ...(input.stage !== undefined && { stage: input.stage }),
       ...(input.groupName !== undefined && { groupName: input.groupName }),
       ...(input.matchNumber !== undefined && { matchNumber: input.matchNumber }),

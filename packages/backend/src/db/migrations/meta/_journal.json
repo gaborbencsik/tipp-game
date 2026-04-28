@@ -85,6 +85,13 @@
       "when": 1777280930143,
       "tag": "0011_legal_spencer_smythe",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1777384120716,
+      "tag": "0012_tough_the_initiative",
+      "breakpoints": true
     }
   ]
 }

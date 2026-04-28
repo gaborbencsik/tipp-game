@@ -97,6 +97,16 @@ export const venues = pgTable('venues', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
+// ─── LEAGUES ─────────────────────────────────────────────────────────────────
+
+export const leagues = pgTable('leagues', {
+  id:        uuid('id').primaryKey().defaultRandom(),
+  name:      varchar('name', { length: 100 }).notNull(),
+  shortName: varchar('short_name', { length: 20 }).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
 // ─── MATCHES ──────────────────────────────────────────────────────────────────
 
 export const matches = pgTable('matches', {
@@ -104,6 +114,7 @@ export const matches = pgTable('matches', {
   homeTeamId:  uuid('home_team_id').notNull().references(() => teams.id),
   awayTeamId:  uuid('away_team_id').notNull().references(() => teams.id),
   venueId:     uuid('venue_id').references(() => venues.id),
+  leagueId:    uuid('league_id').references(() => leagues.id),
   stage:       matchStageEnum('stage').notNull(),
   groupName:   varchar('group_name', { length: 20 }),
   matchNumber: smallint('match_number'),
@@ -312,8 +323,13 @@ export const matchesRelations = relations(matches, ({ one, many }) => ({
   homeTeam: one(teams, { fields: [matches.homeTeamId], references: [teams.id], relationName: 'homeTeam' }),
   awayTeam: one(teams, { fields: [matches.awayTeamId], references: [teams.id], relationName: 'awayTeam' }),
   venue: one(venues, { fields: [matches.venueId], references: [venues.id] }),
+  league: one(leagues, { fields: [matches.leagueId], references: [leagues.id] }),
   result: one(matchResults, { fields: [matches.id], references: [matchResults.matchId] }),
   predictions: many(predictions),
+}))
+
+export const leaguesRelations = relations(leagues, ({ many }) => ({
+  matches: many(matches),
 }))
 
 export const matchResultsRelations = relations(matchResults, ({ one }) => ({

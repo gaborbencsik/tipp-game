@@ -7,17 +7,16 @@
 | Story ID | Cím | Prioritás | Függőség |
 |----------|-----|-----------|----------|
 | US-204 | Mások tippjeinek megtekintése | Should Have | — |
-| US-206 | Kedvenc csapat beállítása ligánként | Should Have | US-1301 |
+| US-206 | Kedvenc csapat beállítása ligánként | Should Have | — |
 | US-404 | Kedvenc csapat dupla pont számítás | Should Have | US-206 |
 | US-607 | Kedvenc csapat dupla pont szabály (csoport beállítás) | Should Have | US-404 |
-| US-609 | Liga filter csoportonként | Should Have | US-1301 |
+| US-609 | Liga filter csoportonként | Should Have | — |
 | US-807 | Admin használati statisztikák (dashboard) | Should Have | — |
 | US-1002 | Felhasználói felület lokalizációja (i18n) | Should Have | — |
 | US-1101 | Donation gomb és pop-up | Should Have | — |
 | US-1102 | Donation átirányítás | Should Have | US-1101 |
 | US-1202 | Futball API szinkronizációs service | Should Have | US-1201 (kész) |
 | US-1203 | Automatikus adatszinkron cron job | Should Have | US-1202 |
-| US-1301 | Liga entitás bevezetése a meccsekhez | Should Have | — |
 | US-1401 | Stadion banner kép a meccs részletes nézeten | Should Have | — |
 | US-932 | Új csoportok automatikus feliratkozása globális típusokra | Should Have | — |
 | US-933 | Badge counter a speciális tippek tabon | Should Have | — |
@@ -33,4 +32,4 @@
 
 ---
 
-**Haladás: 73 / 97 story kész** — Must Have: 31/31, Should Have: 42/63, Nice to Have: 0/3
+**Haladás: 74 / 97 story kész** — Must Have: 31/31, Should Have: 43/63, Nice to Have: 0/3

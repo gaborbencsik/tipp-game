@@ -46,6 +46,7 @@ export interface Match {
   readonly homeTeam: MatchTeam
   readonly awayTeam: MatchTeam
   readonly venue: MatchVenue | null
+  readonly league: { id: string; name: string; shortName: string } | null
   readonly stage: MatchStage
   readonly groupName: string | null
   readonly matchNumber: number | null
@@ -63,6 +64,7 @@ export interface MatchInput {
   readonly homeTeamId: string
   readonly awayTeamId: string
   readonly venueId?: string | null
+  readonly leagueId?: string | null
   readonly stage: MatchStage
   readonly groupName?: string | null
   readonly matchNumber?: number | null
@@ -302,4 +304,17 @@ export interface PlayerInput {
   readonly teamId?: string | null
   readonly position?: string | null
   readonly shirtNumber?: number | null
+}
+
+export interface League {
+  readonly id: string
+  readonly name: string
+  readonly shortName: string
+  readonly createdAt: string
+  readonly updatedAt: string
+}
+
+export interface LeagueInput {
+  readonly name: string
+  readonly shortName: string
 }

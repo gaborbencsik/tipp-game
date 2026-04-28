@@ -3,7 +3,7 @@ import { db } from '../src/db/client.js'
 import {
   scoringConfigs, teams, users, venues,
   matches, matchResults, predictions,
-  groups, groupMembers,
+  groups, groupMembers, leagues,
 } from '../src/db/schema/index.js'
 
 // ─── Fixed UUIDs ─────────────────────────────────────────────────────────────
@@ -37,6 +37,8 @@ const RESULT_4_ID = 'eeeeeeee-1111-2222-3333-000000000004'
 
 const GROUP_IRODA_ID   = 'ffffffff-1111-2222-3333-000000000001'
 const GROUP_HAVEROK_ID = 'ffffffff-1111-2222-3333-000000000002'
+
+const LEAGUE_WC_ID = 'bbbbbbbb-1111-2222-3333-000000000001'
 
 // ─── Helper: resolve team ID by shortCode ───────────────────────────────────
 
@@ -82,6 +84,7 @@ async function seedLocal(): Promise<void> {
   await db.delete(predictions)
   await db.delete(matchResults)
   await db.delete(matches)
+  await db.delete(leagues)
   await db.delete(users)
 
   // ─── Venues: upsert 3 with fixed IDs (rest from seed.ts stay) ──────────
@@ -131,24 +134,31 @@ async function seedLocal(): Promise<void> {
     await db.insert(users).values(u).onConflictDoNothing()
   }
 
+  // ─── League ─────────────────────────────────────────────────────────────
+  await db.insert(leagues).values({
+    id: LEAGUE_WC_ID,
+    name: 'FIFA World Cup 2026',
+    shortName: 'WC2026',
+  }).onConflictDoNothing()
+
   // ─── Matches (10 db) ───────────────────────────────────────────────────
   const now = new Date()
   const day = (offset: number): Date => new Date(now.getTime() + offset * 24 * 60 * 60 * 1000)
 
   const matchData = [
     // Finished
-    { id: MATCH_1_ID,  homeTeamId: ARG, awayTeamId: BRA, venueId: VENUE_METLIFE_ID, stage: 'group' as const, groupName: 'B', matchNumber: 1,  scheduledAt: day(-7), status: 'finished' as const },
-    { id: MATCH_2_ID,  homeTeamId: GER, awayTeamId: FRA, venueId: VENUE_AZTECA_ID,  stage: 'group' as const, groupName: 'H', matchNumber: 2,  scheduledAt: day(-6), status: 'finished' as const },
-    { id: MATCH_3_ID,  homeTeamId: ESP, awayTeamId: ENG, venueId: VENUE_ATT_ID,     stage: 'group' as const, groupName: 'E', matchNumber: 3,  scheduledAt: day(-5), status: 'finished' as const },
-    { id: MATCH_4_ID,  homeTeamId: NED, awayTeamId: ITA, venueId: VENUE_METLIFE_ID, stage: 'group' as const, groupName: 'F', matchNumber: 4,  scheduledAt: day(-4), status: 'finished' as const },
+    { id: MATCH_1_ID,  homeTeamId: ARG, awayTeamId: BRA, venueId: VENUE_METLIFE_ID, leagueId: LEAGUE_WC_ID, stage: 'group' as const, groupName: 'B', matchNumber: 1,  scheduledAt: day(-7), status: 'finished' as const },
+    { id: MATCH_2_ID,  homeTeamId: GER, awayTeamId: FRA, venueId: VENUE_AZTECA_ID,  leagueId: LEAGUE_WC_ID, stage: 'group' as const, groupName: 'H', matchNumber: 2,  scheduledAt: day(-6), status: 'finished' as const },
+    { id: MATCH_3_ID,  homeTeamId: ESP, awayTeamId: ENG, venueId: VENUE_ATT_ID,     leagueId: LEAGUE_WC_ID, stage: 'group' as const, groupName: 'E', matchNumber: 3,  scheduledAt: day(-5), status: 'finished' as const },
+    { id: MATCH_4_ID,  homeTeamId: NED, awayTeamId: ITA, venueId: VENUE_METLIFE_ID, leagueId: LEAGUE_WC_ID, stage: 'group' as const, groupName: 'F', matchNumber: 4,  scheduledAt: day(-4), status: 'finished' as const },
     // Live
-    { id: MATCH_5_ID,  homeTeamId: POR, awayTeamId: ARG, venueId: VENUE_AZTECA_ID,  stage: 'group' as const, groupName: 'E', matchNumber: 5,  scheduledAt: day(0),  status: 'live' as const },
-    { id: MATCH_6_ID,  homeTeamId: BRA, awayTeamId: GER, venueId: VENUE_ATT_ID,     stage: 'group' as const, groupName: 'D', matchNumber: 6,  scheduledAt: day(0),  status: 'live' as const },
+    { id: MATCH_5_ID,  homeTeamId: POR, awayTeamId: ARG, venueId: VENUE_AZTECA_ID,  leagueId: LEAGUE_WC_ID, stage: 'group' as const, groupName: 'E', matchNumber: 5,  scheduledAt: day(0),  status: 'live' as const },
+    { id: MATCH_6_ID,  homeTeamId: BRA, awayTeamId: GER, venueId: VENUE_ATT_ID,     leagueId: LEAGUE_WC_ID, stage: 'group' as const, groupName: 'D', matchNumber: 6,  scheduledAt: day(0),  status: 'live' as const },
     // Scheduled
-    { id: MATCH_7_ID,  homeTeamId: FRA, awayTeamId: ESP, venueId: VENUE_METLIFE_ID, stage: 'group' as const, groupName: 'F', matchNumber: 7,  scheduledAt: day(3),  status: 'scheduled' as const },
-    { id: MATCH_8_ID,  homeTeamId: ENG, awayTeamId: NED, venueId: VENUE_AZTECA_ID,  stage: 'group' as const, groupName: 'G', matchNumber: 8,  scheduledAt: day(5),  status: 'scheduled' as const },
-    { id: MATCH_9_ID,  homeTeamId: ITA, awayTeamId: POR, venueId: VENUE_ATT_ID,     stage: 'group' as const, groupName: 'J', matchNumber: 9,  scheduledAt: day(7),  status: 'scheduled' as const },
-    { id: MATCH_10_ID, homeTeamId: USA, awayTeamId: ARG, venueId: VENUE_METLIFE_ID, stage: 'group' as const, groupName: 'A', matchNumber: 10, scheduledAt: day(10), status: 'scheduled' as const },
+    { id: MATCH_7_ID,  homeTeamId: FRA, awayTeamId: ESP, venueId: VENUE_METLIFE_ID, leagueId: LEAGUE_WC_ID, stage: 'group' as const, groupName: 'F', matchNumber: 7,  scheduledAt: day(3),  status: 'scheduled' as const },
+    { id: MATCH_8_ID,  homeTeamId: ENG, awayTeamId: NED, venueId: VENUE_AZTECA_ID,  leagueId: LEAGUE_WC_ID, stage: 'group' as const, groupName: 'G', matchNumber: 8,  scheduledAt: day(5),  status: 'scheduled' as const },
+    { id: MATCH_9_ID,  homeTeamId: ITA, awayTeamId: POR, venueId: VENUE_ATT_ID,     leagueId: LEAGUE_WC_ID, stage: 'group' as const, groupName: 'J', matchNumber: 9,  scheduledAt: day(7),  status: 'scheduled' as const },
+    { id: MATCH_10_ID, homeTeamId: USA, awayTeamId: ARG, venueId: VENUE_METLIFE_ID, leagueId: LEAGUE_WC_ID, stage: 'group' as const, groupName: 'A', matchNumber: 10, scheduledAt: day(10), status: 'scheduled' as const },
   ]
 
   for (const m of matchData) {
