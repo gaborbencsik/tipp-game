@@ -168,6 +168,14 @@
             </div>
           </template>
         </div>
+
+        <MatchPredictionsList
+          v-if="(match.status === 'finished' || match.status === 'live') && matchPredictions.length > 0"
+          :predictions="matchPredictions"
+          :current-user-id="authStore.user?.id ?? ''"
+          class="mt-4"
+          data-testid="match-predictions-list"
+        />
       </template>
   </AppLayout>
 </template>
@@ -177,19 +185,33 @@ import { onMounted, onUnmounted, ref, computed, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { useMatchesStore } from '../stores/matches.store.js'
 import { usePredictionsStore } from '../stores/predictions.store.js'
-import type { Match, MatchOutcome, MatchStage, MatchStatus } from '../types/index.js'
+import { useAuthStore } from '../stores/auth.store.js'
+import { api } from '../api/index.js'
+import { supabase } from '../lib/supabase.js'
+import type { Match, MatchOutcome, MatchPrediction, MatchStage, MatchStatus } from '../types/index.js'
 import AppLayout from '../components/AppLayout.vue'
 import TeamBadge from '../components/TeamBadge.vue'
+import MatchPredictionsList from '../components/MatchPredictionsList.vue'
+
+const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
+
+async function getToken(): Promise<string> {
+  if (DEV_AUTH_BYPASS) return 'dev-bypass-token'
+  const { data } = await supabase.auth.getSession()
+  return data.session?.access_token ?? ''
+}
 
 const route = useRoute()
 const matchesStore = useMatchesStore()
 const predictionsStore = usePredictionsStore()
+const authStore = useAuthStore()
 
 const now = ref(new Date())
 const draftGoals = ref<{ home: number | null, away: number | null }>({ home: null, away: null })
 const draftOutcome = ref<MatchOutcome | null>(null)
 const homeInputRef = ref<HTMLInputElement | null>(null)
 const awayInputRef = ref<HTMLInputElement | null>(null)
+const matchPredictions = ref<MatchPrediction[]>([])
 let autosaveTimer: ReturnType<typeof setTimeout> | null = null
 
 const KNOCKOUT_STAGES: readonly MatchStage[] = ['round_of_16', 'quarter_final', 'semi_final', 'third_place', 'final']
@@ -211,6 +233,9 @@ onMounted(async () => {
   if (existing) {
     draftGoals.value = { home: existing.homeGoals, away: existing.awayGoals }
     draftOutcome.value = existing.outcomeAfterDraw
+  }
+  if (match.value?.status === 'finished' || match.value?.status === 'live') {
+    await loadMatchPredictions()
   }
 })
 
@@ -270,6 +295,16 @@ async function savePrediction(): Promise<void> {
     awayGoals: draftGoals.value.away,
     outcomeAfterDraw: draftOutcome.value,
   })
+}
+
+async function loadMatchPredictions(): Promise<void> {
+  try {
+    const token = await getToken()
+    if (!token) return
+    matchPredictions.value = await api.predictions.forMatch(token, matchId.value)
+  } catch {
+    // silent — non-critical
+  }
 }
 
 function statusLabel(status: MatchStatus): string {

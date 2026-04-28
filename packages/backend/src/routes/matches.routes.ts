@@ -2,6 +2,7 @@ import Router from '@koa/router'
 import { authMiddleware } from '../middleware/auth.middleware.js'
 import { getMatches } from '../services/matches.service.js'
 import { getLeagues } from '../services/leagues.service.js'
+import { getMatchPredictions } from '../services/predictions.service.js'
 import type { MatchesFilters, MatchStage, MatchStatus } from '../types/index.js'
 
 const router = new Router()
@@ -18,6 +19,10 @@ router.get('/api/matches', authMiddleware, async (ctx) => {
 
 router.get('/api/leagues', authMiddleware, async (ctx) => {
   ctx.body = await getLeagues()
+})
+
+router.get('/api/matches/:matchId/predictions', authMiddleware, async (ctx) => {
+  ctx.body = await getMatchPredictions(ctx.params.matchId)
 })
 
 export { router as matchesRouter }

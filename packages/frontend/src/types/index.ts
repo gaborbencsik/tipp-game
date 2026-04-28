@@ -122,6 +122,14 @@ export interface Prediction {
   readonly updatedAt: string
 }
 
+export interface MatchPrediction {
+  readonly userId: string
+  readonly displayName: string
+  readonly homeGoals: number
+  readonly awayGoals: number
+  readonly pointsGlobal: number | null
+}
+
 export interface AdminUser {
   readonly id: string
   readonly email: string

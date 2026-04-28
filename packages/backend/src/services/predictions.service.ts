@@ -1,7 +1,7 @@
-import { eq, isNull } from 'drizzle-orm'
+import { eq, isNull, desc, sql } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { users, matches, predictions } from '../db/schema/index.js'
-import type { MatchOutcome, Prediction, PredictionInput } from '../types/index.js'
+import type { MatchOutcome, MatchPrediction, Prediction, PredictionInput } from '../types/index.js'
 
 class AppError extends Error {
   readonly status: number
@@ -105,4 +105,28 @@ export async function getPredictionsForUser(
     .orderBy(predictions.createdAt)
 
   return rows.map(toApiPrediction)
+}
+
+export async function getMatchPredictions(matchId: string): Promise<MatchPrediction[]> {
+  const matchRows = await db
+    .select()
+    .from(matches)
+    .where(eq(matches.id, matchId))
+    .limit(1)
+  const match = matchRows[0]
+  if (!match) throw new AppError(404, 'Match not found')
+  if (match.status === 'scheduled') throw new AppError(403, 'Predictions not available until match starts')
+
+  return db
+    .select({
+      userId: users.id,
+      displayName: users.displayName,
+      homeGoals: predictions.homeGoals,
+      awayGoals: predictions.awayGoals,
+      pointsGlobal: predictions.pointsGlobal,
+    })
+    .from(predictions)
+    .innerJoin(users, eq(predictions.userId, users.id))
+    .where(eq(predictions.matchId, matchId))
+    .orderBy(sql`${predictions.pointsGlobal} desc nulls last`)
 }

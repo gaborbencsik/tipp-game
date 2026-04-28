@@ -315,6 +315,14 @@ export interface LeagueInput {
   readonly shortName: string
 }
 
+export interface MatchPrediction {
+  readonly userId: string
+  readonly displayName: string
+  readonly homeGoals: number
+  readonly awayGoals: number
+  readonly pointsGlobal: number | null
+}
+
 export interface SpecialPredictionInput {
   readonly typeId: string
   readonly answer: string

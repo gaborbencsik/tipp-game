@@ -12,10 +12,11 @@ vi.mock('vue-router', async (importOriginal) => {
   return { ...actual, useRouter: () => ({ push: vi.fn() }) }
 })
 
-const { mockMatchesList, mockPredictionsMine, mockPredictionsUpsert } = vi.hoisted(() => ({
+const { mockMatchesList, mockPredictionsMine, mockPredictionsUpsert, mockPredictionsForMatch } = vi.hoisted(() => ({
   mockMatchesList: vi.fn().mockResolvedValue([]),
   mockPredictionsMine: vi.fn().mockResolvedValue([]),
   mockPredictionsUpsert: vi.fn().mockResolvedValue(undefined),
+  mockPredictionsForMatch: vi.fn().mockResolvedValue([]),
 }))
 
 vi.mock('@/lib/supabase', () => ({
@@ -32,7 +33,7 @@ vi.mock('@/api/index', () => ({
     health: vi.fn(),
     auth: { me: vi.fn() },
     matches: { list: mockMatchesList },
-    predictions: { mine: mockPredictionsMine, upsert: mockPredictionsUpsert },
+    predictions: { mine: mockPredictionsMine, upsert: mockPredictionsUpsert, forMatch: mockPredictionsForMatch },
   },
 }))
 
@@ -73,6 +74,20 @@ const MATCH_SCHEDULED: Match = {
   matchNumber: 64,
   scheduledAt: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(),
   status: 'scheduled',
+  result: null,
+}
+
+const MATCH_LIVE: Match = {
+  id: 'match-live',
+  homeTeam: { id: 'ht3', name: 'France', shortCode: 'FRA', flagUrl: null, teamType: 'national' as const, countryCode: 'fr' },
+  awayTeam: { id: 'at3', name: 'Germany', shortCode: 'GER', flagUrl: null, teamType: 'national' as const, countryCode: 'de' },
+  venue: { name: 'Stade de France', city: 'Paris' },
+  league: null,
+  stage: 'group',
+  groupName: 'A',
+  matchNumber: 5,
+  scheduledAt: '2026-06-11T18:00:00.000Z',
+  status: 'live',
   result: null,
 }
 
@@ -128,6 +143,8 @@ describe('MatchDetailView', () => {
     mockPredictionsMine.mockReset()
     mockPredictionsMine.mockResolvedValue([])
     mockPredictionsUpsert.mockReset()
+    mockPredictionsForMatch.mockReset()
+    mockPredictionsForMatch.mockResolvedValue([])
     setActivePinia(createPinia())
   })
 
@@ -189,5 +206,38 @@ describe('MatchDetailView', () => {
     const backLink = wrapper.find('[data-testid="back-link"]')
     expect(backLink.exists()).toBe(true)
     expect(backLink.attributes('href')).toBe('/app/matches')
+  })
+
+  // ─── Others' predictions ─────────────────────────────────────────────────
+
+  it('finished match → others predictions list rendered', async () => {
+    mockPredictionsForMatch.mockResolvedValue([
+      { userId: 'u1', displayName: 'Alice', homeGoals: 2, awayGoals: 1, pointsGlobal: 3 },
+      { userId: 'u2', displayName: 'Bob', homeGoals: 0, awayGoals: 0, pointsGlobal: 0 },
+    ])
+    const { wrapper } = await mountView('match-finished', [MATCH_FINISHED], [], [])
+    expect(wrapper.find('[data-testid="match-predictions-list"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Alice')
+    expect(wrapper.text()).toContain('Bob')
+  })
+
+  it('finished match + empty predictions → list not rendered', async () => {
+    mockPredictionsForMatch.mockResolvedValue([])
+    const { wrapper } = await mountView('match-finished', [MATCH_FINISHED], [], [])
+    expect(wrapper.find('[data-testid="match-predictions-list"]').exists()).toBe(false)
+  })
+
+  it('scheduled match → forMatch not called', async () => {
+    await mountView('match-sched', [MATCH_SCHEDULED])
+    expect(mockPredictionsForMatch).not.toHaveBeenCalled()
+  })
+
+  it('live match → others predictions list rendered', async () => {
+    mockPredictionsForMatch.mockResolvedValue([
+      { userId: 'u1', displayName: 'Alice', homeGoals: 1, awayGoals: 0, pointsGlobal: null },
+    ])
+    const { wrapper } = await mountView('match-live', [MATCH_LIVE], [], [])
+    expect(wrapper.find('[data-testid="match-predictions-list"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Alice')
   })
 })

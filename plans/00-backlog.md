@@ -6,7 +6,6 @@
 
 | Story ID | Cím | Prioritás | Függőség |
 |----------|-----|-----------|----------|
-| US-204 | Mások tippjeinek megtekintése | Should Have | — |
 | US-206 | Kedvenc csapat beállítása ligánként | Should Have | — |
 | US-404 | Kedvenc csapat dupla pont számítás | Should Have | US-206 |
 | US-607 | Kedvenc csapat dupla pont szabály (csoport beállítás) | Should Have | US-404 |
@@ -32,4 +31,4 @@
 
 ---
 
-**Haladás: 74 / 97 story kész** — Must Have: 31/31, Should Have: 43/63, Nice to Have: 0/3
+**Haladás: 75 / 97 story kész** — Must Have: 31/31, Should Have: 44/63, Nice to Have: 0/3
