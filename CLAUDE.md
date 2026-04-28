@@ -12,6 +12,7 @@ Minden felhasználói kérést először a `product-orchestrator` agenten keresz
 - Fájl olvasás/szerkesztés amit a user konkrétan kér
 - Memory műveletek (remember, forget)
 - Rövid, egyértelmű bugfix vagy typo javítás
+- Egyértelmű implementációs feladat ahol a story és terv már ismert
 
 ## A projekt
 
@@ -145,6 +146,20 @@ src/
 
 - **Must Have:** mind kész (31/31)
 - **Nyitott feladatok:** lásd `plans/00-backlog.md` (prioritás + függőségek)
+
+## Modell stratégia (költségoptimalizálás)
+
+- **Kutatás, fájl keresés, grep:** subagent `model: "sonnet"` vagy `"haiku"`
+- **Implementáció, refaktor, architektúra:** Opus (fő session)
+- **Párhuzamos független kutatások:** több haiku/sonnet subagent egyszerre
+
+## Kontextus optimalizálás
+
+- Nagy fájlok (>200 sor): `offset`/`limit` paraméterrel olvasd, ne egészben
+- Ha egy fájlt teljes egészében kell beolvasni (>200 sor), **kérdezz rá** mielőtt megteszed
+- Grep > Read: ha csak egy szekciót keresel, grep-pelj, ne olvasd be az egészet
+- plans/ fájlok: a backlog/history fejléc elég a státuszhoz, ne olvasd végig ha nem kell
+- Subagent delegálás: izolált kutatás nem terheli a fő kontextust
 
 ## Alapelv
 
