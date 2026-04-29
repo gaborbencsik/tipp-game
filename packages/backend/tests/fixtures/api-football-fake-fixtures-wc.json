@@ -1,0 +1,186 @@
+{
+  "results": 3,
+  "errors": {},
+  "response": [
+    {
+      "fixture": {
+        "id": 1100001,
+        "date": "2026-06-11T18:00:00+00:00",
+        "timestamp": 1749664800,
+        "status": {
+          "long": "Not Started",
+          "short": "NS",
+          "elapsed": null
+        },
+        "venue": {
+          "id": 556,
+          "name": "SoFi Stadium",
+          "city": "Los Angeles"
+        }
+      },
+      "league": {
+        "id": 1,
+        "name": "FIFA World Cup",
+        "country": "World",
+        "season": 2026,
+        "round": "Group Stage - 1"
+      },
+      "teams": {
+        "home": {
+          "id": 6,
+          "name": "Brazil",
+          "logo": "https://media.api-sports.io/football/teams/6.png",
+          "winner": null
+        },
+        "away": {
+          "id": 24,
+          "name": "Argentina",
+          "logo": "https://media.api-sports.io/football/teams/24.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": null,
+        "away": null
+      },
+      "score": {
+        "halftime": {
+          "home": null,
+          "away": null
+        },
+        "fulltime": {
+          "home": null,
+          "away": null
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1100002,
+        "date": "2026-06-11T21:00:00+00:00",
+        "timestamp": 1749675600,
+        "status": {
+          "long": "Not Started",
+          "short": "NS",
+          "elapsed": null
+        },
+        "venue": {
+          "id": 65,
+          "name": "Estadio Azteca",
+          "city": "Mexico City"
+        }
+      },
+      "league": {
+        "id": 1,
+        "name": "FIFA World Cup",
+        "country": "World",
+        "season": 2026,
+        "round": "Group Stage - 1"
+      },
+      "teams": {
+        "home": {
+          "id": 16,
+          "name": "Mexico",
+          "logo": "https://media.api-sports.io/football/teams/16.png",
+          "winner": null
+        },
+        "away": {
+          "id": 1,
+          "name": "Germany",
+          "logo": "https://media.api-sports.io/football/teams/1.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": null,
+        "away": null
+      },
+      "score": {
+        "halftime": {
+          "home": null,
+          "away": null
+        },
+        "fulltime": {
+          "home": null,
+          "away": null
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    },
+    {
+      "fixture": {
+        "id": 1100003,
+        "date": "2026-06-12T18:00:00+00:00",
+        "timestamp": 1749751200,
+        "status": {
+          "long": "Not Started",
+          "short": "NS",
+          "elapsed": null
+        },
+        "venue": {
+          "id": 900,
+          "name": "MetLife Stadium",
+          "city": "East Rutherford"
+        }
+      },
+      "league": {
+        "id": 1,
+        "name": "FIFA World Cup",
+        "country": "World",
+        "season": 2026,
+        "round": "Group Stage - 1"
+      },
+      "teams": {
+        "home": {
+          "id": 2,
+          "name": "France",
+          "logo": "https://media.api-sports.io/football/teams/2.png",
+          "winner": null
+        },
+        "away": {
+          "id": 15,
+          "name": "Hungary",
+          "logo": "https://media.api-sports.io/football/teams/15.png",
+          "winner": null
+        }
+      },
+      "goals": {
+        "home": null,
+        "away": null
+      },
+      "score": {
+        "halftime": {
+          "home": null,
+          "away": null
+        },
+        "fulltime": {
+          "home": null,
+          "away": null
+        },
+        "extratime": {
+          "home": null,
+          "away": null
+        },
+        "penalty": {
+          "home": null,
+          "away": null
+        }
+      }
+    }
+  ]
+}

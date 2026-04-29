@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 83 story kész (Must Have: 31/31, Should Have: 52/65)
+> 85 story kész (Must Have: 31/31, Should Have: 54/67)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -88,3 +88,4 @@
 | US-613 | Csoportos tippjeim nézet | Should Have |
 | US-609 | Liga filter csoportonként | Should Have |
 | US-611 | Mérkőzések automatikus szűrése csoport-ligák alapján | Should Have |
+| US-1202-POC | Football API Integration POC | Should Have |

@@ -300,13 +300,88 @@ FOOTBALL_API_NBII_LEAGUE_ID=272
 
 ---
 
-## 9. Következő lépések (US-1202)
+## 9. Szinkronizációs terv (POC validálás után)
+
+> A POC igazolta (2022-es szezonnal): 1 kérés/liga = teljes fixture lista (64 WC, 198 NB I), 1 kérés/liga = összes csapat+venue.
+
+### 9a. Szükséges endpointok és fedettség
+
+| # | Endpoint | Params | Mit ad vissza | Hívás/szezon |
+|---|----------|--------|---------------|--------------|
+| 1 | `GET /teams` | `league, season` | Csapatok + venue (1 response = összes) | **1** |
+| 2 | `GET /fixtures` | `league, season` | Összes meccs + eredmény + venue + round | **1** |
+| 3 | `GET /fixtures` | `live=all` | Élő meccsek frissítése | per-poll |
+| 4 | `GET /players/squads` | `team=X` | Keret (név, pozíció, szám) | 1/csapat |
+
+**WC + NB I teljes import = 4 kérés.** A `/fixtures` response tartalmazza az eredményeket is — nincs külön results endpoint.
+
+### 9b. Frissítési stratégia
+
+| Szituáció | Endpoint | Gyakoriság | ~Req/nap |
+|-----------|----------|------------|----------|
+| Szezon eleje (egyszeri) | `/teams` + `/players/squads` | 1× | 2 + 32 + 12 = 46 |
+| Napi fixture sync | `/fixtures?league=X&season=Y` | 1×/nap | 2 |
+| Live meccs frissítés | `/fixtures?live=all` | 1-2 percenként | ~90/meccs |
+| Meccs végi eredmény | — (fixture response-ból jön) | — | 0 |
+| Játékos keret frissítés | `/players/squads?team=X` | heti 1× | 44 |
+
+### 9c. API kvóta kalkuláció (Pro, 7500 req/nap)
+
+| Forgatókönyv | Req/nap |
+|--------------|---------|
+| Hétköznap, nincs meccs | 2 |
+| Meccsnapon (adaptive, 2 percenként) | ~90 |
+| VB csúcs (full_live, 4 párhuzamos meccs) | ~360 |
+| Szezon eleji teljes import (egyszeri) | ~50 |
+
+**Bőven a 7500-as napi limit alatt minden forgatókönyvben.**
+
+### 9d. Free tier korlát (POC tanulság)
+
+A Free tier (100 req/nap) **csak 2022-2024 szezonokat** engedi lekérdezni. Aktuális szezon (2025, 2026) nem elérhető — Pro ($19/hó) kell hozzá. A Free tier továbbra is használható fejlesztéshez régi adatokkal (structure validáció, integration tesztek).
+
+### 9e. Adatleképezés (validált a POC response-okból)
+
+| API mező | Saját tábla.mező | Megjegyzés |
+|----------|-----------------|------------|
+| `fixture.id` | `matches.external_id` | Upsert kulcs |
+| `fixture.date` | `matches.scheduled_at` | |
+| `fixture.status.short` | `matches.status` | NS→scheduled, 1H/HT/2H/LIVE→live, FT/AET/PEN→finished |
+| `fixture.venue.name/city` | `venues.name/city` | Venue-t a fixture-ből nyerjük ki |
+| `league.round` | `matches.group_name` | "Group Stage - 1" → group mapping |
+| `teams.home.id` | → `teams.external_id` lookup | |
+| `teams.home.name` | `teams.name` | |
+| `teams.home.code` | `teams.short_code` | 3 betűs kód (BRA, HUN, FRA) |
+| `teams.home.logo` | `teams.flag_url` | |
+| `goals.home/away` | `match_results.home_goals/away_goals` | Csak ha status=FT/AET/PEN |
+| `score.penalty` | `match_results.outcome_after_draw` | Ha nem null → "penalties" |
+| `team.national` | `teams.team_type` | true→national, false→club |
+
+### 9f. Játékosok
+
+A `/players/squads?team=X` endpoint csapatonként 1 kérés:
+- WC 32 csapat = 32 kérés (egyszeri, szezon elején)
+- NB I 12 csapat = 12 kérés
+- Összesen 44 kérés — heti 1× frissítés elegendő
+
+Szükséges a `player_select` típusú speciális tippekhez ("Ki lesz a gólkirály?").
+
+### 9g. Schema módosítások (US-1202 előfeltétel)
+
+1. `teams` tábla: + `external_id INTEGER UNIQUE` (api-football team ID)
+2. `matches` tábla: + `external_id INTEGER UNIQUE` (api-football fixture ID)
+3. `players` tábla: + `external_id INTEGER UNIQUE` (api-football player ID)
+4. `match_results.recorded_by`: nullable (sync-nél nincs user) VAGY system user
+
+---
+
+## 10. Következő lépések (US-1202)
 
 Az implementáció során szükséges lesz:
 
-1. **`teams` tábla bővítése** `external_id INTEGER` kolumnnal — az API-Football csapat ID-k tárolásához, hogy az upsert determinisztikus legyen
-2. **`matches` tábla bővítése** `external_id INTEGER` kolumnnal — fixture ID tárolás, duplikálás elkerülése
-3. `football-api.service.ts` — typed HTTP wrapper native fetch-szel (Node 18+), visszatérő típusok: `ApiFixture`, `ApiTeam`, `ApiLeague`
+1. **Schema migráció** — `external_id INTEGER UNIQUE` kolumn a `teams`, `matches`, `players` táblákra
+2. **`match_results.recorded_by`** — nullable vagy system user a sync-hez
+3. `football-api.service.ts` — typed HTTP wrapper native fetch-szel (Node 18+), visszatérő típusok: `ApiFixture`, `ApiTeam`, `ApiSquad`
 4. `sync.service.ts` — mapping + upsert logika; idempotens `ON CONFLICT DO UPDATE`
 
 ---

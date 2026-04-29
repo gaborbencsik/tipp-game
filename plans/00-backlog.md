@@ -10,8 +10,7 @@
 | US-1002 | Felhasználói felület lokalizációja (i18n) | Should Have | — |
 | US-1101 | Donation gomb és pop-up | Should Have | — |
 | US-1102 | Donation átirányítás | Should Have | US-1101 |
-| US-1202 | Futball API szinkronizációs service | Should Have | US-1202-POC |
-| US-1202-POC | Football API Integration POC | Should Have | US-1201 (kész) |
+| US-1202 | Futball API szinkronizációs service | Should Have | US-1202-POC (kész) |
 | US-1203 | Automatikus adatszinkron cron job | Should Have | US-1202 |
 | US-1204 | NB II liga szinkronizáció támogatás | Nice to Have | US-1202, US-1203 |
 | US-1401 | Stadion banner kép a meccs részletes nézeten | Should Have | — |
@@ -27,4 +26,4 @@
 
 ---
 
-**Haladás: 84 / 102 story kész** — Must Have: 31/31, Should Have: 53/67, Nice to Have: 0/4
+**Haladás: 85 / 102 story kész** — Must Have: 31/31, Should Have: 54/67, Nice to Have: 0/4

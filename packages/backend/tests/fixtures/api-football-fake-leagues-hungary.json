@@ -1,0 +1,48 @@
+{
+  "results": 2,
+  "errors": {},
+  "response": [
+    {
+      "league": {
+        "id": 271,
+        "name": "Nemzeti Bajnokság I",
+        "type": "League",
+        "logo": "https://media.api-sports.io/football/leagues/271.png"
+      },
+      "country": {
+        "name": "Hungary",
+        "code": "HU",
+        "flag": "https://media.api-sports.io/flags/hu.svg"
+      },
+      "seasons": [
+        {
+          "year": 2025,
+          "start": "2025-07-25",
+          "end": "2026-05-31",
+          "current": true
+        }
+      ]
+    },
+    {
+      "league": {
+        "id": 272,
+        "name": "Nemzeti Bajnokság II",
+        "type": "League",
+        "logo": "https://media.api-sports.io/football/leagues/272.png"
+      },
+      "country": {
+        "name": "Hungary",
+        "code": "HU",
+        "flag": "https://media.api-sports.io/flags/hu.svg"
+      },
+      "seasons": [
+        {
+          "year": 2025,
+          "start": "2025-08-01",
+          "end": "2026-05-15",
+          "current": true
+        }
+      ]
+    }
+  ]
+}

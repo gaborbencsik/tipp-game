@@ -1,0 +1,59 @@
+{
+  "results": 4,
+  "errors": {},
+  "response": [
+    {
+      "team": {
+        "id": 6,
+        "name": "Brazil",
+        "code": "BRA",
+        "country": "Brazil",
+        "founded": 1914,
+        "national": true,
+        "logo": "https://media.api-sports.io/football/teams/6.png"
+      },
+      "venue": {
+        "id": 556,
+        "name": "SoFi Stadium",
+        "city": "Los Angeles",
+        "capacity": 70240
+      }
+    },
+    {
+      "team": {
+        "id": 24,
+        "name": "Argentina",
+        "code": "ARG",
+        "country": "Argentina",
+        "founded": 1893,
+        "national": true,
+        "logo": "https://media.api-sports.io/football/teams/24.png"
+      },
+      "venue": null
+    },
+    {
+      "team": {
+        "id": 2,
+        "name": "France",
+        "code": "FRA",
+        "country": "France",
+        "founded": 1919,
+        "national": true,
+        "logo": "https://media.api-sports.io/football/teams/2.png"
+      },
+      "venue": null
+    },
+    {
+      "team": {
+        "id": 15,
+        "name": "Hungary",
+        "code": "HUN",
+        "country": "Hungary",
+        "founded": 1901,
+        "national": true,
+        "logo": "https://media.api-sports.io/football/teams/15.png"
+      },
+      "venue": null
+    }
+  ]
+}

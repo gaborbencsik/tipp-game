@@ -1,0 +1,255 @@
+{
+  "get": "teams",
+  "parameters": {
+    "league": "271",
+    "season": "2022"
+  },
+  "errors": [],
+  "results": 12,
+  "paging": {
+    "current": 1,
+    "total": 1
+  },
+  "response": [
+    {
+      "team": {
+        "id": 576,
+        "name": "Budapest Honved",
+        "code": "HON",
+        "country": "Hungary",
+        "founded": 1908,
+        "national": false,
+        "logo": "https://media.api-sports.io/football/teams/576.png"
+      },
+      "venue": {
+        "id": 11902,
+        "name": "Bozsik Aréna",
+        "address": "Puskás Ferenc u. 1-3",
+        "city": "Budapest",
+        "capacity": 8200,
+        "surface": "grass",
+        "image": "https://media.api-sports.io/football/venues/11902.png"
+      }
+    },
+    {
+      "team": {
+        "id": 610,
+        "name": "Fehérvár FC",
+        "code": "VID",
+        "country": "Hungary",
+        "founded": 1941,
+        "national": false,
+        "logo": "https://media.api-sports.io/football/teams/610.png"
+      },
+      "venue": {
+        "id": 798,
+        "name": "MOL Aréna Sóstó",
+        "address": "Csikvári út 10",
+        "city": "Székesfehérvár",
+        "capacity": 14201,
+        "surface": "grass",
+        "image": "https://media.api-sports.io/football/venues/798.png"
+      }
+    },
+    {
+      "team": {
+        "id": 651,
+        "name": "Ferencvarosi TC",
+        "code": "FER",
+        "country": "Hungary",
+        "founded": 1899,
+        "national": false,
+        "logo": "https://media.api-sports.io/football/teams/651.png"
+      },
+      "venue": {
+        "id": 799,
+        "name": "Groupama Aréna",
+        "address": "Üllői út, IX. ker.",
+        "city": "Budapest",
+        "capacity": 23698,
+        "surface": "grass",
+        "image": "https://media.api-sports.io/football/venues/799.png"
+      }
+    },
+    {
+      "team": {
+        "id": 675,
+        "name": "Vasas",
+        "code": "VAS",
+        "country": "Hungary",
+        "founded": 1911,
+        "national": false,
+        "logo": "https://media.api-sports.io/football/teams/675.png"
+      },
+      "venue": {
+        "id": 817,
+        "name": "Illovszky Rudolf Stadion",
+        "address": "Fáy u. 58",
+        "city": "Budapest",
+        "capacity": 5054,
+        "surface": "grass",
+        "image": "https://media.api-sports.io/football/venues/817.png"
+      }
+    },
+    {
+      "team": {
+        "id": 2255,
+        "name": "Ujpest",
+        "code": "UJP",
+        "country": "Hungary",
+        "founded": 1885,
+        "national": false,
+        "logo": "https://media.api-sports.io/football/teams/2255.png"
+      },
+      "venue": {
+        "id": 814,
+        "name": "Szusza Ferenc Stadion",
+        "address": "Megyeri út 13., IV. ker",
+        "city": "Budapest",
+        "capacity": 13501,
+        "surface": "grass",
+        "image": "https://media.api-sports.io/football/venues/814.png"
+      }
+    },
+    {
+      "team": {
+        "id": 2389,
+        "name": "Mezokovesd-zsory",
+        "code": "MEZ",
+        "country": "Hungary",
+        "founded": 1975,
+        "national": false,
+        "logo": "https://media.api-sports.io/football/teams/2389.png"
+      },
+      "venue": {
+        "id": 805,
+        "name": "Városi Stadion",
+        "address": "Széchenyi István u. 9.",
+        "city": "Mezőkövesd",
+        "capacity": 5020,
+        "surface": "grass",
+        "image": "https://media.api-sports.io/football/venues/805.png"
+      }
+    },
+    {
+      "team": {
+        "id": 2390,
+        "name": "Paks",
+        "code": "PAK",
+        "country": "Hungary",
+        "founded": 1952,
+        "national": false,
+        "logo": "https://media.api-sports.io/football/teams/2390.png"
+      },
+      "venue": {
+        "id": 809,
+        "name": "Paksi FC Stadion",
+        "address": "Fehérvári út 29.",
+        "city": "Paks",
+        "capacity": 4950,
+        "surface": "grass",
+        "image": "https://media.api-sports.io/football/venues/809.png"
+      }
+    },
+    {
+      "team": {
+        "id": 2391,
+        "name": "Puskas Academy",
+        "code": "PUS",
+        "country": "Hungary",
+        "founded": 2007,
+        "national": false,
+        "logo": "https://media.api-sports.io/football/teams/2391.png"
+      },
+      "venue": {
+        "id": 1764,
+        "name": "Puskás Akadémia Pancho Aréna",
+        "address": null,
+        "city": "Felcsút",
+        "capacity": 3865,
+        "surface": "grass",
+        "image": "https://media.api-sports.io/football/venues/1764.png"
+      }
+    },
+    {
+      "team": {
+        "id": 2392,
+        "name": "Debreceni VSC",
+        "code": "DEB",
+        "country": "Hungary",
+        "founded": 1902,
+        "national": false,
+        "logo": "https://media.api-sports.io/football/teams/2392.png"
+      },
+      "venue": {
+        "id": 795,
+        "name": "Nagyerdei Stadion",
+        "address": "Nagyerdei park 12",
+        "city": "Debrecen",
+        "capacity": 20340,
+        "surface": "grass",
+        "image": "https://media.api-sports.io/football/venues/795.png"
+      }
+    },
+    {
+      "team": {
+        "id": 2394,
+        "name": "Kisvarda FC",
+        "code": "KIS",
+        "country": "Hungary",
+        "founded": 2003,
+        "national": false,
+        "logo": "https://media.api-sports.io/football/teams/2394.png"
+      },
+      "venue": {
+        "id": 816,
+        "name": "Várkerti Stadion",
+        "address": null,
+        "city": "Kisvárda",
+        "capacity": 3385,
+        "surface": "grass",
+        "image": "https://media.api-sports.io/football/venues/816.png"
+      }
+    },
+    {
+      "team": {
+        "id": 2414,
+        "name": "Zalaegerszegi TE",
+        "code": "ZAL",
+        "country": "Hungary",
+        "founded": 1920,
+        "national": false,
+        "logo": "https://media.api-sports.io/football/teams/2414.png"
+      },
+      "venue": {
+        "id": 818,
+        "name": "ZTE-Aréna",
+        "address": "Október 6. tér 16.",
+        "city": "Zalaegerszeg",
+        "capacity": 11200,
+        "surface": "grass",
+        "image": "https://media.api-sports.io/football/venues/818.png"
+      }
+    },
+    {
+      "team": {
+        "id": 5111,
+        "name": "Kecskeméti TE",
+        "code": "KEC",
+        "country": "Hungary",
+        "founded": 1911,
+        "national": false,
+        "logo": "https://media.api-sports.io/football/teams/5111.png"
+      },
+      "venue": {
+        "id": 3862,
+        "name": "Széktói Stadion",
+        "address": "Csabai Géza körút 1/a.",
+        "city": "Kecskemét",
+        "capacity": 6296,
+        "surface": "grass",
+        "image": "https://media.api-sports.io/football/venues/3862.png"
+      }
+    }
+  ]
+}
