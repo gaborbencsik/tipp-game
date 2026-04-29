@@ -1,4 +1,4 @@
-import type { User, Match, MatchesFilters, MatchInput, MatchResultInput, MatchPrediction, Prediction, PredictionInput, Team, TeamInput, AdminUser, Group, GroupInput, GroupMember, JoinGroupInput, LeaderboardEntry, ScoringConfigFull, ScoringConfigInput, WaitlistListResult, WaitlistFilters, WaitlistEntry, WaitlistSource, SpecialPredictionType, SpecialTypeInput, SpecialPredictionWithType, SpecialPredictionInput, StatPredictionTemplate, Player, PlayerInput, GlobalTypeWithSubscription, League, LeagueInput } from '../types/index.js'
+import type { User, Match, MatchesFilters, MatchInput, MatchResultInput, MatchPrediction, Prediction, PredictionInput, Team, TeamInput, AdminUser, Group, GroupInput, GroupMember, JoinGroupInput, LeaderboardEntry, ScoringConfigFull, ScoringConfigInput, WaitlistListResult, WaitlistFilters, WaitlistEntry, WaitlistSource, SpecialPredictionType, SpecialTypeInput, SpecialPredictionWithType, SpecialPredictionInput, StatPredictionTemplate, Player, PlayerInput, GlobalTypeWithSubscription, League, LeagueInput, UserLeagueFavorite, LeagueTeam } from '../types/index.js'
 
 const BASE_URL = (import.meta.env.VITE_API_URL ?? '') + '/api'
 
@@ -64,6 +64,22 @@ export const api = {
     completeOnboarding: (token: string) =>
       request<User>('/users/me/onboarding', {
         method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+    getLeagueFavorites: (token: string) =>
+      request<UserLeagueFavorite[]>('/users/me/league-favorites', {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+    setLeagueFavorite: (token: string, leagueId: string, teamId: string) =>
+      request<UserLeagueFavorite>(`/users/me/league-favorites/${leagueId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ teamId }),
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+  },
+  leagueTeams: {
+    forLeague: (token: string, leagueId: string) =>
+      request<LeagueTeam[]>(`/leagues/${leagueId}/teams`, {
         headers: { Authorization: `Bearer ${token}` },
       }),
   },

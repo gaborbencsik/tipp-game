@@ -92,6 +92,13 @@
       "when": 1777384120716,
       "tag": "0012_tough_the_initiative",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1777470520000,
+      "tag": "0013_user_league_favorites",
+      "breakpoints": true
     }
   ]
 }

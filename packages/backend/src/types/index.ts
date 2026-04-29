@@ -342,3 +342,16 @@ export interface GlobalTypeWithSubscription {
   readonly updatedAt: string
   readonly subscribed: boolean
 }
+
+export interface UserLeagueFavorite {
+  readonly id: string
+  readonly userId: string
+  readonly leagueId: string
+  readonly teamId: string
+  readonly setAt: string
+  readonly isLocked: boolean
+}
+
+export interface SetFavoriteInput {
+  readonly teamId: string
+}

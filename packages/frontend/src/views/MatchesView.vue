@@ -12,6 +12,22 @@
         class="mb-4"
       />
 
+      <div
+        v-if="showFavBanner"
+        class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded flex items-center justify-between"
+      >
+        <div class="flex items-center gap-2">
+          <span class="text-yellow-600 text-lg">⭐</span>
+          <span class="text-sm text-yellow-800">Állítsd be kedvenc csapatodat a profilodban!</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <router-link to="/app/profile" class="text-sm font-medium text-yellow-700 hover:text-yellow-900 underline">
+            Beállítás
+          </router-link>
+          <button class="text-yellow-400 hover:text-yellow-600 text-lg leading-none" @click="favBannerDismissed = true">&times;</button>
+        </div>
+      </div>
+
       <div class="flex gap-2 mb-6">
         <button
           class="px-3 py-1 text-sm rounded"
@@ -259,6 +275,7 @@ import { onMounted, ref, nextTick, computed } from 'vue'
 import { useMatchesStore } from '../stores/matches.store.js'
 import { usePredictionsStore } from '../stores/predictions.store.js'
 import { useGroupsStore } from '../stores/groups.store.js'
+import { useLeagueFavoritesStore } from '../stores/league-favorites.store.js'
 import type { Match, MatchDateGroup, MatchOutcome, MatchStage, MatchStatus } from '../types/index.js'
 import AppLayout from '../components/AppLayout.vue'
 import TeamBadge from '../components/TeamBadge.vue'
@@ -268,6 +285,7 @@ import { usePendingSpecialTips } from '../composables/usePendingSpecialTips.js'
 const matchesStore = useMatchesStore()
 const predictionsStore = usePredictionsStore()
 const groupsStore = useGroupsStore()
+const favStore = useLeagueFavoritesStore()
 const { pendingGroups, totalPendingCount, now: pendingNow } = usePendingSpecialTips()
 
 const now = ref(new Date())
@@ -279,6 +297,25 @@ const autosaveTimers: Record<string, ReturnType<typeof setTimeout>> = {}
 const FUTURE_DAYS = 7
 const showFutureMatches = ref(false)
 const draftOutcomes = ref<Record<string, MatchOutcome | null>>({})
+const favBannerDismissed = ref(false)
+
+const showFavBanner = computed((): boolean => {
+  if (favBannerDismissed.value) return false
+  if (favStore.leagues.length === 0) return false
+  const leagueIdsWithoutFav = favStore.leagues
+    .filter(l => !favStore.favoriteByLeagueId(l.id))
+    .map(l => l.id)
+  if (leagueIdsWithoutFav.length === 0) return false
+  for (const leagueId of leagueIdsWithoutFav) {
+    const leagueMatches = matchesStore.matches.filter(m => m.league?.id === leagueId)
+    const earliest = leagueMatches.reduce<Date | null>((min, m) => {
+      const d = new Date(m.scheduledAt)
+      return !min || d < min ? d : min
+    }, null)
+    if (!earliest || earliest > now.value) return true
+  }
+  return false
+})
 
 const LS_KEY = 'matches_finished_expanded'
 const finishedSectionOpen = ref(false)
@@ -354,6 +391,12 @@ onMounted(async () => {
     )
   } catch {
     // silent — banner simply won't show
+  }
+
+  try {
+    await Promise.all([favStore.fetchLeagues(), favStore.fetchFavorites()])
+  } catch {
+    // silent — fav banner simply won't show
   }
 })
 

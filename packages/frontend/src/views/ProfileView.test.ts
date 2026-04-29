@@ -28,7 +28,13 @@ vi.mock('@/api/index', () => ({
   api: {
     health: vi.fn(),
     auth: { me: vi.fn() },
-    users: { updateProfile: mockUpdateProfile },
+    users: {
+      updateProfile: mockUpdateProfile,
+      getLeagueFavorites: vi.fn().mockResolvedValue([]),
+      setLeagueFavorite: vi.fn(),
+    },
+    leagues: { list: vi.fn().mockResolvedValue([]) },
+    leagueTeams: { forLeague: vi.fn().mockResolvedValue([]) },
     matches: { list: vi.fn() },
     predictions: { mine: vi.fn(), upsert: vi.fn() },
     admin: {

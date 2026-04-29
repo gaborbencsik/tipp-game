@@ -3,6 +3,7 @@ import { authMiddleware } from '../middleware/auth.middleware.js'
 import { getMatches } from '../services/matches.service.js'
 import { getLeagues } from '../services/leagues.service.js'
 import { getMatchPredictions } from '../services/predictions.service.js'
+import { getTeamsForLeague } from '../services/user-league-favorites.service.js'
 import type { MatchesFilters, MatchStage, MatchStatus } from '../types/index.js'
 
 const router = new Router()
@@ -23,6 +24,10 @@ router.get('/api/leagues', authMiddleware, async (ctx) => {
 
 router.get('/api/matches/:matchId/predictions', authMiddleware, async (ctx) => {
   ctx.body = await getMatchPredictions(ctx.params.matchId)
+})
+
+router.get('/api/leagues/:leagueId/teams', authMiddleware, async (ctx) => {
+  ctx.body = await getTeamsForLeague(ctx.params.leagueId)
 })
 
 export { router as matchesRouter }

@@ -300,6 +300,20 @@ export const waitlistEntries = pgTable('waitlist_entries', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
+// ─── USER LEAGUE FAVORITES ───────────────────────────────────────────────────
+
+export const userLeagueFavorites = pgTable('user_league_favorites', {
+  id:       uuid('id').primaryKey().defaultRandom(),
+  userId:   uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  leagueId: uuid('league_id').notNull().references(() => leagues.id, { onDelete: 'cascade' }),
+  teamId:   uuid('team_id').notNull().references(() => teams.id, { onDelete: 'cascade' }),
+  setAt:    timestamp('set_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  userLeagueUnique: uniqueIndex('ulf_user_league_unique').on(t.userId, t.leagueId),
+  userIdx:          index('ulf_user_idx').on(t.userId),
+  leagueIdx:        index('ulf_league_idx').on(t.leagueId),
+}))
+
 // ─── RELATIONS ────────────────────────────────────────────────────────────────
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -307,6 +321,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   groupMemberships: many(groupMembers),
   createdGroups: many(groups),
   specialPredictions: many(specialPredictions),
+  leagueFavorites: many(userLeagueFavorites),
 }))
 
 export const teamsRelations = relations(teams, ({ many }) => ({
@@ -330,6 +345,7 @@ export const matchesRelations = relations(matches, ({ one, many }) => ({
 
 export const leaguesRelations = relations(leagues, ({ many }) => ({
   matches: many(matches),
+  userFavorites: many(userLeagueFavorites),
 }))
 
 export const matchResultsRelations = relations(matchResults, ({ one }) => ({
@@ -372,4 +388,10 @@ export const specialPredictionsRelations = relations(specialPredictions, ({ one 
 export const groupGlobalTypeSubscriptionsRelations = relations(groupGlobalTypeSubscriptions, ({ one }) => ({
   group: one(groups, { fields: [groupGlobalTypeSubscriptions.groupId], references: [groups.id] }),
   globalType: one(specialPredictionTypes, { fields: [groupGlobalTypeSubscriptions.globalTypeId], references: [specialPredictionTypes.id] }),
+}))
+
+export const userLeagueFavoritesRelations = relations(userLeagueFavorites, ({ one }) => ({
+  user: one(users, { fields: [userLeagueFavorites.userId], references: [users.id] }),
+  league: one(leagues, { fields: [userLeagueFavorites.leagueId], references: [leagues.id] }),
+  team: one(teams, { fields: [userLeagueFavorites.teamId], references: [teams.id] }),
 }))

@@ -326,3 +326,19 @@ export interface LeagueInput {
   readonly name: string
   readonly shortName: string
 }
+
+export interface UserLeagueFavorite {
+  readonly id: string
+  readonly userId: string
+  readonly leagueId: string
+  readonly teamId: string
+  readonly setAt: string
+  readonly isLocked: boolean
+}
+
+export interface LeagueTeam {
+  readonly id: string
+  readonly name: string
+  readonly shortCode: string
+  readonly flagUrl: string | null
+}
