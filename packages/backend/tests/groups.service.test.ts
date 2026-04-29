@@ -213,13 +213,12 @@ describe('createGroup', () => {
   })
 
   it('valid input → returns group with memberCount=1 and isAdmin=true', async () => {
-    // 1: createdCount check, 2: inviteCode uniqueness check
     mockSelect
-      .mockReturnValueOnce(makeSelectChain([{ count: 0 }]))
-      .mockReturnValueOnce(makeSelectChain([]))
+      .mockReturnValueOnce(makeSelectChain([{ count: 0 }]))   // createdCount
+      .mockReturnValueOnce(makeSelectChain([]))                // inviteCode uniqueness
+      .mockReturnValueOnce(makeSelectChain([]))                // globalTypes query (none)
 
-    const { insertFn, valuesFn } = makeInsertChain([GROUP_ROW])
-    // first insert (groups) returns GROUP_ROW; second insert (groupMembers) resolves undefined
+    const insertFn = vi.fn()
     const returningFn = vi.fn().mockResolvedValue([GROUP_ROW])
     const memberValuesFn = vi.fn().mockResolvedValue(undefined)
     insertFn.mockReturnValueOnce({ values: vi.fn().mockReturnValue({ returning: returningFn }) })
@@ -234,10 +233,11 @@ describe('createGroup', () => {
     mockSelect
       .mockReturnValueOnce(makeSelectChain([{ count: 0 }]))
       .mockReturnValueOnce(makeSelectChain([]))
+      .mockReturnValueOnce(makeSelectChain([]))                // globalTypes (none)
 
+    const insertFn = vi.fn()
     const returningFn = vi.fn().mockResolvedValue([GROUP_ROW])
     const memberValuesFn = vi.fn().mockResolvedValue(undefined)
-    const insertFn = vi.fn()
     insertFn.mockReturnValueOnce({ values: vi.fn().mockReturnValue({ returning: returningFn }) })
     insertFn.mockReturnValueOnce({ values: memberValuesFn })
     mockInsert.mockImplementation(insertFn)
@@ -245,6 +245,47 @@ describe('createGroup', () => {
     const result = await createGroup({ name: 'Barátok' }, USER_ID)
     expect(typeof result.inviteCode).toBe('string')
     expect(result.inviteCode.length).toBeGreaterThan(0)
+  })
+
+  it('active global types exist → auto-subscribes new group', async () => {
+    const globalTypes = [{ id: 'gt-1' }, { id: 'gt-2' }]
+    mockSelect
+      .mockReturnValueOnce(makeSelectChain([{ count: 0 }]))   // createdCount
+      .mockReturnValueOnce(makeSelectChain([]))                // inviteCode uniqueness
+      .mockReturnValueOnce(makeSelectChain(globalTypes))       // globalTypes query
+
+    const insertFn = vi.fn()
+    const returningFn = vi.fn().mockResolvedValue([GROUP_ROW])
+    const memberValuesFn = vi.fn().mockResolvedValue(undefined)
+    const subscriptionValuesFn = vi.fn().mockReturnValue({ onConflictDoNothing: vi.fn().mockResolvedValue(undefined) })
+    insertFn.mockReturnValueOnce({ values: vi.fn().mockReturnValue({ returning: returningFn }) })  // groups insert
+    insertFn.mockReturnValueOnce({ values: memberValuesFn })                                       // groupMembers insert
+    insertFn.mockReturnValueOnce({ values: subscriptionValuesFn })                                 // subscriptions insert
+    mockInsert.mockImplementation(insertFn)
+
+    await createGroup({ name: 'Barátok' }, USER_ID)
+    expect(insertFn).toHaveBeenCalledTimes(3)
+    expect(subscriptionValuesFn).toHaveBeenCalledWith([
+      { groupId: 'group-uuid-1', globalTypeId: 'gt-1' },
+      { groupId: 'group-uuid-1', globalTypeId: 'gt-2' },
+    ])
+  })
+
+  it('no active global types → no subscription insert', async () => {
+    mockSelect
+      .mockReturnValueOnce(makeSelectChain([{ count: 0 }]))
+      .mockReturnValueOnce(makeSelectChain([]))
+      .mockReturnValueOnce(makeSelectChain([]))                // globalTypes: empty
+
+    const insertFn = vi.fn()
+    const returningFn = vi.fn().mockResolvedValue([GROUP_ROW])
+    const memberValuesFn = vi.fn().mockResolvedValue(undefined)
+    insertFn.mockReturnValueOnce({ values: vi.fn().mockReturnValue({ returning: returningFn }) })
+    insertFn.mockReturnValueOnce({ values: memberValuesFn })
+    mockInsert.mockImplementation(insertFn)
+
+    await createGroup({ name: 'Barátok' }, USER_ID)
+    expect(insertFn).toHaveBeenCalledTimes(2)
   })
 })
 

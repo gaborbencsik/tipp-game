@@ -1,6 +1,6 @@
 import { and, eq, isNull, sql } from 'drizzle-orm'
 import { db } from '../db/client.js'
-import { groups, groupMembers, users } from '../db/schema/index.js'
+import { groups, groupMembers, users, specialPredictionTypes, groupGlobalTypeSubscriptions } from '../db/schema/index.js'
 import type { Group, GroupInput, GroupMember } from '../types/index.js'
 import { getGroupLeaderboard } from './group-leaderboard.service.js'
 
@@ -121,6 +121,21 @@ export async function createGroup(input: GroupInput, userId: string): Promise<Gr
     userId,
     isAdmin: true,
   })
+
+  const globalTypes = await db
+    .select({ id: specialPredictionTypes.id })
+    .from(specialPredictionTypes)
+    .where(and(
+      eq(specialPredictionTypes.isGlobal, true),
+      eq(specialPredictionTypes.isActive, true),
+    ))
+
+  if (globalTypes.length > 0) {
+    await db
+      .insert(groupGlobalTypeSubscriptions)
+      .values(globalTypes.map(gt => ({ groupId: group.id, globalTypeId: gt.id })))
+      .onConflictDoNothing()
+  }
 
   return toApiGroup(group, 1, true)
 }

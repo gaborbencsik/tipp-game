@@ -1,6 +1,6 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-04-28
+> Utoljára frissítve: 2026-04-29
 
 ## Nyitott story-k
 
@@ -17,8 +17,6 @@
 | US-1202 | Futball API szinkronizációs service | Should Have | US-1201 (kész) |
 | US-1203 | Automatikus adatszinkron cron job | Should Have | US-1202 |
 | US-1401 | Stadion banner kép a meccs részletes nézeten | Should Have | — |
-| US-932 | Új csoportok automatikus feliratkozása globális típusokra | Should Have | — |
-| US-933 | Badge counter a speciális tippek tabon | Should Have | — |
 | US-934 | Mások tippjeinek megjelenítése (speciális) | Should Have | — |
 | UX-004 | Focilabda kurzor ikon | Nice to Have | — |
 | UX-005 | Optimista törlés az admin listákon | Should Have | — |
@@ -31,4 +29,4 @@
 
 ---
 
-**Haladás: 75 / 97 story kész** — Must Have: 31/31, Should Have: 44/63, Nice to Have: 0/3
+**Haladás: 76 / 96 story kész** — Must Have: 31/31, Should Have: 45/62, Nice to Have: 0/3

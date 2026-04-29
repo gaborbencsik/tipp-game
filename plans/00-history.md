@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 75 story kész (Must Have: 31/31, Should Have: 44/63)
+> 76 story kész (Must Have: 31/31, Should Have: 45/62)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -79,3 +79,4 @@
 | US-943 | GroupDetailView `?tab=special` query param | Should Have |
 | US-1301 | Liga entitás bevezetése a meccsekhez | Should Have |
 | US-204 | Mások tippjeinek megtekintése | Should Have |
+| US-932 | Új csoportok automatikus feliratkozása globális típusokra | Should Have |
