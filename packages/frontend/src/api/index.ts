@@ -88,6 +88,7 @@ export const api = {
       const params = new URLSearchParams()
       if (filters?.stage) params.set('stage', filters.stage)
       if (filters?.status) params.set('status', filters.status)
+      if (filters?.leagueId) params.set('leagueId', filters.leagueId)
       const query = params.toString() ? `?${params.toString()}` : ''
       return request<Match[]>(`/matches${query}`, {
         headers: { Authorization: `Bearer ${token}` },

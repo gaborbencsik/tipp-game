@@ -12,10 +12,12 @@ vi.mock('vue-router', async (importOriginal) => {
   return { ...actual, useRouter: () => ({ push: vi.fn() }) }
 })
 
-const { mockMatchesList, mockPredictionsMine, mockPredictionsUpsert } = vi.hoisted(() => ({
+const { mockMatchesList, mockPredictionsMine, mockPredictionsUpsert, mockLeaguesList, mockGetLeagueFavorites } = vi.hoisted(() => ({
   mockMatchesList: vi.fn().mockResolvedValue([]),
   mockPredictionsMine: vi.fn().mockResolvedValue([]),
   mockPredictionsUpsert: vi.fn().mockResolvedValue(undefined),
+  mockLeaguesList: vi.fn().mockResolvedValue([]),
+  mockGetLeagueFavorites: vi.fn().mockResolvedValue([]),
 }))
 
 vi.mock('@/lib/supabase', () => ({
@@ -33,6 +35,9 @@ vi.mock('@/api/index', () => ({
     auth: { me: vi.fn() },
     matches: { list: mockMatchesList },
     predictions: { mine: mockPredictionsMine, upsert: mockPredictionsUpsert },
+    leagues: { list: mockLeaguesList },
+    leagueTeams: { forLeague: vi.fn().mockResolvedValue([]) },
+    users: { getLeagueFavorites: mockGetLeagueFavorites, setLeagueFavorite: vi.fn().mockResolvedValue(undefined) },
   },
 }))
 
@@ -338,6 +343,48 @@ describe('MatchesView', () => {
   it('live match is always visible regardless of date', async () => {
     const { wrapper } = await mountView([MATCH_LIVE])
     expect(wrapper.text()).toContain('Germany')
+  })
+
+  // ─── League filter ───────────────────────────────────────────────────────────
+
+  it('league select visible when >1 league', async () => {
+    mockLeaguesList.mockResolvedValue([
+      { id: 'l1', name: 'World Cup 2026', shortName: 'WC26', createdAt: '', updatedAt: '' },
+      { id: 'l2', name: 'Euro 2026', shortName: 'EU26', createdAt: '', updatedAt: '' },
+    ])
+    const { wrapper } = await mountView([MATCH_SCHEDULED])
+    expect(wrapper.find('[data-testid="league-filter"]').exists()).toBe(true)
+  })
+
+  it('league select hidden when ≤1 league', async () => {
+    mockLeaguesList.mockResolvedValue([
+      { id: 'l1', name: 'World Cup 2026', shortName: 'WC26', createdAt: '', updatedAt: '' },
+    ])
+    const { wrapper } = await mountView([MATCH_SCHEDULED])
+    expect(wrapper.find('[data-testid="league-filter"]').exists()).toBe(false)
+  })
+
+  it('selecting a league sets matchesStore.leagueFilter', async () => {
+    mockLeaguesList.mockResolvedValue([
+      { id: 'l1', name: 'World Cup 2026', shortName: 'WC26', createdAt: '', updatedAt: '' },
+      { id: 'l2', name: 'Euro 2026', shortName: 'EU26', createdAt: '', updatedAt: '' },
+    ])
+    const { wrapper, matchesStore } = await mountView([MATCH_SCHEDULED])
+    const select = wrapper.find('[data-testid="league-filter"]')
+    await select.setValue('l2')
+    expect(matchesStore.leagueFilter).toBe('l2')
+  })
+
+  it('selecting "Összes liga" resets leagueFilter to null', async () => {
+    mockLeaguesList.mockResolvedValue([
+      { id: 'l1', name: 'World Cup 2026', shortName: 'WC26', createdAt: '', updatedAt: '' },
+      { id: 'l2', name: 'Euro 2026', shortName: 'EU26', createdAt: '', updatedAt: '' },
+    ])
+    const { wrapper, matchesStore } = await mountView([MATCH_SCHEDULED])
+    matchesStore.leagueFilter = 'l1'
+    const select = wrapper.find('[data-testid="league-filter"]')
+    await select.setValue('')
+    expect(matchesStore.leagueFilter).toBeNull()
   })
 
 })

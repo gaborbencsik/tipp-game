@@ -50,6 +50,19 @@
         >
           Egyenes kiesés
         </button>
+
+        <select
+          v-if="favStore.leagues.length > 1"
+          :value="matchesStore.leagueFilter ?? ''"
+          class="ml-auto px-3 py-1 text-sm rounded border border-gray-300 bg-white text-gray-700"
+          data-testid="league-filter"
+          @change="matchesStore.leagueFilter = ($event.target as HTMLSelectElement).value || null"
+        >
+          <option value="">Összes liga</option>
+          <option v-for="league in favStore.leagues" :key="league.id" :value="league.id">
+            {{ league.name }}
+          </option>
+        </select>
       </div>
 
       <div v-if="matchesStore.isLoading" class="flex justify-center py-16">

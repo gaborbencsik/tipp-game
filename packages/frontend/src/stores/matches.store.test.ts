@@ -37,7 +37,7 @@ const MATCH_SCHEDULED: Match = {
   homeTeam: { id: 'ht1', name: 'Germany', shortCode: 'GER', flagUrl: null, teamType: 'national' as const, countryCode: 'de' },
   awayTeam: { id: 'at1', name: 'France', shortCode: 'FRA', flagUrl: null, teamType: 'national' as const, countryCode: 'fr' },
   venue: { name: 'Arena', city: 'Munich' },
-  league: null,
+  league: { id: 'league-1', name: 'World Cup 2026', shortName: 'WC26' },
   stage: 'group',
   groupName: 'A',
   matchNumber: 1,
@@ -51,7 +51,7 @@ const MATCH_LIVE: Match = {
   homeTeam: { id: 'ht2', name: 'Spain', shortCode: 'ESP', flagUrl: null, teamType: 'national' as const, countryCode: 'es' },
   awayTeam: { id: 'at2', name: 'Italy', shortCode: 'ITA', flagUrl: null, teamType: 'national' as const, countryCode: 'it' },
   venue: null,
-  league: null,
+  league: { id: 'league-2', name: 'Euro 2026', shortName: 'EU26' },
   stage: 'group',
   groupName: 'B',
   matchNumber: 2,
@@ -65,7 +65,7 @@ const MATCH_FINISHED: Match = {
   homeTeam: { id: 'ht3', name: 'Brazil', shortCode: 'BRA', flagUrl: null, teamType: 'national' as const, countryCode: 'br' },
   awayTeam: { id: 'at3', name: 'Argentina', shortCode: 'ARG', flagUrl: null, teamType: 'national' as const, countryCode: 'ar' },
   venue: { name: 'Stadium', city: 'Sao Paulo' },
-  league: null,
+  league: { id: 'league-1', name: 'World Cup 2026', shortName: 'WC26' },
   stage: 'final',
   groupName: null,
   matchNumber: 64,
@@ -186,5 +186,31 @@ describe('matches.store', () => {
   it('matchesByDate with empty store → empty array', () => {
     const store = useMatchesStore()
     expect(store.matchesByDate).toEqual([])
+  })
+
+  // ─── leagueFilter ──────────────────────────────────────────────────────────
+
+  it('leagueFilter set → only matches with that league', () => {
+    const store = useMatchesStore()
+    store.matches = [MATCH_SCHEDULED, MATCH_LIVE, MATCH_FINISHED]
+    store.leagueFilter = 'league-1'
+    expect(store.filteredMatches).toHaveLength(2)
+    expect(store.filteredMatches.every(m => m.league?.id === 'league-1')).toBe(true)
+  })
+
+  it('leagueFilter null → all matches returned', () => {
+    const store = useMatchesStore()
+    store.matches = [MATCH_SCHEDULED, MATCH_LIVE, MATCH_FINISHED]
+    store.leagueFilter = null
+    expect(store.filteredMatches).toHaveLength(3)
+  })
+
+  it('leagueFilter + stageFilter combined → both applied', () => {
+    const store = useMatchesStore()
+    store.matches = [MATCH_SCHEDULED, MATCH_LIVE, MATCH_FINISHED]
+    store.leagueFilter = 'league-1'
+    store.stageFilter = 'group'
+    expect(store.filteredMatches).toHaveLength(1)
+    expect(store.filteredMatches[0]?.id).toBe('match-1')
   })
 })

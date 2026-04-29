@@ -58,6 +58,7 @@ export interface Match {
 export interface MatchesFilters {
   readonly stage?: MatchStage
   readonly status?: MatchStatus
+  readonly leagueId?: string
 }
 
 export interface MatchInput {

@@ -18,11 +18,13 @@ export const useMatchesStore = defineStore('matches', () => {
   const error = ref<string | null>(null)
   const stageFilter = ref<MatchStage | null>(null)
   const statusFilter = ref<MatchStatus | null>(null)
+  const leagueFilter = ref<string | null>(null)
 
   const filteredMatches = computed<Match[]>(() => {
     return matches.value
       .filter(m => !stageFilter.value || m.stage === stageFilter.value)
       .filter(m => !statusFilter.value || m.status === statusFilter.value)
+      .filter(m => !leagueFilter.value || m.league?.id === leagueFilter.value)
   })
 
   const matchesByDate = computed<MatchDateGroup[]>(() => {
@@ -70,6 +72,7 @@ export const useMatchesStore = defineStore('matches', () => {
     error,
     stageFilter,
     statusFilter,
+    leagueFilter,
     filteredMatches,
     matchesByDate,
     fetchMatches,

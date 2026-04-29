@@ -6,7 +6,7 @@ import {
   groups, groupMembers, leagues,
   players, specialPredictionTypes, specialPredictions,
   groupGlobalTypeSubscriptions, groupPredictionPoints,
-  waitlistEntries, auditLogs,
+  waitlistEntries, auditLogs, userLeagueFavorites,
 } from '../src/db/schema/index.js'
 
 // ─── Fixed UUIDs ─────────────────────────────────────────────────────────────
@@ -102,6 +102,7 @@ async function seedLocal(): Promise<void> {
   await db.delete(matchResults)
   await db.delete(matches)
   await db.delete(players)
+  await db.delete(userLeagueFavorites)
   await db.delete(leagues)
   await db.delete(users)
   await db.delete(venues)
@@ -407,10 +408,44 @@ async function seedLocal(): Promise<void> {
     newValue: { role: 'admin' },
   })
 
+  // ─── NB I Liga + 32. forduló ────────────────────────────────────────────────
+  const LEAGUE_NB1_ID = 'bbbbbbbb-1111-2222-3333-000000000002'
+
+  await db.insert(leagues).values({
+    id: LEAGUE_NB1_ID,
+    name: 'NB I 2025/26',
+    shortName: 'NB I',
+  })
+
+  const ZTE = await teamId('ZTE')
+  const PAFC = await teamId('PAFC')
+  const MTK = await teamId('MTK')
+  const NYIR = await teamId('NYIR')
+  const KBSC = await teamId('KBSC')
+  const KISV = await teamId('KISV')
+  const ETO_TEAM = await teamId('ETO')
+  const DVTK_TEAM = await teamId('DVTK')
+  const PAKS = await teamId('PAKS')
+  const DVSC = await teamId('DVSC')
+  const UJP = await teamId('UJP')
+  const FTC = await teamId('FTC')
+
+  const nb1Matches = [
+    { homeTeamId: ZTE,      awayTeamId: PAFC,      leagueId: LEAGUE_NB1_ID, stage: 'group' as const, groupName: '32. forduló', matchNumber: 1, scheduledAt: new Date('2026-05-01T18:00:00.000Z'), status: 'scheduled' as const },
+    { homeTeamId: MTK,      awayTeamId: NYIR,      leagueId: LEAGUE_NB1_ID, stage: 'group' as const, groupName: '32. forduló', matchNumber: 2, scheduledAt: new Date('2026-05-02T11:00:00.000Z'), status: 'scheduled' as const },
+    { homeTeamId: KBSC,     awayTeamId: KISV,      leagueId: LEAGUE_NB1_ID, stage: 'group' as const, groupName: '32. forduló', matchNumber: 3, scheduledAt: new Date('2026-05-02T14:00:00.000Z'), status: 'scheduled' as const },
+    { homeTeamId: ETO_TEAM, awayTeamId: DVTK_TEAM, leagueId: LEAGUE_NB1_ID, stage: 'group' as const, groupName: '32. forduló', matchNumber: 4, scheduledAt: new Date('2026-05-02T17:15:00.000Z'), status: 'scheduled' as const },
+    { homeTeamId: PAKS,     awayTeamId: DVSC,      leagueId: LEAGUE_NB1_ID, stage: 'group' as const, groupName: '32. forduló', matchNumber: 5, scheduledAt: new Date('2026-05-03T11:30:00.000Z'), status: 'scheduled' as const },
+    { homeTeamId: UJP,      awayTeamId: FTC,       leagueId: LEAGUE_NB1_ID, stage: 'group' as const, groupName: '32. forduló', matchNumber: 6, scheduledAt: new Date('2026-05-03T14:00:00.000Z'), status: 'scheduled' as const },
+  ]
+  for (const m of nb1Matches) {
+    await db.insert(matches).values(m)
+  }
+
   console.log('Local seed complete.')
   console.log('  Users: 1 admin + 5 dummy')
   console.log('  Players: 4')
-  console.log('  Matches: 4 finished, 2 live, 4 scheduled')
+  console.log('  Matches: 4 finished, 2 live, 4 scheduled (WC) + 6 scheduled (NB I)')
   console.log('  Predictions: 31 (6 users × finished + scheduled mix)')
   console.log('  Groups: "Irodai tippverseny" (4 members), "Haverok" (5 members)')
   console.log('  Group prediction points: per-group scoring for finished matches')
@@ -418,6 +453,7 @@ async function seedLocal(): Promise<void> {
   console.log('  Special predictions: 6 (mix answered)')
   console.log('  Waitlist entries: 3')
   console.log('  Audit logs: 2')
+  console.log('  NB I 32. forduló: 6 matches')
   process.exit(0)
 }
 
