@@ -31,8 +31,66 @@
     </div>
   </div>
 
+  <!-- Story detail modal -->
+  <div id="story-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-black/40" onclick="closeModal()"></div>
+    <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[80vh] flex flex-col">
+      <div class="flex items-center justify-between border-b px-6 py-4">
+        <h3 id="modal-title" class="font-bold text-lg text-gray-900"></h3>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
+      </div>
+      <div id="modal-body" class="overflow-y-auto px-6 py-4 prose prose-sm max-w-none"></div>
+    </div>
+  </div>
+
   <script>
     const BASE = 'https://raw.githubusercontent.com/gaborbencsik/tipp-game/main/plans'
+
+    async function openStory(id, done) {
+      const modal = document.getElementById('story-modal')
+      const title = document.getElementById('modal-title')
+      const body = document.getElementById('modal-body')
+
+      title.textContent = id
+      body.innerHTML = '<p class="text-gray-500">Betöltés...</p>'
+      modal.classList.remove('hidden')
+
+      const folder = done ? 'stories/archive' : 'stories'
+      try {
+        const res = await fetch(`${BASE}/${folder}/${id}.md`)
+        if (!res.ok) {
+          const altRes = await fetch(`${BASE}/${done ? 'stories' : 'stories/archive'}/${id}.md`)
+          if (!altRes.ok) throw new Error('Nem található')
+          body.innerHTML = renderMarkdown(await altRes.text())
+        } else {
+          body.innerHTML = renderMarkdown(await res.text())
+        }
+      } catch (e) {
+        body.innerHTML = `<p class="text-red-600">Hiba: ${e.message}</p>`
+      }
+    }
+
+    function closeModal() {
+      document.getElementById('story-modal').classList.add('hidden')
+    }
+
+    function renderMarkdown(md) {
+      return md
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/^### (.+)$/gm, '<h3 class="text-base font-semibold text-gray-800 mt-4 mb-1">$1</h3>')
+        .replace(/^## (.+)$/gm, '<h2 class="text-lg font-bold text-gray-900 mt-5 mb-2">$1</h2>')
+        .replace(/^# (.+)$/gm, '<h1 class="text-xl font-bold text-gray-900 mt-4 mb-2">$1</h1>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/`([^`]+)`/g, '<code class="bg-gray-100 px-1 py-0.5 rounded text-xs">$1</code>')
+        .replace(/^- (.+)$/gm, '<li class="ml-4 list-disc text-gray-700">$1</li>')
+        .replace(/^(\d+)\. (.+)$/gm, '<li class="ml-4 list-decimal text-gray-700">$2</li>')
+        .replace(/\n{2,}/g, '<br/><br/>')
+        .replace(/\n/g, '<br/>')
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModal()
+    })
 
     async function loadData() {
       const loading = document.getElementById('loading')
@@ -154,8 +212,8 @@
             </thead>
             <tbody class="divide-y divide-gray-100">
               ${backlog.map(r => `
-                <tr class="hover:bg-gray-50">
-                  <td class="px-4 py-2 font-mono text-xs text-gray-700">${r.id}</td>
+                <tr class="hover:bg-blue-50 cursor-pointer transition-colors" onclick="openStory('${r.id}', false)">
+                  <td class="px-4 py-2 font-mono text-xs text-blue-700 underline">${r.id}</td>
                   <td class="px-4 py-2 text-gray-800">${r.title}</td>
                   <td class="px-4 py-2">${priorityBadge(r.priority)}</td>
                   <td class="px-4 py-2 text-xs text-gray-500">${r.dependency}</td>
@@ -180,8 +238,8 @@
               </thead>
               <tbody class="divide-y divide-gray-100">
                 ${history.map(r => `
-                  <tr class="hover:bg-gray-50">
-                    <td class="px-4 py-2 font-mono text-xs text-gray-700">${r.id}</td>
+                  <tr class="hover:bg-blue-50 cursor-pointer transition-colors" onclick="openStory('${r.id}', true)">
+                    <td class="px-4 py-2 font-mono text-xs text-blue-700 underline">${r.id}</td>
                     <td class="px-4 py-2 text-gray-800">${r.title}</td>
                     <td class="px-4 py-2">${priorityBadge(r.priority)}</td>
                   </tr>
