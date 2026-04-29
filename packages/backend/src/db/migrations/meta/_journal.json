@@ -99,6 +99,13 @@
       "when": 1777470520000,
       "tag": "0013_user_league_favorites",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1777556920000,
+      "tag": "0014_favorite_team_double_points",
+      "breakpoints": true
     }
   ]
 }

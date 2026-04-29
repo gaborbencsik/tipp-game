@@ -261,6 +261,34 @@
         </form>
       </div>
 
+      <!-- Kedvenc csapat dupla pont toggle -->
+      <div class="mt-8 max-w-md">
+        <h3 class="text-base font-semibold text-gray-800 mb-1">Kedvenc csapat dupla pont</h3>
+        <p class="text-sm text-gray-500 mb-3">Ha aktív, a tagok kedvenc csapatának meccsein szerzett pontok duplán számítanak a csoport ranglistán.</p>
+        <div class="flex items-center justify-between border rounded-lg p-3 bg-white">
+          <span class="text-sm font-medium text-gray-800">Dupla pont szabály</span>
+          <label class="inline-flex items-center gap-2 shrink-0 cursor-pointer">
+            <button
+              type="button"
+              role="switch"
+              data-testid="fav-double-toggle"
+              :aria-checked="currentGroup?.favoriteTeamDoublePoints"
+              class="relative w-9 h-5 rounded-full transition-colors duration-150"
+              :class="currentGroup?.favoriteTeamDoublePoints ? 'bg-green-500' : 'bg-gray-300'"
+              @click="toggleFavDoublePoints"
+            >
+              <span
+                class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-150"
+                :class="currentGroup?.favoriteTeamDoublePoints ? 'translate-x-4' : 'translate-x-0'"
+              />
+            </button>
+            <span class="text-xs font-medium" :class="currentGroup?.favoriteTeamDoublePoints ? 'text-green-700' : 'text-gray-400'">
+              {{ currentGroup?.favoriteTeamDoublePoints ? 'Aktív' : 'Inaktív' }}
+            </span>
+          </label>
+        </div>
+      </div>
+
       <!-- Hivatalos speciális tippek kezelése (admin) -->
       <div class="mt-8 max-w-lg">
         <h3 class="text-base font-semibold text-gray-800 mb-1">Hivatalos speciális tippek</h3>
@@ -878,6 +906,11 @@ async function onToggleInvite(): Promise<void> {
   const active = currentGroup.value?.inviteActive
   if (active === undefined) return
   await groupsStore.setInviteActive(groupId, !active)
+}
+
+async function toggleFavDoublePoints(): Promise<void> {
+  const current = currentGroup.value?.favoriteTeamDoublePoints ?? false
+  await groupsStore.updateGroupSettings(groupId, { favoriteTeamDoublePoints: !current })
 }
 
 async function onConfirmRegenerate(): Promise<void> {

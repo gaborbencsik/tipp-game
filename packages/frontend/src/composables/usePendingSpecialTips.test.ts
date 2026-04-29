@@ -29,6 +29,7 @@ function makeGroup(id: string, name: string): Group {
     memberCount: 5,
     isAdmin: false,
     userRank: 1,
+    favoriteTeamDoublePoints: false,
     createdAt: '2026-01-01T00:00:00Z',
   }
 }

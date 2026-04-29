@@ -105,6 +105,12 @@ export const useGroupsStore = defineStore('groups', () => {
     groups.value = groups.value.map((g) => g.id === groupId ? updated : g)
   }
 
+  async function updateGroupSettings(groupId: string, settings: { favoriteTeamDoublePoints: boolean }): Promise<void> {
+    const token = await getAccessToken()
+    const updated = await api.groups.updateSettings(token, groupId, settings)
+    groups.value = groups.value.map((g) => g.id === groupId ? updated : g)
+  }
+
   async function deleteGroup(groupId: string): Promise<void> {
     const token = await getAccessToken()
     await api.groups.delete(token, groupId)
@@ -262,6 +268,7 @@ export const useGroupsStore = defineStore('groups', () => {
     toggleMemberAdmin,
     regenerateInvite,
     setInviteActive,
+    updateGroupSettings,
     deleteGroup,
     fetchGroupScoringConfig,
     setGroupScoringConfig,

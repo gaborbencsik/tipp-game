@@ -6,8 +6,7 @@
 
 | Story ID | Cím | Prioritás | Függőség |
 |----------|-----|-----------|----------|
-| US-404 | Kedvenc csapat dupla pont számítás | Should Have | US-206 |
-| US-607 | Kedvenc csapat dupla pont szabály (csoport beállítás) | Should Have | US-404 |
+| US-404 | Kedvenc csapat dupla pont számítás | Should Have | US-206, US-607 |
 | US-609 | Liga filter csoportonként | Should Have | — |
 | US-611 | Mérkőzések automatikus szűrése csoport-ligák alapján | Should Have | US-609, US-610 |
 | US-807 | Admin használati statisztikák (dashboard) | Should Have | — |
@@ -29,4 +28,4 @@
 
 ---
 
-**Haladás: 79 / 99 story kész** — Must Have: 31/31, Should Have: 48/65, Nice to Have: 0/3
+**Haladás: 80 / 99 story kész** — Must Have: 31/31, Should Have: 49/65, Nice to Have: 0/3

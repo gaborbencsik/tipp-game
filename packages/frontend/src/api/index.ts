@@ -173,6 +173,12 @@ export const api = {
         body: JSON.stringify(input),
         headers: { Authorization: `Bearer ${token}` },
       }),
+    updateSettings: (token: string, groupId: string, settings: { favoriteTeamDoublePoints: boolean }) =>
+      request<Group>(`/groups/${groupId}/settings`, {
+        method: 'PATCH',
+        body: JSON.stringify(settings),
+        headers: { Authorization: `Bearer ${token}` },
+      }),
     specialTypes: {
       list: (token: string, groupId: string) =>
         request<SpecialPredictionType[]>(`/groups/${groupId}/special-types`, {

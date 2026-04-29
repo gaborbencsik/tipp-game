@@ -76,6 +76,7 @@ const SAMPLE_GROUP: Group = {
   memberCount: 3,
   isAdmin: true,
   userRank: null,
+  favoriteTeamDoublePoints: false,
   createdAt: '2026-01-01T00:00:00.000Z',
 }
 

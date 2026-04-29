@@ -42,6 +42,7 @@ function toApiGroup(
     memberCount,
     isAdmin,
     userRank,
+    favoriteTeamDoublePoints: row.favoriteTeamDoublePoints,
     createdAt: row.createdAt.toISOString(),
   }
 }
@@ -384,4 +385,46 @@ export async function deleteGroup(groupId: string, requesterId: string, isGlobal
     .update(groups)
     .set({ deletedAt: new Date() })
     .where(eq(groups.id, groupId))
+}
+
+export interface GroupSettings {
+  readonly favoriteTeamDoublePoints?: boolean
+}
+
+export async function updateGroupSettings(
+  groupId: string,
+  userId: string,
+  settings: GroupSettings,
+): Promise<Group> {
+  const groupRows = await db
+    .select()
+    .from(groups)
+    .where(and(eq(groups.id, groupId), isNull(groups.deletedAt)))
+    .limit(1)
+  if (!groupRows[0]) throw new AppError(404, 'Group not found')
+
+  const memberRows = await db
+    .select()
+    .from(groupMembers)
+    .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, userId)))
+    .limit(1)
+  if (!memberRows[0]?.isAdmin) throw new AppError(403, 'Not authorized')
+
+  const updateData: Record<string, unknown> = { updatedAt: new Date() }
+  if (settings.favoriteTeamDoublePoints !== undefined) {
+    updateData.favoriteTeamDoublePoints = settings.favoriteTeamDoublePoints
+  }
+
+  const updated = await db
+    .update(groups)
+    .set(updateData)
+    .where(eq(groups.id, groupId))
+    .returning()
+
+  const countRows = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(groupMembers)
+    .where(eq(groupMembers.groupId, groupId))
+
+  return toApiGroup(updated[0]!, countRows[0]?.count ?? 0, true)
 }

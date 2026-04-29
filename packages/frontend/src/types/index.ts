@@ -150,6 +150,7 @@ export interface Group {
   readonly memberCount: number
   readonly isAdmin: boolean
   readonly userRank: number | null
+  readonly favoriteTeamDoublePoints: boolean
   readonly createdAt: string
 }
 

@@ -2,7 +2,7 @@ import Router from '@koa/router'
 import { authMiddleware } from '../middleware/auth.middleware.js'
 import { createRateLimit } from '../middleware/rateLimit.middleware.js'
 import { upsertUser } from '../services/user.service.js'
-import { getMyGroups, createGroup, joinGroup, getGroupMembers, removeMember, setMemberAdmin, regenerateInviteCode, setInviteActive, deleteGroup } from '../services/groups.service.js'
+import { getMyGroups, createGroup, joinGroup, getGroupMembers, removeMember, setMemberAdmin, regenerateInviteCode, setInviteActive, deleteGroup, updateGroupSettings } from '../services/groups.service.js'
 import { getGroupLeaderboard } from '../services/group-leaderboard.service.js'
 import { getGroupConfig, setGroupConfig } from '../services/scoring-config.service.js'
 import type { GroupInput, JoinGroupInput, ScoringConfigInput } from '../types/index.js'
@@ -125,6 +125,16 @@ router.put('/api/groups/:groupId/scoring-config', authMiddleware, async (ctx) =>
     }
   }
   ctx.body = await setGroupConfig(ctx.params.groupId, body as unknown as ScoringConfigInput)
+})
+
+router.patch('/api/groups/:groupId/settings', authMiddleware, async (ctx) => {
+  const dbUser = await upsertUser(ctx.state.user)
+  const body = ctx.request.body as Record<string, unknown>
+  const settings: Record<string, boolean> = {}
+  if (typeof body.favoriteTeamDoublePoints === 'boolean') {
+    settings.favoriteTeamDoublePoints = body.favoriteTeamDoublePoints
+  }
+  ctx.body = await updateGroupSettings(ctx.params.groupId, dbUser.id, settings)
 })
 
 export { router as groupsRouter }

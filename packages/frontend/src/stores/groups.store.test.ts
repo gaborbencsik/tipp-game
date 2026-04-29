@@ -19,6 +19,7 @@ const {
   mockGroupsDelete,
   mockGroupsGetScoringConfig,
   mockGroupsSetScoringConfig,
+  mockGroupsUpdateSettings,
   mockSpecialTypesList,
   mockSpecialTypesDeactivate,
   mockGlobalSubsUnsubscribe,
@@ -37,6 +38,7 @@ const {
   mockGroupsDelete: vi.fn(),
   mockGroupsGetScoringConfig: vi.fn(),
   mockGroupsSetScoringConfig: vi.fn(),
+  mockGroupsUpdateSettings: vi.fn(),
   mockSpecialTypesList: vi.fn(),
   mockSpecialTypesDeactivate: vi.fn(),
   mockGlobalSubsUnsubscribe: vi.fn(),
@@ -67,6 +69,7 @@ vi.mock('@/api/index', () => ({
       delete: mockGroupsDelete,
       getScoringConfig: mockGroupsGetScoringConfig,
       setScoringConfig: mockGroupsSetScoringConfig,
+      updateSettings: mockGroupsUpdateSettings,
       specialTypes: {
         list: mockSpecialTypesList,
         deactivate: mockSpecialTypesDeactivate,
@@ -93,6 +96,7 @@ const GROUP_A: Group = {
   memberCount: 3,
   isAdmin: true,
   userRank: null,
+  favoriteTeamDoublePoints: false,
   createdAt: '2026-01-01T00:00:00.000Z',
 }
 
@@ -106,6 +110,7 @@ const GROUP_B: Group = {
   memberCount: 5,
   isAdmin: false,
   userRank: null,
+  favoriteTeamDoublePoints: false,
   createdAt: '2026-02-01T00:00:00.000Z',
 }
 
@@ -468,5 +473,20 @@ describe('groups.store', () => {
     await store.unsubscribeGlobalType('g1', 'global-1')
     expect(mockGlobalSubsUnsubscribe).toHaveBeenCalledWith('mock-token', 'g1', 'global-1')
     expect(store.globalSubscriptionsMap['g1']![0]!.subscribed).toBe(false)
+  })
+
+  // ─── updateGroupSettings ────────────────────────────────────────────────────
+
+  it('updateGroupSettings → calls API and updates group in store', async () => {
+    const updatedGroup = { ...GROUP_A, favoriteTeamDoublePoints: true }
+    mockGroupsUpdateSettings.mockResolvedValue(updatedGroup)
+    mockGroupsMine.mockResolvedValue([GROUP_A, GROUP_B])
+
+    const store = useGroupsStore()
+    await store.fetchMyGroups()
+    await store.updateGroupSettings(GROUP_A.id, { favoriteTeamDoublePoints: true })
+
+    expect(mockGroupsUpdateSettings).toHaveBeenCalledWith('mock-token', GROUP_A.id, { favoriteTeamDoublePoints: true })
+    expect(store.groups.find(g => g.id === GROUP_A.id)?.favoriteTeamDoublePoints).toBe(true)
   })
 })
