@@ -10,10 +10,11 @@
 
 **Indoklás:**
 - Egyetlen, olcsó tier ($19/hó Pro) lefedi az összes szükséges ligát
-- Magyar **NB I és NB II** mindkét tier-en elérhető — ez az egyetlen API ahol az NB II is megvan
+- Magyar **NB I** elérhető mindkét tier-en
 - Free tier (100 req/nap) elegendő fejlesztéshez és alacsony forgalmú teszteléshez
 - Fixture response struktúra könnyen térképezhető a meglévő Drizzle schemára
 - Közvetlen elérés (nem RapidAPI-n át) — nincs extra overhead
+- NB II is elérhető (Nice to Have — US-1204)
 
 ---
 
@@ -94,7 +95,7 @@ Auth:     x-rapidapi-key: YOUR_KEY
 | UEFA Nations League B | World | **5** (verify) | `2024` |
 | Internacionális barátságos (válogatott) | World | **10** (verify) | aktuális év |
 | Magyar NB I (Nemzeti Bajnokság I) | Hungary | **271** (verify) | `2025` |
-| Magyar NB II | Hungary | **272** (verify) | `2025` |
+| Magyar NB II (Nice to Have — US-1204) | Hungary | **272** (verify) | `2025` |
 
 ### Verifikálási parancs (bash, az API key megszerzése után)
 
