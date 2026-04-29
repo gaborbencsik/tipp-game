@@ -23,6 +23,7 @@ const {
   mockSpecialTypesList,
   mockSpecialTypesDeactivate,
   mockGlobalSubsUnsubscribe,
+  mockGroupsMyPredictions,
 } = vi.hoisted(() => ({
   mockGetSession: vi.fn().mockResolvedValue({
     data: { session: { access_token: 'mock-token' } },
@@ -42,6 +43,7 @@ const {
   mockSpecialTypesList: vi.fn(),
   mockSpecialTypesDeactivate: vi.fn(),
   mockGlobalSubsUnsubscribe: vi.fn(),
+  mockGroupsMyPredictions: vi.fn(),
 }))
 
 vi.mock('@/lib/supabase', () => ({
@@ -75,6 +77,7 @@ vi.mock('@/api/index', () => ({
         deactivate: mockSpecialTypesDeactivate,
       },
       specialPredictions: { list: vi.fn().mockResolvedValue([]), upsert: vi.fn() },
+      myPredictions: mockGroupsMyPredictions,
       globalTypeSubscriptions: {
         list: vi.fn().mockResolvedValue([]),
         subscribe: vi.fn(),
@@ -488,5 +491,24 @@ describe('groups.store', () => {
 
     expect(mockGroupsUpdateSettings).toHaveBeenCalledWith('mock-token', GROUP_A.id, { favoriteTeamDoublePoints: true })
     expect(store.groups.find(g => g.id === GROUP_A.id)?.favoriteTeamDoublePoints).toBe(true)
+  })
+
+  // ─── fetchMyGroupPredictions ──────────────────────────────────────────────────
+
+  it('fetchMyGroupPredictions populates myGroupPredictionsMap', async () => {
+    const mockResult = { predictions: [{ predictionId: 'p1', matchId: 'm1', scheduledAt: '2026-06-14T18:00:00Z', homeTeam: { id: 'th', name: 'Hungary', shortCode: 'HUN', flagUrl: null }, awayTeam: { id: 'ta', name: 'France', shortCode: 'FRA', flagUrl: null }, homeGoals: 2, awayGoals: 1, resultHomeGoals: 2, resultAwayGoals: 1, points: 5, doubledByFavorite: false }], totalPoints: 5 }
+    mockGroupsMyPredictions.mockResolvedValue(mockResult)
+    const store = useGroupsStore()
+    await store.fetchMyGroupPredictions('g1')
+    expect(mockGroupsMyPredictions).toHaveBeenCalledWith('mock-token', 'g1')
+    expect(store.myGroupPredictionsMap['g1']).toEqual(mockResult)
+  })
+
+  it('fetchMyGroupPredictions sets error on failure', async () => {
+    mockGroupsMyPredictions.mockRejectedValue(new Error('Not a member'))
+    const store = useGroupsStore()
+    await store.fetchMyGroupPredictions('g1')
+    expect(store.myGroupPredictionsError).toBe('Not a member')
+    expect(store.myGroupPredictionsMap['g1']).toBeUndefined()
   })
 })

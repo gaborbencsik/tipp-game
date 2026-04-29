@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { supabase } from '../lib/supabase.js'
 import { api } from '../api/index.js'
-import type { Group, GroupInput, GroupMember, JoinGroupInput, ScoringConfigFull, ScoringConfigInput, SpecialPredictionType, SpecialTypeInput, SpecialPredictionWithType, SpecialPredictionInput, GlobalTypeWithSubscription } from '../types/index.js'
+import type { Group, GroupInput, GroupMember, JoinGroupInput, ScoringConfigFull, ScoringConfigInput, SpecialPredictionType, SpecialTypeInput, SpecialPredictionWithType, SpecialPredictionInput, GlobalTypeWithSubscription, GroupMyPredictionsResult } from '../types/index.js'
 
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
 
@@ -38,6 +38,11 @@ export const useGroupsStore = defineStore('groups', () => {
   const globalSubscriptionsMap = ref<Record<string, GlobalTypeWithSubscription[]>>({})
   const globalSubscriptionsLoading = ref(false)
   const globalSubscriptionsError = ref<string | null>(null)
+
+  // My group predictions (member)
+  const myGroupPredictionsMap = ref<Record<string, GroupMyPredictionsResult>>({})
+  const myGroupPredictionsLoading = ref(false)
+  const myGroupPredictionsError = ref<string | null>(null)
 
   async function fetchMyGroups(): Promise<void> {
     isLoading.value = true
@@ -240,6 +245,21 @@ export const useGroupsStore = defineStore('groups', () => {
     delete specialPredictionsMap.value[groupId]
   }
 
+  // ─── My group predictions ───────────────────────────────────────────────────
+
+  async function fetchMyGroupPredictions(groupId: string): Promise<void> {
+    myGroupPredictionsLoading.value = true
+    myGroupPredictionsError.value = null
+    try {
+      const token = await getAccessToken()
+      myGroupPredictionsMap.value[groupId] = await api.groups.myPredictions(token, groupId)
+    } catch (err) {
+      myGroupPredictionsError.value = err instanceof Error ? err.message : 'Ismeretlen hiba'
+    } finally {
+      myGroupPredictionsLoading.value = false
+    }
+  }
+
   return {
     groups,
     isLoading,
@@ -282,5 +302,9 @@ export const useGroupsStore = defineStore('groups', () => {
     fetchGlobalSubscriptions,
     subscribeGlobalType,
     unsubscribeGlobalType,
+    myGroupPredictionsMap,
+    myGroupPredictionsLoading,
+    myGroupPredictionsError,
+    fetchMyGroupPredictions,
   }
 })

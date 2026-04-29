@@ -4,6 +4,7 @@ import { createRateLimit } from '../middleware/rateLimit.middleware.js'
 import { upsertUser } from '../services/user.service.js'
 import { getMyGroups, createGroup, joinGroup, getGroupMembers, removeMember, setMemberAdmin, regenerateInviteCode, setInviteActive, deleteGroup, updateGroupSettings } from '../services/groups.service.js'
 import { getGroupLeaderboard } from '../services/group-leaderboard.service.js'
+import { getMyGroupPredictions } from '../services/group-my-predictions.service.js'
 import { getGroupConfig, setGroupConfig } from '../services/scoring-config.service.js'
 import type { GroupInput, JoinGroupInput, ScoringConfigInput } from '../types/index.js'
 
@@ -49,6 +50,11 @@ router.post('/api/groups/join', joinRateLimit, authMiddleware, async (ctx) => {
 router.get('/api/groups/:groupId/leaderboard', authMiddleware, async (ctx) => {
   const dbUser = await upsertUser(ctx.state.user)
   ctx.body = await getGroupLeaderboard(ctx.params.groupId, dbUser.id)
+})
+
+router.get('/api/groups/:groupId/my-predictions', authMiddleware, async (ctx) => {
+  const dbUser = await upsertUser(ctx.state.user)
+  ctx.body = await getMyGroupPredictions(ctx.params.groupId, dbUser.id)
 })
 
 router.get('/api/groups/:groupId/members', authMiddleware, async (ctx) => {

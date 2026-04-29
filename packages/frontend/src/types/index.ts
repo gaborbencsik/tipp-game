@@ -131,6 +131,25 @@ export interface MatchPrediction {
   readonly pointsGlobal: number | null
 }
 
+export interface GroupMatchPrediction {
+  readonly predictionId: string
+  readonly matchId: string
+  readonly scheduledAt: string
+  readonly homeTeam: { readonly id: string; readonly name: string; readonly shortCode: string; readonly flagUrl: string | null }
+  readonly awayTeam: { readonly id: string; readonly name: string; readonly shortCode: string; readonly flagUrl: string | null }
+  readonly homeGoals: number
+  readonly awayGoals: number
+  readonly resultHomeGoals: number
+  readonly resultAwayGoals: number
+  readonly points: number
+  readonly doubledByFavorite: boolean
+}
+
+export interface GroupMyPredictionsResult {
+  readonly predictions: GroupMatchPrediction[]
+  readonly totalPoints: number
+}
+
 export interface AdminUser {
   readonly id: string
   readonly email: string

@@ -15,6 +15,14 @@
         Ranglista
       </button>
       <button
+        data-testid="tab-my-predictions"
+        class="px-4 py-2 text-sm font-medium"
+        :class="activeTab === 'my-predictions' ? 'border-b-2 border-blue-600 text-blue-700 font-semibold' : 'text-gray-500'"
+        @click="switchToMyPredictionsTab"
+      >
+        Tippjeim
+      </button>
+      <button
         data-testid="tab-special"
         class="px-4 py-2 text-sm font-medium"
         :class="activeTab === 'special' ? 'border-b-2 border-blue-600 text-blue-700 font-semibold' : 'text-gray-500'"
@@ -463,6 +471,55 @@
       </div>
     </div>
 
+    <!-- Tippjeim tab -->
+    <div v-if="activeTab === 'my-predictions'" data-testid="my-predictions-tab">
+      <div v-if="groupsStore.myGroupPredictionsLoading" class="text-gray-500">Betöltés...</div>
+      <div v-else-if="groupsStore.myGroupPredictionsError" class="text-red-600">{{ groupsStore.myGroupPredictionsError }}</div>
+      <div v-else-if="!myGroupPredictions || myGroupPredictions.predictions.length === 0" data-testid="my-predictions-empty" class="text-gray-500 text-sm">
+        Még nincsenek kiértékelt tippjeid ebben a csoportban.
+      </div>
+      <div v-else>
+        <div class="mb-4 text-sm font-medium text-gray-700">
+          Összesen: <span class="text-blue-700 font-bold">{{ myGroupPredictions.totalPoints }} pont</span>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-gray-200 text-gray-500 text-left">
+                <th class="px-4 py-3">Mérkőzés</th>
+                <th class="px-4 py-3 text-center">Tipp</th>
+                <th class="px-4 py-3 text-center">Eredmény</th>
+                <th class="px-4 py-3 text-right">Pont</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="pred in myGroupPredictions.predictions"
+                :key="pred.predictionId"
+                data-testid="my-prediction-row"
+                class="border-b border-gray-100 last:border-0"
+              >
+                <td class="px-4 py-3">
+                  <div class="flex flex-col gap-0.5">
+                    <span class="text-xs text-gray-400">{{ formatDate(pred.scheduledAt) }}</span>
+                    <span class="font-medium text-gray-800">{{ pred.homeTeam.shortCode }} – {{ pred.awayTeam.shortCode }}</span>
+                  </div>
+                </td>
+                <td class="px-4 py-3 text-center text-gray-600 font-mono">{{ pred.homeGoals }}–{{ pred.awayGoals }}</td>
+                <td class="px-4 py-3 text-center text-gray-600 font-mono">{{ pred.resultHomeGoals }}–{{ pred.resultAwayGoals }}</td>
+                <td class="px-4 py-3 text-right">
+                  <div class="flex items-center justify-end gap-1">
+                    <span v-if="pred.doubledByFavorite" data-testid="double-badge" class="text-xs font-bold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">×2</span>
+                    <span class="font-bold" :class="pred.points > 0 ? 'text-blue-700' : 'text-gray-400'">{{ pred.points }}</span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <!-- Speciális tippek tab (member) -->
     <div v-if="activeTab === 'special'" data-testid="special-tab">
       <div v-if="groupsStore.specialPredictionsLoading" class="text-gray-500">Betöltés...</div>
@@ -697,7 +754,7 @@ import { api } from '../api/index.js'
 import { supabase } from '../lib/supabase.js'
 import type { GroupMember, LeaderboardEntry, ScoringConfigInput, SpecialTypeInput, StatPredictionTemplate, GlobalTypeWithSubscription } from '../types/index.js'
 
-type Tab = 'leaderboard' | 'members' | 'settings' | 'special'
+type Tab = 'leaderboard' | 'my-predictions' | 'members' | 'settings' | 'special'
 
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
 
@@ -1081,6 +1138,15 @@ async function switchToSpecialTab(): Promise<void> {
   }
 }
 
+async function switchToMyPredictionsTab(): Promise<void> {
+  activeTab.value = 'my-predictions'
+  if (!groupsStore.myGroupPredictionsMap[groupId]) {
+    await groupsStore.fetchMyGroupPredictions(groupId)
+  }
+}
+
+const myGroupPredictions = computed(() => groupsStore.myGroupPredictionsMap[groupId] ?? null)
+
 onMounted(async () => {
   isLoading.value = true
   error.value = null
@@ -1104,6 +1170,9 @@ onMounted(async () => {
 
   if (route.query.tab === 'special') {
     await switchToSpecialTab()
+  }
+  if (route.query.tab === 'my-predictions') {
+    await switchToMyPredictionsTab()
   }
 })
 </script>
