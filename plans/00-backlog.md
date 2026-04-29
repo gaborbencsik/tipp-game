@@ -6,8 +6,7 @@
 
 | Story ID | Cím | Prioritás | Függőség |
 |----------|-----|-----------|----------|
-| US-609 | Liga filter csoportonként | Should Have | — |
-| US-611 | Mérkőzések automatikus szűrése csoport-ligák alapján | Should Have | US-609, US-610 |
+| US-611 | Mérkőzések automatikus szűrése csoport-ligák alapján | Should Have | US-609 (kész), US-610 |
 | US-807 | Admin használati statisztikák (dashboard) | Should Have | — |
 | US-1002 | Felhasználói felület lokalizációja (i18n) | Should Have | — |
 | US-1101 | Donation gomb és pop-up | Should Have | — |
@@ -27,4 +26,4 @@
 
 ---
 
-**Haladás: 82 / 100 story kész** — Must Have: 31/31, Should Have: 51/66, Nice to Have: 0/3
+**Haladás: 83 / 100 story kész** — Must Have: 31/31, Should Have: 52/66, Nice to Have: 0/3

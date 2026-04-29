@@ -42,6 +42,21 @@
             maxlength="200"
             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
+          <div v-if="leagueStore.leagues.length > 1" data-testid="league-select" class="flex flex-col gap-1">
+            <span class="text-sm font-medium text-gray-700">Liga</span>
+            <select
+              v-model="selectedLeagueId"
+              :class="[
+                'w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500',
+                !selectedLeagueId ? 'text-gray-400' : 'text-gray-900'
+              ]"
+            >
+              <option value="" disabled>Válassz ligát...</option>
+              <option v-for="league in leagueStore.leagues" :key="league.id" :value="league.id">
+                {{ league.name }}
+              </option>
+            </select>
+          </div>
           <p v-if="createError" data-testid="create-error" class="text-red-600 text-xs">{{ createError }}</p>
           <div class="flex gap-2 justify-end">
             <button
@@ -182,8 +197,10 @@ import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import AppLayout from '../components/AppLayout.vue'
 import { useGroupsStore } from '../stores/groups.store.js'
+import { useLeagueFavoritesStore } from '../stores/league-favorites.store.js'
 
 const store = useGroupsStore()
+const leagueStore = useLeagueFavoritesStore()
 const route = useRoute()
 
 const showCreateForm = ref(false)
@@ -193,7 +210,7 @@ const isSubmitting = ref(false)
 const createName = ref('')
 const createDescription = ref('')
 const createError = ref<string | null>(null)
-
+const selectedLeagueId = ref('')
 const joinCode = ref('')
 const joinError = ref<string | null>(null)
 const copiedState = ref(new Map<string, 'code' | 'url'>())
@@ -218,7 +235,7 @@ async function copyUrl(groupId: string, code: string): Promise<void> {
 }
 
 onMounted(async () => {
-  await store.fetchMyGroups()
+  await Promise.all([store.fetchMyGroups(), leagueStore.fetchLeagues()])
   const action = route.query.action
   if (action === 'create') {
     showCreateForm.value = true
@@ -232,6 +249,7 @@ function closeCreateForm(): void {
   createName.value = ''
   createDescription.value = ''
   createError.value = null
+  selectedLeagueId.value = ''
 }
 
 function closeJoinForm(): void {
@@ -242,11 +260,19 @@ function closeJoinForm(): void {
 
 async function onCreateSubmit(): Promise<void> {
   createError.value = null
+  const leagueId = leagueStore.leagues.length === 1
+    ? leagueStore.leagues[0]!.id
+    : selectedLeagueId.value
+  if (!leagueId) {
+    createError.value = 'Válassz ki egy ligát'
+    return
+  }
   isSubmitting.value = true
   try {
     await store.createGroup({
       name: createName.value.trim(),
       description: createDescription.value.trim() || null,
+      leagueId,
     })
     closeCreateForm()
   } catch (err) {

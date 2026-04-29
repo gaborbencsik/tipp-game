@@ -1,6 +1,6 @@
-import { eq, isNull, sql, count, and, or } from 'drizzle-orm'
+import { eq, isNull, sql, count, and, or, inArray } from 'drizzle-orm'
 import { db } from '../db/client.js'
-import { users, predictions, groupMembers, groups, scoringConfigs, groupPredictionPoints, specialPredictions, specialPredictionTypes, groupGlobalTypeSubscriptions } from '../db/schema/index.js'
+import { users, predictions, groupMembers, groups, scoringConfigs, groupPredictionPoints, specialPredictions, specialPredictionTypes, groupGlobalTypeSubscriptions, groupLeagues, matches } from '../db/schema/index.js'
 import type { LeaderboardEntry } from './leaderboard.service.js'
 
 class AppError extends Error {
@@ -29,6 +29,12 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
   const memberIds = membership.map(m => m.userId)
   if (!memberIds.includes(requesterId)) throw new AppError(403, 'Not a member of this group')
 
+  const allowedLeagueRows = await db
+    .select({ leagueId: groupLeagues.leagueId })
+    .from(groupLeagues)
+    .where(eq(groupLeagues.groupId, groupId))
+  const allowedLeagueIds = allowedLeagueRows.map(r => r.leagueId)
+
   const useGroupPoints = group[0].scoringConfigId !== null || group[0].favoriteTeamDoublePoints
 
   let rows: Array<{
@@ -41,7 +47,7 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
   }>
 
   if (useGroupPoints) {
-    rows = await db
+    const baseQuery = db
       .select({
         userId: users.id,
         displayName: users.displayName,
@@ -57,11 +63,21 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
         groupPredictionPoints,
         sql`${groupPredictionPoints.predictionId} = ${predictions.id} AND ${groupPredictionPoints.groupId} = ${groupId}::uuid`,
       )
-      .where(eq(groupMembers.groupId, groupId))
+
+    const filtered = allowedLeagueIds.length > 0
+      ? baseQuery
+          .leftJoin(matches, eq(matches.id, predictions.matchId))
+          .where(and(
+            eq(groupMembers.groupId, groupId),
+            sql`(${predictions.id} IS NULL OR ${matches.leagueId} IN (${sql.join(allowedLeagueIds.map(id => sql`${id}::uuid`), sql`, `)}))`,
+          ))
+      : baseQuery.where(eq(groupMembers.groupId, groupId))
+
+    rows = await filtered
       .groupBy(users.id, users.displayName, users.avatarUrl)
       .orderBy(sql`coalesce(sum(${groupPredictionPoints.points}), 0) desc`)
   } else {
-    rows = await db
+    const baseQuery = db
       .select({
         userId: users.id,
         displayName: users.displayName,
@@ -73,7 +89,17 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
       .from(groupMembers)
       .innerJoin(users, eq(users.id, groupMembers.userId))
       .leftJoin(predictions, eq(predictions.userId, users.id))
-      .where(eq(groupMembers.groupId, groupId))
+
+    const filtered = allowedLeagueIds.length > 0
+      ? baseQuery
+          .leftJoin(matches, eq(matches.id, predictions.matchId))
+          .where(and(
+            eq(groupMembers.groupId, groupId),
+            sql`(${predictions.id} IS NULL OR ${matches.leagueId} IN (${sql.join(allowedLeagueIds.map(id => sql`${id}::uuid`), sql`, `)}))`,
+          ))
+      : baseQuery.where(eq(groupMembers.groupId, groupId))
+
+    rows = await filtered
       .groupBy(users.id, users.displayName, users.avatarUrl)
       .orderBy(sql`coalesce(sum(${predictions.pointsGlobal}), 0) desc`)
   }

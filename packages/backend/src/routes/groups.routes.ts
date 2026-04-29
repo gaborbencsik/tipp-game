@@ -2,7 +2,7 @@ import Router from '@koa/router'
 import { authMiddleware } from '../middleware/auth.middleware.js'
 import { createRateLimit } from '../middleware/rateLimit.middleware.js'
 import { upsertUser } from '../services/user.service.js'
-import { getMyGroups, createGroup, joinGroup, getGroupMembers, removeMember, setMemberAdmin, regenerateInviteCode, setInviteActive, deleteGroup, updateGroupSettings } from '../services/groups.service.js'
+import { getMyGroups, createGroup, joinGroup, getGroupMembers, removeMember, setMemberAdmin, regenerateInviteCode, setInviteActive, deleteGroup, updateGroupSettings, setGroupLeague } from '../services/groups.service.js'
 import { getGroupLeaderboard } from '../services/group-leaderboard.service.js'
 import { getMyGroupPredictions } from '../services/group-my-predictions.service.js'
 import { getGroupConfig, setGroupConfig } from '../services/scoring-config.service.js'
@@ -19,16 +19,18 @@ router.get('/api/groups/mine', authMiddleware, async (ctx) => {
 
 router.post('/api/groups', authMiddleware, async (ctx) => {
   const dbUser = await upsertUser(ctx.state.user)
-  const body = ctx.request.body as { name?: unknown; description?: unknown }
+  const body = ctx.request.body as { name?: unknown; description?: unknown; leagueId?: unknown }
   const name = body.name
   if (typeof name !== 'string' || name.trim().length === 0) {
     ctx.status = 400
     ctx.body = { error: 'name is required' }
     return
   }
+  const leagueId = typeof body.leagueId === 'string' ? body.leagueId : ''
   const input: GroupInput = {
     name: name.trim(),
     description: typeof body.description === 'string' ? body.description.trim() || null : null,
+    leagueId,
   }
   ctx.status = 201
   ctx.body = await createGroup(input, dbUser.id)
@@ -141,6 +143,13 @@ router.patch('/api/groups/:groupId/settings', authMiddleware, async (ctx) => {
     settings.favoriteTeamDoublePoints = body.favoriteTeamDoublePoints
   }
   ctx.body = await updateGroupSettings(ctx.params.groupId, dbUser.id, settings)
+})
+
+router.put('/api/groups/:groupId/leagues', authMiddleware, async (ctx) => {
+  const dbUser = await upsertUser(ctx.state.user)
+  const body = ctx.request.body as { leagueId?: unknown }
+  const leagueId = typeof body.leagueId === 'string' ? body.leagueId : ''
+  ctx.body = await setGroupLeague(ctx.params.groupId, dbUser.id, leagueId)
 })
 
 export { router as groupsRouter }

@@ -7,6 +7,7 @@ const {
   mockInnerJoin, mockLeaderboardWhere, mockLeaderboardFrom,
   mockLeftJoin2,
   mockStatGroupBy, mockStatWhere, mockStatInnerJoin, mockStatFrom,
+  mockLeagueWhere, mockLeagueFrom,
 } = vi.hoisted(() => ({
   mockLimit: vi.fn(),
   mockMemberWhere: vi.fn(),
@@ -25,6 +26,8 @@ const {
   mockStatWhere: vi.fn(),
   mockStatInnerJoin: vi.fn(),
   mockStatFrom: vi.fn(),
+  mockLeagueWhere: vi.fn(),
+  mockLeagueFrom: vi.fn(),
 }))
 
 vi.mock('../src/db/client.js', () => ({
@@ -33,7 +36,7 @@ vi.mock('../src/db/client.js', () => ({
 
 vi.mock('../src/db/schema/index.js', () => ({
   users: { id: 'users.id', displayName: 'users.displayName', avatarUrl: 'users.avatarUrl' },
-  predictions: { pointsGlobal: 'predictions.pointsGlobal', id: 'predictions.id', userId: 'predictions.userId' },
+  predictions: { pointsGlobal: 'predictions.pointsGlobal', id: 'predictions.id', userId: 'predictions.userId', matchId: 'predictions.matchId' },
   groups: { id: 'groups.id', scoringConfigId: 'groups.scoringConfigId', favoriteTeamDoublePoints: 'groups.favoriteTeamDoublePoints' },
   groupMembers: { groupId: 'groupMembers.groupId', userId: 'groupMembers.userId' },
   groupPredictionPoints: { points: 'gpp.points', id: 'gpp.id', predictionId: 'gpp.predictionId', groupId: 'gpp.groupId' },
@@ -41,15 +44,18 @@ vi.mock('../src/db/schema/index.js', () => ({
   specialPredictions: { userId: 'sp.userId', typeId: 'sp.typeId', points: 'sp.points', groupId: 'sp.groupId' },
   specialPredictionTypes: { id: 'spt.id', groupId: 'spt.groupId', isGlobal: 'spt.isGlobal' },
   groupGlobalTypeSubscriptions: { globalTypeId: 'ggts.globalTypeId', groupId: 'ggts.groupId' },
+  groupLeagues: { groupId: 'gl.groupId', leagueId: 'gl.leagueId' },
+  matches: { id: 'matches.id', leagueId: 'matches.leagueId' },
 }))
 
 vi.mock('drizzle-orm', () => ({
   eq: vi.fn(),
   isNull: vi.fn(),
-  sql: Object.assign(vi.fn(() => 'sql-expr'), { raw: vi.fn() }),
+  sql: Object.assign(vi.fn(() => 'sql-expr'), { raw: vi.fn(), join: vi.fn(() => 'sql-join') }),
   count: vi.fn(() => 'count-expr'),
   and: vi.fn(),
   or: vi.fn(),
+  inArray: vi.fn(),
 }))
 
 import { getGroupLeaderboard } from '../src/services/group-leaderboard.service.js'
@@ -86,6 +92,9 @@ function setupLeaderboardSelectChain(
   mockMemberWhere.mockResolvedValueOnce(memberRows)
   mockMemberFrom.mockReturnValue({ where: mockMemberWhere })
 
+  mockLeagueWhere.mockResolvedValueOnce([])
+  mockLeagueFrom.mockReturnValue({ where: mockLeagueWhere })
+
   mockOrderBy.mockResolvedValueOnce(leaderboardRows)
   mockGroupBy.mockReturnValue({ orderBy: mockOrderBy })
   mockLeaderboardWhere.mockReturnValue({ groupBy: mockGroupBy })
@@ -105,6 +114,7 @@ function setupLeaderboardSelectChain(
   mockSelect
     .mockReturnValueOnce({ from: mockGroupFrom })       // group lookup
     .mockReturnValueOnce({ from: mockMemberFrom })       // membership check
+    .mockReturnValueOnce({ from: mockLeagueFrom })       // allowedLeagues
     .mockReturnValueOnce({ from: mockLeaderboardFrom })  // leaderboard query
     .mockReturnValueOnce({ from: mockStatFrom })         // stat points query
 }

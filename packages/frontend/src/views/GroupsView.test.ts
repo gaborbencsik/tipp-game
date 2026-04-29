@@ -56,6 +56,13 @@ vi.mock('@/stores/groups.store', () => ({
   }),
 }))
 
+vi.mock('@/stores/league-favorites.store', () => ({
+  useLeagueFavoritesStore: () => ({
+    leagues: [{ id: 'l-1', name: 'VB 2026', shortName: 'VB' }],
+    fetchLeagues: vi.fn().mockResolvedValue(undefined),
+  }),
+}))
+
 function buildRouter() {
   return buildTestRouter({ '/app/groups': GroupsView })
 }
@@ -77,6 +84,7 @@ const SAMPLE_GROUP: Group = {
   isAdmin: true,
   userRank: null,
   favoriteTeamDoublePoints: false,
+  leagues: [{ id: 'l-1', name: 'VB 2026', shortName: 'VB' }],
   createdAt: '2026-01-01T00:00:00.000Z',
 }
 
@@ -141,7 +149,7 @@ describe('GroupsView', () => {
     const vm = wrapper.vm as unknown as { createName: string; onCreateSubmit: () => Promise<void> }
     vm.createName = 'Barátok'
     await vm.onCreateSubmit()
-    expect(mockCreateGroup).toHaveBeenCalledWith({ name: 'Barátok', description: null })
+    expect(mockCreateGroup).toHaveBeenCalledWith({ name: 'Barátok', description: null, leagueId: 'l-1' })
   })
 
   it('join form submit → store.joinGroup hívva', async () => {

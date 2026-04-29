@@ -86,6 +86,7 @@ const GROUP: Group = {
   isAdmin: true,
   userRank: null,
   favoriteTeamDoublePoints: false,
+  leagues: [{ id: 'l-1', name: 'VB 2026', shortName: 'VB' }],
   createdAt: '2026-01-01T00:00:00.000Z',
 }
 

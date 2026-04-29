@@ -183,6 +183,12 @@ export const api = {
         body: JSON.stringify(settings),
         headers: { Authorization: `Bearer ${token}` },
       }),
+    setLeague: (token: string, groupId: string, leagueId: string) =>
+      request<Group>(`/groups/${groupId}/leagues`, {
+        method: 'PUT',
+        body: JSON.stringify({ leagueId }),
+        headers: { Authorization: `Bearer ${token}` },
+      }),
     specialTypes: {
       list: (token: string, groupId: string) =>
         request<SpecialPredictionType[]>(`/groups/${groupId}/special-types`, {

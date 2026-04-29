@@ -170,6 +170,7 @@ export interface Group {
   readonly isAdmin: boolean
   readonly userRank: number | null
   readonly favoriteTeamDoublePoints: boolean
+  readonly leagues: ReadonlyArray<{ readonly id: string; readonly name: string; readonly shortName: string }>
   readonly createdAt: string
 }
 
@@ -185,6 +186,7 @@ export interface GroupMember {
 export interface GroupInput {
   readonly name: string
   readonly description?: string | null
+  readonly leagueId: string
 }
 
 export interface JoinGroupInput {

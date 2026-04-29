@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 82 story kész (Must Have: 31/31, Should Have: 51/65)
+> 83 story kész (Must Have: 31/31, Should Have: 52/65)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -86,3 +86,4 @@
 | US-607 | Kedvenc csapat dupla pont szabály (csoport beállítás) | Should Have |
 | US-404 | Kedvenc csapat dupla pont számítás | Should Have |
 | US-613 | Csoportos tippjeim nézet | Should Have |
+| US-609 | Liga filter csoportonként | Should Have |

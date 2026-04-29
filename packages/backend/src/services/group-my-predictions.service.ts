@@ -1,7 +1,7 @@
-import { eq, and, isNull, desc, sql } from 'drizzle-orm'
+import { eq, and, isNull, desc, sql, inArray } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/pg-core'
 import { db } from '../db/client.js'
-import { predictions, matches, matchResults, teams, groups, groupMembers, groupPredictionPoints, userLeagueFavorites } from '../db/schema/index.js'
+import { predictions, matches, matchResults, teams, groups, groupMembers, groupPredictionPoints, userLeagueFavorites, groupLeagues } from '../db/schema/index.js'
 import type { GroupMatchPrediction } from '../types/index.js'
 
 class AppError extends Error {
@@ -46,8 +46,19 @@ export async function getMyGroupPredictions(
 
   const favoriteTeamDoublePoints = groupRow[0]?.favoriteTeamDoublePoints ?? false
 
+  const allowedLeagueRows = await db
+    .select({ leagueId: groupLeagues.leagueId })
+    .from(groupLeagues)
+    .where(eq(groupLeagues.groupId, groupId))
+  const allowedLeagueIds = allowedLeagueRows.map(r => r.leagueId)
+
   const homeTeam = alias(teams, 'home_team')
   const awayTeam = alias(teams, 'away_team')
+
+  const whereConditions = [eq(predictions.userId, userId)]
+  if (allowedLeagueIds.length > 0) {
+    whereConditions.push(inArray(matches.leagueId, allowedLeagueIds))
+  }
 
   const rows = await db
     .select({
@@ -76,7 +87,7 @@ export async function getMyGroupPredictions(
     .innerJoin(awayTeam, eq(matches.awayTeamId, awayTeam.id))
     .innerJoin(matchResults, eq(matchResults.matchId, matches.id))
     .leftJoin(groupPredictionPoints, sql`${groupPredictionPoints.predictionId} = ${predictions.id} AND ${groupPredictionPoints.groupId} = ${groupId}::uuid`)
-    .where(eq(predictions.userId, userId))
+    .where(and(...whereConditions))
     .orderBy(desc(matches.scheduledAt))
 
   let userFavorites: Array<{ leagueId: string; teamId: string }> = []

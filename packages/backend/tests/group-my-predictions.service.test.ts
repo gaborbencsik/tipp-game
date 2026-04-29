@@ -27,6 +27,7 @@ vi.mock('../src/db/schema/index.js', () => ({
   groupMembers: { id: 'groupMembers.id', groupId: 'groupMembers.groupId', userId: 'groupMembers.userId' },
   groupPredictionPoints: { predictionId: 'gpp.predictionId', groupId: 'gpp.groupId', points: 'gpp.points' },
   userLeagueFavorites: { userId: 'ulf.userId', leagueId: 'ulf.leagueId', teamId: 'ulf.teamId' },
+  groupLeagues: { groupId: 'gl.groupId', leagueId: 'gl.leagueId' },
 }))
 
 vi.mock('drizzle-orm', () => ({
@@ -35,6 +36,7 @@ vi.mock('drizzle-orm', () => ({
   isNull: vi.fn(),
   desc: vi.fn(),
   sql: Object.assign(vi.fn(() => 'sql-expr'), { raw: vi.fn() }),
+  inArray: vi.fn(),
 }))
 
 vi.mock('drizzle-orm/pg-core', () => ({
@@ -87,7 +89,12 @@ function setupCalls(options: {
   const flagChain = makeSelectChain([{ favoriteTeamDoublePoints: flag }])
   mockSelect.mockReturnValueOnce({ from: flagChain.from })
 
-  // Call 4: main predictions query → select().from().innerJoin()...orderBy()
+  // Call 4: allowedLeagueRows → select().from().where()
+  const leagueWhere = vi.fn().mockResolvedValue([])
+  const leagueFrom = vi.fn().mockReturnValue({ where: leagueWhere })
+  mockSelect.mockReturnValueOnce({ from: leagueFrom })
+
+  // Call 5: main predictions query → select().from().innerJoin()...orderBy()
   const predsLimit = vi.fn().mockResolvedValue(predictionRows)
   const predsOrderBy = vi.fn().mockResolvedValue(predictionRows)
   const predsLeftJoin = vi.fn()
@@ -98,7 +105,7 @@ function setupCalls(options: {
   const predsFrom = vi.fn().mockReturnValue({ innerJoin: predsInnerJoin, leftJoin: predsLeftJoin, where: predsWhere, orderBy: predsOrderBy })
   mockSelect.mockReturnValueOnce({ from: predsFrom })
 
-  // Call 5 (if flag=true): favorites → select().from().where()
+  // Call 6 (if flag=true): favorites → select().from().where()
   if (flag && favorites !== undefined) {
     const favWhere = vi.fn().mockResolvedValue(favorites)
     const favFrom = vi.fn().mockReturnValue({ where: favWhere })

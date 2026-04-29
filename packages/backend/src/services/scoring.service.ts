@@ -1,6 +1,6 @@
 import { eq, and, or, isNotNull, isNull } from 'drizzle-orm'
 import { db } from '../db/client.js'
-import { predictions, scoringConfigs, groupMembers, groups, groupPredictionPoints, userLeagueFavorites, matches } from '../db/schema/index.js'
+import { predictions, scoringConfigs, groupMembers, groups, groupPredictionPoints, userLeagueFavorites, matches, groupLeagues } from '../db/schema/index.js'
 import type { ScoringConfig, ScoreLine, MatchOutcome } from '../types/index.js'
 
 export interface PredictionScore {
@@ -150,6 +150,16 @@ export async function calculateAndSaveGroupPoints(
   const globalConfig = await db.select().from(scoringConfigs).where(eq(scoringConfigs.isGlobalDefault, true))
   const defaultConfig = globalConfig[0]
 
+  const allGroupLeagues = await db
+    .select({ groupId: groupLeagues.groupId, leagueId: groupLeagues.leagueId })
+    .from(groupLeagues)
+  const groupLeagueMap = new Map<string, Set<string>>()
+  for (const row of allGroupLeagues) {
+    let set = groupLeagueMap.get(row.groupId)
+    if (!set) { set = new Set(); groupLeagueMap.set(row.groupId, set) }
+    set.add(row.leagueId)
+  }
+
   await Promise.all(
     matchPredictions.map(async (pred) => {
       const userGroups = await db
@@ -172,6 +182,11 @@ export async function calculateAndSaveGroupPoints(
 
       await Promise.all(
         userGroups.map(({ groupId, scoringConfigId, favoriteTeamDoublePoints, config }) => {
+          const allowedLeagues = groupLeagueMap.get(groupId)
+          if (allowedLeagues && allowedLeagues.size > 0) {
+            if (!matchRow.leagueId || !allowedLeagues.has(matchRow.leagueId)) return Promise.resolve()
+          }
+
           const scoringConfig = config ?? defaultConfig
           if (!scoringConfig) return Promise.resolve()
 

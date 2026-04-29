@@ -159,6 +159,11 @@ describe('calculateAndSaveGroupPoints', () => {
     mockSelect.mockReturnValueOnce({ from: mockConfigFrom })
   }
 
+  function setupGroupLeaguesSelect(rows: Array<{ groupId: string; leagueId: string }> = []) {
+    const mockGLFrom = vi.fn().mockResolvedValue(rows)
+    mockSelect.mockReturnValueOnce({ from: mockGLFrom })
+  }
+
   function setupUserGroupsSelect(groups: unknown[]) {
     const mockGroupWhere = vi.fn().mockResolvedValue(groups)
     const mockLeftJoin = vi.fn().mockReturnValue({ where: mockGroupWhere })
@@ -189,6 +194,7 @@ describe('calculateAndSaveGroupPoints', () => {
     setupParallelSelect([PREDICTIONS[0]], MATCH_ROW)
     setupFavoritesSelect([])
     setupGlobalConfigSelect(DEFAULT_CONFIG_ROW)
+    setupGroupLeaguesSelect([])
 
     // User's groups query
     setupUserGroupsSelect([
@@ -207,6 +213,7 @@ describe('calculateAndSaveGroupPoints', () => {
     setupParallelSelect([PREDICTIONS[0]], MATCH_ROW)
     setupFavoritesSelect([])
     setupGlobalConfigSelect(DEFAULT_CONFIG_ROW)
+    setupGroupLeaguesSelect([])
     setupUserGroupsSelect([])
 
     await calculateAndSaveGroupPoints(MATCH_ID, RESULT)
@@ -218,6 +225,7 @@ describe('calculateAndSaveGroupPoints', () => {
     setupParallelSelect([PREDICTIONS[0]], MATCH_ROW)
     setupFavoritesSelect([{ userId: 'user-1', leagueId: 'league-1', teamId: 'team-home' }])
     setupGlobalConfigSelect(DEFAULT_CONFIG_ROW)
+    setupGroupLeaguesSelect([])
 
     setupUserGroupsSelect([
       { groupId: 'group-uuid-1', scoringConfigId: null, favoriteTeamDoublePoints: true, config: null },
@@ -234,6 +242,7 @@ describe('calculateAndSaveGroupPoints', () => {
     setupParallelSelect([PREDICTIONS[0]], MATCH_ROW)
     setupFavoritesSelect([{ userId: 'user-1', leagueId: 'league-1', teamId: 'team-other' }])
     setupGlobalConfigSelect(DEFAULT_CONFIG_ROW)
+    setupGroupLeaguesSelect([])
 
     setupUserGroupsSelect([
       { groupId: 'group-uuid-1', scoringConfigId: null, favoriteTeamDoublePoints: true, config: null },

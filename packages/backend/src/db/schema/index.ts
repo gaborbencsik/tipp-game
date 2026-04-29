@@ -274,6 +274,19 @@ export const groupGlobalTypeSubscriptions = pgTable('group_global_type_subscript
   globalTypeIdx: index('ggts_global_type_idx').on(t.globalTypeId),
 }))
 
+// ─── GROUP LEAGUES ───────────────────────────────────────────────────────────
+
+export const groupLeagues = pgTable('group_leagues', {
+  id:       uuid('id').primaryKey().defaultRandom(),
+  groupId:  uuid('group_id').notNull().references(() => groups.id, { onDelete: 'cascade' }),
+  leagueId: uuid('league_id').notNull().references(() => leagues.id, { onDelete: 'cascade' }),
+  addedAt:  timestamp('added_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  uniqueGroupLeague: uniqueIndex('group_leagues_unique').on(t.groupId, t.leagueId),
+  groupIdx:          index('group_leagues_group_idx').on(t.groupId),
+  leagueIdx:         index('group_leagues_league_idx').on(t.leagueId),
+}))
+
 // ─── AUDIT LOGS ───────────────────────────────────────────────────────────────
 
 export const auditLogs = pgTable('audit_logs', {
@@ -347,6 +360,7 @@ export const matchesRelations = relations(matches, ({ one, many }) => ({
 export const leaguesRelations = relations(leagues, ({ many }) => ({
   matches: many(matches),
   userFavorites: many(userLeagueFavorites),
+  groupLeagues: many(groupLeagues),
 }))
 
 export const matchResultsRelations = relations(matchResults, ({ one }) => ({
@@ -367,6 +381,7 @@ export const groupsRelations = relations(groups, ({ one, many }) => ({
   groupPoints: many(groupPredictionPoints),
   specialTypes: many(specialPredictionTypes),
   globalTypeSubscriptions: many(groupGlobalTypeSubscriptions),
+  leagues: many(groupLeagues),
 }))
 
 export const groupMembersRelations = relations(groupMembers, ({ one }) => ({
@@ -395,4 +410,9 @@ export const userLeagueFavoritesRelations = relations(userLeagueFavorites, ({ on
   user: one(users, { fields: [userLeagueFavorites.userId], references: [users.id] }),
   league: one(leagues, { fields: [userLeagueFavorites.leagueId], references: [leagues.id] }),
   team: one(teams, { fields: [userLeagueFavorites.teamId], references: [teams.id] }),
+}))
+
+export const groupLeaguesRelations = relations(groupLeagues, ({ one }) => ({
+  group: one(groups, { fields: [groupLeagues.groupId], references: [groups.id] }),
+  league: one(leagues, { fields: [groupLeagues.leagueId], references: [leagues.id] }),
 }))

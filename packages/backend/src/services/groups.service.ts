@@ -1,6 +1,6 @@
 import { and, eq, isNull, sql } from 'drizzle-orm'
 import { db } from '../db/client.js'
-import { groups, groupMembers, users, specialPredictionTypes, groupGlobalTypeSubscriptions } from '../db/schema/index.js'
+import { groups, groupMembers, users, specialPredictionTypes, groupGlobalTypeSubscriptions, groupLeagues, leagues } from '../db/schema/index.js'
 import type { Group, GroupInput, GroupMember } from '../types/index.js'
 import { getGroupLeaderboard } from './group-leaderboard.service.js'
 
@@ -26,11 +26,20 @@ function generateInviteCode(): string {
   return code
 }
 
+async function fetchGroupLeagues(groupId: string): Promise<Array<{ id: string; name: string; shortName: string }>> {
+  return db
+    .select({ id: leagues.id, name: leagues.name, shortName: leagues.shortName })
+    .from(groupLeagues)
+    .innerJoin(leagues, eq(groupLeagues.leagueId, leagues.id))
+    .where(eq(groupLeagues.groupId, groupId))
+}
+
 function toApiGroup(
   row: typeof groups.$inferSelect,
   memberCount: number,
   isAdmin: boolean,
   userRank: number | null = null,
+  groupLeagueList: Array<{ id: string; name: string; shortName: string }> = [],
 ): Group {
   return {
     id: row.id,
@@ -43,6 +52,7 @@ function toApiGroup(
     isAdmin,
     userRank,
     favoriteTeamDoublePoints: row.favoriteTeamDoublePoints,
+    leagues: groupLeagueList,
     createdAt: row.createdAt.toISOString(),
   }
 }
@@ -67,6 +77,8 @@ export async function getMyGroups(userId: string): Promise<Group[]> {
       .where(eq(groupMembers.groupId, group.id))
     const memberCount = countRows[0]?.count ?? 0
 
+    const leagueRows = await fetchGroupLeagues(group.id)
+
     let userRank: number | null = null
     try {
       const leaderboard = await getGroupLeaderboard(group.id, userId)
@@ -76,12 +88,16 @@ export async function getMyGroups(userId: string): Promise<Group[]> {
       // If leaderboard fails (e.g. no predictions yet), rank stays null
     }
 
-    result.push(toApiGroup(group, memberCount, isAdmin, userRank))
+    result.push(toApiGroup(group, memberCount, isAdmin, userRank, leagueRows))
   }
   return result
 }
 
 export async function createGroup(input: GroupInput, userId: string): Promise<Group> {
+  if (!input.leagueId) {
+    throw new AppError(422, 'A league must be selected')
+  }
+
   const createdCount = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(groups)
@@ -138,7 +154,11 @@ export async function createGroup(input: GroupInput, userId: string): Promise<Gr
       .onConflictDoNothing()
   }
 
-  return toApiGroup(group, 1, true)
+  await db.insert(groupLeagues).values({ groupId: group.id, leagueId: input.leagueId })
+
+  const leagueRows = await fetchGroupLeagues(group.id)
+
+  return toApiGroup(group, 1, true, null, leagueRows)
 }
 
 export async function joinGroup(inviteCode: string, userId: string): Promise<Group> {
@@ -180,7 +200,8 @@ export async function joinGroup(inviteCode: string, userId: string): Promise<Gro
   })
 
   const memberCount = existing.length + 1
-  return toApiGroup(group, memberCount, false)
+  const leagueRows = await fetchGroupLeagues(group.id)
+  return toApiGroup(group, memberCount, false, null, leagueRows)
 }
 
 export async function getGroupMembers(groupId: string, requesterId: string): Promise<GroupMember[]> {
@@ -346,7 +367,8 @@ export async function regenerateInviteCode(groupId: string, requesterId: string)
   const updatedGroup = updated[0]
   if (!updatedGroup) throw new AppError(500, 'Failed to regenerate invite code')
 
-  return toApiGroup(updatedGroup, memberCount, true)
+  const leagueRows = await fetchGroupLeagues(group.id)
+  return toApiGroup(updatedGroup, memberCount, true, null, leagueRows)
 }
 
 export async function setInviteActive(groupId: string, active: boolean, requesterId: string): Promise<Group> {
@@ -361,7 +383,8 @@ export async function setInviteActive(groupId: string, active: boolean, requeste
   const updatedGroup = updated[0]
   if (!updatedGroup) throw new AppError(500, 'Failed to update invite status')
 
-  return toApiGroup(updatedGroup, memberCount, true)
+  const leagueRows = await fetchGroupLeagues(group.id)
+  return toApiGroup(updatedGroup, memberCount, true, null, leagueRows)
 }
 
 export async function deleteGroup(groupId: string, requesterId: string, isGlobalAdmin: boolean): Promise<void> {
@@ -426,5 +449,43 @@ export async function updateGroupSettings(
     .from(groupMembers)
     .where(eq(groupMembers.groupId, groupId))
 
-  return toApiGroup(updated[0]!, countRows[0]?.count ?? 0, true)
+  const leagueRows = await fetchGroupLeagues(groupId)
+
+  return toApiGroup(updated[0]!, countRows[0]?.count ?? 0, true, null, leagueRows)
+}
+
+export async function setGroupLeague(
+  groupId: string,
+  userId: string,
+  leagueId: string,
+): Promise<Group> {
+  if (!leagueId) {
+    throw new AppError(422, 'A league must be selected')
+  }
+
+  const groupRows = await db
+    .select()
+    .from(groups)
+    .where(and(eq(groups.id, groupId), isNull(groups.deletedAt)))
+    .limit(1)
+  if (!groupRows[0]) throw new AppError(404, 'Group not found')
+
+  const memberRows = await db
+    .select()
+    .from(groupMembers)
+    .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, userId)))
+    .limit(1)
+  if (!memberRows[0]?.isAdmin) throw new AppError(403, 'Not authorized')
+
+  await db.delete(groupLeagues).where(eq(groupLeagues.groupId, groupId))
+  await db.insert(groupLeagues).values({ groupId, leagueId })
+
+  const leagueRows = await fetchGroupLeagues(groupId)
+
+  const countRows = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(groupMembers)
+    .where(eq(groupMembers.groupId, groupId))
+
+  return toApiGroup(groupRows[0], countRows[0]?.count ?? 0, true, null, leagueRows)
 }
