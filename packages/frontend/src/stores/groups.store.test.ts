@@ -19,6 +19,9 @@ const {
   mockGroupsDelete,
   mockGroupsGetScoringConfig,
   mockGroupsSetScoringConfig,
+  mockSpecialTypesList,
+  mockSpecialTypesDeactivate,
+  mockGlobalSubsUnsubscribe,
 } = vi.hoisted(() => ({
   mockGetSession: vi.fn().mockResolvedValue({
     data: { session: { access_token: 'mock-token' } },
@@ -34,6 +37,9 @@ const {
   mockGroupsDelete: vi.fn(),
   mockGroupsGetScoringConfig: vi.fn(),
   mockGroupsSetScoringConfig: vi.fn(),
+  mockSpecialTypesList: vi.fn(),
+  mockSpecialTypesDeactivate: vi.fn(),
+  mockGlobalSubsUnsubscribe: vi.fn(),
 }))
 
 vi.mock('@/lib/supabase', () => ({
@@ -61,6 +67,16 @@ vi.mock('@/api/index', () => ({
       delete: mockGroupsDelete,
       getScoringConfig: mockGroupsGetScoringConfig,
       setScoringConfig: mockGroupsSetScoringConfig,
+      specialTypes: {
+        list: mockSpecialTypesList,
+        deactivate: mockSpecialTypesDeactivate,
+      },
+      specialPredictions: { list: vi.fn().mockResolvedValue([]), upsert: vi.fn() },
+      globalTypeSubscriptions: {
+        list: vi.fn().mockResolvedValue([]),
+        subscribe: vi.fn(),
+        unsubscribe: mockGlobalSubsUnsubscribe,
+      },
     },
   },
 }))
@@ -412,5 +428,45 @@ describe('groups.store', () => {
       incorrect: 0,
     })
     expect(store.groupScoringSaveStatus).toBe('error')
+  })
+
+  // ─── specialTypes: deactivate filters out from map ────────────────────────────
+
+  it('deactivateSpecialType removes type from specialTypesMap', async () => {
+    mockSpecialTypesDeactivate.mockResolvedValue(undefined)
+    const store = useGroupsStore()
+    store.specialTypesMap['g1'] = [
+      { id: 'type-1', groupId: 'g1', name: 'VB Győztes', isGlobal: false, isActive: true, inputType: 'team_select', options: null, description: null, deadline: '2026-06-01', points: 10, correctAnswer: null, createdAt: '', updatedAt: '' },
+      { id: 'type-2', groupId: 'g1', name: 'B csoport', isGlobal: false, isActive: true, inputType: 'team_select', options: null, description: null, deadline: '2026-06-01', points: 3, correctAnswer: null, createdAt: '', updatedAt: '' },
+    ]
+    await store.deactivateSpecialType('g1', 'type-1')
+    expect(store.specialTypesMap['g1']).toHaveLength(1)
+    expect(store.specialTypesMap['g1']![0]!.id).toBe('type-2')
+  })
+
+  // ─── specialTypes: global types should not appear in group-specific list ──────
+
+  it('specialTypesMap includes global types from API but view should filter them', async () => {
+    const store = useGroupsStore()
+    store.specialTypesMap['g1'] = [
+      { id: 'global-1', groupId: null, name: 'Gólkirály', isGlobal: true, isActive: true, inputType: 'player_select', options: null, description: null, deadline: '2026-06-01', points: 5, correctAnswer: null, createdAt: '', updatedAt: '' },
+      { id: 'local-1', groupId: 'g1', name: 'VB Győztes', isGlobal: false, isActive: true, inputType: 'team_select', options: null, description: null, deadline: '2026-06-01', points: 10, correctAnswer: null, createdAt: '', updatedAt: '' },
+    ]
+    const filtered = store.specialTypesMap['g1']!.filter(t => !t.isGlobal)
+    expect(filtered).toHaveLength(1)
+    expect(filtered[0]!.id).toBe('local-1')
+  })
+
+  // ─── unsubscribeGlobalType ────────────────────────────────────────────────────
+
+  it('unsubscribeGlobalType calls API and updates globalSubscriptionsMap', async () => {
+    mockGlobalSubsUnsubscribe.mockResolvedValue(undefined)
+    const store = useGroupsStore()
+    store.globalSubscriptionsMap['g1'] = [
+      { id: 'global-1', name: 'Gólkirály', description: null, inputType: 'player_select', points: 5, deadline: '2026-06-01', isActive: true, subscribed: true },
+    ]
+    await store.unsubscribeGlobalType('g1', 'global-1')
+    expect(mockGlobalSubsUnsubscribe).toHaveBeenCalledWith('mock-token', 'g1', 'global-1')
+    expect(store.globalSubscriptionsMap['g1']![0]!.subscribed).toBe(false)
   })
 })

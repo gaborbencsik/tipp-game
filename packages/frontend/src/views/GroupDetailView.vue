@@ -782,7 +782,7 @@ const typeDraft = reactive({
   deadline: '',
 })
 
-const specialTypes = computed(() => groupsStore.specialTypesMap[groupId] ?? [])
+const specialTypes = computed(() => (groupsStore.specialTypesMap[groupId] ?? []).filter(t => !t.isGlobal))
 
 // ─── Set correct answer dialog ───────────────────────────────────────────────
 const setAnswerTypeId = ref<string | null>(null)
@@ -973,7 +973,13 @@ async function onConfirmDeactivate(): Promise<void> {
   if (!confirmDeactivateTypeId.value) return
   const id = confirmDeactivateTypeId.value
   confirmDeactivateTypeId.value = null
-  await groupsStore.deactivateSpecialType(groupId, id)
+  const type = specialTypes.value.find(t => t.id === id)
+  if (type?.isGlobal) {
+    await groupsStore.unsubscribeGlobalType(groupId, id)
+    groupsStore.specialTypesMap[groupId] = (groupsStore.specialTypesMap[groupId] ?? []).filter(t => t.id !== id)
+  } else {
+    await groupsStore.deactivateSpecialType(groupId, id)
+  }
 }
 
 function openSetAnswer(st: { id: string; name: string; inputType: string }): void {
