@@ -89,6 +89,7 @@ sh:
 # ─── CI / minőség ────────────────────────────────────────────────────────────
 
 test:
+	npm run typecheck --workspaces --if-present
 	npm test
 
 test-coverage:

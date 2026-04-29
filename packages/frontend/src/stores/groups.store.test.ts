@@ -463,7 +463,7 @@ describe('groups.store', () => {
     mockGlobalSubsUnsubscribe.mockResolvedValue(undefined)
     const store = useGroupsStore()
     store.globalSubscriptionsMap['g1'] = [
-      { id: 'global-1', name: 'Gólkirály', description: null, inputType: 'player_select', points: 5, deadline: '2026-06-01', isActive: true, subscribed: true },
+      { id: 'global-1', name: 'Gólkirály', description: null, inputType: 'player_select', options: null, points: 5, deadline: '2026-06-01', correctAnswer: null, isActive: true, createdAt: '2026-01-01T00:00:00Z', updatedAt: '2026-01-01T00:00:00Z', subscribed: true },
     ]
     await store.unsubscribeGlobalType('g1', 'global-1')
     expect(mockGlobalSubsUnsubscribe).toHaveBeenCalledWith('mock-token', 'g1', 'global-1')
