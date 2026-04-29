@@ -17,7 +17,8 @@ const {
   const mockSet = vi.fn()
   const mockValues = vi.fn()
   const mockOrderBy = vi.fn().mockResolvedValue([])
-  const mockWhere = vi.fn(() => ({ orderBy: mockOrderBy }))
+  const mockLimit = vi.fn().mockResolvedValue([])
+  const mockWhere = vi.fn(() => ({ orderBy: mockOrderBy, limit: mockLimit }))
   const mockLeftJoin = vi.fn(function () {
     return { leftJoin: mockLeftJoin, where: mockWhere }
   })

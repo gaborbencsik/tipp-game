@@ -14,7 +14,7 @@ class AppError extends Error {
 
 export async function getGroupLeaderboard(groupId: string, requesterId: string): Promise<LeaderboardEntry[]> {
   const group = await db
-    .select({ id: groups.id, scoringConfigId: groups.scoringConfigId })
+    .select({ id: groups.id, scoringConfigId: groups.scoringConfigId, favoriteTeamDoublePoints: groups.favoriteTeamDoublePoints })
     .from(groups)
     .where(eq(groups.id, groupId))
     .limit(1)
@@ -29,7 +29,7 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
   const memberIds = membership.map(m => m.userId)
   if (!memberIds.includes(requesterId)) throw new AppError(403, 'Not a member of this group')
 
-  const hasGroupConfig = group[0].scoringConfigId !== null
+  const useGroupPoints = group[0].scoringConfigId !== null || group[0].favoriteTeamDoublePoints
 
   let rows: Array<{
     userId: string
@@ -40,7 +40,7 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
     correctCount: number
   }>
 
-  if (hasGroupConfig) {
+  if (useGroupPoints) {
     rows = await db
       .select({
         userId: users.id,

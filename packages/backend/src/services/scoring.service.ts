@@ -1,6 +1,6 @@
-import { eq, isNotNull } from 'drizzle-orm'
+import { eq, and, or, isNotNull, isNull } from 'drizzle-orm'
 import { db } from '../db/client.js'
-import { predictions, scoringConfigs, groupMembers, groups, groupPredictionPoints } from '../db/schema/index.js'
+import { predictions, scoringConfigs, groupMembers, groups, groupPredictionPoints, userLeagueFavorites, matches } from '../db/schema/index.js'
 import type { ScoringConfig, ScoreLine, MatchOutcome } from '../types/index.js'
 
 export interface PredictionScore {
@@ -98,40 +98,100 @@ export async function calculateAndSavePoints(
   )
 }
 
+export interface FavoriteTeamContext {
+  readonly userId: string
+  readonly groupFavoriteTeamDoublePoints: boolean
+  readonly match: { readonly homeTeamId: string; readonly awayTeamId: string; readonly leagueId: string | null }
+  readonly userFavorites: ReadonlyArray<{ readonly userId: string; readonly leagueId: string; readonly teamId: string }>
+}
+
+export function applyFavoriteTeamMultiplier(basePoints: number, ctx: FavoriteTeamContext): number {
+  if (!ctx.groupFavoriteTeamDoublePoints) return basePoints
+  if (!ctx.match.leagueId) return basePoints
+
+  const fav = ctx.userFavorites.find(
+    f => f.userId === ctx.userId && f.leagueId === ctx.match.leagueId,
+  )
+  if (!fav) return basePoints
+
+  if (fav.teamId === ctx.match.homeTeamId || fav.teamId === ctx.match.awayTeamId) {
+    return basePoints * 2
+  }
+  return basePoints
+}
+
 export async function calculateAndSaveGroupPoints(
   matchId: string,
   result: ResultScore,
 ): Promise<void> {
-  const matchPredictions = await db
-    .select()
-    .from(predictions)
-    .where(eq(predictions.matchId, matchId))
+  const [matchPredictions, matchRows] = await Promise.all([
+    db.select().from(predictions).where(eq(predictions.matchId, matchId)),
+    db.select({ homeTeamId: matches.homeTeamId, awayTeamId: matches.awayTeamId, leagueId: matches.leagueId })
+      .from(matches)
+      .where(eq(matches.id, matchId))
+      .limit(1),
+  ])
 
   if (matchPredictions.length === 0) return
 
+  const matchRow = matchRows[0]
+  if (!matchRow) return
+
+  const userIds = [...new Set(matchPredictions.map(p => p.userId))]
+
+  const allFavorites = matchRow.leagueId
+    ? await db.select({ userId: userLeagueFavorites.userId, leagueId: userLeagueFavorites.leagueId, teamId: userLeagueFavorites.teamId })
+        .from(userLeagueFavorites)
+        .where(and(
+          eq(userLeagueFavorites.leagueId, matchRow.leagueId!),
+        ))
+    : []
+
+  const globalConfig = await db.select().from(scoringConfigs).where(eq(scoringConfigs.isGlobalDefault, true))
+  const defaultConfig = globalConfig[0]
+
   await Promise.all(
     matchPredictions.map(async (pred) => {
-      const groupsWithConfig = await db
+      const userGroups = await db
         .select({
           groupId: groupMembers.groupId,
+          scoringConfigId: groups.scoringConfigId,
+          favoriteTeamDoublePoints: groups.favoriteTeamDoublePoints,
           config: scoringConfigs,
         })
         .from(groupMembers)
         .innerJoin(groups, eq(groupMembers.groupId, groups.id))
-        .innerJoin(scoringConfigs, eq(groups.scoringConfigId, scoringConfigs.id))
-        .where(eq(groupMembers.userId, pred.userId))
+        .leftJoin(scoringConfigs, eq(groups.scoringConfigId, scoringConfigs.id))
+        .where(and(
+          eq(groupMembers.userId, pred.userId),
+          or(
+            isNotNull(groups.scoringConfigId),
+            eq(groups.favoriteTeamDoublePoints, true),
+          ),
+        ))
 
       await Promise.all(
-        groupsWithConfig.map(({ groupId, config }) => {
-          const points = calculatePoints(
+        userGroups.map(({ groupId, scoringConfigId, favoriteTeamDoublePoints, config }) => {
+          const scoringConfig = config ?? defaultConfig
+          if (!scoringConfig) return Promise.resolve()
+
+          let points = calculatePoints(
             {
               homeGoals: pred.homeGoals,
               awayGoals: pred.awayGoals,
               outcomeAfterDraw: pred.outcomeAfterDraw as MatchOutcome | null,
             },
             result,
-            config,
+            scoringConfig,
           )
+
+          points = applyFavoriteTeamMultiplier(points, {
+            userId: pred.userId,
+            groupFavoriteTeamDoublePoints: favoriteTeamDoublePoints,
+            match: matchRow,
+            userFavorites: allFavorites,
+          })
+
           return db
             .insert(groupPredictionPoints)
             .values({

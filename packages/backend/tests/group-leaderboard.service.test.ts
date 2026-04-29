@@ -34,7 +34,7 @@ vi.mock('../src/db/client.js', () => ({
 vi.mock('../src/db/schema/index.js', () => ({
   users: { id: 'users.id', displayName: 'users.displayName', avatarUrl: 'users.avatarUrl' },
   predictions: { pointsGlobal: 'predictions.pointsGlobal', id: 'predictions.id', userId: 'predictions.userId' },
-  groups: { id: 'groups.id', scoringConfigId: 'groups.scoringConfigId' },
+  groups: { id: 'groups.id', scoringConfigId: 'groups.scoringConfigId', favoriteTeamDoublePoints: 'groups.favoriteTeamDoublePoints' },
   groupMembers: { groupId: 'groupMembers.groupId', userId: 'groupMembers.userId' },
   groupPredictionPoints: { points: 'gpp.points', id: 'gpp.id', predictionId: 'gpp.predictionId', groupId: 'gpp.groupId' },
   scoringConfigs: {},
@@ -57,8 +57,8 @@ import { getGroupLeaderboard } from '../src/services/group-leaderboard.service.j
 const GROUP_ID = 'group-uuid-1'
 const REQUESTER_ID = 'user-uuid-1'
 
-const GROUP_ROW_NO_CONFIG = { id: GROUP_ID, scoringConfigId: null }
-const GROUP_ROW_WITH_CONFIG = { id: GROUP_ID, scoringConfigId: 'config-uuid-1' }
+const GROUP_ROW_NO_CONFIG = { id: GROUP_ID, scoringConfigId: null, favoriteTeamDoublePoints: false }
+const GROUP_ROW_WITH_CONFIG = { id: GROUP_ID, scoringConfigId: 'config-uuid-1', favoriteTeamDoublePoints: false }
 const MEMBER_ROWS = [{ userId: REQUESTER_ID }, { userId: 'user-uuid-2' }]
 const LEADERBOARD_ROWS = [
   { userId: REQUESTER_ID, displayName: 'Alice', avatarUrl: null, totalPoints: 10, predictionCount: 3, correctCount: 2 },
@@ -208,5 +208,15 @@ describe('getGroupLeaderboard', () => {
     // Alice: 10+0=10, Bob: 5+20=25 → Bob first
     expect(result[0]).toMatchObject({ userId: 'user-uuid-2', rank: 1, totalPoints: 25 })
     expect(result[1]).toMatchObject({ userId: REQUESTER_ID, rank: 2, totalPoints: 10 })
+  })
+
+  it('uses groupPredictionPoints when group has favoriteTeamDoublePoints enabled (no custom config)', async () => {
+    const GROUP_ROW_DOUBLE = { id: GROUP_ID, scoringConfigId: null, favoriteTeamDoublePoints: true }
+    setupLeaderboardSelectChain(GROUP_ROW_DOUBLE, MEMBER_ROWS, LEADERBOARD_ROWS, true)
+
+    const result = await getGroupLeaderboard(GROUP_ID, REQUESTER_ID)
+
+    expect(result).toHaveLength(2)
+    expect(result[0]).toMatchObject({ rank: 1, userId: REQUESTER_ID, totalPoints: 10 })
   })
 })

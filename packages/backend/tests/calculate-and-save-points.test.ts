@@ -3,7 +3,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 const {
   mockSelect, mockFrom, mockWhere, mockUpdate, mockSet, mockUpdateWhere, mockUpdateReturning,
   mockInsert, mockInsertValues, mockOnConflict,
-  mockInnerJoin2,
 } = vi.hoisted(() => {
   const mockUpdateReturning = vi.fn().mockResolvedValue([])
   const mockUpdateWhere = vi.fn(() => ({ returning: mockUpdateReturning }))
@@ -17,12 +16,9 @@ const {
   const mockInsertValues = vi.fn(() => ({ onConflictDoUpdate: mockOnConflict }))
   const mockInsert = vi.fn(() => ({ values: mockInsertValues }))
 
-  const mockInnerJoin2 = vi.fn()
-
   return {
     mockSelect, mockFrom, mockWhere, mockUpdate, mockSet, mockUpdateWhere, mockUpdateReturning,
     mockInsert, mockInsertValues, mockOnConflict,
-    mockInnerJoin2,
   }
 })
 
@@ -135,10 +131,54 @@ describe('calculateAndSaveGroupPoints', () => {
     mockInsert.mockReturnValue({ values: mockInsertValues })
   })
 
+  function setupParallelSelect(predictions: unknown[], matchRow: unknown) {
+    // The function does Promise.all([selectPredictions, selectMatch])
+    // First call to select → predictions chain
+    const mockPredWhere = vi.fn().mockResolvedValue(predictions)
+    const mockPredFrom = vi.fn().mockReturnValue({ where: mockPredWhere })
+
+    // Second call to select → match chain (needs .from().where().limit())
+    const mockMatchLimit = vi.fn().mockResolvedValue(matchRow ? [matchRow] : [])
+    const mockMatchWhere = vi.fn().mockReturnValue({ limit: mockMatchLimit })
+    const mockMatchFrom = vi.fn().mockReturnValue({ where: mockMatchWhere })
+
+    mockSelect
+      .mockReturnValueOnce({ from: mockPredFrom })
+      .mockReturnValueOnce({ from: mockMatchFrom })
+  }
+
+  function setupFavoritesSelect(favorites: unknown[]) {
+    const mockFavWhere = vi.fn().mockResolvedValue(favorites)
+    const mockFavFrom = vi.fn().mockReturnValue({ where: mockFavWhere })
+    mockSelect.mockReturnValueOnce({ from: mockFavFrom })
+  }
+
+  function setupGlobalConfigSelect(config: unknown) {
+    const mockConfigWhere = vi.fn().mockResolvedValue(config ? [config] : [])
+    const mockConfigFrom = vi.fn().mockReturnValue({ where: mockConfigWhere })
+    mockSelect.mockReturnValueOnce({ from: mockConfigFrom })
+  }
+
+  function setupUserGroupsSelect(groups: unknown[]) {
+    const mockGroupWhere = vi.fn().mockResolvedValue(groups)
+    const mockLeftJoin = vi.fn().mockReturnValue({ where: mockGroupWhere })
+    const mockInnerJoin = vi.fn().mockReturnValue({ leftJoin: mockLeftJoin })
+    const mockGroupFrom = vi.fn().mockReturnValue({ innerJoin: mockInnerJoin })
+    mockSelect.mockReturnValueOnce({ from: mockGroupFrom })
+  }
+
+  const MATCH_ROW = { homeTeamId: 'team-home', awayTeamId: 'team-away', leagueId: 'league-1' }
+
   it('no predictions → no inserts', async () => {
-    mockWhere.mockResolvedValueOnce([])
-    mockFrom.mockReturnValueOnce({ where: mockWhere })
-    mockSelect.mockReturnValueOnce({ from: mockFrom })
+    setupParallelSelect([], MATCH_ROW)
+
+    await calculateAndSaveGroupPoints(MATCH_ID, RESULT)
+
+    expect(mockInsert).not.toHaveBeenCalled()
+  })
+
+  it('no match row → no inserts', async () => {
+    setupParallelSelect([PREDICTIONS[0]], null)
 
     await calculateAndSaveGroupPoints(MATCH_ID, RESULT)
 
@@ -146,22 +186,14 @@ describe('calculateAndSaveGroupPoints', () => {
   })
 
   it('inserts group points for predictions of users in groups with config', async () => {
-    const singlePrediction = [PREDICTIONS[0]]
+    setupParallelSelect([PREDICTIONS[0]], MATCH_ROW)
+    setupFavoritesSelect([])
+    setupGlobalConfigSelect(DEFAULT_CONFIG_ROW)
 
-    // First select: predictions WHERE matchId
-    const mockPredWhere = vi.fn().mockResolvedValue(singlePrediction)
-    const mockPredFrom = vi.fn().mockReturnValue({ where: mockPredWhere })
-    mockSelect.mockReturnValueOnce({ from: mockPredFrom })
-
-    // Second select: groupsWithConfig for user-1
-    const groupsWithConfigRows = [
-      { groupId: 'group-uuid-1', config: GROUP_CONFIG_ROW },
-    ]
-    const mockGroupConfigWhere = vi.fn().mockResolvedValue(groupsWithConfigRows)
-    const mockInnerJoin1 = vi.fn().mockReturnValue({ innerJoin: mockInnerJoin2 })
-    mockInnerJoin2.mockReturnValue({ where: mockGroupConfigWhere })
-    const mockGroupFrom = vi.fn().mockReturnValue({ innerJoin: mockInnerJoin1 })
-    mockSelect.mockReturnValueOnce({ from: mockGroupFrom })
+    // User's groups query
+    setupUserGroupsSelect([
+      { groupId: 'group-uuid-1', scoringConfigId: 'cfg-1', favoriteTeamDoublePoints: false, config: GROUP_CONFIG_ROW },
+    ])
 
     await calculateAndSaveGroupPoints(MATCH_ID, RESULT)
 
@@ -171,23 +203,46 @@ describe('calculateAndSaveGroupPoints', () => {
     expect(insertedValues.points).toBe(5) // exact score with GROUP_CONFIG_ROW.exactScore = 5
   })
 
-  it('no groups with config → no inserts', async () => {
-    const singlePrediction = [PREDICTIONS[0]]
-
-    // First select: predictions
-    const mockPredWhere = vi.fn().mockResolvedValue(singlePrediction)
-    const mockPredFrom = vi.fn().mockReturnValue({ where: mockPredWhere })
-    mockSelect.mockReturnValueOnce({ from: mockPredFrom })
-
-    // Second select: no groups with config
-    const mockGroupConfigWhere = vi.fn().mockResolvedValue([])
-    const mockInnerJoin1 = vi.fn().mockReturnValue({ innerJoin: mockInnerJoin2 })
-    mockInnerJoin2.mockReturnValue({ where: mockGroupConfigWhere })
-    const mockGroupFrom = vi.fn().mockReturnValue({ innerJoin: mockInnerJoin1 })
-    mockSelect.mockReturnValueOnce({ from: mockGroupFrom })
+  it('no groups with config or doublePoints → no inserts', async () => {
+    setupParallelSelect([PREDICTIONS[0]], MATCH_ROW)
+    setupFavoritesSelect([])
+    setupGlobalConfigSelect(DEFAULT_CONFIG_ROW)
+    setupUserGroupsSelect([])
 
     await calculateAndSaveGroupPoints(MATCH_ID, RESULT)
 
     expect(mockInsert).not.toHaveBeenCalled()
+  })
+
+  it('favorite team double points → ×2 when fav team plays', async () => {
+    setupParallelSelect([PREDICTIONS[0]], MATCH_ROW)
+    setupFavoritesSelect([{ userId: 'user-1', leagueId: 'league-1', teamId: 'team-home' }])
+    setupGlobalConfigSelect(DEFAULT_CONFIG_ROW)
+
+    setupUserGroupsSelect([
+      { groupId: 'group-uuid-1', scoringConfigId: null, favoriteTeamDoublePoints: true, config: null },
+    ])
+
+    await calculateAndSaveGroupPoints(MATCH_ID, RESULT)
+
+    expect(mockInsert).toHaveBeenCalledTimes(1)
+    const insertedValues = mockInsertValues.mock.calls[0]![0] as { groupId: string; points: number }
+    expect(insertedValues.points).toBe(6) // exact(3) × 2
+  })
+
+  it('favorite team double points → ×1 when fav team does NOT play', async () => {
+    setupParallelSelect([PREDICTIONS[0]], MATCH_ROW)
+    setupFavoritesSelect([{ userId: 'user-1', leagueId: 'league-1', teamId: 'team-other' }])
+    setupGlobalConfigSelect(DEFAULT_CONFIG_ROW)
+
+    setupUserGroupsSelect([
+      { groupId: 'group-uuid-1', scoringConfigId: null, favoriteTeamDoublePoints: true, config: null },
+    ])
+
+    await calculateAndSaveGroupPoints(MATCH_ID, RESULT)
+
+    expect(mockInsert).toHaveBeenCalledTimes(1)
+    const insertedValues = mockInsertValues.mock.calls[0]![0] as { groupId: string; points: number }
+    expect(insertedValues.points).toBe(3) // exact(3) × 1 (fav not playing)
   })
 })
