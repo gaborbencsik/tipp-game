@@ -11,8 +11,11 @@ vi.mock('vue-router', async (importOriginal) => {
   return { ...actual, useRouter: () => ({ push: vi.fn() }) }
 })
 
-const { mockUpdateProfile } = vi.hoisted(() => ({
+const { mockUpdateProfile, mockSetLeagueFavorite, mockLeaguesList, mockLeagueTeamsForLeague } = vi.hoisted(() => ({
   mockUpdateProfile: vi.fn().mockResolvedValue(undefined),
+  mockSetLeagueFavorite: vi.fn().mockResolvedValue(undefined),
+  mockLeaguesList: vi.fn().mockResolvedValue([]),
+  mockLeagueTeamsForLeague: vi.fn().mockResolvedValue([]),
 }))
 
 vi.mock('@/lib/supabase', () => ({
@@ -31,10 +34,10 @@ vi.mock('@/api/index', () => ({
     users: {
       updateProfile: mockUpdateProfile,
       getLeagueFavorites: vi.fn().mockResolvedValue([]),
-      setLeagueFavorite: vi.fn(),
+      setLeagueFavorite: mockSetLeagueFavorite,
     },
-    leagues: { list: vi.fn().mockResolvedValue([]) },
-    leagueTeams: { forLeague: vi.fn().mockResolvedValue([]) },
+    leagues: { list: mockLeaguesList },
+    leagueTeams: { forLeague: mockLeagueTeamsForLeague },
     matches: { list: vi.fn() },
     predictions: { mine: vi.fn(), upsert: vi.fn() },
     admin: {
@@ -130,5 +133,72 @@ describe('ProfileView', () => {
     const { wrapper } = await mountView()
     const link = wrapper.find('a[href="/app/matches"]')
     expect(link.exists()).toBe(true)
+  })
+
+  // ─── Favorite save feedback ──────────────────────────────────────────────────
+
+  it('successful favorite save → shows "Elmentve ✓"', async () => {
+    mockLeaguesList.mockResolvedValue([
+      { id: 'l1', name: 'NB I', shortName: 'NB I', createdAt: '', updatedAt: '' },
+    ])
+    mockLeagueTeamsForLeague.mockResolvedValue([
+      { id: 't1', name: 'Ferencváros', shortCode: 'FTC' },
+      { id: 't2', name: 'Újpest FC', shortCode: 'UJP' },
+    ])
+    mockSetLeagueFavorite.mockResolvedValue({ id: 'fav-1', userId: 'user-1', leagueId: 'l1', teamId: 't1', setAt: '', isLocked: false })
+
+    const { wrapper } = await mountView()
+    await flushPromises()
+
+    const select = wrapper.find('[data-testid="fav-select-l1"]')
+    await select.setValue('t1')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="fav-saved-l1"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="fav-saved-l1"]').text()).toContain('Elmentve')
+  })
+
+  it('failed favorite save → shows error', async () => {
+    mockLeaguesList.mockResolvedValue([
+      { id: 'l1', name: 'NB I', shortName: 'NB I', createdAt: '', updatedAt: '' },
+    ])
+    mockLeagueTeamsForLeague.mockResolvedValue([
+      { id: 't1', name: 'Ferencváros', shortCode: 'FTC' },
+    ])
+    mockSetLeagueFavorite.mockRejectedValue(new Error('Lock error'))
+
+    const { wrapper } = await mountView()
+    await flushPromises()
+
+    const select = wrapper.find('[data-testid="fav-select-l1"]')
+    await select.setValue('t1')
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="fav-error-l1"]').exists()).toBe(true)
+  })
+
+  it('favorite select is disabled during save', async () => {
+    mockLeaguesList.mockResolvedValue([
+      { id: 'l1', name: 'NB I', shortName: 'NB I', createdAt: '', updatedAt: '' },
+    ])
+    mockLeagueTeamsForLeague.mockResolvedValue([
+      { id: 't1', name: 'Ferencváros', shortCode: 'FTC' },
+    ])
+    let resolveSave!: (v: unknown) => void
+    mockSetLeagueFavorite.mockReturnValue(new Promise(r => { resolveSave = r }))
+
+    const { wrapper } = await mountView()
+    await flushPromises()
+
+    const select = wrapper.find('[data-testid="fav-select-l1"]')
+    await select.setValue('t1')
+    await wrapper.vm.$nextTick()
+
+    expect((wrapper.find('[data-testid="fav-select-l1"]').element as HTMLSelectElement).disabled).toBe(true)
+
+    resolveSave({ id: 'fav-1', userId: 'user-1', leagueId: 'l1', teamId: 't1', setAt: '', isLocked: false })
+    await flushPromises()
+
+    expect((wrapper.find('[data-testid="fav-select-l1"]').element as HTMLSelectElement).disabled).toBe(false)
   })
 })

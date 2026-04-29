@@ -67,8 +67,9 @@
           <select
             v-else
             :value="favStore.favoriteByLeagueId(league.id)?.teamId ?? ''"
+            :disabled="favSaveStatus[league.id] === 'saving'"
             :data-testid="`fav-select-${league.id}`"
-            class="border rounded px-3 py-1.5 text-sm flex-1"
+            class="border rounded px-3 py-1.5 text-sm flex-1 disabled:opacity-50"
             @change="onFavChange(league.id, ($event.target as HTMLSelectElement).value)"
           >
             <option value="" disabled>Válassz csapatot...</option>
@@ -80,6 +81,9 @@
               {{ team.name }}
             </option>
           </select>
+
+          <span v-if="favSaveStatus[league.id] === 'saved'" class="text-xs text-green-600" :data-testid="`fav-saved-${league.id}`">Elmentve ✓</span>
+          <span v-else-if="favSaveStatus[league.id] === 'error'" class="text-xs text-red-500" :data-testid="`fav-error-${league.id}`">Hiba történt</span>
         </div>
 
         <div v-if="favError" class="p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
@@ -90,7 +94,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { useAuthStore } from '../stores/auth.store.js'
 import { useLeagueFavoritesStore } from '../stores/league-favorites.store.js'
 import AppLayout from '../components/AppLayout.vue'
@@ -110,6 +114,8 @@ const isSaving = ref(false)
 const errorMessage = ref<string | null>(null)
 const saveSuccess = ref(false)
 const favError = ref<string | null>(null)
+const favSaveStatus = reactive<Record<string, 'saving' | 'saved' | 'error' | null>>({})
+const favTimers: Record<string, ReturnType<typeof setTimeout>> = {}
 
 function isFavLocked(leagueId: string): boolean {
   return favStore.favoriteByLeagueId(leagueId)?.isLocked ?? false
@@ -125,9 +131,14 @@ function getFavTeamName(leagueId: string): string {
 async function onFavChange(leagueId: string, teamId: string): Promise<void> {
   if (!teamId) return
   favError.value = null
+  favSaveStatus[leagueId] = 'saving'
+  if (favTimers[leagueId]) clearTimeout(favTimers[leagueId])
   try {
     await favStore.setFavorite(leagueId, teamId)
+    favSaveStatus[leagueId] = 'saved'
+    favTimers[leagueId] = setTimeout(() => { favSaveStatus[leagueId] = null }, 3000)
   } catch (e) {
+    favSaveStatus[leagueId] = 'error'
     favError.value = e instanceof Error ? e.message : 'Ismeretlen hiba'
   }
 }
