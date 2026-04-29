@@ -152,6 +152,7 @@ src/
 - **Kutatás, fájl keresés, grep:** subagent `model: "sonnet"` vagy `"haiku"`
 - **Implementáció, refaktor, architektúra:** Opus (fő session)
 - **Párhuzamos független kutatások:** több haiku/sonnet subagent egyszerre
+- **Git műveletek (commit, push, status):** subagent `model: "haiku"`
 
 ## Output minimalizálás (kötelező)
 
