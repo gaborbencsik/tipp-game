@@ -87,3 +87,4 @@
 | US-404 | Kedvenc csapat dupla pont számítás | Should Have |
 | US-613 | Csoportos tippjeim nézet | Should Have |
 | US-609 | Liga filter csoportonként | Should Have |
+| US-611 | Mérkőzések automatikus szűrése csoport-ligák alapján | Should Have |

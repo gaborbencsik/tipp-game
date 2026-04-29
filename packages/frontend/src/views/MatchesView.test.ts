@@ -12,12 +12,13 @@ vi.mock('vue-router', async (importOriginal) => {
   return { ...actual, useRouter: () => ({ push: vi.fn() }) }
 })
 
-const { mockMatchesList, mockPredictionsMine, mockPredictionsUpsert, mockLeaguesList, mockGetLeagueFavorites } = vi.hoisted(() => ({
+const { mockMatchesList, mockPredictionsMine, mockPredictionsUpsert, mockLeaguesList, mockGetLeagueFavorites, mockGroupsGroups } = vi.hoisted(() => ({
   mockMatchesList: vi.fn().mockResolvedValue([]),
   mockPredictionsMine: vi.fn().mockResolvedValue([]),
   mockPredictionsUpsert: vi.fn().mockResolvedValue(undefined),
   mockLeaguesList: vi.fn().mockResolvedValue([]),
   mockGetLeagueFavorites: vi.fn().mockResolvedValue([]),
+  mockGroupsGroups: [] as import('@/types/index').Group[],
 }))
 
 vi.mock('@/lib/supabase', () => ({
@@ -52,6 +53,15 @@ vi.mock('@/stores/auth.store', async (importOriginal) => {
     }),
   }
 })
+
+vi.mock('@/stores/groups.store', () => ({
+  useGroupsStore: () => ({
+    get groups() { return mockGroupsGroups },
+    specialPredictionsMap: {},
+    fetchMyGroups: vi.fn().mockResolvedValue(undefined),
+    fetchSpecialPredictions: vi.fn().mockResolvedValue(undefined),
+  }),
+}))
 
 // scheduled match with future kickoff (tomorrow = within 7 days)
 const MATCH_SCHEDULED: Match = {
@@ -148,6 +158,7 @@ describe('MatchesView', () => {
     mockPredictionsMine.mockReset()
     mockPredictionsMine.mockResolvedValue([])
     mockPredictionsUpsert.mockReset()
+    mockGroupsGroups.length = 0
     setActivePinia(createPinia())
     localStorage.clear()
   })
@@ -384,6 +395,43 @@ describe('MatchesView', () => {
     matchesStore.leagueFilter = 'l1'
     const select = wrapper.find('[data-testid="league-filter"]')
     await select.setValue('')
+    expect(matchesStore.leagueFilter).toBeNull()
+  })
+
+  // ─── Default league filter (US-611) ──────────────────────────────────────────
+
+  it('no groups → leagueFilter stays null', async () => {
+    mockGroupsGroups.length = 0
+    const { matchesStore } = await mountView([MATCH_SCHEDULED])
+    expect(matchesStore.leagueFilter).toBeNull()
+  })
+
+  it('1 group with 1 league → leagueFilter auto-set to that league', async () => {
+    mockGroupsGroups.push({
+      id: 'g1', name: 'Test', description: null, inviteCode: 'X', inviteActive: true,
+      createdBy: 'u1', memberCount: 2, isAdmin: false, userRank: null, favoriteTeamDoublePoints: false,
+      leagues: [{ id: 'l1', name: 'World Cup 2026', shortName: 'WC26' }],
+      createdAt: '2026-01-01T00:00:00.000Z',
+    })
+    const { matchesStore } = await mountView([MATCH_SCHEDULED])
+    expect(matchesStore.leagueFilter).toBe('l1')
+  })
+
+  it('2 groups with same league → leagueFilter auto-set to that league', async () => {
+    mockGroupsGroups.push(
+      { id: 'g1', name: 'A', description: null, inviteCode: 'X', inviteActive: true, createdBy: 'u1', memberCount: 2, isAdmin: false, userRank: null, favoriteTeamDoublePoints: false, leagues: [{ id: 'l1', name: 'WC', shortName: 'WC' }], createdAt: '2026-01-01T00:00:00.000Z' },
+      { id: 'g2', name: 'B', description: null, inviteCode: 'Y', inviteActive: true, createdBy: 'u1', memberCount: 3, isAdmin: false, userRank: null, favoriteTeamDoublePoints: false, leagues: [{ id: 'l1', name: 'WC', shortName: 'WC' }], createdAt: '2026-01-01T00:00:00.000Z' },
+    )
+    const { matchesStore } = await mountView([MATCH_SCHEDULED])
+    expect(matchesStore.leagueFilter).toBe('l1')
+  })
+
+  it('2 groups with different leagues → leagueFilter stays null', async () => {
+    mockGroupsGroups.push(
+      { id: 'g1', name: 'A', description: null, inviteCode: 'X', inviteActive: true, createdBy: 'u1', memberCount: 2, isAdmin: false, userRank: null, favoriteTeamDoublePoints: false, leagues: [{ id: 'l1', name: 'WC', shortName: 'WC' }], createdAt: '2026-01-01T00:00:00.000Z' },
+      { id: 'g2', name: 'B', description: null, inviteCode: 'Y', inviteActive: true, createdBy: 'u1', memberCount: 3, isAdmin: false, userRank: null, favoriteTeamDoublePoints: false, leagues: [{ id: 'l2', name: 'Euro', shortName: 'EU' }], createdAt: '2026-01-01T00:00:00.000Z' },
+    )
+    const { matchesStore } = await mountView([MATCH_SCHEDULED])
     expect(matchesStore.leagueFilter).toBeNull()
   })
 

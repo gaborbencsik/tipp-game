@@ -411,6 +411,11 @@ onMounted(async () => {
   } catch {
     // silent — fav banner simply won't show
   }
+
+  const userLeagueIds = new Set(groupsStore.groups.flatMap(g => g.leagues.map(l => l.id)))
+  if (userLeagueIds.size === 1) {
+    matchesStore.leagueFilter = [...userLeagueIds][0]!
+  }
 })
 
 function initDrafts(): void {
