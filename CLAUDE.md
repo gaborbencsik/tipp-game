@@ -153,6 +153,13 @@ src/
 - **Implementáció, refaktor, architektúra:** Opus (fő session)
 - **Párhuzamos független kutatások:** több haiku/sonnet subagent egyszerre
 
+## Output minimalizálás (kötelező)
+
+- **Minden szöveges output max 1 mondat, max 120 karakter** – tool hívások előtt, között, után egyaránt
+- **Tilos:** többmondatos magyarázat, indoklás, felsorolás hogy mit fogsz csinálni, diff összefoglalás
+- **Ha nincs mondanivaló:** ne írj semmit, csak hívd a toolt
+- **Végén:** 1 mondat – mi változott
+
 ## Kontextus optimalizálás
 
 - Nagy fájlok (>200 sor): `offset`/`limit` paraméterrel olvasd, ne egészben
