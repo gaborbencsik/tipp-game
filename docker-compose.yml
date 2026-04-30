@@ -48,6 +48,7 @@ services:
     environment:
       VITE_DEV_AUTH_BYPASS: "true"
       VITE_API_URL: http://localhost:3000
+      VITE_DONATION_URL: https://revolut.me/gaborbencsik?currency={currency}&amount={amount}&note={note}
     volumes:
       - ./packages/frontend/src:/app/packages/frontend/src
     depends_on:

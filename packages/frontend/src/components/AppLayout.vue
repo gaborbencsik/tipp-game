@@ -38,7 +38,7 @@
           sidebarOpen ? 'w-56' : 'md:w-14 max-md:w-0',
         ]"
       >
-        <nav class="flex flex-col gap-1 px-2 min-w-[14rem] md:min-w-0">
+        <nav class="flex flex-col flex-1 gap-1 px-2 min-w-[14rem] md:min-w-0">
 
           <!-- Meccsek -->
           <router-link
@@ -100,6 +100,7 @@
             <span v-if="sidebarOpen">Ranglista</span>
           </router-link>
 
+          <DonationButton :sidebar-open="sidebarOpen" />
         </nav>
       </aside>
 
@@ -124,6 +125,7 @@
 import { ref, computed } from 'vue'
 import UserMenuButton from './UserMenuButton.vue'
 import OnboardingOverlay from './OnboardingOverlay.vue'
+import DonationButton from './DonationButton.vue'
 import { useAuthStore } from '../stores/auth.store.js'
 
 const authStore = useAuthStore()
