@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import DonationModal from './DonationModal.vue'
 import type { DonationAmount } from '../composables/useDonationConfig.js'
