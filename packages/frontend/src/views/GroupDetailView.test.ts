@@ -272,16 +272,16 @@ describe('GroupDetailView', () => {
 
   // ─── Invite section ───────────────────────────────────────────────────────────
 
-  it('invite section visible for admin on members tab', async () => {
+  it('invite section visible for admin on settings tab', async () => {
     const { wrapper } = await mountView([MEMBER_SELF])
-    await wrapper.find('[data-testid="tab-members"]').trigger('click')
+    await wrapper.find('[data-testid="tab-settings"]').trigger('click')
     await wrapper.vm.$nextTick()
     expect(wrapper.find('[data-testid="invite-section"]').exists()).toBe(true)
   })
 
   it('invite section shows invite code', async () => {
     const { wrapper } = await mountView([MEMBER_SELF])
-    await wrapper.find('[data-testid="tab-members"]').trigger('click')
+    await wrapper.find('[data-testid="tab-settings"]').trigger('click')
     await wrapper.vm.$nextTick()
     expect(wrapper.find('[data-testid="invite-code-display"]').text()).toBe('ABCD1234')
   })
@@ -293,7 +293,7 @@ describe('GroupDetailView', () => {
 
   it('clicking Újragenerálás → confirm dialog appears', async () => {
     const { wrapper } = await mountView([MEMBER_SELF])
-    await wrapper.find('[data-testid="tab-members"]').trigger('click')
+    await wrapper.find('[data-testid="tab-settings"]').trigger('click')
     await wrapper.vm.$nextTick()
     expect(wrapper.find('[data-testid="invite-confirm-dialog"]').exists()).toBe(false)
     await wrapper.find('[data-testid="invite-regenerate-btn"]').trigger('click')
@@ -303,7 +303,7 @@ describe('GroupDetailView', () => {
 
   it('invite confirm cancel → dialog disappears', async () => {
     const { wrapper } = await mountView([MEMBER_SELF])
-    await wrapper.find('[data-testid="tab-members"]').trigger('click')
+    await wrapper.find('[data-testid="tab-settings"]').trigger('click')
     await wrapper.vm.$nextTick()
     await wrapper.find('[data-testid="invite-regenerate-btn"]').trigger('click')
     await wrapper.vm.$nextTick()
@@ -315,7 +315,7 @@ describe('GroupDetailView', () => {
   it('invite confirm OK → store.regenerateInvite called', async () => {
     const { wrapper, store } = await mountView([MEMBER_SELF])
     const regenerateSpy = vi.spyOn(store, 'regenerateInvite').mockResolvedValue()
-    await wrapper.find('[data-testid="tab-members"]').trigger('click')
+    await wrapper.find('[data-testid="tab-settings"]').trigger('click')
     await wrapper.vm.$nextTick()
     await wrapper.find('[data-testid="invite-regenerate-btn"]').trigger('click')
     await wrapper.vm.$nextTick()
@@ -327,7 +327,7 @@ describe('GroupDetailView', () => {
   it('clicking toggle button → store.setInviteActive called', async () => {
     const { wrapper, store } = await mountView([MEMBER_SELF])
     const toggleSpy = vi.spyOn(store, 'setInviteActive').mockResolvedValue()
-    await wrapper.find('[data-testid="tab-members"]').trigger('click')
+    await wrapper.find('[data-testid="tab-settings"]').trigger('click')
     await wrapper.vm.$nextTick()
     await wrapper.find('[data-testid="invite-toggle-btn"]').trigger('click')
     await flushPromises()
@@ -336,16 +336,16 @@ describe('GroupDetailView', () => {
 
   // ─── Delete group ─────────────────────────────────────────────────────────────
 
-  it('delete group button visible for admin on members tab', async () => {
+  it('delete group button visible for admin on settings tab', async () => {
     const { wrapper } = await mountView([MEMBER_SELF])
-    await wrapper.find('[data-testid="tab-members"]').trigger('click')
+    await wrapper.find('[data-testid="tab-settings"]').trigger('click')
     await wrapper.vm.$nextTick()
     expect(wrapper.find('[data-testid="delete-group-btn"]').exists()).toBe(true)
   })
 
   it('clicking delete group button → confirm dialog appears', async () => {
     const { wrapper } = await mountView([MEMBER_SELF])
-    await wrapper.find('[data-testid="tab-members"]').trigger('click')
+    await wrapper.find('[data-testid="tab-settings"]').trigger('click')
     await wrapper.vm.$nextTick()
     expect(wrapper.find('[data-testid="delete-confirm-dialog"]').exists()).toBe(false)
     await wrapper.find('[data-testid="delete-group-btn"]').trigger('click')
@@ -355,7 +355,7 @@ describe('GroupDetailView', () => {
 
   it('delete confirm cancel → dialog disappears', async () => {
     const { wrapper } = await mountView([MEMBER_SELF])
-    await wrapper.find('[data-testid="tab-members"]').trigger('click')
+    await wrapper.find('[data-testid="tab-settings"]').trigger('click')
     await wrapper.vm.$nextTick()
     await wrapper.find('[data-testid="delete-group-btn"]').trigger('click')
     await wrapper.vm.$nextTick()
@@ -367,7 +367,7 @@ describe('GroupDetailView', () => {
   it('delete confirm OK → store.deleteGroup called', async () => {
     const { wrapper, store } = await mountView([MEMBER_SELF])
     const deleteSpy = vi.spyOn(store, 'deleteGroup').mockResolvedValue()
-    await wrapper.find('[data-testid="tab-members"]').trigger('click')
+    await wrapper.find('[data-testid="tab-settings"]').trigger('click')
     await wrapper.vm.$nextTick()
     await wrapper.find('[data-testid="delete-group-btn"]').trigger('click')
     await wrapper.vm.$nextTick()

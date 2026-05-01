@@ -169,61 +169,60 @@
       </div>
     </div>
 
-    <!-- Invite section (admin only, inside members tab) -->
-    <div v-if="activeTab === 'members' && currentUserIsGroupAdmin" data-testid="invite-section" class="mt-6 bg-white rounded-xl border border-gray-200 p-4">
-      <h3 class="text-sm font-semibold text-gray-700 mb-3">Meghívó kód</h3>
-      <div class="flex items-center gap-2 mb-3">
-        <span data-testid="invite-code-display" class="font-mono text-lg font-bold tracking-widest text-gray-900">{{ currentGroup?.inviteCode }}</span>
-        <button
-          class="text-xs px-2 py-1 rounded border transition-all duration-200"
-          :class="copiedInvite === 'code' ? 'border-green-400 bg-green-50 text-green-600' : 'border-gray-300 text-gray-600 hover:border-gray-400'"
-          @click="copyInviteCode"
-        >
-          {{ copiedInvite === 'code' ? '✓ Másolva' : 'Kód' }}
-        </button>
-        <button
-          class="text-xs px-2 py-1 rounded border transition-all duration-200"
-          :class="copiedInvite === 'url' ? 'border-green-400 bg-green-50 text-green-600' : 'border-blue-300 text-blue-600 hover:border-blue-400'"
-          @click="copyInviteUrl"
-        >
-          {{ copiedInvite === 'url' ? '✓ Másolva' : 'Link másolása' }}
-        </button>
-      </div>
-      <div class="flex items-center gap-3">
-        <span class="text-sm text-gray-500">
-          Állapot: <span :class="currentGroup?.inviteActive ? 'text-green-600' : 'text-red-500'">{{ currentGroup?.inviteActive ? 'Aktív' : 'Inaktív' }}</span>
-        </span>
-        <button
-          data-testid="invite-toggle-btn"
-          class="text-xs px-2 py-1 rounded border"
-          :class="currentGroup?.inviteActive ? 'border-red-300 text-red-600' : 'border-green-300 text-green-600'"
-          @click="onToggleInvite"
-        >
-          {{ currentGroup?.inviteActive ? 'Deaktiválás' : 'Aktiválás' }}
-        </button>
-        <button
-          data-testid="invite-regenerate-btn"
-          class="text-xs px-2 py-1 rounded border border-blue-300 text-blue-600"
-          @click="showInviteConfirm = true"
-        >
-          Újragenerálás
-        </button>
-      </div>
-    </div>
-
-    <!-- Csoport törlése (admin only) -->
-    <div v-if="activeTab === 'members' && currentUserIsGroupAdmin" class="mt-4">
-      <button
-        data-testid="delete-group-btn"
-        class="text-xs px-3 py-1.5 rounded border border-red-300 text-red-600 hover:bg-red-50 transition-colors"
-        @click="showDeleteConfirm = true"
-      >
-        Csoport törlése
-      </button>
-    </div>
-
     <!-- Beállítások tab -->
     <div v-if="activeTab === 'settings'" data-testid="settings-tab">
+      <!-- Invite section (admin only) -->
+      <div v-if="currentUserIsGroupAdmin" data-testid="invite-section" class="mb-6 bg-white rounded-xl border border-gray-200 p-4">
+        <h3 class="text-sm font-semibold text-gray-700 mb-3">Meghívó kód</h3>
+        <div class="flex items-center gap-2 mb-3">
+          <span data-testid="invite-code-display" class="font-mono text-lg font-bold tracking-widest text-gray-900">{{ currentGroup?.inviteCode }}</span>
+          <button
+            class="text-xs px-2 py-1 rounded border transition-all duration-200"
+            :class="copiedInvite === 'code' ? 'border-green-400 bg-green-50 text-green-600' : 'border-gray-300 text-gray-600 hover:border-gray-400'"
+            @click="copyInviteCode"
+          >
+            {{ copiedInvite === 'code' ? '✓ Másolva' : 'Kód' }}
+          </button>
+          <button
+            class="text-xs px-2 py-1 rounded border transition-all duration-200"
+            :class="copiedInvite === 'url' ? 'border-green-400 bg-green-50 text-green-600' : 'border-blue-300 text-blue-600 hover:border-blue-400'"
+            @click="copyInviteUrl"
+          >
+            {{ copiedInvite === 'url' ? '✓ Másolva' : 'Link másolása' }}
+          </button>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="text-sm text-gray-500">
+            Állapot: <span :class="currentGroup?.inviteActive ? 'text-green-600' : 'text-red-500'">{{ currentGroup?.inviteActive ? 'Aktív' : 'Inaktív' }}</span>
+          </span>
+          <button
+            data-testid="invite-toggle-btn"
+            class="text-xs px-2 py-1 rounded border"
+            :class="currentGroup?.inviteActive ? 'border-red-300 text-red-600' : 'border-green-300 text-green-600'"
+            @click="onToggleInvite"
+          >
+            {{ currentGroup?.inviteActive ? 'Deaktiválás' : 'Aktiválás' }}
+          </button>
+          <button
+            data-testid="invite-regenerate-btn"
+            class="text-xs px-2 py-1 rounded border border-blue-300 text-blue-600"
+            @click="showInviteConfirm = true"
+          >
+            Újragenerálás
+          </button>
+        </div>
+      </div>
+
+      <!-- Csoport törlése (admin only) -->
+      <div v-if="currentUserIsGroupAdmin" class="mb-6">
+        <button
+          data-testid="delete-group-btn"
+          class="text-xs px-3 py-1.5 rounded border border-red-300 text-red-600 hover:bg-red-50 transition-colors"
+          @click="showDeleteConfirm = true"
+        >
+          Csoport törlése
+        </button>
+      </div>
       <div v-if="groupsStore.groupScoringLoading" class="text-gray-500">Betöltés...</div>
       <div v-else-if="groupsStore.groupScoringError" class="text-red-600">{{ groupsStore.groupScoringError }}</div>
       <div v-else class="max-w-md">
