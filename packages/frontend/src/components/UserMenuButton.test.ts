@@ -137,6 +137,7 @@ describe('UserMenuButton', () => {
     expect(wrapper.find('[data-testid="menu-admin-matches"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="menu-admin-teams"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="menu-admin-users"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="menu-admin-sync"]').exists()).toBe(false)
   })
 
   it('admin usernél admin linkek láthatók', async () => {
@@ -145,6 +146,7 @@ describe('UserMenuButton', () => {
     expect(wrapper.find('[data-testid="menu-admin-matches"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="menu-admin-teams"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="menu-admin-users"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="menu-admin-sync"]').exists()).toBe(true)
   })
 
   it('admin section toggle → admin linkek elrejtve', async () => {

@@ -68,6 +68,7 @@ export const teams = pgTable('teams', {
   group:       varchar('group', { length: 20 }),
   teamType:    teamTypeEnum('team_type').notNull().default('national'),
   countryCode: varchar('country_code', { length: 10 }),
+  externalId:  integer('external_id').unique(),
   createdAt:   timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt:   timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
@@ -80,6 +81,7 @@ export const players = pgTable('players', {
   teamId:      uuid('team_id').references(() => teams.id),
   position:    varchar('position', { length: 30 }),
   shirtNumber: smallint('shirt_number'),
+  externalId:  integer('external_id').unique(),
   createdAt:   timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt:   timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({
@@ -120,6 +122,7 @@ export const matches = pgTable('matches', {
   matchNumber: smallint('match_number'),
   scheduledAt: timestamp('scheduled_at', { withTimezone: true }).notNull(),
   status:      matchStatusEnum('status').notNull().default('scheduled'),
+  externalId:  integer('external_id').unique(),
   createdAt:   timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt:   timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   deletedAt:   timestamp('deleted_at', { withTimezone: true }),
@@ -137,7 +140,7 @@ export const matchResults = pgTable('match_results', {
   homeGoals:        smallint('home_goals').notNull(),
   awayGoals:        smallint('away_goals').notNull(),
   outcomeAfterDraw: text('outcome_after_draw'),
-  recordedBy:       uuid('recorded_by').notNull().references(() => users.id),
+  recordedBy:       uuid('recorded_by').references(() => users.id),
   recordedAt:       timestamp('recorded_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt:        timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({

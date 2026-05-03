@@ -99,6 +99,15 @@
         >
           Speciális tippek
         </router-link>
+        <router-link
+          v-show="adminOpen"
+          to="/admin/sync"
+          data-testid="menu-admin-sync"
+          class="flex items-center pl-6 pr-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+          @click="menuOpen = false"
+        >
+          Szinkron
+        </router-link>
         <div class="border-t border-gray-100" />
       </template>
       <router-link

@@ -435,6 +435,23 @@ export const api = {
           headers: { Authorization: `Bearer ${token}` },
         }),
     },
+    sync: {
+      getSettings: (token: string) =>
+        request<{ mode: string }>('/admin/sync/settings', {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      updateSettings: (token: string, mode: string) =>
+        request<{ mode: string }>('/admin/sync/settings', {
+          method: 'PUT',
+          body: JSON.stringify({ mode }),
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      run: (token: string) =>
+        request<{ results: Array<{ teamsUpserted: number; fixturesUpserted: number; resultsUpserted: number; errors: string[]; partial: boolean }> }>('/admin/sync/run', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+    },
   },
   leaderboard: {
     get: (token: string) =>

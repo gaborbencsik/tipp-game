@@ -144,7 +144,7 @@ export interface MatchResultRow {
   readonly homeGoals: number
   readonly awayGoals: number
   readonly outcomeAfterDraw: string | null
-  readonly recordedBy: string
+  readonly recordedBy: string | null
   readonly recordedAt: Date
   readonly updatedAt: Date
 }
@@ -371,4 +371,75 @@ export interface UserLeagueFavorite {
 
 export interface SetFavoriteInput {
   readonly teamId: string
+}
+
+// ─── FOOTBALL API SYNC ─────────────────────────────────────────────────────────
+
+export type SyncMode = 'off' | 'final_only' | 'adaptive' | 'full_live'
+
+export interface SyncRunResult {
+  readonly startedAt: string
+  readonly finishedAt: string
+  readonly mode: SyncMode
+  readonly leaguesSynced: number
+  readonly fixturesUpserted: number
+  readonly teamsUpserted: number
+  readonly resultsUpserted: number
+  readonly errors: readonly string[]
+  readonly partial: boolean
+}
+
+export interface ApiFootballFixtureStatus {
+  readonly short: string
+  readonly long: string
+  readonly elapsed: number | null
+}
+
+export interface ApiFootballVenue {
+  readonly id: number | null
+  readonly name: string | null
+  readonly city: string | null
+}
+
+export interface ApiFootballTeamEntry {
+  readonly id: number
+  readonly name: string
+  readonly code: string | null
+  readonly logo: string
+  readonly national: boolean
+}
+
+export interface ApiFootballFixture {
+  readonly fixture: {
+    readonly id: number
+    readonly date: string
+    readonly status: ApiFootballFixtureStatus
+    readonly venue: ApiFootballVenue
+  }
+  readonly league: {
+    readonly id: number
+    readonly round: string
+  }
+  readonly teams: {
+    readonly home: ApiFootballTeamEntry
+    readonly away: ApiFootballTeamEntry
+  }
+  readonly goals: {
+    readonly home: number | null
+    readonly away: number | null
+  }
+  readonly score: {
+    readonly fulltime: { readonly home: number | null; readonly away: number | null }
+    readonly penalty: { readonly home: number | null; readonly away: number | null }
+  }
+}
+
+export interface ApiFootballTeam {
+  readonly team: ApiFootballTeamEntry
+  readonly venue: ApiFootballVenue | null
+}
+
+export interface ApiFootballResponse<T> {
+  readonly results: number
+  readonly response: readonly T[]
 }

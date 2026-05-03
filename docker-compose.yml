@@ -28,6 +28,13 @@ services:
       SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET:-dev_jwt_secret_placeholder}
       CORS_ORIGIN: http://localhost:5173
       ADMIN_EMAILS: admin@dev.local
+      FOOTBALL_API_KEY: ${FOOTBALL_API_KEY:-}
+      FOOTBALL_API_BASE_URL: https://v3.football.api-sports.io
+      FOOTBALL_API_WC_LEAGUE_ID: "1"
+      FOOTBALL_API_NBI_LEAGUE_ID: "271"
+      FOOTBALL_SYNC_MODE: final_only
+      FOOTBALL_INTERNAL_WC_LEAGUE_ID: bbbbbbbb-1111-2222-3333-000000000001
+      FOOTBALL_INTERNAL_NBI_LEAGUE_ID: bbbbbbbb-1111-2222-3333-000000000002
     volumes:
       - ./packages/backend/src:/app/packages/backend/src
     depends_on:

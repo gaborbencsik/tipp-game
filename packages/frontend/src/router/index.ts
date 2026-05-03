@@ -86,6 +86,12 @@ export const router = createRouter({
       meta: { requiresAuth: true, requiresAdmin: true },
     },
     {
+      path: '/admin/sync',
+      name: 'admin-sync',
+      component: () => import('../views/AdminSyncView.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true },
+    },
+    {
       path: '/app/my-tips',
       name: 'my-tips',
       component: () => import('../views/MyTipsView.vue'),
