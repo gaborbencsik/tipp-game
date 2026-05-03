@@ -23,6 +23,7 @@
 | UX-012 | Toast notification rendszer | Should Have | — |
 | UX-013 | Értesítési rendszer (notification bell + panel) | Nice to Have | — |
 | SEC-002 | HMAC-aláírt meghívó URL-ek | Nice to Have | — |
+| UX-014 | Napi bontás navigáció a mérkőzések nézetben | Should Have | — |
 
 ---
 
