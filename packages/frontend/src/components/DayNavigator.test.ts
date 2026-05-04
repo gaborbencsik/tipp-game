@@ -80,4 +80,20 @@ describe('DayNavigator', () => {
     const btn = w.find('[data-testid="day-nav-all"]')
     expect(btn.classes()).toContain('bg-gray-200')
   })
+
+  it('shows checkmark icon when isShowingAll is true', () => {
+    const w = mountNav({ isShowingAll: true })
+    const btn = w.find('[data-testid="day-nav-all"]')
+    const svg = btn.find('svg')
+    expect(svg.exists()).toBe(true)
+    expect(svg.find('path').exists()).toBe(true)
+  })
+
+  it('shows empty checkbox icon when isShowingAll is false', () => {
+    const w = mountNav({ isShowingAll: false })
+    const btn = w.find('[data-testid="day-nav-all"]')
+    const svg = btn.find('svg')
+    expect(svg.exists()).toBe(true)
+    expect(svg.find('rect').exists()).toBe(true)
+  })
 })
