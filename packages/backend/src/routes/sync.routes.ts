@@ -1,21 +1,28 @@
 import Router from '@koa/router'
 import { authMiddleware } from '../middleware/auth.middleware.js'
 import { adminMiddleware } from '../middleware/admin.middleware.js'
-import { getSyncMode, setSyncMode, VALID_SYNC_MODES } from '../services/sync-config.js'
-import { runSync } from '../services/sync.service.js'
-import { buildConfig, createFootballApiClient } from '../services/football-api.service.js'
+import { getSyncState, setSyncMode, markSyncFinished, incrementApiCalls } from '../services/sync-state.service.js'
+import { runAllLeagues } from '../services/sync-runner.js'
 import type { SyncMode } from '../types/index.js'
+
+const VALID_SYNC_MODES: readonly SyncMode[] = ['off', 'final_only', 'adaptive', 'full_live']
 
 const syncRouter = new Router({ prefix: '/api/admin/sync' })
 
 syncRouter.use(authMiddleware)
 syncRouter.use(adminMiddleware)
 
-syncRouter.get('/settings', (ctx) => {
-  ctx.body = { mode: getSyncMode() }
+syncRouter.get('/settings', async (ctx) => {
+  const state = await getSyncState()
+  ctx.body = {
+    mode: state.mode,
+    lastSuccessfulSyncAt: state.lastSuccessfulSyncAt,
+    apiCallsToday: state.apiCallsToday,
+    syncInProgress: state.syncInProgress,
+  }
 })
 
-syncRouter.put('/settings', (ctx) => {
+syncRouter.put('/settings', async (ctx) => {
   const { mode } = ctx.request.body as { mode?: string }
 
   if (!mode || !(VALID_SYNC_MODES as readonly string[]).includes(mode)) {
@@ -24,57 +31,29 @@ syncRouter.put('/settings', (ctx) => {
     return
   }
 
-  setSyncMode(mode as SyncMode)
-  ctx.body = { mode: getSyncMode() }
+  await setSyncMode(mode as SyncMode)
+  const state = await getSyncState()
+  ctx.body = { mode: state.mode }
 })
 
 syncRouter.post('/run', async (ctx) => {
-  const mode = getSyncMode()
-  if (mode === 'off') {
+  const state = await getSyncState()
+  if (state.mode === 'off') {
     ctx.status = 400
     ctx.body = { error: 'Sync is disabled. Change mode first.' }
     return
   }
 
-  const config = buildConfig()
-  const client = createFootballApiClient(config)
-
-  const wcLeagueId = process.env['FOOTBALL_API_WC_LEAGUE_ID']
-  const nbiLeagueId = process.env['FOOTBALL_API_NBI_LEAGUE_ID']
-  const wcInternalId = process.env['FOOTBALL_INTERNAL_WC_LEAGUE_ID']
-  const nbiInternalId = process.env['FOOTBALL_INTERNAL_NBI_LEAGUE_ID']
-
-  const results = []
-
-  if (wcLeagueId && wcInternalId) {
-    const result = await runSync(
-      Number(wcLeagueId),
-      wcInternalId,
-      2026,
-      client,
-      mode,
-    )
-    results.push(result)
+  try {
+    const results = await runAllLeagues(state.mode)
+    const totalApiCalls = results.length * 2
+    await markSyncFinished(true)
+    await incrementApiCalls(totalApiCalls)
+    ctx.body = { results }
+  } catch (err) {
+    await markSyncFinished(false)
+    throw err
   }
-
-  if (nbiLeagueId && nbiInternalId) {
-    const result = await runSync(
-      Number(nbiLeagueId),
-      nbiInternalId,
-      2025,
-      client,
-      mode,
-    )
-    results.push(result)
-  }
-
-  if (results.length === 0) {
-    ctx.status = 400
-    ctx.body = { error: 'No leagues configured. Set FOOTBALL_INTERNAL_WC_LEAGUE_ID and/or FOOTBALL_INTERNAL_NBI_LEAGUE_ID.' }
-    return
-  }
-
-  ctx.body = { results }
 })
 
 export { syncRouter }

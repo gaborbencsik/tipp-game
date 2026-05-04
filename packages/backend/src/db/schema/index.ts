@@ -419,3 +419,15 @@ export const groupLeaguesRelations = relations(groupLeagues, ({ one }) => ({
   group: one(groups, { fields: [groupLeagues.groupId], references: [groups.id] }),
   league: one(leagues, { fields: [groupLeagues.leagueId], references: [leagues.id] }),
 }))
+
+// ─── SYNC STATE ──────────────────────────────────────────────────────────────
+
+export const syncState = pgTable('sync_state', {
+  id:                   uuid('id').primaryKey().defaultRandom(),
+  mode:                 text('mode').notNull().default('off'),
+  lastSuccessfulSyncAt: timestamp('last_successful_sync_at', { withTimezone: true }),
+  apiCallsToday:        integer('api_calls_today').notNull().default(0),
+  apiCallsDate:         text('api_calls_date').notNull().default(''),
+  syncInProgress:       boolean('sync_in_progress').notNull().default(false),
+  updatedAt:            timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})
