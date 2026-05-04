@@ -1,6 +1,7 @@
 import { sql, eq } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { teams, matches, matchResults, venues, auditLogs } from '../db/schema/index.js'
+import { calculateAndSavePoints, calculateAndSaveGroupPoints } from './scoring.service.js'
 import type {
   ApiFootballFixture,
   ApiFootballTeam,
@@ -8,6 +9,7 @@ import type {
   SyncRunResult,
   MatchStage,
   MatchStatus,
+  MatchOutcome,
 } from '../types/index.js'
 import type { FootballApiClient } from './football-api.service.js'
 
@@ -72,7 +74,7 @@ interface PenaltyScore {
   readonly away: number | null
 }
 
-export function derivePenaltyOutcome(penalty: PenaltyScore): string | null {
+export function derivePenaltyOutcome(penalty: PenaltyScore): MatchOutcome | null {
   if (penalty.home === null || penalty.away === null) {
     return null
   }
@@ -281,6 +283,10 @@ export async function upsertResults(
         updatedAt: sql`now()`,
       },
     })
+
+    await calculateAndSavePoints(match.id, { homeGoals, awayGoals, outcomeAfterDraw: outcomeAfterDraw ?? null })
+    await calculateAndSaveGroupPoints(match.id, { homeGoals, awayGoals, outcomeAfterDraw: outcomeAfterDraw ?? null })
+
     count++
   }
 
