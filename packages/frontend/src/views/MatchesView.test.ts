@@ -176,18 +176,24 @@ describe('MatchesView', () => {
     resolveList([])
   })
 
-  it('matches loaded → live and scheduled groups rendered, finished group hidden', async () => {
+  it('matches loaded → live and scheduled groups rendered, finished shows last day only', async () => {
     // MATCH_FINISHED is on a different day from MATCH_LIVE so it forms its own all-finished group
     const finishedOnOwnDay: Match = {
       ...MATCH_FINISHED,
       scheduledAt: '2026-06-10T18:00:00.000Z',
     }
-    const { wrapper } = await mountView([MATCH_LIVE, finishedOnOwnDay, MATCH_SCHEDULED])
+    // Put scheduled match on same day as live match so both appear in the first upcoming day
+    const scheduledSameDay: Match = {
+      ...MATCH_SCHEDULED,
+      scheduledAt: '2026-06-11T20:00:00.000Z',
+    }
+    const { wrapper } = await mountView([MATCH_LIVE, finishedOnOwnDay, scheduledSameDay])
+    // upcoming section shows the first day (which has both live and scheduled)
     expect(wrapper.text()).toContain('Germany')
     expect(wrapper.text()).toContain('France')
     expect(wrapper.text()).toContain('Brazil')
-    // finished section is collapsed by default
-    expect(wrapper.text()).not.toContain('Spain')
+    // finished section is open by default showing last finished day
+    expect(wrapper.text()).toContain('Spain')
   })
 
   it('live match → ÉLŐBEN text visible', async () => {
@@ -195,11 +201,9 @@ describe('MatchesView', () => {
     expect(wrapper.text()).toContain('ÉLŐBEN')
   })
 
-  it('finished match → result scores and teams visible after expanding section', async () => {
+  it('finished match → result scores and teams visible (section open by default)', async () => {
     const { wrapper } = await mountView([MATCH_FINISHED])
-    // expand the finished section
-    await wrapper.find('[data-testid="finished-section-toggle"]').trigger('click')
-    await wrapper.vm.$nextTick()
+    // section is open by default showing the last finished day
     expect(wrapper.text()).toContain('Spain')
     expect(wrapper.text()).toContain('Italy')
     expect(wrapper.text()).toContain('Befejezett')
@@ -247,18 +251,18 @@ describe('MatchesView', () => {
     expect(wrapper.find('[data-testid="save-button"]').exists()).toBe(false)
   })
 
-  it('finished match → section collapsed by default, teams not visible', async () => {
+  it('finished match → section open by default, teams visible', async () => {
     const { wrapper } = await mountView([MATCH_FINISHED])
-    expect(wrapper.find('[data-testid="input-home"]').exists()).toBe(false)
-    expect(wrapper.text()).not.toContain('Spain')
+    expect(wrapper.text()).toContain('Spain')
   })
 
-  it('finished match → clicking finished-section-toggle expands and shows teams', async () => {
+  it('finished match → clicking finished-section-toggle collapses and hides teams', async () => {
     const { wrapper } = await mountView([MATCH_FINISHED])
-    expect(wrapper.text()).not.toContain('Spain')
+    // section is open by default
+    expect(wrapper.text()).toContain('Spain')
     await wrapper.find('[data-testid="finished-section-toggle"]').trigger('click')
     await wrapper.vm.$nextTick()
-    expect(wrapper.text()).toContain('Spain')
+    expect(wrapper.text()).not.toContain('Spain')
   })
 
   it('finished match → finished-section-toggle button is visible', async () => {
@@ -267,11 +271,10 @@ describe('MatchesView', () => {
     expect(wrapper.text()).toContain('Lejátszott meccsek')
   })
 
-  it('finished match → toggle shows day and match count in header', async () => {
+  it('finished match → toggle shows day count in header', async () => {
     const { wrapper } = await mountView([MATCH_FINISHED])
     const toggleText = wrapper.find('[data-testid="finished-section-toggle"]').text()
     expect(toggleText).toContain('1 nap')
-    expect(toggleText).toContain('1 mérkőzés')
   })
 
   it('live match → date group not collapsed', async () => {
@@ -329,12 +332,11 @@ describe('MatchesView', () => {
     expect((homeInput.element as HTMLInputElement).disabled).toBe(true)
   })
 
-  // ─── UX-003: Far future matches collapsed ────────────────────────────────────
+  // ─── UX-014: Day navigation ──────────────────────────────────────────────────
 
-  it('far future match (>7 days) → hidden by default', async () => {
+  it('far future match → visible via day navigation (first upcoming day shown)', async () => {
     const { wrapper } = await mountView([MATCH_FAR_FUTURE])
-    expect(wrapper.text()).not.toContain('Portugal')
-    expect(wrapper.text()).toContain('további tervezett mérkőzés')
+    expect(wrapper.text()).toContain('Portugal')
   })
 
   it('within-7-days match → visible by default', async () => {
@@ -342,13 +344,11 @@ describe('MatchesView', () => {
     expect(wrapper.find('[data-testid="input-home"]').exists()).toBe(true)
   })
 
-  it('clicking future matches button → far future match becomes visible', async () => {
+  it('day navigator buttons render for upcoming section', async () => {
     const { wrapper } = await mountView([MATCH_FAR_FUTURE])
-    const btn = wrapper.findAll('button').find(b => b.text().includes('további tervezett'))
-    expect(btn).toBeDefined()
-    await btn!.trigger('click')
-    await wrapper.vm.$nextTick()
-    expect(wrapper.text()).toContain('Portugal')
+    expect(wrapper.find('[data-testid="day-nav-prev"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="day-nav-next"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="day-nav-all"]').exists()).toBe(true)
   })
 
   it('live match is always visible regardless of date', async () => {

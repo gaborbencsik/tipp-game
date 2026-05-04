@@ -80,29 +80,41 @@
       <div v-else>
         <!-- Lejátszott meccsek – összecsomagolt szekció -->
         <div v-if="finishedDayGroups.length > 0" class="mb-8">
-          <button
-            data-testid="finished-section-toggle"
-            class="w-full text-left flex items-center justify-between border-b border-gray-200 pb-1 mb-3 cursor-pointer select-none hover:text-gray-900 group"
-            @click="toggleFinishedSection"
-          >
-            <span class="text-lg font-semibold text-gray-500 group-hover:text-gray-700">
-              Lejátszott meccsek
-              <span class="text-sm font-normal text-gray-400 ml-2">
-                ({{ finishedDayGroups.length }} nap, {{ finishedMatchCount }} mérkőzés)
-              </span>
-            </span>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="w-4 h-4 text-gray-400 transition-transform duration-200 shrink-0"
-              :class="finishedSectionOpen ? 'rotate-180' : ''"
-              fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
+          <div class="flex items-center justify-between border-b border-gray-200 pb-1 mb-3">
+            <button
+              data-testid="finished-section-toggle"
+              class="flex items-center gap-1 cursor-pointer select-none hover:text-gray-900 group"
+              @click="toggleFinishedSection"
             >
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
+              <span class="text-lg font-semibold text-gray-500 group-hover:text-gray-700">
+                Lejátszott meccsek
+                <span class="text-sm font-normal text-gray-400 ml-1">
+                  ({{ finishedDayGroups.length }} nap)
+                </span>
+              </span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="w-4 h-4 text-gray-400 transition-transform duration-200 shrink-0"
+                :class="finishedSectionOpen ? 'rotate-180' : ''"
+                fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            <DayNavigator
+              v-if="finishedSectionOpen"
+              :date-label="finishedNav.dateLabel.value"
+              :can-go-prev="finishedNav.canGoPrev.value"
+              :can-go-next="finishedNav.canGoNext.value"
+              :is-showing-all="finishedNav.isShowingAll.value"
+              @prev="finishedNav.goPrev()"
+              @next="finishedNav.goNext()"
+              @show-all="finishedNav.isShowingAll.value ? finishedNav.showSingleDay() : finishedNav.showAll()"
+            />
+          </div>
 
           <template v-if="finishedSectionOpen">
-            <div v-for="group in finishedDayGroups" :key="group.date" class="mb-8">
+            <div v-for="group in visibleFinishedGroups" :key="group.date" class="mb-8">
               <h2 class="text-base font-semibold text-gray-600 mb-3 border-b border-gray-100 pb-1">
                 {{ group.label }}
               </h2>
@@ -161,12 +173,24 @@
         </div>
 
         <!-- Aktuális és jövőbeli meccsnapok -->
+        <div v-if="upcomingDayGroups.length > 0" class="flex items-center justify-between border-b border-gray-200 pb-1 mb-3">
+          <span class="text-lg font-semibold text-gray-700">Következő meccsek</span>
+          <DayNavigator
+            :date-label="upcomingNav.dateLabel.value"
+            :can-go-prev="upcomingNav.canGoPrev.value"
+            :can-go-next="upcomingNav.canGoNext.value"
+            :is-showing-all="upcomingNav.isShowingAll.value"
+            @prev="upcomingNav.goPrev()"
+            @next="upcomingNav.goNext()"
+            @show-all="upcomingNav.isShowingAll.value ? upcomingNav.showSingleDay() : upcomingNav.showAll()"
+          />
+        </div>
         <div
           v-for="group in visibleUpcomingGroups"
           :key="group.date"
           class="mb-8"
         >
-          <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b border-gray-200 pb-1">
+          <h2 class="text-base font-semibold text-gray-600 mb-3 border-b border-gray-100 pb-1">
             {{ group.label }}
           </h2>
           <div
@@ -175,7 +199,7 @@
             class="bg-white rounded-lg shadow-sm border p-4 mb-3"
             :class="cardBorderClass(match)"
           >
-            <router-link :to="`/matches/${match.id}`" class="block">
+            <router-link :to="`/app/matches/${match.id}`" class="block">
               <div class="flex items-center justify-between mb-2">
                 <span class="text-xs font-medium uppercase tracking-wide text-gray-500">
                   {{ stageLabel(match.stage) }}
@@ -271,14 +295,6 @@
           </div>
         </div>
 
-        <!-- Távoli jövőbeli meccsek -->
-        <button
-          v-if="!showFutureMatches && hiddenFutureCount > 0"
-          class="w-full text-sm text-gray-500 hover:text-gray-700 border border-dashed border-gray-300 rounded-lg py-3 mb-4 transition-colors"
-          @click="showFutureMatches = true"
-        >
-          ▶ {{ hiddenFutureCount }} további tervezett mérkőzés megjelenítése
-        </button>
       </div>
   </AppLayout>
 </template>
@@ -293,7 +309,9 @@ import type { Match, MatchDateGroup, MatchOutcome, MatchStage, MatchStatus } fro
 import AppLayout from '../components/AppLayout.vue'
 import TeamBadge from '../components/TeamBadge.vue'
 import SpecialPendingBanner from '../components/SpecialPendingBanner.vue'
+import DayNavigator from '../components/DayNavigator.vue'
 import { usePendingSpecialTips } from '../composables/usePendingSpecialTips.js'
+import { useDayNavigation } from '../composables/useDayNavigation.js'
 
 const matchesStore = useMatchesStore()
 const predictionsStore = usePredictionsStore()
@@ -307,8 +325,6 @@ const homeInputs = ref<Record<string, HTMLInputElement>>({})
 const awayInputs = ref<Record<string, HTMLInputElement>>({})
 const autosaveTimers: Record<string, ReturnType<typeof setTimeout>> = {}
 
-const FUTURE_DAYS = 7
-const showFutureMatches = ref(false)
 const draftOutcomes = ref<Record<string, MatchOutcome | null>>({})
 const favBannerDismissed = ref(false)
 
@@ -331,7 +347,7 @@ const showFavBanner = computed((): boolean => {
 })
 
 const LS_KEY = 'matches_finished_expanded'
-const finishedSectionOpen = ref(false)
+const finishedSectionOpen = ref(true)
 
 function toggleFinishedSection(): void {
   finishedSectionOpen.value = !finishedSectionOpen.value
@@ -342,10 +358,6 @@ function toggleFinishedSection(): void {
   }
 }
 
-const cutoffDate = new Date(now.value)
-cutoffDate.setDate(cutoffDate.getDate() + FUTURE_DAYS)
-const cutoffStr = cutoffDate.toISOString().substring(0, 10)
-
 function isFinishedDay(group: MatchDateGroup): boolean {
   return group.matches.every(m => m.status === 'finished' || m.status === 'cancelled')
 }
@@ -354,28 +366,38 @@ const finishedDayGroups = computed((): MatchDateGroup[] =>
   matchesStore.matchesByDate.filter(g => isFinishedDay(g)),
 )
 
-const finishedMatchCount = computed((): number =>
-  finishedDayGroups.value.reduce((sum, g) => sum + g.matches.length, 0),
-)
 
 const upcomingDayGroups = computed((): MatchDateGroup[] =>
   matchesStore.matchesByDate.filter(g => !isFinishedDay(g)),
 )
 
-const visibleUpcomingGroups = computed((): MatchDateGroup[] => {
-  if (showFutureMatches.value) return upcomingDayGroups.value
-  return upcomingDayGroups.value.filter(g => g.date <= cutoffStr || g.matches.some(m => m.status !== 'scheduled'))
+const finishedNav = useDayNavigation({
+  groups: finishedDayGroups,
+  storageKey: 'matches_finished_day_index',
+  defaultIndex: 'last',
 })
 
-const hiddenFutureCount = computed((): number => {
-  return upcomingDayGroups.value
-    .filter(g => g.date > cutoffStr && g.matches.every(m => m.status === 'scheduled'))
-    .reduce((sum, g) => sum + g.matches.length, 0)
+const upcomingNav = useDayNavigation({
+  groups: upcomingDayGroups,
+  storageKey: 'matches_upcoming_day_index',
+  defaultIndex: 'first',
+})
+
+const visibleFinishedGroups = computed((): MatchDateGroup[] => {
+  if (finishedNav.isShowingAll.value) return finishedDayGroups.value
+  const group = finishedNav.currentGroup.value
+  return group ? [group] : []
+})
+
+const visibleUpcomingGroups = computed((): MatchDateGroup[] => {
+  if (upcomingNav.isShowingAll.value) return upcomingDayGroups.value
+  const group = upcomingNav.currentGroup.value
+  return group ? [group] : []
 })
 
 const inputOrder = computed((): Array<{ matchId: string; side: 'home' | 'away' }> => {
   const order: Array<{ matchId: string; side: 'home' | 'away' }> = []
-  for (const group of upcomingDayGroups.value) {
+  for (const group of visibleUpcomingGroups.value) {
     for (const match of group.matches) {
       if (isTippable(match)) {
         order.push({ matchId: match.id, side: 'home' })
