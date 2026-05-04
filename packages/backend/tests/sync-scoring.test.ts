@@ -23,6 +23,7 @@ vi.mock('../src/services/scoring.service.js', () => ({
 }))
 
 import { db } from '../src/db/client.js'
+import { upsertResults } from '../src/services/sync.service.js'
 
 describe('sync.service – upsertResults scoring integration', () => {
   beforeEach(() => {
@@ -30,8 +31,6 @@ describe('sync.service – upsertResults scoring integration', () => {
   })
 
   it('calls calculateAndSavePoints after upserting a finished result', async () => {
-    const { upsertResults } = await import('../src/services/sync.service.js')
-
     const fixtures = [{
       fixture: { id: 101, status: { short: 'FT' } },
       goals: { home: 2, away: 1 },
@@ -64,11 +63,6 @@ describe('sync.service – upsertResults scoring integration', () => {
   })
 
   it('calls scoring with outcomeAfterDraw when penalties decided', async () => {
-    vi.resetModules()
-    vi.clearAllMocks()
-
-    const { upsertResults } = await import('../src/services/sync.service.js')
-
     const fixtures = [{
       fixture: { id: 202, status: { short: 'PEN' } },
       goals: { home: 1, away: 1 },
@@ -97,11 +91,6 @@ describe('sync.service – upsertResults scoring integration', () => {
   })
 
   it('does not call scoring for non-finished fixtures', async () => {
-    vi.resetModules()
-    vi.clearAllMocks()
-
-    const { upsertResults } = await import('../src/services/sync.service.js')
-
     const fixtures = [{
       fixture: { id: 303, status: { short: 'NS' } },
       goals: { home: null, away: null },
@@ -115,11 +104,6 @@ describe('sync.service – upsertResults scoring integration', () => {
   })
 
   it('does not call scoring when match not found in DB', async () => {
-    vi.resetModules()
-    vi.clearAllMocks()
-
-    const { upsertResults } = await import('../src/services/sync.service.js')
-
     const fixtures = [{
       fixture: { id: 404, status: { short: 'FT' } },
       goals: { home: 3, away: 0 },
