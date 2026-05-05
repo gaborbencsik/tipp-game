@@ -307,31 +307,36 @@
       <div class="mt-8 max-w-md">
         <h3 class="text-base font-semibold text-gray-800 mb-1">Liga</h3>
         <p class="text-sm text-gray-500 mb-3">Csak a kiválasztott liga meccseit tartalmazza a csoport ranglista.</p>
-        <select
-          v-model="leagueDraft"
-          :class="[
-            'w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500',
-            !leagueDraft ? 'text-gray-400' : 'text-gray-900'
-          ]"
-        >
-          <option value="" disabled>Válassz ligát...</option>
-          <option v-for="league in leagueStore.leagues" :key="league.id" :value="league.id">
-            {{ league.name }}
-          </option>
-        </select>
-        <div class="flex items-center gap-4 mt-3">
-          <button
-            type="button"
-            data-testid="leagues-submit"
-            class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
-            :disabled="leagueSaveStatus === 'saving' || !leagueDraft"
-            @click="submitLeagues"
+        <template v-if="currentGroup?.leagues?.length">
+          <p class="text-sm text-gray-900">{{ currentGroup.leagues[0]!.name }}</p>
+        </template>
+        <template v-else>
+          <select
+            v-model="leagueDraft"
+            :class="[
+              'w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500',
+              !leagueDraft ? 'text-gray-400' : 'text-gray-900'
+            ]"
           >
-            Mentés
-          </button>
-          <span v-if="leagueSaveStatus === 'saved'" class="text-sm text-green-600">Elmentve!</span>
-          <span v-else-if="leagueSaveStatus === 'error'" class="text-sm text-red-600">Hiba a mentés során</span>
-        </div>
+            <option value="" disabled>Válassz ligát...</option>
+            <option v-for="league in leagueStore.leagues" :key="league.id" :value="league.id">
+              {{ league.name }}
+            </option>
+          </select>
+          <div class="flex items-center gap-4 mt-3">
+            <button
+              type="button"
+              data-testid="leagues-submit"
+              class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              :disabled="leagueSaveStatus === 'saving' || !leagueDraft"
+              @click="submitLeagues"
+            >
+              Mentés
+            </button>
+            <span v-if="leagueSaveStatus === 'saved'" class="text-sm text-green-600">Elmentve!</span>
+            <span v-else-if="leagueSaveStatus === 'error'" class="text-sm text-red-600">Hiba a mentés során</span>
+          </div>
+        </template>
       </div>
 
       <!-- Hivatalos speciális tippek kezelése (admin) -->

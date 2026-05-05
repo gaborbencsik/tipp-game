@@ -477,7 +477,15 @@ export async function setGroupLeague(
     .limit(1)
   if (!memberRows[0]?.isAdmin) throw new AppError(403, 'Not authorized')
 
-  await db.delete(groupLeagues).where(eq(groupLeagues.groupId, groupId))
+  const existingLeagues = await db
+    .select({ id: groupLeagues.id })
+    .from(groupLeagues)
+    .where(eq(groupLeagues.groupId, groupId))
+    .limit(1)
+  if (existingLeagues.length > 0) {
+    throw new AppError(422, 'League already set')
+  }
+
   await db.insert(groupLeagues).values({ groupId, leagueId })
 
   const leagueRows = await fetchGroupLeagues(groupId)

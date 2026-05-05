@@ -355,6 +355,24 @@ describe('GroupDetailView', () => {
     expect(toggleSpy).toHaveBeenCalledWith('group-uuid-1', false)
   })
 
+  // ─── League lock ───────────────────────────────────────────────────────────
+
+  it('league section shows read-only name when league is already set', async () => {
+    const { wrapper } = await mountView([MEMBER_SELF])
+    await wrapper.find('[data-testid="tab-settings"]').trigger('click')
+    await wrapper.vm.$nextTick()
+    expect(wrapper.text()).toContain('VB 2026')
+    expect(wrapper.find('[data-testid="leagues-submit"]').exists()).toBe(false)
+  })
+
+  it('league section shows dropdown when no league is set', async () => {
+    const groupNoLeague: Group = { ...GROUP, leagues: [] }
+    const { wrapper } = await mountView([MEMBER_SELF], [], [groupNoLeague])
+    await wrapper.find('[data-testid="tab-settings"]').trigger('click')
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find('[data-testid="leagues-submit"]').exists()).toBe(true)
+  })
+
   // ─── Delete group ─────────────────────────────────────────────────────────────
 
   it('delete group button visible for admin on settings tab', async () => {

@@ -674,3 +674,42 @@ describe('deleteGroup', () => {
     expect(mockUpdate).toHaveBeenCalledOnce()
   })
 })
+
+// ─── setGroupLeague ───────────────────────────────────────────────────────────
+
+describe('setGroupLeague', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('throws 422 if group already has a league', async () => {
+    // group lookup
+    mockSelect.mockReturnValueOnce(makeSelectChain([GROUP_ROW]))
+    // membership check
+    mockSelect.mockReturnValueOnce(makeSelectChain([MEMBER_ROW_ADMIN]))
+    // existing leagues check — has a row
+    mockSelect.mockReturnValueOnce(makeSelectChain([{ id: 'gl-1' }]))
+
+    await expect(setGroupLeague('group-uuid-1', USER_ID, 'league-new'))
+      .rejects.toMatchObject({ status: 422, message: 'League already set' })
+  })
+
+  it('inserts league if group has no league yet', async () => {
+    // group lookup
+    mockSelect.mockReturnValueOnce(makeSelectChain([GROUP_ROW]))
+    // membership check
+    mockSelect.mockReturnValueOnce(makeSelectChain([MEMBER_ROW_ADMIN]))
+    // existing leagues check — empty
+    mockSelect.mockReturnValueOnce(makeSelectChain([]))
+    // insert groupLeagues
+    const leagueValuesFn = vi.fn().mockResolvedValue(undefined)
+    mockInsert.mockReturnValueOnce({ values: leagueValuesFn })
+    // fetchGroupLeagues
+    mockSelect.mockReturnValueOnce(makeSelectChain([{ id: 'league-new', name: 'VB 2026', shortName: 'VB' }]))
+    // member count
+    mockSelect.mockReturnValueOnce(makeSelectChain([{ count: 3 }]))
+
+    const result = await setGroupLeague('group-uuid-1', USER_ID, 'league-new')
+
+    expect(result.leagues).toEqual([{ id: 'league-new', name: 'VB 2026', shortName: 'VB' }])
+    expect(mockInsert).toHaveBeenCalledOnce()
+  })
+})

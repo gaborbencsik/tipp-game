@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 91 story kész (Must Have: 31/31, Should Have: 60/67)
+> 92 story kész (Must Have: 31/31, Should Have: 61/67)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -95,3 +95,4 @@
 | US-1101 | Donation gomb és pop-up | Should Have |
 | US-1102 | Donation átirányítás | Should Have |
 | UX-015 | Kedvenc csapat zászló a ranglistán | Should Have |
+| UX-018 | Liga módosítás tiltása csoport létrehozás után | Should Have |
