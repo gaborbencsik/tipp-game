@@ -209,8 +209,8 @@ describe('getMyGroups', () => {
 describe('createGroup', () => {
   beforeEach(() => { vi.resetAllMocks() })
 
-  it('user already has 5 groups → AppError 422', async () => {
-    mockSelect.mockReturnValueOnce(makeSelectChain([{ count: 5 }]))
+  it('user already has 20 groups → AppError 422', async () => {
+    mockSelect.mockReturnValueOnce(makeSelectChain([{ count: 20 }]))
     await expect(createGroup({ name: 'Új', leagueId: 'l-1' }, USER_ID)).rejects.toMatchObject({
       status: 422,
       message: 'Maximum number of created groups reached',

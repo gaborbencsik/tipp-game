@@ -13,7 +13,7 @@ class AppError extends Error {
   }
 }
 
-const MAX_GROUPS_CREATED = 5
+const MAX_GROUPS_CREATED = 20
 const MAX_GROUPS_JOINED = 20
 const INVITE_CODE_LENGTH = 8
 const INVITE_CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -101,7 +101,7 @@ export async function createGroup(input: GroupInput, userId: string): Promise<Gr
   const createdCount = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(groups)
-    .where(eq(groups.createdBy, userId))
+    .where(and(eq(groups.createdBy, userId), isNull(groups.deletedAt)))
 
   if ((createdCount[0]?.count ?? 0) >= MAX_GROUPS_CREATED) {
     throw new AppError(422, 'Maximum number of created groups reached')
