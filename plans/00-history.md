@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 88 story kész (Must Have: 31/31, Should Have: 57/67)
+> 91 story kész (Must Have: 31/31, Should Have: 60/67)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -92,3 +92,6 @@
 | US-1202 | Futball API szinkronizációs service | Should Have |
 | US-1203 | Automatikus adatszinkron cron job | Should Have |
 | UX-014 | Napi bontás navigáció a mérkőzések nézetben | Should Have |
+| US-1101 | Donation gomb és pop-up | Should Have |
+| US-1102 | Donation átirányítás | Should Have |
+| UX-015 | Kedvenc csapat zászló a ranglistán | Should Have |

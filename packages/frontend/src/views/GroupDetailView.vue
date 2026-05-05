@@ -91,6 +91,13 @@
                     class="w-7 h-7 rounded-full object-cover shrink-0"
                   />
                   <span class="font-medium text-gray-800 truncate">{{ entry.displayName }}</span>
+                  <span
+                    v-if="entry.favoriteTeam?.countryCode"
+                    :class="`fi fi-${entry.favoriteTeam.countryCode}`"
+                    :title="entry.favoriteTeam.name"
+                    class="shrink-0"
+                    style="width:1.2em;height:0.9em"
+                  />
                   <span v-if="entry.userId === authStore.user?.id" class="text-xs text-blue-600 shrink-0">(te)</span>
                 </div>
               </td>

@@ -270,6 +270,27 @@ describe('GroupDetailView', () => {
     expect(wrapper.text()).toContain('10')
   })
 
+  it('leaderboard shows favorite team flag when entry has favoriteTeam', async () => {
+    const entryWithFav: LeaderboardEntry = {
+      ...LEADERBOARD_ENTRY,
+      favoriteTeam: { countryCode: 'br', name: 'Brazil' },
+    }
+    const { wrapper } = await mountView([], [entryWithFav])
+    const flag = wrapper.find('.fi.fi-br')
+    expect(flag.exists()).toBe(true)
+    expect(flag.attributes('title')).toBe('Brazil')
+  })
+
+  it('leaderboard does not show flag when favoriteTeam is null', async () => {
+    const entryNoFav: LeaderboardEntry = {
+      ...LEADERBOARD_ENTRY,
+      favoriteTeam: null,
+    }
+    const { wrapper } = await mountView([], [entryNoFav])
+    const flags = wrapper.findAll('[class*="fi fi-"]')
+    expect(flags.length).toBe(0)
+  })
+
   // ─── Invite section ───────────────────────────────────────────────────────────
 
   it('invite section visible for admin on settings tab', async () => {

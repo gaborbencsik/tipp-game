@@ -11,6 +11,7 @@ export interface LeaderboardEntry {
   readonly predictionCount: number
   readonly correctCount: number
   readonly specialPredictionPoints: number
+  readonly favoriteTeam?: { readonly countryCode: string; readonly name: string } | null
 }
 
 export async function getLeaderboard(): Promise<LeaderboardEntry[]> {

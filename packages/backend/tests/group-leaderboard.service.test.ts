@@ -5,9 +5,10 @@ const {
   mockGroupWhere, mockGroupFrom, mockSelect,
   mockOrderBy, mockGroupBy, mockLeftJoin,
   mockInnerJoin, mockLeaderboardWhere, mockLeaderboardFrom,
-  mockLeftJoin2,
+  mockLeftJoin2, mockLeftJoin3,
   mockStatGroupBy, mockStatWhere, mockStatInnerJoin, mockStatFrom,
   mockLeagueWhere, mockLeagueFrom,
+  mockFavWhere, mockFavInnerJoin, mockFavFrom,
 } = vi.hoisted(() => ({
   mockLimit: vi.fn(),
   mockMemberWhere: vi.fn(),
@@ -22,12 +23,16 @@ const {
   mockLeaderboardWhere: vi.fn(),
   mockLeaderboardFrom: vi.fn(),
   mockLeftJoin2: vi.fn(),
+  mockLeftJoin3: vi.fn(),
   mockStatGroupBy: vi.fn(),
   mockStatWhere: vi.fn(),
   mockStatInnerJoin: vi.fn(),
   mockStatFrom: vi.fn(),
   mockLeagueWhere: vi.fn(),
   mockLeagueFrom: vi.fn(),
+  mockFavWhere: vi.fn(),
+  mockFavInnerJoin: vi.fn(),
+  mockFavFrom: vi.fn(),
 }))
 
 vi.mock('../src/db/client.js', () => ({
@@ -46,6 +51,8 @@ vi.mock('../src/db/schema/index.js', () => ({
   groupGlobalTypeSubscriptions: { globalTypeId: 'ggts.globalTypeId', groupId: 'ggts.groupId' },
   groupLeagues: { groupId: 'gl.groupId', leagueId: 'gl.leagueId' },
   matches: { id: 'matches.id', leagueId: 'matches.leagueId' },
+  userLeagueFavorites: { userId: 'ulf.userId', leagueId: 'ulf.leagueId', teamId: 'ulf.teamId' },
+  teams: { id: 'teams.id', countryCode: 'teams.countryCode', name: 'teams.name' },
 }))
 
 vi.mock('drizzle-orm', () => ({
@@ -78,12 +85,20 @@ function setupStatChain(statRows: unknown[] = []) {
   mockStatFrom.mockReturnValue({ innerJoin: mockStatInnerJoin })
 }
 
+function setupFavChain(favRows: unknown[] = []) {
+  mockFavWhere.mockResolvedValueOnce(favRows)
+  mockFavInnerJoin.mockReturnValue({ where: mockFavWhere })
+  mockFavFrom.mockReturnValue({ innerJoin: mockFavInnerJoin })
+}
+
 function setupLeaderboardSelectChain(
   groupRow: unknown,
   memberRows: unknown[],
   leaderboardRows: unknown[],
   withConfig = false,
   statRows: unknown[] = [],
+  leagueRows: unknown[] = [],
+  favRows: unknown[] = [],
 ) {
   mockLimit.mockResolvedValueOnce([groupRow])
   mockGroupWhere.mockReturnValue({ limit: mockLimit })
@@ -92,17 +107,30 @@ function setupLeaderboardSelectChain(
   mockMemberWhere.mockResolvedValueOnce(memberRows)
   mockMemberFrom.mockReturnValue({ where: mockMemberWhere })
 
-  mockLeagueWhere.mockResolvedValueOnce([])
+  mockLeagueWhere.mockResolvedValueOnce(leagueRows)
   mockLeagueFrom.mockReturnValue({ where: mockLeagueWhere })
 
   mockOrderBy.mockResolvedValueOnce(leaderboardRows)
   mockGroupBy.mockReturnValue({ orderBy: mockOrderBy })
   mockLeaderboardWhere.mockReturnValue({ groupBy: mockGroupBy })
 
-  if (withConfig) {
+  const hasLeagues = leagueRows.length > 0
+
+  if (withConfig && hasLeagues) {
+    // useGroupPoints=true + leagues: from → innerJoin → leftJoin(pred) → leftJoin2(gpp) → leftJoin3(matches) → where
+    mockLeftJoin3.mockReturnValue({ where: mockLeaderboardWhere })
+    mockLeftJoin2.mockReturnValue({ leftJoin: mockLeftJoin3 })
+    mockLeftJoin.mockReturnValue({ leftJoin: mockLeftJoin2 })
+  } else if (withConfig && !hasLeagues) {
+    // useGroupPoints=true + no leagues: from → innerJoin → leftJoin(pred) → leftJoin2(gpp) → where
+    mockLeftJoin2.mockReturnValue({ where: mockLeaderboardWhere })
+    mockLeftJoin.mockReturnValue({ leftJoin: mockLeftJoin2 })
+  } else if (!withConfig && hasLeagues) {
+    // useGroupPoints=false + leagues: from → innerJoin → leftJoin(pred) → leftJoin2(matches) → where
     mockLeftJoin2.mockReturnValue({ where: mockLeaderboardWhere })
     mockLeftJoin.mockReturnValue({ leftJoin: mockLeftJoin2 })
   } else {
+    // useGroupPoints=false + no leagues: from → innerJoin → leftJoin(pred) → where
     mockLeftJoin.mockReturnValue({ where: mockLeaderboardWhere })
   }
 
@@ -111,12 +139,26 @@ function setupLeaderboardSelectChain(
 
   setupStatChain(statRows)
 
-  mockSelect
-    .mockReturnValueOnce({ from: mockGroupFrom })       // group lookup
-    .mockReturnValueOnce({ from: mockMemberFrom })       // membership check
-    .mockReturnValueOnce({ from: mockLeagueFrom })       // allowedLeagues
-    .mockReturnValueOnce({ from: mockLeaderboardFrom })  // leaderboard query
-    .mockReturnValueOnce({ from: mockStatFrom })         // stat points query
+  const needsFavQuery = (groupRow as any)?.favoriteTeamDoublePoints && leagueRows.length > 0
+  if (needsFavQuery) {
+    setupFavChain(favRows)
+  }
+
+  const selectCalls: Array<{ from: unknown }> = [
+    { from: mockGroupFrom },
+    { from: mockMemberFrom },
+    { from: mockLeagueFrom },
+    { from: mockLeaderboardFrom },
+    { from: mockStatFrom },
+  ]
+
+  if (needsFavQuery) {
+    selectCalls.push({ from: mockFavFrom })
+  }
+
+  for (const call of selectCalls) {
+    mockSelect.mockReturnValueOnce(call)
+  }
 }
 
 describe('getGroupLeaderboard', () => {
@@ -222,11 +264,45 @@ describe('getGroupLeaderboard', () => {
 
   it('uses groupPredictionPoints when group has favoriteTeamDoublePoints enabled (no custom config)', async () => {
     const GROUP_ROW_DOUBLE = { id: GROUP_ID, scoringConfigId: null, favoriteTeamDoublePoints: true }
-    setupLeaderboardSelectChain(GROUP_ROW_DOUBLE, MEMBER_ROWS, LEADERBOARD_ROWS, true)
+    setupLeaderboardSelectChain(GROUP_ROW_DOUBLE, MEMBER_ROWS, LEADERBOARD_ROWS, true, [], [{ leagueId: 'league-1' }])
 
     const result = await getGroupLeaderboard(GROUP_ID, REQUESTER_ID)
 
     expect(result).toHaveLength(2)
     expect(result[0]).toMatchObject({ rank: 1, userId: REQUESTER_ID, totalPoints: 10 })
+  })
+
+  // ─── favoriteTeam field tests ───────────────────────────────────────────────
+
+  it('returns favoriteTeam when favoriteTeamDoublePoints is true and user has a favorite', async () => {
+    const GROUP_ROW_DOUBLE = { id: GROUP_ID, scoringConfigId: null, favoriteTeamDoublePoints: true }
+    const favRows = [
+      { userId: REQUESTER_ID, countryCode: 'br', teamName: 'Brazil' },
+    ]
+    setupLeaderboardSelectChain(GROUP_ROW_DOUBLE, MEMBER_ROWS, LEADERBOARD_ROWS, true, [], [{ leagueId: 'league-1' }], favRows)
+
+    const result = await getGroupLeaderboard(GROUP_ID, REQUESTER_ID)
+
+    expect(result[0]?.favoriteTeam).toEqual({ countryCode: 'br', name: 'Brazil' })
+    expect(result[1]?.favoriteTeam).toBeNull()
+  })
+
+  it('returns favoriteTeam null for all when favoriteTeamDoublePoints is false', async () => {
+    setupLeaderboardSelectChain(GROUP_ROW_NO_CONFIG, MEMBER_ROWS, LEADERBOARD_ROWS)
+
+    const result = await getGroupLeaderboard(GROUP_ID, REQUESTER_ID)
+
+    expect(result[0]?.favoriteTeam).toBeNull()
+    expect(result[1]?.favoriteTeam).toBeNull()
+  })
+
+  it('returns favoriteTeam null when favoriteTeamDoublePoints is true but no leagues', async () => {
+    const GROUP_ROW_DOUBLE = { id: GROUP_ID, scoringConfigId: null, favoriteTeamDoublePoints: true }
+    setupLeaderboardSelectChain(GROUP_ROW_DOUBLE, MEMBER_ROWS, LEADERBOARD_ROWS, true)
+
+    const result = await getGroupLeaderboard(GROUP_ID, REQUESTER_ID)
+
+    expect(result[0]?.favoriteTeam).toBeNull()
+    expect(result[1]?.favoriteTeam).toBeNull()
   })
 })

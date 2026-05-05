@@ -1,6 +1,6 @@
 import { eq, isNull, sql, count, and, or, inArray } from 'drizzle-orm'
 import { db } from '../db/client.js'
-import { users, predictions, groupMembers, groups, scoringConfigs, groupPredictionPoints, specialPredictions, specialPredictionTypes, groupGlobalTypeSubscriptions, groupLeagues, matches } from '../db/schema/index.js'
+import { users, predictions, groupMembers, groups, scoringConfigs, groupPredictionPoints, specialPredictions, specialPredictionTypes, groupGlobalTypeSubscriptions, groupLeagues, matches, userLeagueFavorites, teams } from '../db/schema/index.js'
 import type { LeaderboardEntry } from './leaderboard.service.js'
 
 class AppError extends Error {
@@ -148,6 +148,28 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
   // Sort by total (match + stat) descending
   merged.sort((a, b) => b.totalPoints - a.totalPoints)
 
+  // Fetch favorite teams if feature is enabled
+  let favoritesByUser = new Map<string, { countryCode: string; name: string }>()
+  if (group[0].favoriteTeamDoublePoints && allowedLeagueIds.length > 0) {
+    const favRows = await db
+      .select({
+        userId: userLeagueFavorites.userId,
+        countryCode: teams.countryCode,
+        teamName: teams.name,
+      })
+      .from(userLeagueFavorites)
+      .innerJoin(teams, eq(teams.id, userLeagueFavorites.teamId))
+      .where(and(
+        inArray(userLeagueFavorites.userId, memberIds),
+        inArray(userLeagueFavorites.leagueId, allowedLeagueIds),
+      ))
+    for (const row of favRows) {
+      if (row.countryCode) {
+        favoritesByUser.set(row.userId, { countryCode: row.countryCode, name: row.teamName })
+      }
+    }
+  }
+
   let rank = 1
   return merged.map((row, i) => {
     if (i > 0 && row.totalPoints < merged[i - 1]!.totalPoints) {
@@ -162,6 +184,7 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
       predictionCount: row.predictionCount,
       correctCount: row.correctCount,
       specialPredictionPoints: row.specialPredictionPoints,
+      favoriteTeam: favoritesByUser.get(row.userId) ?? null,
     }
   })
 }

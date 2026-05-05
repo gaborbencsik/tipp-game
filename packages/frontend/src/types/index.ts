@@ -202,6 +202,7 @@ export interface LeaderboardEntry {
   readonly predictionCount: number
   readonly correctCount: number
   readonly specialPredictionPoints: number
+  readonly favoriteTeam?: { readonly countryCode: string; readonly name: string } | null
 }
 
 export type SpecialPredictionInputType = 'text' | 'dropdown' | 'team_select' | 'player_select'

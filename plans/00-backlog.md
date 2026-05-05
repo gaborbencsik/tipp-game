@@ -8,8 +8,6 @@
 |----------|-----|-----------|----------|
 | US-807 | Admin használati statisztikák (dashboard) | Should Have | — |
 | US-1002 | Felhasználói felület lokalizációja (i18n) | Should Have | — |
-| US-1101 | Donation gomb és pop-up | Should Have | — |
-| US-1102 | Donation átirányítás | Should Have | US-1101 |
 | US-1204 | NB II liga szinkronizáció támogatás | Nice to Have | US-1202, US-1203 |
 | US-1301 | Match Pulse – adatréteg és csapat KPI-ok gyűjtése | Should Have | US-1202, US-1203 |
 | US-1302 | Match Pulse – AI insight generálás (batch job) | Should Have | US-1301 |
@@ -25,8 +23,9 @@
 | UX-011 | Sidebar redesign (szekciócímkék, admin nav, mini LB) | Should Have | — |
 | UX-012 | Toast notification rendszer | Should Have | — |
 | UX-013 | Értesítési rendszer (notification bell + panel) | Nice to Have | — |
+| UX-016 | Kedvenc csapat dupla pont jelzés a meccs kártyán | Should Have | — |
 | SEC-002 | HMAC-aláírt meghívó URL-ek | Nice to Have | — |
 
 ---
 
-**Haladás: 88 / 107 story kész** — Must Have: 31/31, Should Have: 57/72, Nice to Have: 0/4
+**Haladás: 91 / 109 story kész** — Must Have: 31/31, Should Have: 60/74, Nice to Have: 0/4
