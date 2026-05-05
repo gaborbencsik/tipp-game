@@ -300,7 +300,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, nextTick, computed } from 'vue'
+import { onMounted, ref, nextTick, computed, watch } from 'vue'
 import { useMatchesStore } from '../stores/matches.store.js'
 import { usePredictionsStore } from '../stores/predictions.store.js'
 import { useGroupsStore } from '../stores/groups.store.js'
@@ -347,6 +347,7 @@ const showFavBanner = computed((): boolean => {
 })
 
 const LS_KEY = 'matches_finished_expanded'
+const LS_LEAGUE_KEY = 'matches_league_filter'
 const finishedSectionOpen = ref(true)
 
 function toggleFinishedSection(): void {
@@ -435,8 +436,29 @@ onMounted(async () => {
   }
 
   const userLeagueIds = new Set(groupsStore.groups.flatMap(g => g.leagues.map(l => l.id)))
-  if (userLeagueIds.size === 1) {
-    matchesStore.leagueFilter = [...userLeagueIds][0]!
+  try {
+    const storedLeague = localStorage.getItem(LS_LEAGUE_KEY)
+    if (storedLeague) {
+      matchesStore.leagueFilter = storedLeague
+    } else if (userLeagueIds.size === 1) {
+      matchesStore.leagueFilter = [...userLeagueIds][0]!
+    }
+  } catch {
+    if (userLeagueIds.size === 1) {
+      matchesStore.leagueFilter = [...userLeagueIds][0]!
+    }
+  }
+})
+
+watch(() => matchesStore.leagueFilter, (val) => {
+  try {
+    if (val) {
+      localStorage.setItem(LS_LEAGUE_KEY, val)
+    } else {
+      localStorage.removeItem(LS_LEAGUE_KEY)
+    }
+  } catch {
+    // ignore
   }
 })
 
