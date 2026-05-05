@@ -15,7 +15,7 @@
     </div>
 
     <!-- Sync mode -->
-    <section class="mb-8 p-4 bg-white rounded-lg border">
+    <section class="mb-4 p-4 bg-white rounded-lg border">
       <h2 class="text-sm font-semibold text-gray-700 mb-3">Sync mód</h2>
       <div class="flex items-center gap-3">
         <select
@@ -30,6 +30,34 @@
         </select>
         <span v-if="modeLoading" class="text-xs text-gray-400">Mentés...</span>
         <span v-if="modeSaved" class="text-xs text-green-600">Mentve ✓</span>
+      </div>
+    </section>
+
+    <!-- Sync status -->
+    <section class="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+      <div class="flex items-center justify-between text-sm">
+        <div class="space-y-1">
+          <div class="text-gray-600">
+            <span class="font-medium">Utolsó sync:</span>
+            <span v-if="lastSyncAt" :title="lastSyncAt.toLocaleString('hu-HU')">
+              {{ lastSyncRelative }}
+            </span>
+            <span v-else class="text-gray-400">Még nem futott</span>
+          </div>
+          <div class="text-gray-600">
+            <span class="font-medium">API hívások:</span>
+            <span :class="apiCallsRatio > 0.8 ? 'text-red-600 font-semibold' : ''">
+              {{ apiCallsToday }} / {{ apiDailyLimit }}
+            </span>
+          </div>
+        </div>
+        <div v-if="syncInProgress" class="flex items-center gap-2 text-blue-600 text-xs font-medium">
+          <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+          </svg>
+          Folyamatban...
+        </div>
       </div>
     </section>
 
@@ -78,7 +106,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import AppLayout from '../components/AppLayout.vue'
 import { supabase } from '../lib/supabase.js'
 import { api } from '../api/index.js'
@@ -100,6 +128,24 @@ const syncing = ref(false)
 const syncResults = ref<SyncResult[]>([])
 const syncError = ref('')
 
+const lastSyncAt = ref<Date | null>(null)
+const apiCallsToday = ref(0)
+const apiDailyLimit = 100
+const syncInProgress = ref(false)
+
+const apiCallsRatio = computed((): number => apiCallsToday.value / apiDailyLimit)
+
+const lastSyncRelative = computed((): string => {
+  if (!lastSyncAt.value) return ''
+  const diff = Date.now() - lastSyncAt.value.getTime()
+  const minutes = Math.floor(diff / 60000)
+  if (minutes < 1) return 'most'
+  if (minutes < 60) return `${minutes} perce`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours} órája`
+  return `${Math.floor(hours / 24)} napja`
+})
+
 async function getToken(): Promise<string> {
   if (DEV_AUTH_BYPASS) return 'dev-bypass-token'
   const { data } = await supabase.auth.getSession()
@@ -110,6 +156,9 @@ async function loadSettings(): Promise<void> {
   const token = await getToken()
   const data = await api.admin.sync.getSettings(token)
   syncMode.value = data.mode
+  lastSyncAt.value = data.lastSuccessfulSyncAt ? new Date(data.lastSuccessfulSyncAt) : null
+  apiCallsToday.value = data.apiCallsToday ?? 0
+  syncInProgress.value = data.syncInProgress ?? false
 }
 
 async function updateMode(): Promise<void> {
@@ -131,6 +180,7 @@ async function triggerSync(): Promise<void> {
     const token = await getToken()
     const data = await api.admin.sync.run(token)
     syncResults.value = data.results
+    await loadSettings()
   } catch (err) {
     syncError.value = err instanceof Error ? err.message : 'Ismeretlen hiba'
   } finally {

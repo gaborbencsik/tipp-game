@@ -80,7 +80,9 @@ export async function markSyncFinished(success: boolean): Promise<void> {
   if (success) {
     setFields.lastSuccessfulSyncAt = sql`now()`
   }
-  await db.update(syncState).set(setFields).where(eq(syncState.syncInProgress, true))
+  const [existing] = await db.select({ id: syncState.id }).from(syncState).limit(1)
+  if (!existing) return
+  await db.update(syncState).set(setFields).where(eq(syncState.id, existing.id))
 }
 
 export async function incrementApiCalls(count: number): Promise<void> {

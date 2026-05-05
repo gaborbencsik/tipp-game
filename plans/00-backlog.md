@@ -1,6 +1,6 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-04-29
+> Utoljára frissítve: 2026-05-05
 
 ## Nyitott story-k
 
@@ -10,8 +10,12 @@
 | US-1002 | Felhasználói felület lokalizációja (i18n) | Should Have | — |
 | US-1101 | Donation gomb és pop-up | Should Have | — |
 | US-1102 | Donation átirányítás | Should Have | US-1101 |
-| US-1203 | Automatikus adatszinkron cron job | Should Have | US-1202 |
 | US-1204 | NB II liga szinkronizáció támogatás | Nice to Have | US-1202, US-1203 |
+| US-1301 | Match Pulse – adatréteg és csapat KPI-ok gyűjtése | Should Have | US-1202, US-1203 |
+| US-1302 | Match Pulse – AI insight generálás (batch job) | Should Have | US-1301 |
+| US-1303 | Match Pulse – automatikus insight generálás cron jobban | Should Have | US-1302, US-1203 |
+| US-1304 | Match Pulse – insight megjelenítése a meccs kártyán | Should Have | US-1302 |
+| US-1305 | Match Pulse – in-tournament statisztikák integrálása | Should Have | US-1303, US-1304 |
 | US-1401 | Stadion banner kép a meccs részletes nézeten | Should Have | — |
 | US-934 | Mások tippjeinek megjelenítése (speciális) | Should Have | — |
 | UX-004 | Focilabda kurzor ikon | Nice to Have | — |
@@ -22,8 +26,7 @@
 | UX-012 | Toast notification rendszer | Should Have | — |
 | UX-013 | Értesítési rendszer (notification bell + panel) | Nice to Have | — |
 | SEC-002 | HMAC-aláírt meghívó URL-ek | Nice to Have | — |
-| UX-014 | Napi bontás navigáció a mérkőzések nézetben | Should Have | — |
 
 ---
 
-**Haladás: 86 / 102 story kész** — Must Have: 31/31, Should Have: 55/67, Nice to Have: 0/4
+**Haladás: 88 / 107 story kész** — Must Have: 31/31, Should Have: 57/72, Nice to Have: 0/4

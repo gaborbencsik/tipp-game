@@ -1,7 +1,7 @@
 import Router from '@koa/router'
 import { authMiddleware } from '../middleware/auth.middleware.js'
 import { adminMiddleware } from '../middleware/admin.middleware.js'
-import { getSyncState, setSyncMode, markSyncFinished, incrementApiCalls } from '../services/sync-state.service.js'
+import { getSyncState, setSyncMode, markSyncStarted, markSyncFinished, incrementApiCalls } from '../services/sync-state.service.js'
 import { runAllLeagues } from '../services/sync-runner.js'
 import type { SyncMode } from '../types/index.js'
 
@@ -45,6 +45,7 @@ syncRouter.post('/run', async (ctx) => {
   }
 
   try {
+    await markSyncStarted()
     const results = await runAllLeagues(state.mode)
     const totalApiCalls = results.length * 2
     await markSyncFinished(true)

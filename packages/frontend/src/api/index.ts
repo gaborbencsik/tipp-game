@@ -437,7 +437,7 @@ export const api = {
     },
     sync: {
       getSettings: (token: string) =>
-        request<{ mode: string }>('/admin/sync/settings', {
+        request<{ mode: string; lastSuccessfulSyncAt: string | null; apiCallsToday: number; syncInProgress: boolean }>('/admin/sync/settings', {
           headers: { Authorization: `Bearer ${token}` },
         }),
       updateSettings: (token: string, mode: string) =>
