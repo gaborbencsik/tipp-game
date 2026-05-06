@@ -26,12 +26,14 @@ function generateInviteCode(): string {
   return code
 }
 
-async function fetchGroupLeagues(groupId: string): Promise<Array<{ id: string; name: string; shortName: string }>> {
-  return db
+async function fetchGroupLeague(groupId: string): Promise<{ id: string; name: string; shortName: string } | null> {
+  const rows = await db
     .select({ id: leagues.id, name: leagues.name, shortName: leagues.shortName })
     .from(groupLeagues)
     .innerJoin(leagues, eq(groupLeagues.leagueId, leagues.id))
     .where(eq(groupLeagues.groupId, groupId))
+    .limit(1)
+  return rows[0] ?? null
 }
 
 function toApiGroup(
@@ -39,7 +41,7 @@ function toApiGroup(
   memberCount: number,
   isAdmin: boolean,
   userRank: number | null = null,
-  groupLeagueList: Array<{ id: string; name: string; shortName: string }> = [],
+  groupLeague: { id: string; name: string; shortName: string } | null = null,
 ): Group {
   return {
     id: row.id,
@@ -52,7 +54,7 @@ function toApiGroup(
     isAdmin,
     userRank,
     favoriteTeamDoublePoints: row.favoriteTeamDoublePoints,
-    leagues: groupLeagueList,
+    league: groupLeague,
     createdAt: row.createdAt.toISOString(),
   }
 }
@@ -77,7 +79,7 @@ export async function getMyGroups(userId: string): Promise<Group[]> {
       .where(eq(groupMembers.groupId, group.id))
     const memberCount = countRows[0]?.count ?? 0
 
-    const leagueRows = await fetchGroupLeagues(group.id)
+    const league = await fetchGroupLeague(group.id)
 
     let userRank: number | null = null
     try {
@@ -88,7 +90,7 @@ export async function getMyGroups(userId: string): Promise<Group[]> {
       // If leaderboard fails (e.g. no predictions yet), rank stays null
     }
 
-    result.push(toApiGroup(group, memberCount, isAdmin, userRank, leagueRows))
+    result.push(toApiGroup(group, memberCount, isAdmin, userRank, league))
   }
   return result
 }
@@ -156,9 +158,9 @@ export async function createGroup(input: GroupInput, userId: string): Promise<Gr
 
   await db.insert(groupLeagues).values({ groupId: group.id, leagueId: input.leagueId })
 
-  const leagueRows = await fetchGroupLeagues(group.id)
+  const league = await fetchGroupLeague(group.id)
 
-  return toApiGroup(group, 1, true, null, leagueRows)
+  return toApiGroup(group, 1, true, null, league)
 }
 
 export async function joinGroup(inviteCode: string, userId: string): Promise<Group> {
@@ -200,8 +202,8 @@ export async function joinGroup(inviteCode: string, userId: string): Promise<Gro
   })
 
   const memberCount = existing.length + 1
-  const leagueRows = await fetchGroupLeagues(group.id)
-  return toApiGroup(group, memberCount, false, null, leagueRows)
+  const league = await fetchGroupLeague(group.id)
+  return toApiGroup(group, memberCount, false, null, league)
 }
 
 export async function getGroupMembers(groupId: string, requesterId: string): Promise<GroupMember[]> {
@@ -367,8 +369,8 @@ export async function regenerateInviteCode(groupId: string, requesterId: string)
   const updatedGroup = updated[0]
   if (!updatedGroup) throw new AppError(500, 'Failed to regenerate invite code')
 
-  const leagueRows = await fetchGroupLeagues(group.id)
-  return toApiGroup(updatedGroup, memberCount, true, null, leagueRows)
+  const league = await fetchGroupLeague(group.id)
+  return toApiGroup(updatedGroup, memberCount, true, null, league)
 }
 
 export async function setInviteActive(groupId: string, active: boolean, requesterId: string): Promise<Group> {
@@ -383,8 +385,8 @@ export async function setInviteActive(groupId: string, active: boolean, requeste
   const updatedGroup = updated[0]
   if (!updatedGroup) throw new AppError(500, 'Failed to update invite status')
 
-  const leagueRows = await fetchGroupLeagues(group.id)
-  return toApiGroup(updatedGroup, memberCount, true, null, leagueRows)
+  const league2 = await fetchGroupLeague(group.id)
+  return toApiGroup(updatedGroup, memberCount, true, null, league2)
 }
 
 export async function deleteGroup(groupId: string, requesterId: string, isGlobalAdmin: boolean): Promise<void> {
@@ -449,9 +451,9 @@ export async function updateGroupSettings(
     .from(groupMembers)
     .where(eq(groupMembers.groupId, groupId))
 
-  const leagueRows = await fetchGroupLeagues(groupId)
+  const league = await fetchGroupLeague(groupId)
 
-  return toApiGroup(updated[0]!, countRows[0]?.count ?? 0, true, null, leagueRows)
+  return toApiGroup(updated[0]!, countRows[0]?.count ?? 0, true, null, league)
 }
 
 export async function setGroupLeague(
@@ -488,12 +490,12 @@ export async function setGroupLeague(
 
   await db.insert(groupLeagues).values({ groupId, leagueId })
 
-  const leagueRows = await fetchGroupLeagues(groupId)
+  const league = await fetchGroupLeague(groupId)
 
   const countRows = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(groupMembers)
     .where(eq(groupMembers.groupId, groupId))
 
-  return toApiGroup(groupRows[0], countRows[0]?.count ?? 0, true, null, leagueRows)
+  return toApiGroup(groupRows[0], countRows[0]?.count ?? 0, true, null, league)
 }

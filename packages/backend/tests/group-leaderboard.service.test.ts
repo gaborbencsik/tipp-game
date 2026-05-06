@@ -7,7 +7,7 @@ const {
   mockInnerJoin, mockLeaderboardWhere, mockLeaderboardFrom,
   mockLeftJoin2, mockLeftJoin3,
   mockStatGroupBy, mockStatWhere, mockStatInnerJoin, mockStatFrom,
-  mockLeagueWhere, mockLeagueFrom,
+  mockLeagueWhere, mockLeagueLimit, mockLeagueFrom,
   mockFavWhere, mockFavInnerJoin, mockFavFrom,
 } = vi.hoisted(() => ({
   mockLimit: vi.fn(),
@@ -29,6 +29,7 @@ const {
   mockStatInnerJoin: vi.fn(),
   mockStatFrom: vi.fn(),
   mockLeagueWhere: vi.fn(),
+  mockLeagueLimit: vi.fn(),
   mockLeagueFrom: vi.fn(),
   mockFavWhere: vi.fn(),
   mockFavInnerJoin: vi.fn(),
@@ -107,7 +108,8 @@ function setupLeaderboardSelectChain(
   mockMemberWhere.mockResolvedValueOnce(memberRows)
   mockMemberFrom.mockReturnValue({ where: mockMemberWhere })
 
-  mockLeagueWhere.mockResolvedValueOnce(leagueRows)
+  mockLeagueLimit.mockResolvedValueOnce(leagueRows)
+  mockLeagueWhere.mockReturnValue({ limit: mockLeagueLimit })
   mockLeagueFrom.mockReturnValue({ where: mockLeagueWhere })
 
   mockOrderBy.mockResolvedValueOnce(leaderboardRows)
@@ -296,7 +298,7 @@ describe('getGroupLeaderboard', () => {
     expect(result[1]?.favoriteTeam).toBeNull()
   })
 
-  it('returns favoriteTeam null when favoriteTeamDoublePoints is true but no leagues', async () => {
+  it('returns favoriteTeam null when favoriteTeamDoublePoints is true but no league', async () => {
     const GROUP_ROW_DOUBLE = { id: GROUP_ID, scoringConfigId: null, favoriteTeamDoublePoints: true }
     setupLeaderboardSelectChain(GROUP_ROW_DOUBLE, MEMBER_ROWS, LEADERBOARD_ROWS, true)
 

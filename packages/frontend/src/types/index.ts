@@ -170,7 +170,7 @@ export interface Group {
   readonly isAdmin: boolean
   readonly userRank: number | null
   readonly favoriteTeamDoublePoints: boolean
-  readonly leagues: ReadonlyArray<{ readonly id: string; readonly name: string; readonly shortName: string }>
+  readonly league: { readonly id: string; readonly name: string; readonly shortName: string } | null
   readonly createdAt: string
 }
 

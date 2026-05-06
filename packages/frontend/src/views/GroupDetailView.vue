@@ -4,10 +4,7 @@
       <router-link to="/app/groups" class="text-blue-600 hover:text-blue-800 text-sm">← Csoportok</router-link>
       <div>
         <h1 class="text-2xl font-bold text-gray-900">{{ groupName }}</h1>
-        <p v-if="currentGroup?.leagues?.length === 1" class="text-xs text-gray-500 mt-0.5">{{ currentGroup.leagues[0]!.name }}</p>
-        <div v-else-if="currentGroup?.leagues?.length && currentGroup.leagues.length > 1" class="flex gap-1 mt-1 overflow-x-auto">
-          <span v-for="l in currentGroup.leagues" :key="l.id" class="text-xs bg-gray-100 text-gray-600 rounded px-1.5 py-0.5 whitespace-nowrap">{{ l.shortName }}</span>
-        </div>
+        <p v-if="currentGroup?.league" class="text-xs text-gray-500 mt-0.5">{{ currentGroup.league.name }}</p>
       </div>
     </div>
 
@@ -313,8 +310,8 @@
       <div class="mt-8 max-w-md">
         <h3 class="text-base font-semibold text-gray-800 mb-1">Liga</h3>
         <p class="text-sm text-gray-500 mb-3">Csak a kiválasztott liga meccseit tartalmazza a csoport ranglista.</p>
-        <template v-if="currentGroup?.leagues?.length">
-          <p class="text-sm text-gray-900">{{ currentGroup.leagues[0]!.name }}</p>
+        <template v-if="currentGroup?.league">
+          <p class="text-sm text-gray-900">{{ currentGroup.league.name }}</p>
         </template>
         <template v-else>
           <select
@@ -1226,7 +1223,7 @@ onMounted(async () => {
       await groupsStore.fetchSpecialTypes(groupId)
       await groupsStore.fetchGlobalSubscriptions(groupId)
       await leagueStore.fetchLeagues()
-      leagueDraft.value = currentGroup.value?.leagues[0]?.id ?? ''
+      leagueDraft.value = currentGroup.value?.league?.id ?? ''
       await loadTemplatesIfNeeded()
       await loadNameCachesIfNeeded()
     }

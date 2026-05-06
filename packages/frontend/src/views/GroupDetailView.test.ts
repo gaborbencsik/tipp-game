@@ -86,7 +86,7 @@ const GROUP: Group = {
   isAdmin: true,
   userRank: null,
   favoriteTeamDoublePoints: false,
-  leagues: [{ id: 'l-1', name: 'VB 2026', shortName: 'VB' }],
+  league: { id: 'l-1', name: 'VB 2026', shortName: 'VB' },
   createdAt: '2026-01-01T00:00:00.000Z',
 }
 
@@ -291,22 +291,15 @@ describe('GroupDetailView', () => {
     expect(flags.length).toBe(0)
   })
 
-  it('header shows league name when group has one league', async () => {
+  it('header shows league name when group has a league', async () => {
     const { wrapper } = await mountView()
     expect(wrapper.text()).toContain('VB 2026')
   })
 
-  it('header shows shortName badges when group has multiple leagues', async () => {
-    const multiLeagueGroup: Group = {
-      ...GROUP,
-      leagues: [
-        { id: 'l-1', name: 'FIFA World Cup 2026', shortName: 'WC26' },
-        { id: 'l-2', name: 'NB I', shortName: 'NB I' },
-      ],
-    }
-    const { wrapper } = await mountView([], [], [multiLeagueGroup])
-    expect(wrapper.text()).toContain('WC26')
-    expect(wrapper.text()).toContain('NB I')
+  it('header shows nothing when group has no league', async () => {
+    const noLeagueGroup: Group = { ...GROUP, league: null }
+    const { wrapper } = await mountView([], [], [noLeagueGroup])
+    expect(wrapper.text()).not.toContain('VB 2026')
   })
 
   // ─── Invite section ───────────────────────────────────────────────────────────
@@ -384,7 +377,7 @@ describe('GroupDetailView', () => {
   })
 
   it('league section shows dropdown when no league is set', async () => {
-    const groupNoLeague: Group = { ...GROUP, leagues: [] }
+    const groupNoLeague: Group = { ...GROUP, league: null }
     const { wrapper } = await mountView([MEMBER_SELF], [], [groupNoLeague])
     await wrapper.find('[data-testid="tab-settings"]').trigger('click')
     await wrapper.vm.$nextTick()

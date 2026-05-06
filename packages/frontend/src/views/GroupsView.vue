@@ -157,10 +157,7 @@
                 <span v-if="group.isAdmin" class="text-xs px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded font-medium">admin</span>
               </div>
               <p v-if="group.description" class="text-xs text-gray-500 mt-0.5">{{ group.description }}</p>
-              <p v-if="group.leagues?.length === 1" class="text-xs text-gray-500 mt-0.5">{{ group.leagues[0]!.name }}</p>
-              <div v-else-if="group.leagues?.length > 1" class="flex flex-wrap gap-1 mt-1">
-                <span v-for="l in group.leagues" :key="l.id" class="text-xs bg-gray-100 text-gray-600 rounded px-1.5 py-0.5">{{ l.shortName }}</span>
-              </div>
+              <p v-if="group.league" class="text-xs text-gray-500 mt-0.5">{{ group.league.name }}</p>
               <div v-if="group.inviteActive" class="flex items-center gap-2 mt-1.5" @click.prevent>
                 <span class="font-mono text-xs text-gray-500 tracking-widest" data-testid="invite-code">{{ group.inviteCode }}</span>
                 <button

@@ -100,7 +100,7 @@ const GROUP_A: Group = {
   isAdmin: true,
   userRank: null,
   favoriteTeamDoublePoints: false,
-  leagues: [{ id: 'l-1', name: 'VB 2026', shortName: 'VB' }],
+  league: { id: 'l-1', name: 'VB 2026', shortName: 'VB' },
   createdAt: '2026-01-01T00:00:00.000Z',
 }
 
@@ -115,7 +115,7 @@ const GROUP_B: Group = {
   isAdmin: false,
   userRank: null,
   favoriteTeamDoublePoints: false,
-  leagues: [{ id: 'l-1', name: 'VB 2026', shortName: 'VB' }],
+  league: { id: 'l-1', name: 'VB 2026', shortName: 'VB' },
   createdAt: '2026-02-01T00:00:00.000Z',
 }
 

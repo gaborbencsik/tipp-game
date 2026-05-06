@@ -435,7 +435,7 @@ onMounted(async () => {
     // silent — fav banner simply won't show
   }
 
-  const userLeagueIds = new Set(groupsStore.groups.flatMap(g => g.leagues.map(l => l.id)))
+  const userLeagueIds = new Set(groupsStore.groups.map(g => g.league?.id).filter(Boolean))
   try {
     const storedLeague = localStorage.getItem(LS_LEAGUE_KEY)
     if (storedLeague) {

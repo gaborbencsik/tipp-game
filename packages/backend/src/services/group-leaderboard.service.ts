@@ -29,11 +29,12 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
   const memberIds = membership.map(m => m.userId)
   if (!memberIds.includes(requesterId)) throw new AppError(403, 'Not a member of this group')
 
-  const allowedLeagueRows = await db
+  const leagueRow = await db
     .select({ leagueId: groupLeagues.leagueId })
     .from(groupLeagues)
     .where(eq(groupLeagues.groupId, groupId))
-  const allowedLeagueIds = allowedLeagueRows.map(r => r.leagueId)
+    .limit(1)
+  const leagueId = leagueRow[0]?.leagueId ?? null
 
   const useGroupPoints = group[0].scoringConfigId !== null || group[0].favoriteTeamDoublePoints
 
@@ -64,12 +65,12 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
         sql`${groupPredictionPoints.predictionId} = ${predictions.id} AND ${groupPredictionPoints.groupId} = ${groupId}::uuid`,
       )
 
-    const filtered = allowedLeagueIds.length > 0
+    const filtered = leagueId
       ? baseQuery
           .leftJoin(matches, eq(matches.id, predictions.matchId))
           .where(and(
             eq(groupMembers.groupId, groupId),
-            sql`(${predictions.id} IS NULL OR ${matches.leagueId} IN (${sql.join(allowedLeagueIds.map(id => sql`${id}::uuid`), sql`, `)}))`,
+            sql`(${predictions.id} IS NULL OR ${matches.leagueId} = ${leagueId}::uuid)`,
           ))
       : baseQuery.where(eq(groupMembers.groupId, groupId))
 
@@ -90,12 +91,12 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
       .innerJoin(users, eq(users.id, groupMembers.userId))
       .leftJoin(predictions, eq(predictions.userId, users.id))
 
-    const filtered = allowedLeagueIds.length > 0
+    const filtered = leagueId
       ? baseQuery
           .leftJoin(matches, eq(matches.id, predictions.matchId))
           .where(and(
             eq(groupMembers.groupId, groupId),
-            sql`(${predictions.id} IS NULL OR ${matches.leagueId} IN (${sql.join(allowedLeagueIds.map(id => sql`${id}::uuid`), sql`, `)}))`,
+            sql`(${predictions.id} IS NULL OR ${matches.leagueId} = ${leagueId}::uuid)`,
           ))
       : baseQuery.where(eq(groupMembers.groupId, groupId))
 
@@ -150,7 +151,7 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
 
   // Fetch favorite teams if feature is enabled
   let favoritesByUser = new Map<string, { countryCode: string; name: string }>()
-  if (group[0].favoriteTeamDoublePoints && allowedLeagueIds.length > 0) {
+  if (group[0].favoriteTeamDoublePoints && leagueId) {
     const favRows = await db
       .select({
         userId: userLeagueFavorites.userId,
@@ -161,7 +162,7 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
       .innerJoin(teams, eq(teams.id, userLeagueFavorites.teamId))
       .where(and(
         inArray(userLeagueFavorites.userId, memberIds),
-        inArray(userLeagueFavorites.leagueId, allowedLeagueIds),
+        eq(userLeagueFavorites.leagueId, leagueId),
       ))
     for (const row of favRows) {
       if (row.countryCode) {
