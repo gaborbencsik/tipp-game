@@ -27,8 +27,31 @@ jobs:
       - name: Test
         run: npm test --workspaces --if-present
 
+  e2e:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start E2E stack
+        run: docker compose --profile e2e up -d --build
+
+      - name: Wait for backend
+        run: |
+          until docker compose --profile e2e exec backend-e2e curl -sf http://localhost:3000/api/health > /dev/null 2>&1; do sleep 1; done
+
+      - name: Push DB schema
+        run: docker compose --profile e2e exec backend-e2e npx drizzle-kit push --force
+
+      - name: Run Playwright tests
+        run: docker compose --profile e2e run --rm playwright npx playwright test
+
+      - name: Stop E2E stack
+        if: always()
+        run: docker compose --profile e2e down
+
   deploy-backend:
-    needs: ci
+    needs: [ci, e2e]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
 

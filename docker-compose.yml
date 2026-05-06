@@ -14,6 +14,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    profiles:
+      - dev
 
   backend:
     build:
@@ -45,6 +47,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    profiles:
+      - dev
 
   frontend:
     build:
@@ -61,6 +65,86 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+    profiles:
+      - dev
+
+  playwright:
+    build:
+      context: .
+      dockerfile: e2e/Dockerfile
+    working_dir: /app
+    volumes:
+      - ./e2e:/app/e2e
+      - ./playwright.config.ts:/app/playwright.config.ts
+    environment:
+      BASE_URL: http://frontend-e2e:5173
+      API_URL: http://backend-e2e:3000
+    depends_on:
+      frontend-e2e:
+        condition: service_started
+    profiles:
+      - e2e
+
+  db-e2e:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: tipp_game_e2e
+      POSTGRES_USER: tipp_user
+      POSTGRES_PASSWORD: tipp_pass
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tipp_user -d tipp_game_e2e"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+    profiles:
+      - e2e
+
+  backend-e2e:
+    build:
+      context: .
+      dockerfile: packages/backend/Dockerfile.dev
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_URL: postgresql://tipp_user:tipp_pass@db-e2e:5432/tipp_game_e2e
+      SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET:-dev_jwt_secret_placeholder}
+      CORS_ORIGIN: http://frontend-e2e:5173
+      ADMIN_EMAILS: admin@dev.local
+      FOOTBALL_API_KEY: ${FOOTBALL_API_KEY:-}
+      FOOTBALL_API_BASE_URL: https://v3.football.api-sports.io
+      FOOTBALL_API_WC_LEAGUE_ID: "1"
+      FOOTBALL_API_NBI_LEAGUE_ID: "271"
+      FOOTBALL_SYNC_MODE: final_only
+      FOOTBALL_INTERNAL_WC_LEAGUE_ID: bbbbbbbb-1111-2222-3333-000000000001
+      FOOTBALL_INTERNAL_NBI_LEAGUE_ID: bbbbbbbb-1111-2222-3333-000000000002
+    volumes:
+      - ./packages/backend/src:/app/packages/backend/src
+    depends_on:
+      db-e2e:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    profiles:
+      - e2e
+
+  frontend-e2e:
+    build:
+      context: .
+      dockerfile: packages/frontend/Dockerfile.dev
+    environment:
+      VITE_DEV_AUTH_BYPASS: "true"
+      VITE_API_URL: http://backend-e2e:3000
+      VITE_DONATION_URL: https://revolut.me/gaborbencsik?currency={currency}&amount={amount}&note={note}
+    depends_on:
+      backend-e2e:
+        condition: service_healthy
+    profiles:
+      - e2e
 
 volumes:
   pg_data:

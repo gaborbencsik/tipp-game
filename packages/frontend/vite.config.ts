@@ -10,6 +10,7 @@ export default defineConfig({
   ],
   envDir: path.resolve(__dirname, '../..'),
   server: {
+    allowedHosts: true,
     proxy: {
       '/api': {
         target: process.env.VITE_API_URL ?? 'http://localhost:3000',

@@ -23,6 +23,7 @@ tipp-game/
 ├── packages/
 │   ├── frontend/   # Vue 3 + Vite + TypeScript + Tailwind v4 + Pinia
 │   └── backend/    # Koa.js + TypeScript + Drizzle ORM + PostgreSQL 18.3
+├── e2e/            # Playwright E2E tesztek + helperek
 ├── plans/          # Tervdokumentumok (csak olvasni)
 ├── .nvmrc          # 24.14.1
 └── docker-compose.yml  # Teljes stack: frontend + backend + PG 18.3
@@ -40,7 +41,7 @@ tipp-game/
 | Runtime   | Node.js 24.14.1 (LTS)                                        |
 | Auth      | Google OAuth 2.0 + JWT (access 15 min / refresh 30 nap)      |
 | Real-time | Server-Sent Events (SSE)                                     |
-| Tesztek   | Vitest (mindkét csomag)                                      |
+| Tesztek   | Vitest (unit), Playwright (E2E)                              |
 | Helyi dev | Docker Compose (frontend + backend + DB együtt)              |
 
 ## Adatbázis konvenciók

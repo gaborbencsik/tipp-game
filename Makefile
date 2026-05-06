@@ -1,6 +1,7 @@
 .PHONY: help install dev build test typecheck \
         db-up db-down db-logs db-migrate db-seed db-reset \
-        logs ps clean sh-backend sh-frontend sh-db
+        logs ps clean sh-backend sh-frontend sh-db \
+        e2e e2e-ui e2e-down
 
 # Default target
 help:
@@ -30,6 +31,8 @@ help:
 	@echo "    make test          Tesztek futtatása (minden workspace)"
 	@echo "    make typecheck     TypeScript ellenőrzés (minden workspace)"
 	@echo "    make build         Produkciós build (minden workspace)"
+	@echo "    make e2e           Playwright E2E tesztek (docker up → test → down)"
+	@echo "    make e2e-ui        Playwright E2E tesztek UI módban"
 	@echo ""
 	@echo "    make clean         node_modules + Docker volume törlése"
 
@@ -39,30 +42,30 @@ install:
 	npm install
 
 up:
-	docker compose up --build
+	docker compose --profile dev up --build
 
 down:
-	docker compose down
+	docker compose --profile dev down
 
 restart: down up
 
 logs:
-	docker compose logs -f
+	docker compose --profile dev logs -f
 
 # ─── Adatbázis ───────────────────────────────────────────────────────────────
 
 db-up:
-	docker compose up -d db
+	docker compose --profile dev up -d db
 
 db-down:
-	docker compose down
+	docker compose --profile dev down
 
 db-migrate:
 	npm run db:generate --workspace=packages/backend
 	npm run db:migrate --workspace=packages/backend
 
 db-shell:
-	docker compose exec db psql -U tipp_user -d tipp_game
+	docker compose --profile dev exec db psql -U tipp_user -d tipp_game
 
 db-seed:
 	npm run db:seed --workspace=packages/backend
@@ -71,8 +74,8 @@ db-seed-local:
 	npm run db:seed-local --workspace=packages/backend
 
 db-reset:
-	docker compose down -v
-	docker compose up -d db
+	docker compose --profile dev down -v
+	docker compose --profile dev up -d db
 	@echo "Várakozás a DB-re..."
 	@sleep 3
 	npm run db:migrate --workspace=packages/backend
@@ -84,7 +87,7 @@ db-reset:
 # ─── Shell ───────────────────────────────────────────────────────────────────
 
 sh:
-	docker compose exec backend sh
+	docker compose --profile dev exec backend sh
 
 # ─── CI / minőség ────────────────────────────────────────────────────────────
 
@@ -104,5 +107,29 @@ build:
 # ─── Takarítás ───────────────────────────────────────────────────────────────
 
 clean:
-	docker compose down -v
+	docker compose --profile dev --profile e2e down -v
 	rm -rf node_modules packages/*/node_modules
+
+# ─── E2E tesztek ─────────────────────────────────────────────────────────────
+
+e2e:
+	docker compose --profile e2e up -d --build
+	@echo "Várakozás az E2E stack-re..."
+	@until docker compose --profile e2e exec backend-e2e curl -sf http://localhost:3000/api/health > /dev/null 2>&1; do sleep 1; done
+	@echo "DB schema push az E2E DB-re..."
+	docker compose --profile e2e exec backend-e2e npx drizzle-kit push --force
+	@echo "Playwright tesztek indulnak..."
+	docker compose --profile e2e run --rm playwright npx playwright test
+	docker compose --profile e2e down
+
+e2e-down:
+	docker compose --profile e2e down
+
+e2e-ui:
+	docker compose --profile dev up -d --build
+	@echo "Várakozás a backend-re..."
+	@until curl -sf http://localhost:3000/api/health > /dev/null 2>&1; do sleep 1; done
+	@echo "Várakozás a frontend-re..."
+	@until curl -sf http://localhost:5173 > /dev/null 2>&1; do sleep 1; done
+	npx playwright install chromium --with-deps 2>/dev/null || npx playwright install chromium
+	npx playwright test --ui
