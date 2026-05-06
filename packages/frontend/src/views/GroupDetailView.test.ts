@@ -291,6 +291,24 @@ describe('GroupDetailView', () => {
     expect(flags.length).toBe(0)
   })
 
+  it('header shows league name when group has one league', async () => {
+    const { wrapper } = await mountView()
+    expect(wrapper.text()).toContain('VB 2026')
+  })
+
+  it('header shows shortName badges when group has multiple leagues', async () => {
+    const multiLeagueGroup: Group = {
+      ...GROUP,
+      leagues: [
+        { id: 'l-1', name: 'FIFA World Cup 2026', shortName: 'WC26' },
+        { id: 'l-2', name: 'NB I', shortName: 'NB I' },
+      ],
+    }
+    const { wrapper } = await mountView([], [], [multiLeagueGroup])
+    expect(wrapper.text()).toContain('WC26')
+    expect(wrapper.text()).toContain('NB I')
+  })
+
   // ─── Invite section ───────────────────────────────────────────────────────────
 
   it('invite section visible for admin on settings tab', async () => {

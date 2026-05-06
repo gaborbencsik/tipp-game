@@ -124,6 +124,31 @@ describe('GroupsView', () => {
     expect(wrapper.find('[data-testid="empty-state"]').exists()).toBe(false)
   })
 
+  it('group card shows league name when group has one league', () => {
+    mockStoreState.groups = [SAMPLE_GROUP]
+    const wrapper = mountView()
+    expect(wrapper.text()).toContain('VB 2026')
+  })
+
+  it('group card shows shortName badges when group has multiple leagues', () => {
+    mockStoreState.groups = [{
+      ...SAMPLE_GROUP,
+      leagues: [
+        { id: 'l-1', name: 'FIFA World Cup 2026', shortName: 'WC26' },
+        { id: 'l-2', name: 'NB I 2025/26', shortName: 'NB I' },
+      ],
+    }]
+    const wrapper = mountView()
+    expect(wrapper.text()).toContain('WC26')
+    expect(wrapper.text()).toContain('NB I')
+  })
+
+  it('group card shows nothing extra when group has no leagues', () => {
+    mockStoreState.groups = [{ ...SAMPLE_GROUP, leagues: [] }]
+    const wrapper = mountView()
+    expect(wrapper.text()).not.toContain('VB 2026')
+  })
+
   it('az oldalon az \"Csoportok\" fejléc látható', () => {
     const wrapper = mountView()
     expect(wrapper.text()).toContain('Csoportok')

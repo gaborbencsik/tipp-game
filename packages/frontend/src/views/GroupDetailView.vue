@@ -2,7 +2,13 @@
   <AppLayout>
     <div class="flex items-center gap-3 mb-6">
       <router-link to="/app/groups" class="text-blue-600 hover:text-blue-800 text-sm">← Csoportok</router-link>
-      <h1 class="text-2xl font-bold text-gray-900">{{ groupName }}</h1>
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">{{ groupName }}</h1>
+        <p v-if="currentGroup?.leagues?.length === 1" class="text-xs text-gray-500 mt-0.5">{{ currentGroup.leagues[0]!.name }}</p>
+        <div v-else-if="currentGroup?.leagues?.length && currentGroup.leagues.length > 1" class="flex gap-1 mt-1 overflow-x-auto">
+          <span v-for="l in currentGroup.leagues" :key="l.id" class="text-xs bg-gray-100 text-gray-600 rounded px-1.5 py-0.5 whitespace-nowrap">{{ l.shortName }}</span>
+        </div>
+      </div>
     </div>
 
     <div data-testid="tab-bar" class="flex border-b border-gray-200 mb-6">

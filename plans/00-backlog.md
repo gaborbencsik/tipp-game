@@ -24,9 +24,8 @@
 | UX-012 | Toast notification rendszer | Should Have | — |
 | UX-013 | Értesítési rendszer (notification bell + panel) | Nice to Have | — |
 | UX-016 | Kedvenc csapat dupla pont jelzés a meccs kártyán | Should Have | — |
-| UX-017 | Liga megjelenítése a csoportokon | Should Have | — |
 | SEC-002 | HMAC-aláírt meghívó URL-ek | Nice to Have | — |
 
 ---
 
-**Haladás: 92 / 111 story kész** — Must Have: 31/31, Should Have: 61/76, Nice to Have: 0/4
+**Haladás: 93 / 111 story kész** — Must Have: 31/31, Should Have: 62/76, Nice to Have: 0/4
