@@ -4,7 +4,7 @@
     class="w-full border rounded px-2 py-1.5 text-sm"
     @change="$emit('update:modelValue', ($event.target as HTMLSelectElement).value || null)"
   >
-    <option value="" disabled>Válassz csapatot...</option>
+    <option value="" disabled>{{ $t('teamSelect.placeholder') }}</option>
     <option v-for="t in teamsList" :key="t.id" :value="t.id">{{ t.name }}</option>
   </select>
 </template>

@@ -2,8 +2,8 @@
   <div class="min-h-screen flex items-center justify-center bg-gray-50">
     <div class="w-full max-w-sm">
       <div class="text-center mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">VB Tippjáték</h1>
-        <p class="text-gray-500">{{ mode === 'login' ? 'Jelentkezz be a folytatáshoz' : 'Hozz létre fiókot' }}</p>
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ $t('login.title') }}</h1>
+        <p class="text-gray-500">{{ mode === 'login' ? $t('login.subtitleLogin') : $t('login.subtitleRegister') }}</p>
       </div>
 
       <form class="space-y-4" @submit.prevent="handleSubmit">
@@ -11,7 +11,7 @@
           <input
             v-model="displayName"
             type="text"
-            placeholder="Megjelenítendő név"
+            :placeholder="$t('login.displayNamePlaceholder')"
             required
             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
@@ -20,7 +20,7 @@
           <input
             v-model="email"
             type="email"
-            placeholder="Email cím"
+            :placeholder="$t('login.emailPlaceholder')"
             required
             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
@@ -29,7 +29,7 @@
           <input
             v-model="password"
             type="password"
-            placeholder="Jelszó"
+            :placeholder="$t('login.passwordPlaceholder')"
             required
             minlength="8"
             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -44,13 +44,13 @@
           :disabled="isLoading"
           class="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
         >
-          {{ isLoading ? 'Folyamatban...' : mode === 'login' ? 'Bejelentkezés' : 'Regisztráció' }}
+          {{ isLoading ? $t('login.submitting') : mode === 'login' ? $t('login.submitLogin') : $t('login.submitRegister') }}
         </button>
       </form>
 
       <div class="my-4 flex items-center gap-3">
         <hr class="flex-1 border-gray-300" />
-        <span class="text-sm text-gray-400">vagy</span>
+        <span class="text-sm text-gray-400">{{ $t('login.or') }}</span>
         <hr class="flex-1 border-gray-300" />
       </div>
 
@@ -58,17 +58,17 @@
         disabled
         class="w-full px-6 py-3 border border-gray-300 rounded-lg opacity-50 cursor-not-allowed"
       >
-        Bejelentkezés Google-lel
+        {{ $t('login.googleLogin') }}
       </button>
 
       <p class="mt-6 text-center text-sm text-gray-500">
         <span v-if="mode === 'login'">
-          Nincs fiókod?
-          <a href="#" class="text-blue-600 hover:underline" @click.prevent="mode = 'register'">Regisztrálj</a>
+          {{ $t('login.noAccount') }}
+          <a href="#" class="text-blue-600 hover:underline" @click.prevent="mode = 'register'">{{ $t('login.register') }}</a>
         </span>
         <span v-else>
-          Már van fiókod?
-          <a href="#" class="text-blue-600 hover:underline" @click.prevent="mode = 'login'">Belépés</a>
+          {{ $t('login.hasAccount') }}
+          <a href="#" class="text-blue-600 hover:underline" @click.prevent="mode = 'login'">{{ $t('login.signIn') }}</a>
         </span>
       </p>
     </div>
@@ -77,9 +77,11 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../stores/auth.store.js'
 
+const { t } = useI18n()
 const authStore = useAuthStore()
 const router = useRouter()
 const route = useRoute()
@@ -107,7 +109,7 @@ async function handleSubmit(): Promise<void> {
       await router.push(redirect)
     }
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Ismeretlen hiba'
+    const message = err instanceof Error ? err.message : t('common.unknownError')
     if (message.includes('Erősítsd meg')) {
       infoMessage.value = message
       mode.value = 'login'

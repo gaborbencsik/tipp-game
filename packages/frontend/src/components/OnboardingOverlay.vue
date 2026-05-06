@@ -123,7 +123,7 @@ onUnmounted(() => {
             <div class="flex items-center justify-between gap-3">
               <div class="flex flex-col items-center gap-1">
                 <div class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-sm font-bold text-blue-700">A</div>
-                <span class="text-xs text-gray-500">Csapat A</span>
+                <span class="text-xs text-gray-500">{{ $t('onboarding.step0TeamA') }}</span>
               </div>
               <div class="flex items-center gap-2">
                 <div class="h-9 w-10 rounded-md border-2 border-blue-400 bg-white flex items-center justify-center text-lg font-bold text-blue-700">2</div>
@@ -132,17 +132,16 @@ onUnmounted(() => {
               </div>
               <div class="flex flex-col items-center gap-1">
                 <div class="h-8 w-8 rounded-full bg-red-100 flex items-center justify-center text-sm font-bold text-red-700">B</div>
-                <span class="text-xs text-gray-500">Csapat B</span>
+                <span class="text-xs text-gray-500">{{ $t('onboarding.step0TeamB') }}</span>
               </div>
             </div>
           </div>
 
           <h2 class="text-xl font-bold text-gray-900 mb-2">
-            Üdvözlünk a VB Tippjátékban!
+            {{ $t('onboarding.step0Title') }}
           </h2>
           <p class="text-gray-600 text-sm leading-relaxed mb-6">
-            Tippeld meg a 2026-os VB meccseit, gyűjtsd a pontokat,
-            és derüljön ki, kinek van a legjobb focitudása.
+            {{ $t('onboarding.step0Desc') }}
           </p>
 
           <div class="flex flex-col gap-3">
@@ -152,7 +151,7 @@ onUnmounted(() => {
               data-testid="next-button"
               @click="nextStep"
             >
-              Hogyan működik?
+              {{ $t('onboarding.step0Next') }}
             </button>
             <button
               class="text-sm text-gray-400 hover:text-gray-600 transition-colors focus:outline-none focus:underline"
@@ -160,7 +159,7 @@ onUnmounted(() => {
               data-testid="skip-button"
               @click="skip"
             >
-              Kihagyom, nézzük a meccseket
+              {{ $t('onboarding.step0Skip') }}
             </button>
           </div>
         </div>
@@ -181,29 +180,28 @@ onUnmounted(() => {
                 <div class="h-6 w-6 rounded-full bg-green-500 border-2 border-white shadow flex items-center justify-center">
                   <svg class="h-3 w-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
                 </div>
-                <span class="text-xs font-medium text-green-700 mt-1">Tipp nyitva</span>
+                <span class="text-xs font-medium text-green-700 mt-1">{{ $t('onboarding.step1Open') }}</span>
               </div>
               <div class="relative z-10 flex flex-col items-center gap-1">
                 <div class="h-6 w-6 rounded-full bg-yellow-500 border-2 border-white shadow flex items-center justify-center">
                   <svg class="h-3 w-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" fill="currentColor" /></svg>
                 </div>
-                <span class="text-xs font-medium text-yellow-700 mt-1">Meccs kezdés</span>
+                <span class="text-xs font-medium text-yellow-700 mt-1">{{ $t('onboarding.step1Start') }}</span>
               </div>
               <div class="relative z-10 flex flex-col items-center gap-1">
                 <div class="h-6 w-6 rounded-full bg-red-500 border-2 border-white shadow flex items-center justify-center">
                   <svg class="h-3 w-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" /></svg>
                 </div>
-                <span class="text-xs font-medium text-red-700 mt-1">Zárva</span>
+                <span class="text-xs font-medium text-red-700 mt-1">{{ $t('onboarding.step1Closed') }}</span>
               </div>
             </div>
           </div>
 
           <h2 class="text-xl font-bold text-gray-900 mb-2">
-            Minden tipp számít!
+            {{ $t('onboarding.step1Title') }}
           </h2>
           <p class="text-gray-600 text-sm leading-relaxed mb-6">
-            A tipped a meccs kezdéséig bármikor leadható és módosítható.
-            Pontos találat, helyes gólarány vagy jó végeredmény — mindegyikért jár pont!
+            {{ $t('onboarding.step1Desc') }}
           </p>
 
           <div class="flex flex-col gap-3">
@@ -213,7 +211,7 @@ onUnmounted(() => {
               data-testid="next-button"
               @click="nextStep"
             >
-              Értem, tovább!
+              {{ $t('onboarding.step1Next') }}
             </button>
             <button
               class="text-sm text-gray-400 hover:text-gray-600 transition-colors focus:outline-none focus:underline"
@@ -221,7 +219,7 @@ onUnmounted(() => {
               data-testid="skip-button"
               @click="skip"
             >
-              Átugorva
+              {{ $t('onboarding.step1Skip') }}
             </button>
           </div>
         </div>
@@ -246,11 +244,10 @@ onUnmounted(() => {
           </div>
 
           <h2 class="text-xl font-bold text-gray-900 mb-2">
-            Csatlakozz egy csapathoz!
+            {{ $t('onboarding.step2Title') }}
           </h2>
           <p class="text-gray-600 text-sm leading-relaxed mb-6">
-            Hozz létre saját csoportot, vagy csatlakozz meghívó kóddal.
-            Saját ranglista, saját riválisok.
+            {{ $t('onboarding.step2Desc') }}
           </p>
 
           <div class="flex gap-3 mb-3">
@@ -260,7 +257,7 @@ onUnmounted(() => {
               data-testid="create-group-button"
               @click="goToCreateGroup"
             >
-              Csoport létrehozása
+              {{ $t('onboarding.step2CreateGroup') }}
             </button>
             <button
               class="flex-1 rounded-lg border border-blue-600 px-4 py-2.5 text-sm font-semibold text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
@@ -268,7 +265,7 @@ onUnmounted(() => {
               data-testid="join-group-button"
               @click="goToJoinGroup"
             >
-              Meghívó kód beváltása
+              {{ $t('onboarding.step2JoinGroup') }}
             </button>
           </div>
           <button
@@ -277,7 +274,7 @@ onUnmounted(() => {
             data-testid="later-button"
             @click="goToMatches"
           >
-            Egyedül kezdek
+            {{ $t('onboarding.step2Solo') }}
           </button>
         </div>
       </div>

@@ -3,15 +3,15 @@
     class="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
     role="dialog"
     aria-modal="true"
-    aria-label="Adományozás"
+    :aria-label="$t('donation.ariaLabel')"
     data-testid="donation-modal"
     @click.self="$emit('close')"
   >
     <div class="bg-white rounded-xl p-6 shadow-xl max-w-sm w-full mx-4">
-      <h2 class="text-lg font-bold text-gray-900 mb-2">Tetszik a játék? 🍺</h2>
+      <h2 class="text-lg font-bold text-gray-900 mb-2">{{ $t('donation.title') }}</h2>
 
       <p class="text-sm text-gray-600 mb-5">
-        Ezt a tippjátékot hobbiból, a közösség öröméért készítem. Ha neked is örömet okoz, egy kisebb támogatással te is hozzájárulhatsz a működéséhez.
+        {{ $t('donation.desc') }}
       </p>
 
       <div v-if="amounts.length > 0" class="flex gap-2 mb-3">
@@ -27,7 +27,7 @@
               ? 'bg-amber-500 text-white border-amber-500 font-semibold hover:bg-amber-600'
               : 'border-gray-300 text-gray-700 hover:bg-gray-50'
           ]"
-          :aria-label="`Támogatás ${item.amount}`"
+          :aria-label="$t('donation.supportAria', { amount: item.amount })"
           :data-testid="`donation-amount-${i}`"
         >
           {{ item.label }}
@@ -42,7 +42,7 @@
           class="text-sm text-amber-600 hover:underline"
           data-testid="donation-open-amount"
         >
-          Egyéni összeg →
+          {{ $t('donation.customAmount') }}
         </a>
       </div>
 
@@ -52,7 +52,7 @@
           data-testid="donation-dismiss"
           @click="$emit('close')"
         >
-          Majd máskor
+          {{ $t('donation.later') }}
         </button>
       </div>
     </div>

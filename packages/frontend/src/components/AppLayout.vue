@@ -7,14 +7,14 @@
         data-testid="hamburger-btn"
         class="w-10 h-10 flex items-center justify-center rounded-full text-gray-600 hover:bg-gray-100 transition-colors"
         :aria-expanded="sidebarOpen"
-        aria-label="Navigáció megnyitása"
+        :aria-label="$t('nav.openNav')"
         @click="sidebarOpen = !sidebarOpen"
       >
         <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
         </svg>
       </button>
-      <span class="text-base font-semibold text-gray-800 select-none">VB Tippjáték</span>
+      <span class="text-base font-semibold text-gray-800 select-none">{{ $t('login.title') }}</span>
       <div class="ml-auto">
         <UserMenuButton />
       </div>
@@ -52,7 +52,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            <span v-if="sidebarOpen">Meccsek</span>
+            <span v-if="sidebarOpen">{{ $t('nav.matches') }}</span>
           </router-link>
 
           <!-- Tippjeim -->
@@ -67,7 +67,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
             </svg>
-            <span v-if="sidebarOpen">Tippjeim</span>
+            <span v-if="sidebarOpen">{{ $t('nav.myTips') }}</span>
           </router-link>
 
           <!-- Csoportok -->
@@ -82,7 +82,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2h5m6 0v-2a4 4 0 00-2-2H9a4 4 0 00-2 2v2m6 0H9" />
             </svg>
-            <span v-if="sidebarOpen">Csoportok</span>
+            <span v-if="sidebarOpen">{{ $t('nav.groups') }}</span>
           </router-link>
 
           <!-- Ranglista -->
@@ -97,7 +97,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
-            <span v-if="sidebarOpen">Ranglista</span>
+            <span v-if="sidebarOpen">{{ $t('nav.leaderboard') }}</span>
           </router-link>
 
           <DonationButton :sidebar-open="sidebarOpen" />

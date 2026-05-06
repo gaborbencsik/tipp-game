@@ -1,7 +1,7 @@
 <template>
   <AppLayout>
     <div class="flex items-center gap-3 mb-6">
-      <router-link to="/app/groups" class="text-blue-600 hover:text-blue-800 text-sm">← Csoportok</router-link>
+      <router-link to="/app/groups" class="text-blue-600 hover:text-blue-800 text-sm">{{ $t('groupDetail.backToGroups') }}</router-link>
       <div>
         <h1 class="text-2xl font-bold text-gray-900">{{ groupName }}</h1>
         <p v-if="currentGroup?.league" class="text-xs text-gray-500 mt-0.5">{{ currentGroup.league.name }}</p>
@@ -15,7 +15,7 @@
         :class="activeTab === 'leaderboard' ? 'border-b-2 border-blue-600 text-blue-700 font-semibold' : 'text-gray-500'"
         @click="activeTab = 'leaderboard'"
       >
-        Ranglista
+        {{ $t('groupDetail.tabLeaderboard') }}
       </button>
       <button
         data-testid="tab-my-predictions"
@@ -23,7 +23,7 @@
         :class="activeTab === 'my-predictions' ? 'border-b-2 border-blue-600 text-blue-700 font-semibold' : 'text-gray-500'"
         @click="switchToMyPredictionsTab"
       >
-        Tippjeim
+        {{ $t('groupDetail.tabMyTips') }}
       </button>
       <button
         data-testid="tab-special"
@@ -31,7 +31,7 @@
         :class="activeTab === 'special' ? 'border-b-2 border-blue-600 text-blue-700 font-semibold' : 'text-gray-500'"
         @click="switchToSpecialTab"
       >
-        Speciális tippek
+        {{ $t('groupDetail.tabSpecial') }}
       </button>
       <button
         v-if="currentUserIsGroupAdmin"
@@ -40,7 +40,7 @@
         :class="activeTab === 'members' ? 'border-b-2 border-blue-600 text-blue-700 font-semibold' : 'text-gray-500'"
         @click="activeTab = 'members'"
       >
-        Tagok
+        {{ $t('groupDetail.tabMembers') }}
       </button>
       <button
         v-if="canManageSettings"
@@ -49,15 +49,15 @@
         :class="activeTab === 'settings' ? 'border-b-2 border-blue-600 text-blue-700 font-semibold' : 'text-gray-500'"
         @click="activeTab = 'settings'"
       >
-        Beállítások
+        {{ $t('groupDetail.tabSettings') }}
       </button>
     </div>
 
     <!-- Ranglista tab -->
     <div v-if="activeTab === 'leaderboard'">
-      <div v-if="isLoading" class="text-gray-500">Betöltés...</div>
+      <div v-if="isLoading" class="text-gray-500">{{ $t('common.loading') }}</div>
       <div v-else-if="error" class="text-red-600">{{ error }}</div>
-      <div v-else-if="entries.length === 0" class="text-gray-500">Még nincs ranglista adat.</div>
+      <div v-else-if="entries.length === 0" class="text-gray-500">{{ $t('leaderboard.empty') }}</div>
       <div v-else class="bg-white rounded-xl shadow-sm overflow-hidden">
         <table class="w-full text-sm table-fixed">
           <colgroup>
@@ -70,12 +70,12 @@
           </colgroup>
           <thead>
             <tr class="border-b border-gray-200 text-gray-500 text-left">
-              <th class="px-4 py-3">#</th>
-              <th class="px-4 py-3">Játékos</th>
-              <th class="px-4 py-3 text-right">Tipp</th>
-              <th class="px-4 py-3 text-right">Helyes</th>
-              <th class="px-4 py-3 text-right" title="Speciális tipp pontok">Speciális</th>
-              <th class="px-4 py-3 text-right font-semibold">Pont</th>
+              <th class="px-4 py-3">{{ $t('groupDetail.rank') }}</th>
+              <th class="px-4 py-3">{{ $t('groupDetail.player') }}</th>
+              <th class="px-4 py-3 text-right">{{ $t('groupDetail.tips') }}</th>
+              <th class="px-4 py-3 text-right">{{ $t('groupDetail.correct') }}</th>
+              <th class="px-4 py-3 text-right" :title="$t('groupDetail.specialPointsTitle')">{{ $t('groupDetail.specialPoints') }}</th>
+              <th class="px-4 py-3 text-right font-semibold">{{ $t('groupDetail.totalPoints') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -101,7 +101,7 @@
                     class="shrink-0"
                     style="width:1.2em;height:0.9em"
                   />
-                  <span v-if="entry.userId === authStore.user?.id" class="text-xs text-blue-600 shrink-0">(te)</span>
+                  <span v-if="entry.userId === authStore.user?.id" class="text-xs text-blue-600 shrink-0">{{ $t('groupDetail.you') }}</span>
                 </div>
               </td>
               <td class="px-4 py-3 text-right text-gray-600">{{ entry.predictionCount }}</td>
@@ -116,16 +116,16 @@
 
     <!-- Tagok tab -->
     <div v-else-if="activeTab === 'members'" data-testid="members-tab">
-      <div v-if="groupsStore.membersLoading" data-testid="members-spinner" class="text-gray-500">Betöltés...</div>
+      <div v-if="groupsStore.membersLoading" data-testid="members-spinner" class="text-gray-500">{{ $t('common.loading') }}</div>
       <div v-else-if="groupsStore.membersError" class="text-red-600">{{ groupsStore.membersError }}</div>
       <div v-else class="bg-white rounded-xl shadow-sm overflow-hidden">
         <table class="w-full text-sm">
           <thead>
             <tr class="border-b border-gray-200 text-gray-500 text-left">
-              <th class="px-4 py-3">Tag</th>
-              <th class="px-4 py-3">Szerep</th>
-              <th class="px-4 py-3">Csatlakozott</th>
-              <th v-if="currentUserIsGroupAdmin" class="px-4 py-3">Műveletek</th>
+              <th class="px-4 py-3">{{ $t('groupDetail.memberCol') }}</th>
+              <th class="px-4 py-3">{{ $t('groupDetail.roleCol') }}</th>
+              <th class="px-4 py-3">{{ $t('groupDetail.joinedCol') }}</th>
+              <th v-if="currentUserIsGroupAdmin" class="px-4 py-3">{{ $t('groupDetail.actionsCol') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -143,7 +143,7 @@
                     class="w-7 h-7 rounded-full object-cover shrink-0"
                   />
                   <span class="font-medium text-gray-800">{{ member.displayName }}</span>
-                  <span v-if="member.userId === authStore.user?.id" class="text-xs text-blue-600">(te)</span>
+                  <span v-if="member.userId === authStore.user?.id" class="text-xs text-blue-600">{{ $t('groupDetail.you') }}</span>
                 </div>
               </td>
               <td class="px-4 py-3">
@@ -151,7 +151,7 @@
                   :class="member.isAdmin ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'"
                   class="px-2 py-0.5 rounded-full text-xs font-medium"
                 >
-                  {{ member.isAdmin ? 'Admin' : 'Tag' }}
+                  {{ member.isAdmin ? $t('groupDetail.roleAdmin') : $t('groupDetail.roleUser') }}
                 </span>
               </td>
               <td class="px-4 py-3 text-gray-500 text-sm">{{ formatDate(member.joinedAt) }}</td>
@@ -162,14 +162,14 @@
                     class="text-xs px-2 py-1 rounded border border-blue-300 text-blue-600 disabled:opacity-40 disabled:cursor-not-allowed"
                     @click="onToggleAdmin(member)"
                   >
-                    {{ member.isAdmin ? 'Admin visszavon' : 'Admin' }}
+                    {{ member.isAdmin ? $t('groupDetail.demoteAdmin') : $t('groupDetail.promoteAdmin') }}
                   </button>
                   <button
                     :disabled="member.userId === authStore.user?.id"
                     class="text-xs px-2 py-1 rounded border border-red-300 text-red-600 disabled:opacity-40 disabled:cursor-not-allowed"
                     @click="confirmRemoveUserId = member.userId"
                   >
-                    Eltávolít
+                    {{ $t('groupDetail.removeMember') }}
                   </button>
                 </div>
               </td>
@@ -183,7 +183,7 @@
     <div v-if="activeTab === 'settings'" data-testid="settings-tab">
       <!-- Invite section (admin only) -->
       <div v-if="currentUserIsGroupAdmin" data-testid="invite-section" class="mb-6 bg-white rounded-xl border border-gray-200 p-4">
-        <h3 class="text-sm font-semibold text-gray-700 mb-3">Meghívó kód</h3>
+        <h3 class="text-sm font-semibold text-gray-700 mb-3">{{ $t('groupDetail.inviteTitle') }}</h3>
         <div class="flex items-center gap-2 mb-3">
           <span data-testid="invite-code-display" class="font-mono text-lg font-bold tracking-widest text-gray-900">{{ currentGroup?.inviteCode }}</span>
           <button
@@ -191,19 +191,19 @@
             :class="copiedInvite === 'code' ? 'border-green-400 bg-green-50 text-green-600' : 'border-gray-300 text-gray-600 hover:border-gray-400'"
             @click="copyInviteCode"
           >
-            {{ copiedInvite === 'code' ? '✓ Másolva' : 'Kód' }}
+            {{ copiedInvite === 'code' ? $t('common.copied') : $t('common.code') }}
           </button>
           <button
             class="text-xs px-2 py-1 rounded border transition-all duration-200"
             :class="copiedInvite === 'url' ? 'border-green-400 bg-green-50 text-green-600' : 'border-blue-300 text-blue-600 hover:border-blue-400'"
             @click="copyInviteUrl"
           >
-            {{ copiedInvite === 'url' ? '✓ Másolva' : 'Link másolása' }}
+            {{ copiedInvite === 'url' ? $t('common.copied') : $t('common.copyLink') }}
           </button>
         </div>
         <div class="flex items-center gap-3">
           <span class="text-sm text-gray-500">
-            Állapot: <span :class="currentGroup?.inviteActive ? 'text-green-600' : 'text-red-500'">{{ currentGroup?.inviteActive ? 'Aktív' : 'Inaktív' }}</span>
+            {{ $t('groupDetail.inviteStatus') }} <span :class="currentGroup?.inviteActive ? 'text-green-600' : 'text-red-500'">{{ currentGroup?.inviteActive ? $t('common.active') : $t('common.inactive') }}</span>
           </span>
           <button
             data-testid="invite-toggle-btn"
@@ -211,14 +211,14 @@
             :class="currentGroup?.inviteActive ? 'border-red-300 text-red-600' : 'border-green-300 text-green-600'"
             @click="onToggleInvite"
           >
-            {{ currentGroup?.inviteActive ? 'Deaktiválás' : 'Aktiválás' }}
+            {{ currentGroup?.inviteActive ? $t('groupDetail.inviteDeactivate') : $t('groupDetail.inviteActivate') }}
           </button>
           <button
             data-testid="invite-regenerate-btn"
             class="text-xs px-2 py-1 rounded border border-blue-300 text-blue-600"
             @click="showInviteConfirm = true"
           >
-            Újragenerálás
+            {{ $t('groupDetail.inviteRegenerate') }}
           </button>
         </div>
       </div>
@@ -230,14 +230,14 @@
           class="text-xs px-3 py-1.5 rounded border border-red-300 text-red-600 hover:bg-red-50 transition-colors"
           @click="showDeleteConfirm = true"
         >
-          Csoport törlése
+          {{ $t('groupDetail.deleteGroupBtn') }}
         </button>
       </div>
-      <div v-if="groupsStore.groupScoringLoading" class="text-gray-500">Betöltés...</div>
+      <div v-if="groupsStore.groupScoringLoading" class="text-gray-500">{{ $t('common.loading') }}</div>
       <div v-else-if="groupsStore.groupScoringError" class="text-red-600">{{ groupsStore.groupScoringError }}</div>
       <div v-else class="max-w-md">
-        <h3 class="text-base font-semibold text-gray-800 mb-1">Egyedi pontrendszer</h3>
-        <p class="text-sm text-gray-500 mb-4">Ha beállítod, a csoport ranglista ezt a pontrendszert használja a globális helyett.</p>
+        <h3 class="text-base font-semibold text-gray-800 mb-1">{{ $t('groupDetail.scoringTitle') }}</h3>
+        <p class="text-sm text-gray-500 mb-4">{{ $t('groupDetail.scoringDesc') }}</p>
         <form class="space-y-3" @submit.prevent="submitScoringConfig">
           <div v-for="field in scoringFields" :key="field.key" class="flex items-center justify-between gap-4">
             <label class="text-sm font-medium text-gray-700">{{ field.label }}</label>
@@ -258,21 +258,21 @@
               class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
               :disabled="groupsStore.groupScoringSaveStatus === 'saving'"
             >
-              Mentés
+              {{ $t('common.save') }}
             </button>
             <span
               v-if="groupsStore.groupScoringSaveStatus === 'saved'"
               data-testid="settings-save-status"
               class="text-sm text-green-600"
             >
-              Elmentve!
+              {{ $t('common.saved') }}
             </span>
             <span
               v-else-if="groupsStore.groupScoringSaveStatus === 'error'"
               data-testid="settings-save-status"
               class="text-sm text-red-600"
             >
-              Hiba a mentés során
+              {{ $t('groupDetail.leagueSaveError') }}
             </span>
           </div>
         </form>
@@ -280,10 +280,10 @@
 
       <!-- Kedvenc csapat dupla pont toggle -->
       <div class="mt-8 max-w-md">
-        <h3 class="text-base font-semibold text-gray-800 mb-1">Kedvenc csapat dupla pont</h3>
-        <p class="text-sm text-gray-500 mb-3">Ha aktív, a tagok kedvenc csapatának meccsein szerzett pontok duplán számítanak a csoport ranglistán.</p>
+        <h3 class="text-base font-semibold text-gray-800 mb-1">{{ $t('groupDetail.favTitle') }}</h3>
+        <p class="text-sm text-gray-500 mb-3">{{ $t('groupDetail.favDesc') }}</p>
         <div class="flex items-center justify-between border rounded-lg p-3 bg-white">
-          <span class="text-sm font-medium text-gray-800">Dupla pont szabály</span>
+          <span class="text-sm font-medium text-gray-800">{{ $t('groupDetail.favRule') }}</span>
           <label class="inline-flex items-center gap-2 shrink-0 cursor-pointer">
             <button
               type="button"
@@ -300,7 +300,7 @@
               />
             </button>
             <span class="text-xs font-medium" :class="currentGroup?.favoriteTeamDoublePoints ? 'text-green-700' : 'text-gray-400'">
-              {{ currentGroup?.favoriteTeamDoublePoints ? 'Aktív' : 'Inaktív' }}
+              {{ currentGroup?.favoriteTeamDoublePoints ? $t('common.active') : $t('common.inactive') }}
             </span>
           </label>
         </div>
@@ -308,8 +308,8 @@
 
       <!-- Liga szűrő -->
       <div class="mt-8 max-w-md">
-        <h3 class="text-base font-semibold text-gray-800 mb-1">Liga</h3>
-        <p class="text-sm text-gray-500 mb-3">Csak a kiválasztott liga meccseit tartalmazza a csoport ranglista.</p>
+        <h3 class="text-base font-semibold text-gray-800 mb-1">{{ $t('groupDetail.leagueTitle') }}</h3>
+        <p class="text-sm text-gray-500 mb-3">{{ $t('groupDetail.leagueDesc') }}</p>
         <template v-if="currentGroup?.league">
           <p class="text-sm text-gray-900">{{ currentGroup.league.name }}</p>
         </template>
@@ -321,7 +321,7 @@
               !leagueDraft ? 'text-gray-400' : 'text-gray-900'
             ]"
           >
-            <option value="" disabled>Válassz ligát...</option>
+            <option value="" disabled>{{ $t('groups.leaguePlaceholder') }}</option>
             <option v-for="league in leagueStore.leagues" :key="league.id" :value="league.id">
               {{ league.name }}
             </option>
@@ -334,22 +334,22 @@
               :disabled="leagueSaveStatus === 'saving' || !leagueDraft"
               @click="submitLeagues"
             >
-              Mentés
+              {{ $t('common.save') }}
             </button>
-            <span v-if="leagueSaveStatus === 'saved'" class="text-sm text-green-600">Elmentve!</span>
-            <span v-else-if="leagueSaveStatus === 'error'" class="text-sm text-red-600">Hiba a mentés során</span>
+            <span v-if="leagueSaveStatus === 'saved'" class="text-sm text-green-600">{{ $t('common.saved') }}</span>
+            <span v-else-if="leagueSaveStatus === 'error'" class="text-sm text-red-600">{{ $t('groupDetail.leagueSaveError') }}</span>
           </div>
         </template>
       </div>
 
       <!-- Hivatalos speciális tippek kezelése (admin) -->
       <div class="mt-8 max-w-lg">
-        <h3 class="text-base font-semibold text-gray-800 mb-1">Hivatalos speciális tippek</h3>
-        <p class="text-sm text-gray-500 mb-4">Kapcsold be, amelyekre a tagok tippelhetnek.</p>
+        <h3 class="text-base font-semibold text-gray-800 mb-1">{{ $t('groupDetail.globalTypesTitle') }}</h3>
+        <p class="text-sm text-gray-500 mb-4">{{ $t('groupDetail.globalTypesDesc') }}</p>
 
-        <div v-if="groupsStore.globalSubscriptionsLoading" class="text-gray-500 text-sm">Betöltés...</div>
+        <div v-if="groupsStore.globalSubscriptionsLoading" class="text-gray-500 text-sm">{{ $t('common.loading') }}</div>
         <div v-else-if="groupsStore.globalSubscriptionsError" class="text-red-600 text-sm">{{ groupsStore.globalSubscriptionsError }}</div>
-        <div v-else-if="globalSubscriptions.length === 0" class="text-sm text-gray-400">Nincs elérhető hivatalos speciális tipp típus.</div>
+        <div v-else-if="globalSubscriptions.length === 0" class="text-sm text-gray-400">{{ $t('groupDetail.globalTypesEmpty') }}</div>
         <div v-else class="space-y-2">
           <div
             v-for="gt in globalSubscriptions"
@@ -360,9 +360,9 @@
               <p class="font-medium text-gray-800 text-sm">{{ gt.name }}</p>
               <p v-if="gt.description" class="text-xs text-gray-500 mt-0.5">{{ gt.description }}</p>
               <div class="flex flex-wrap gap-2 mt-1 text-xs text-gray-500">
-                <span>{{ gt.points }} pont</span>
+                <span>{{ $t('groupDetail.pointsFormat', { n: gt.points }) }}</span>
                 <span>·</span>
-                <span>Határidő: {{ formatDateTime(gt.deadline) }}</span>
+                <span>{{ $t('groupDetail.deadlineFormat', { date: formatDateTime(gt.deadline) }) }}</span>
               </div>
             </div>
             <label class="inline-flex items-center gap-2 shrink-0 cursor-pointer" :class="{ 'opacity-50 pointer-events-none': subscriptionToggling[gt.id] }">
@@ -380,7 +380,7 @@
                 />
               </button>
               <span class="text-xs font-medium" :class="gt.subscribed ? 'text-green-700' : 'text-gray-400'">
-                {{ gt.subscribed ? 'Aktív' : 'Inaktív' }}
+                {{ gt.subscribed ? $t('groupDetail.subscriptionActive') : $t('groupDetail.subscriptionInactive') }}
               </span>
             </label>
           </div>
@@ -389,10 +389,10 @@
 
       <!-- Egyedi speciális tipp típusok kezelése (admin) -->
       <div class="mt-8 max-w-lg">
-        <h3 class="text-base font-semibold text-gray-800 mb-1">Egyedi speciális tipp típusok</h3>
-        <p class="text-sm text-gray-500 mb-4">Hozz létre egyedi speciális tippeket a csoport számára (pl. Gólkirály, Legjobb csapat).</p>
+        <h3 class="text-base font-semibold text-gray-800 mb-1">{{ $t('groupDetail.customTypesTitle') }}</h3>
+        <p class="text-sm text-gray-500 mb-4">{{ $t('groupDetail.customTypesDesc') }}</p>
 
-        <div v-if="groupsStore.specialTypesLoading" class="text-gray-500 text-sm">Betöltés...</div>
+        <div v-if="groupsStore.specialTypesLoading" class="text-gray-500 text-sm">{{ $t('common.loading') }}</div>
         <div v-else-if="groupsStore.specialTypesError" class="text-red-600 text-sm">{{ groupsStore.specialTypesError }}</div>
         <div v-else>
           <!-- Existing types list -->
@@ -407,17 +407,17 @@
                   <p class="font-medium text-gray-800 text-sm">{{ st.name }}</p>
                   <p v-if="st.description" class="text-xs text-gray-500 mt-0.5">{{ st.description }}</p>
                   <div class="flex flex-wrap gap-2 mt-1 text-xs text-gray-500">
-                    <span>{{ st.inputType === 'dropdown' ? 'Legördülő' : st.inputType === 'team_select' ? 'Csapatválasztó' : st.inputType === 'player_select' ? 'Játékosválasztó' : 'Szabad szöveg' }}</span>
+                    <span>{{ st.inputType === 'dropdown' ? $t('groupDetail.typeKindDropdown') : st.inputType === 'team_select' ? $t('groupDetail.typeKindTeam') : st.inputType === 'player_select' ? $t('groupDetail.typeKindPlayer') : $t('groupDetail.typeKindFreeText') }}</span>
                     <span>·</span>
-                    <span>{{ st.points }} pont</span>
+                    <span>{{ $t('groupDetail.pointsFormat', { n: st.points }) }}</span>
                     <span>·</span>
-                    <span>Határidő: {{ formatDateTime(st.deadline) }}</span>
+                    <span>{{ $t('groupDetail.deadlineFormat', { date: formatDateTime(st.deadline) }) }}</span>
                   </div>
                   <div v-if="st.options?.length" class="mt-1 text-xs text-gray-400">
-                    Opciók: {{ st.options.join(', ') }}
+                    {{ $t('groupDetail.optionsFormat', { options: st.options.join(', ') }) }}
                   </div>
                   <div v-if="st.correctAnswer" class="mt-1 text-xs text-green-600 font-medium">
-                    Helyes válasz: {{ resolveAnswerLabel(st.inputType, st.correctAnswer) }}
+                    {{ $t('groupDetail.correctAnswer', { answer: resolveAnswerLabel(st.inputType, st.correctAnswer) }) }}
                   </div>
                 </div>
                 <div class="flex gap-1 shrink-0">
@@ -426,29 +426,29 @@
                     class="text-xs px-2 py-1 rounded border border-green-300 text-green-600 hover:bg-green-50"
                     @click="openSetAnswer(st)"
                   >
-                    Kiértékel
+                    {{ $t('groupDetail.typeEvaluate') }}
                   </button>
                   <button
                     class="text-xs px-2 py-1 rounded border border-blue-300 text-blue-600 hover:bg-blue-50"
                     @click="openEditType(st)"
                   >
-                    Szerkeszt
+                    {{ $t('common.edit') }}
                   </button>
                   <button
                     class="text-xs px-2 py-1 rounded border border-red-300 text-red-600 hover:bg-red-50"
                     @click="confirmDeactivateTypeId = st.id"
                   >
-                    Törlés
+                    {{ $t('common.delete') }}
                   </button>
                 </div>
               </div>
             </div>
           </div>
-          <div v-else class="text-sm text-gray-400 mb-4">Még nincs egyedi speciális tipp típus.</div>
+          <div v-else class="text-sm text-gray-400 mb-4">{{ $t('groupDetail.customTypesEmpty') }}</div>
 
           <!-- Template picker -->
           <div v-if="templates.length > 0 && !showTypeForm" class="mb-4">
-            <p class="text-xs font-medium text-gray-600 mb-2">Sablon választása:</p>
+            <p class="text-xs font-medium text-gray-600 mb-2">{{ $t('groupDetail.templateLabel') }}</p>
             <div class="flex flex-wrap gap-2">
               <button
                 v-for="tpl in templates"
@@ -467,48 +467,48 @@
             class="text-sm px-3 py-1.5 rounded border border-blue-300 text-blue-600 hover:bg-blue-50"
             @click="openNewTypeForm"
           >
-            + Új speciális tipp típus
+            {{ $t('groupDetail.newCustomType') }}
           </button>
 
           <form v-if="showTypeForm" class="border rounded-lg p-4 bg-gray-50 space-y-3" @submit.prevent="submitTypeForm">
             <div>
-              <label class="text-xs font-medium text-gray-600 block mb-1">Név *</label>
-              <input v-model="typeDraft.name" type="text" maxlength="100" required class="w-full border rounded px-2 py-1 text-sm" placeholder="pl. Gólkirály" />
+              <label class="text-xs font-medium text-gray-600 block mb-1">{{ $t('groupDetail.typeNameLabel') }}</label>
+              <input v-model="typeDraft.name" type="text" maxlength="100" required class="w-full border rounded px-2 py-1 text-sm" :placeholder="$t('groupDetail.typeNamePlaceholder')" />
             </div>
             <div>
-              <label class="text-xs font-medium text-gray-600 block mb-1">Leírás</label>
-              <input v-model="typeDraft.description" type="text" class="w-full border rounded px-2 py-1 text-sm" placeholder="Opcionális leírás" />
+              <label class="text-xs font-medium text-gray-600 block mb-1">{{ $t('groupDetail.typeDescLabel') }}</label>
+              <input v-model="typeDraft.description" type="text" class="w-full border rounded px-2 py-1 text-sm" :placeholder="$t('groupDetail.typeDescPlaceholder')" />
             </div>
             <div class="flex gap-4">
               <div class="flex-1">
-                <label class="text-xs font-medium text-gray-600 block mb-1">Típus</label>
+                <label class="text-xs font-medium text-gray-600 block mb-1">{{ $t('groupDetail.typeKindLabel') }}</label>
                 <select v-model="typeDraft.inputType" class="w-full border rounded px-2 py-1 text-sm">
-                  <option value="text">Szabad szöveg</option>
-                  <option value="dropdown">Legördülő</option>
-                  <option value="team_select">Csapatválasztó</option>
-                  <option value="player_select">Játékosválasztó</option>
+                  <option value="text">{{ $t('groupDetail.typeKindFreeText') }}</option>
+                  <option value="dropdown">{{ $t('groupDetail.typeKindDropdown') }}</option>
+                  <option value="team_select">{{ $t('groupDetail.typeKindTeam') }}</option>
+                  <option value="player_select">{{ $t('groupDetail.typeKindPlayer') }}</option>
                 </select>
               </div>
               <div class="w-24">
-                <label class="text-xs font-medium text-gray-600 block mb-1">Pont</label>
+                <label class="text-xs font-medium text-gray-600 block mb-1">{{ $t('groupDetail.typePointsLabel') }}</label>
                 <input v-model.number="typeDraft.points" type="number" min="1" max="100" required class="w-full border rounded px-2 py-1 text-sm text-center" />
               </div>
             </div>
             <div v-if="typeDraft.inputType === 'dropdown'">
-              <label class="text-xs font-medium text-gray-600 block mb-1">Opciók (vesszővel elválasztva)</label>
-              <input v-model="typeDraft.optionsRaw" type="text" class="w-full border rounded px-2 py-1 text-sm" placeholder="Messi, Ronaldo, Mbappé" />
+              <label class="text-xs font-medium text-gray-600 block mb-1">{{ $t('groupDetail.typeOptionsLabel') }}</label>
+              <input v-model="typeDraft.optionsRaw" type="text" class="w-full border rounded px-2 py-1 text-sm" :placeholder="$t('groupDetail.typeOptionsPlaceholder')" />
             </div>
             <div>
-              <label class="text-xs font-medium text-gray-600 block mb-1">Határidő *</label>
+              <label class="text-xs font-medium text-gray-600 block mb-1">{{ $t('groupDetail.typeDeadlineLabel') }}</label>
               <input v-model="typeDraft.deadline" type="datetime-local" required class="w-full border rounded px-2 py-1 text-sm" />
             </div>
             <div v-if="typeFormError" class="text-xs text-red-600">{{ typeFormError }}</div>
             <div class="flex gap-2 pt-1">
               <button type="submit" class="text-sm px-3 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50" :disabled="typeFormSaving">
-                {{ editingTypeId ? 'Mentés' : 'Létrehozás' }}
+                {{ editingTypeId ? $t('common.save') : $t('groups.create') }}
               </button>
               <button type="button" class="text-sm px-3 py-1.5 rounded border border-gray-300 text-gray-600" @click="showTypeForm = false">
-                Mégse
+                {{ $t('common.cancel') }}
               </button>
             </div>
           </form>
@@ -518,23 +518,23 @@
 
     <!-- Tippjeim tab -->
     <div v-if="activeTab === 'my-predictions'" data-testid="my-predictions-tab">
-      <div v-if="groupsStore.myGroupPredictionsLoading" class="text-gray-500">Betöltés...</div>
+      <div v-if="groupsStore.myGroupPredictionsLoading" class="text-gray-500">{{ $t('common.loading') }}</div>
       <div v-else-if="groupsStore.myGroupPredictionsError" class="text-red-600">{{ groupsStore.myGroupPredictionsError }}</div>
       <div v-else-if="!myGroupPredictions || myGroupPredictions.predictions.length === 0" data-testid="my-predictions-empty" class="text-gray-500 text-sm">
-        Még nincsenek kiértékelt tippjeid ebben a csoportban.
+        {{ $t('groupDetail.myPredEmpty') }}
       </div>
       <div v-else>
         <div class="mb-4 text-sm font-medium text-gray-700">
-          Összesen: <span class="text-blue-700 font-bold">{{ myGroupPredictions.totalPoints }} pont</span>
+          {{ $t('groupDetail.myPredTotal') }} <span class="text-blue-700 font-bold">{{ $t('groupDetail.myPredTotalPoints', { n: myGroupPredictions.totalPoints }) }}</span>
         </div>
         <div class="bg-white rounded-xl shadow-sm overflow-hidden">
           <table class="w-full text-sm">
             <thead>
               <tr class="border-b border-gray-200 text-gray-500 text-left">
-                <th class="px-4 py-3">Mérkőzés</th>
-                <th class="px-4 py-3 text-center">Tipp</th>
-                <th class="px-4 py-3 text-center">Eredmény</th>
-                <th class="px-4 py-3 text-right">Pont</th>
+                <th class="px-4 py-3">{{ $t('groupDetail.matchCol') }}</th>
+                <th class="px-4 py-3 text-center">{{ $t('groupDetail.tipCol') }}</th>
+                <th class="px-4 py-3 text-center">{{ $t('groupDetail.resultCol') }}</th>
+                <th class="px-4 py-3 text-right">{{ $t('groupDetail.pointCol') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -567,9 +567,9 @@
 
     <!-- Speciális tippek tab (member) -->
     <div v-if="activeTab === 'special'" data-testid="special-tab">
-      <div v-if="groupsStore.specialPredictionsLoading" class="text-gray-500">Betöltés...</div>
+      <div v-if="groupsStore.specialPredictionsLoading" class="text-gray-500">{{ $t('common.loading') }}</div>
       <div v-else-if="groupsStore.specialPredictionsError" class="text-red-600">{{ groupsStore.specialPredictionsError }}</div>
-      <div v-else-if="specialPredictions.length === 0" class="text-gray-500 text-sm">Ebben a csoportban még nincsenek speciális tippek.</div>
+      <div v-else-if="specialPredictions.length === 0" class="text-gray-500 text-sm">{{ $t('groupDetail.specialTabEmpty') }}</div>
       <div v-else class="space-y-3 max-w-lg">
         <div
           v-for="sp in specialPredictions"
@@ -587,19 +587,19 @@
           </div>
 
           <div class="flex flex-wrap gap-2 text-xs mb-3">
-            <span class="text-gray-500">Max {{ sp.maxPoints }} pont</span>
+            <span class="text-gray-500">{{ $t('groupDetail.specialMaxPoints', { n: sp.maxPoints }) }}</span>
             <span class="text-gray-500">·</span>
-            <span :class="formatRelativeDeadline(sp.deadline, now).cssClass">
-              {{ formatRelativeDeadline(sp.deadline, now).label }}
+            <span :class="formatRelativeDeadline(sp.deadline, now, t).cssClass">
+              {{ formatRelativeDeadline(sp.deadline, now, t).label }}
             </span>
           </div>
 
           <!-- Already evaluated -->
           <div v-if="sp.points !== null" class="text-sm">
-            <p class="text-gray-600">Tipped: <span class="font-medium text-gray-800">{{ sp.answerLabel ?? sp.answer ?? '–' }}</span></p>
-            <p v-if="sp.correctAnswer" class="text-gray-600">Helyes válasz: <span class="font-medium text-green-700">{{ sp.correctAnswerLabel ?? sp.correctAnswer }}</span></p>
+            <p class="text-gray-600">{{ $t('groupDetail.specialYourTip', { answer: sp.answerLabel ?? sp.answer ?? '–' }) }}</p>
+            <p v-if="sp.correctAnswer" class="text-gray-600">{{ $t('groupDetail.specialCorrectAnswer', { answer: sp.correctAnswerLabel ?? sp.correctAnswer }) }}</p>
             <p class="mt-1 font-semibold" :class="sp.points > 0 ? 'text-green-600' : 'text-gray-400'">
-              {{ sp.points > 0 ? `+${sp.points} pont` : '0 pont' }}
+              {{ sp.points > 0 ? $t('groupDetail.specialPointsResult', { n: sp.points }) : $t('groupDetail.specialZeroPoints') }}
             </p>
           </div>
 
@@ -623,7 +623,7 @@
                 class="w-full border rounded px-2 py-1.5 text-sm mb-2"
                 @change="pendingAnswers[sp.typeId] = ($event.target as HTMLSelectElement).value"
               >
-                <option value="" disabled>Válassz...</option>
+                <option value="" disabled>{{ $t('groupDetail.specialPlaceholder') }}</option>
                 <option v-for="opt in sp.options" :key="opt" :value="opt">{{ opt }}</option>
               </select>
             </div>
@@ -633,7 +633,7 @@
                 type="text"
                 maxlength="500"
                 class="w-full border rounded px-2 py-1.5 text-sm mb-2"
-                placeholder="Írd be a tipped..."
+                :placeholder="$t('groupDetail.specialInputPlaceholder')"
                 @input="pendingAnswers[sp.typeId] = ($event.target as HTMLInputElement).value"
               />
             </div>
@@ -643,17 +643,17 @@
                 :disabled="!canSubmitPrediction(sp)"
                 @click="submitPrediction(sp.typeId)"
               >
-                {{ sp.answer ? 'Módosít' : 'Küldés' }}
+                {{ sp.answer ? $t('groupDetail.specialModify') : $t('groupDetail.specialSubmit') }}
               </button>
-              <span v-if="predictionSaveStatus[sp.typeId] === 'saved'" class="text-xs text-green-600">Mentve!</span>
-              <span v-else-if="predictionSaveStatus[sp.typeId] === 'error'" class="text-xs text-red-600">Hiba</span>
+              <span v-if="predictionSaveStatus[sp.typeId] === 'saved'" class="text-xs text-green-600">{{ $t('groupDetail.specialSaved') }}</span>
+              <span v-else-if="predictionSaveStatus[sp.typeId] === 'error'" class="text-xs text-red-600">{{ $t('groupDetail.specialError') }}</span>
             </div>
           </div>
 
           <!-- After deadline, not yet evaluated -->
           <div v-else class="text-sm">
-            <p class="text-gray-600">Tipped: <span class="font-medium text-gray-800">{{ sp.answerLabel ?? sp.answer ?? 'Nem adtál le tippet' }}</span></p>
-            <p class="text-xs text-gray-400 mt-1">A határidő lejárt, kiértékelésre vár.</p>
+            <p class="text-gray-600">{{ $t('groupDetail.specialYourTip', { answer: sp.answerLabel ?? sp.answer ?? $t('groupDetail.specialNoTip') }) }}</p>
+            <p class="text-xs text-gray-400 mt-1">{{ $t('groupDetail.specialExpired') }}</p>
           </div>
         </div>
       </div>
@@ -662,7 +662,7 @@
     <!-- Set correct answer dialog -->
     <div v-if="setAnswerTypeId !== null" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div class="bg-white rounded-xl p-6 shadow-xl max-w-sm w-full mx-4">
-        <p class="text-gray-800 mb-1 font-semibold">Helyes válasz megadása</p>
+        <p class="text-gray-800 mb-1 font-semibold">{{ $t('groupDetail.typeEvaluateDialog') }}</p>
         <p class="text-gray-500 text-sm mb-3">{{ setAnswerTypeName }}</p>
         <div v-if="setAnswerInputType === 'team_select'" class="mb-3">
           <TeamSelectDropdown
@@ -681,19 +681,19 @@
           v-model="setAnswerValue"
           type="text"
           class="w-full border rounded px-3 py-2 text-sm mb-3"
-          placeholder="Helyes válasz..."
+          :placeholder="$t('groupDetail.setAnswerPlaceholder')"
         />
         <div v-if="setAnswerError" class="text-xs text-red-600 mb-2">{{ setAnswerError }}</div>
         <div class="flex gap-3 justify-end">
           <button class="px-4 py-2 text-sm rounded border border-gray-300 text-gray-700" @click="setAnswerTypeId = null">
-            Mégse
+            {{ $t('common.cancel') }}
           </button>
           <button
             class="px-4 py-2 text-sm rounded bg-green-600 text-white font-medium disabled:opacity-50"
             :disabled="!setAnswerValue.trim() || setAnswerSaving"
             @click="submitSetAnswer"
           >
-            Kiértékelés
+            {{ $t('groupDetail.typeEvaluateSubmit') }}
           </button>
         </div>
       </div>
@@ -702,13 +702,13 @@
     <!-- Deactivate type confirm dialog -->
     <div v-if="confirmDeactivateTypeId !== null" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div class="bg-white rounded-xl p-6 shadow-xl max-w-sm w-full mx-4">
-        <p class="text-gray-800 mb-4">Biztosan törölni szeretnéd ezt a speciális tipp típust?</p>
+        <p class="text-gray-800 mb-4">{{ $t('groupDetail.typeDeleteDialog') }}</p>
         <div class="flex gap-3 justify-end">
           <button class="px-4 py-2 text-sm rounded border border-gray-300 text-gray-700" @click="confirmDeactivateTypeId = null">
-            Mégse
+            {{ $t('common.cancel') }}
           </button>
           <button class="px-4 py-2 text-sm rounded bg-red-600 text-white font-medium" @click="onConfirmDeactivate">
-            Törlés
+            {{ $t('common.delete') }}
           </button>
         </div>
       </div>
@@ -716,21 +716,21 @@
 
     <!-- Confirm dialog -->    <div v-if="confirmRemoveUserId !== null" data-testid="confirm-dialog" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div class="bg-white rounded-xl p-6 shadow-xl max-w-sm w-full mx-4">
-        <p class="text-gray-800 mb-4">Biztosan el szeretnéd távolítani ezt a tagot?</p>
+        <p class="text-gray-800 mb-4">{{ $t('groupDetail.removeMemberDialog') }}</p>
         <div class="flex gap-3 justify-end">
           <button
             data-testid="confirm-cancel"
             class="px-4 py-2 text-sm rounded border border-gray-300 text-gray-700"
             @click="confirmRemoveUserId = null"
           >
-            Mégse
+            {{ $t('common.cancel') }}
           </button>
           <button
             data-testid="confirm-ok"
             class="px-4 py-2 text-sm rounded bg-red-600 text-white font-medium"
             @click="onConfirmRemove"
           >
-            Eltávolítás
+            {{ $t('groupDetail.removeMemberConfirm') }}
           </button>
         </div>
       </div>
@@ -739,21 +739,21 @@
     <!-- Invite confirm dialog -->
     <div v-if="showInviteConfirm" data-testid="invite-confirm-dialog" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div class="bg-white rounded-xl p-6 shadow-xl max-w-sm w-full mx-4">
-        <p class="text-gray-800 mb-4">Biztosan újra szeretnéd generálni a meghívó kódot? A régi kód érvénytelenné válik.</p>
+        <p class="text-gray-800 mb-4">{{ $t('groupDetail.inviteRegenerateDialog') }}</p>
         <div class="flex gap-3 justify-end">
           <button
             data-testid="invite-confirm-cancel"
             class="px-4 py-2 text-sm rounded border border-gray-300 text-gray-700"
             @click="showInviteConfirm = false"
           >
-            Mégse
+            {{ $t('common.cancel') }}
           </button>
           <button
             data-testid="invite-confirm-ok"
             class="px-4 py-2 text-sm rounded bg-blue-600 text-white font-medium"
             @click="onConfirmRegenerate"
           >
-            Újragenerálás
+            {{ $t('groupDetail.inviteRegenerate') }}
           </button>
         </div>
       </div>
@@ -762,22 +762,22 @@
     <!-- Delete group confirm dialog -->
     <div v-if="showDeleteConfirm" data-testid="delete-confirm-dialog" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div class="bg-white rounded-xl p-6 shadow-xl max-w-sm w-full mx-4">
-        <p class="text-gray-800 mb-1 font-semibold">Csoport törlése</p>
-        <p class="text-gray-500 text-sm mb-4">A csoport és a csoport ranglista véglegesen törlődik. Ez a művelet nem vonható vissza.</p>
+        <p class="text-gray-800 mb-1 font-semibold">{{ $t('groupDetail.deleteGroupTitle') }}</p>
+        <p class="text-gray-500 text-sm mb-4">{{ $t('groupDetail.deleteGroupDesc') }}</p>
         <div class="flex gap-3 justify-end">
           <button
             data-testid="delete-confirm-cancel"
             class="px-4 py-2 text-sm rounded border border-gray-300 text-gray-700"
             @click="showDeleteConfirm = false"
           >
-            Mégse
+            {{ $t('common.cancel') }}
           </button>
           <button
             data-testid="delete-confirm-ok"
             class="px-4 py-2 text-sm rounded bg-red-600 text-white font-medium"
             @click="onConfirmDelete"
           >
-            Törlés
+            {{ $t('common.delete') }}
           </button>
         </div>
       </div>
@@ -788,6 +788,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, reactive, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import AppLayout from '../components/AppLayout.vue'
 import { formatRelativeDeadline } from '../lib/deadline.js'
 import TeamSelectDropdown from '../components/predictions/TeamSelectDropdown.vue'
@@ -816,6 +817,7 @@ function formatDate(iso: string): string {
 
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n()
 const groupsStore = useGroupsStore()
 const authStore = useAuthStore()
 const leagueStore = useLeagueFavoritesStore()
@@ -861,7 +863,7 @@ async function loadNameCachesIfNeeded(): Promise<void> {
   }
 }
 
-const groupName = computed(() => groupsStore.groups.find(g => g.id === groupId)?.name ?? 'Csoport')
+const groupName = computed(() => groupsStore.groups.find(g => g.id === groupId)?.name ?? t('nav.groups'))
 const currentGroup = computed(() => groupsStore.groups.find(g => g.id === groupId))
 const members = computed(() => groupsStore.membersMap[groupId] ?? [])
 const currentUserIsGroupAdmin = computed(() =>
@@ -946,12 +948,12 @@ async function toggleGlobalSubscription(gt: GlobalTypeWithSubscription): Promise
 }
 
 const scoringFields: Array<{ key: keyof ScoringConfigInput; label: string }> = [
-  { key: 'exactScore', label: 'Pontos találat' },
-  { key: 'correctWinnerAndDiff', label: 'Helyes győztes + gólkülönbség' },
-  { key: 'correctWinner', label: 'Helyes győztes' },
-  { key: 'correctDraw', label: 'Döntetlen tipp döntetlenre' },
-  { key: 'correctOutcome', label: 'Outcome bónusz (hossz./tizenegyes)' },
-  { key: 'incorrect', label: 'Helytelen tipp' },
+  { key: 'exactScore', label: t('scoring.exact') },
+  { key: 'correctWinnerAndDiff', label: t('scoring.goalDiff') },
+  { key: 'correctWinner', label: t('scoring.winner') },
+  { key: 'correctDraw', label: t('scoring.drawOnDraw') },
+  { key: 'correctOutcome', label: t('scoring.outcomeBonus') },
+  { key: 'incorrect', label: t('scoring.wrong') },
 ]
 
 type ScoringDraft = {
@@ -1116,7 +1118,7 @@ async function submitTypeForm(): Promise<void> {
     }
     showTypeForm.value = false
   } catch (err) {
-    typeFormError.value = err instanceof Error ? err.message : 'Hiba'
+    typeFormError.value = err instanceof Error ? err.message : t('common.error')
   } finally {
     typeFormSaving.value = false
   }
@@ -1151,7 +1153,7 @@ async function submitSetAnswer(): Promise<void> {
     await groupsStore.setSpecialTypeAnswer(groupId, setAnswerTypeId.value, setAnswerValue.value.trim())
     setAnswerTypeId.value = null
   } catch (err) {
-    setAnswerError.value = err instanceof Error ? err.message : 'Hiba'
+    setAnswerError.value = err instanceof Error ? err.message : t('common.error')
   } finally {
     setAnswerSaving.value = false
   }
@@ -1167,10 +1169,10 @@ function predictionStatusClass(sp: { points: number | null; answer: string | nul
 }
 
 function predictionStatusLabel(sp: { points: number | null; answer: string | null; deadline: string }): string {
-  if (sp.points !== null) return sp.points > 0 ? `+${sp.points}` : '0 pont'
-  if (isDeadlinePassed(sp.deadline)) return 'Kiértékelésre vár'
-  if (sp.answer) return 'Leadva'
-  return 'Nyitott'
+  if (sp.points !== null) return sp.points > 0 ? `+${sp.points}` : t('groupDetail.predStatusZero')
+  if (isDeadlinePassed(sp.deadline)) return t('groupDetail.predStatusPending')
+  if (sp.answer) return t('groupDetail.predStatusSubmitted')
+  return t('groupDetail.predStatusOpen')
 }
 
 function canSubmitPrediction(sp: { typeId: string; answer: string | null }): boolean {
@@ -1228,7 +1230,7 @@ onMounted(async () => {
       await loadNameCachesIfNeeded()
     }
   } catch (err) {
-    error.value = err instanceof Error ? err.message : 'Ismeretlen hiba'
+    error.value = err instanceof Error ? err.message : t('common.unknownError')
   } finally {
     isLoading.value = false
   }

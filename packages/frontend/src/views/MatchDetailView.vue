@@ -6,7 +6,7 @@
           data-testid="back-link"
           class="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
         >
-          ← Vissza
+          {{ $t('matchDetail.back') }}
         </router-link>
       </div>
 
@@ -15,14 +15,14 @@
       </div>
 
       <div v-else-if="!match" class="text-center text-gray-500 py-16">
-        A mérkőzés nem található.
+        {{ $t('matchDetail.notFound') }}
       </div>
 
       <template v-else>
         <div class="flex items-center justify-between mb-4">
           <span class="text-sm font-medium text-gray-500 uppercase tracking-wide">
             {{ stageLabel(match.stage) }}
-            <span v-if="match.groupName"> – {{ match.groupName }} csoport</span>
+            <span v-if="match.groupName"> – {{ $t('matches.groupLabel', { name: match.groupName }) }}</span>
           </span>
           <span
             class="text-xs font-bold px-2 py-0.5 rounded"
@@ -63,7 +63,7 @@
 
         <!-- Tipp szekció -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
-          <h2 class="text-sm font-semibold text-gray-600 mb-3">Tipp</h2>
+          <h2 class="text-sm font-semibold text-gray-600 mb-3">{{ $t('matchDetail.tipTitle') }}</h2>
 
           <!-- Tippelhető meccs -->
           <template v-if="isTippable(match)">
@@ -102,34 +102,34 @@
             <!-- Outcome selector egyenes kieséses meccseknél döntetlen tipp esetén -->
             <div v-if="showOutcomeSelector" class="mt-3 flex flex-col gap-1 items-center">
               <div class="flex gap-1">
-                <span class="text-xs text-gray-400 w-20 text-right self-center">Hossz.:</span>
+                <span class="text-xs text-gray-400 w-20 text-right self-center">{{ $t('matches.extraTimeShort') }}</span>
                 <button
                   type="button"
                   class="text-xs px-2 py-1 rounded border transition-colors"
                   :class="draftOutcome === 'extra_time_home' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'"
                   @click="setOutcome('extra_time_home')"
-                >← Hazai</button>
+                >{{ $t('matches.homeWin') }}</button>
                 <button
                   type="button"
                   class="text-xs px-2 py-1 rounded border transition-colors"
                   :class="draftOutcome === 'extra_time_away' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'"
                   @click="setOutcome('extra_time_away')"
-                >Vendég →</button>
+                >{{ $t('matches.awayWin') }}</button>
               </div>
               <div class="flex gap-1">
-                <span class="text-xs text-gray-400 w-20 text-right self-center">Tizenegyes:</span>
+                <span class="text-xs text-gray-400 w-20 text-right self-center">{{ $t('matches.penaltyShort') }}</span>
                 <button
                   type="button"
                   class="text-xs px-2 py-1 rounded border transition-colors"
                   :class="draftOutcome === 'penalties_home' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'"
                   @click="setOutcome('penalties_home')"
-                >← Hazai</button>
+                >{{ $t('matches.homeWin') }}</button>
                 <button
                   type="button"
                   class="text-xs px-2 py-1 rounded border transition-colors"
                   :class="draftOutcome === 'penalties_away' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'"
                   @click="setOutcome('penalties_away')"
-                >Vendég →</button>
+                >{{ $t('matches.awayWin') }}</button>
               </div>
             </div>
 
@@ -139,7 +139,7 @@
                 class="text-green-600"
                 data-testid="save-success"
               >
-                Tipp elmentve! ✓
+                {{ $t('matchDetail.tipSaved') }}
               </span>
               <span
                 v-else-if="predictionsStore.saveStatus[match.id] === 'error'"
@@ -155,15 +155,15 @@
             <div class="text-center text-sm text-gray-500">
               <template v-if="myPrediction">
                 <span>
-                  Az én tippem:
+                  {{ $t('matchDetail.myTip') }}
                   <strong class="text-gray-700">{{ myPrediction.homeGoals }} – {{ myPrediction.awayGoals }}</strong>
                 </span>
                 <span v-if="myPrediction.pointsGlobal !== null" class="ml-3">
-                  Pontok: <strong class="text-blue-700">{{ myPrediction.pointsGlobal }}</strong>
+                  {{ $t('matchDetail.pointsLabel') }} <strong class="text-blue-700">{{ myPrediction.pointsGlobal }}</strong>
                 </span>
               </template>
               <template v-else>
-                <span>Nem adtál tippet erre a mérkőzésre</span>
+                <span>{{ $t('matchDetail.noTip') }}</span>
               </template>
             </div>
           </template>
@@ -182,6 +182,7 @@
 
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, computed, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { useMatchesStore } from '../stores/matches.store.js'
 import { usePredictionsStore } from '../stores/predictions.store.js'
@@ -201,6 +202,7 @@ async function getToken(): Promise<string> {
   return data.session?.access_token ?? ''
 }
 
+const { t } = useI18n()
 const route = useRoute()
 const matchesStore = useMatchesStore()
 const predictionsStore = usePredictionsStore()
@@ -309,10 +311,10 @@ async function loadMatchPredictions(): Promise<void> {
 
 function statusLabel(status: MatchStatus): string {
   switch (status) {
-    case 'live': return 'ÉLŐBEN'
-    case 'finished': return 'Befejezett'
-    case 'scheduled': return 'Tervezett'
-    case 'cancelled': return 'Törölve'
+    case 'live': return t('status.live')
+    case 'finished': return t('status.finished')
+    case 'scheduled': return t('status.scheduled')
+    case 'cancelled': return t('status.cancelled')
   }
 }
 
@@ -327,12 +329,12 @@ function statusClass(status: MatchStatus): string {
 
 function stageLabel(stage: MatchStage): string {
   switch (stage) {
-    case 'group': return 'Csoportkör'
-    case 'round_of_16': return 'Nyolcaddöntő'
-    case 'quarter_final': return 'Negyeddöntő'
-    case 'semi_final': return 'Elődöntő'
-    case 'third_place': return 'Bronzmérkőzés'
-    case 'final': return 'Döntő'
+    case 'group': return t('stage.group')
+    case 'round_of_16': return t('stage.round16')
+    case 'quarter_final': return t('stage.quarter')
+    case 'semi_final': return t('stage.semi')
+    case 'third_place': return t('stage.thirdPlace')
+    case 'final': return t('stage.final')
   }
 }
 

@@ -6,7 +6,7 @@
         type="text"
         :value="displayText"
         class="w-full px-2 py-1.5 text-sm outline-none"
-        :placeholder="selectedPlayer ? '' : 'Keresés játékosra...'"
+        :placeholder="selectedPlayer ? '' : $t('playerSelect.placeholder')"
         @focus="onFocus"
         @input="onInput"
       />
@@ -36,7 +36,7 @@
       v-if="dropdownOpen && searchText.length > 0 && filteredPlayers.length === 0"
       class="absolute z-30 mt-1 w-full bg-white border rounded shadow-lg px-3 py-2 text-sm text-gray-400"
     >
-      Nincs ilyen játékos
+      {{ $t('playerSelect.noResults') }}
     </div>
   </div>
 </template>

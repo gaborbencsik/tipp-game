@@ -3,12 +3,14 @@ export interface DeadlineInfo {
   readonly cssClass: string
 }
 
-export function formatRelativeDeadline(deadline: string, now: number): DeadlineInfo {
+type TranslateFn = (key: string, params?: Record<string, unknown>) => string
+
+export function formatRelativeDeadline(deadline: string, now: number, t?: TranslateFn): DeadlineInfo {
   const deadlineMs = new Date(deadline).getTime()
   const diffMs = deadlineMs - now
 
   if (diffMs <= 0) {
-    return { label: 'Lezárva', cssClass: 'text-gray-400' }
+    return { label: t ? t('deadline.closed') : 'Lezárva', cssClass: 'text-gray-400' }
   }
 
   const diffMinutes = Math.floor(diffMs / 60_000)
@@ -17,20 +19,20 @@ export function formatRelativeDeadline(deadline: string, now: number): DeadlineI
 
   if (diffMs < 2 * 3_600_000) {
     return {
-      label: `${diffMinutes} perc múlva`,
+      label: t ? t('deadline.minutesLeft', { n: diffMinutes }) : `${diffMinutes} perc múlva`,
       cssClass: 'text-red-600 font-semibold animate-pulse',
     }
   }
 
   if (diffMs < 48 * 3_600_000) {
     return {
-      label: `${diffHours} óra múlva`,
+      label: t ? t('deadline.hoursLeft', { n: diffHours }) : `${diffHours} óra múlva`,
       cssClass: 'text-amber-600 font-medium',
     }
   }
 
   return {
-    label: `${diffDays} nap múlva`,
+    label: t ? t('deadline.daysLeft', { n: diffDays }) : `${diffDays} nap múlva`,
     cssClass: 'text-gray-500',
   }
 }

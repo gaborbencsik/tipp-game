@@ -1,13 +1,13 @@
 <template>
   <AppLayout>
-    <h1 class="text-2xl font-bold text-gray-900 mb-6">Tippjeim</h1>
+    <h1 class="text-2xl font-bold text-gray-900 mb-6">{{ $t('myTips.title') }}</h1>
 
     <div v-if="matchesStore.isLoading || predictionsStore.isLoading" class="flex justify-center py-16">
       <div class="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
     </div>
 
     <div v-else-if="matchesStore.matchesByDate.length === 0" class="text-center text-gray-500 py-16">
-      Nincs megjeleníthető mérkőzés.
+      {{ $t('myTips.empty') }}
     </div>
 
     <div v-else>
@@ -89,8 +89,8 @@
                       {{ predictionsStore.predictionByMatchId(match.id)!.awayGoals }}
                     </button>
                     <div class="text-xs text-gray-400 text-right">
-                      <span v-if="predictionsStore.saveStatus[match.id] === 'saved'" class="text-green-600">elmentve ✓</span>
-                      <span v-else>elmentve</span>
+                      <span v-if="predictionsStore.saveStatus[match.id] === 'saved'" class="text-green-600">{{ $t('myTips.saved') }}</span>
+                      <span v-else>{{ $t('myTips.savedShort') }}</span>
                     </div>
                   </template>
                   <template v-else>
@@ -98,7 +98,7 @@
                       class="text-xs font-medium text-amber-700 bg-amber-50 px-2 py-1 rounded hover:bg-amber-100 transition-colors"
                       @click="openEdit(match.id)"
                     >
-                      Tippelj!
+                      {{ $t('myTips.tipNow') }}
                     </button>
                   </template>
                 </template>
@@ -115,11 +115,11 @@
                     </span>
                   </div>
                   <div v-if="predictionsStore.predictionByMatchId(match.id)!.pointsGlobal !== null" class="text-xs font-bold text-blue-600 text-right">
-                    {{ predictionsStore.predictionByMatchId(match.id)!.pointsGlobal }} pont
+                    {{ predictionsStore.predictionByMatchId(match.id)!.pointsGlobal }} {{ $t('common.points') }}
                   </div>
                 </template>
                 <template v-else>
-                  <span class="text-xs text-red-500 font-medium">Kimaradt</span>
+                  <span class="text-xs text-red-500 font-medium">{{ $t('myTips.missed') }}</span>
                 </template>
               </template>
 
@@ -136,12 +136,14 @@
 
 <script setup lang="ts">
 import { ref, nextTick, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import AppLayout from '../components/AppLayout.vue'
 import TeamBadge from '../components/TeamBadge.vue'
 import { useMatchesStore } from '../stores/matches.store.js'
 import { usePredictionsStore } from '../stores/predictions.store.js'
 import type { Match, MatchOutcome } from '../types/index.js'
 
+const { t } = useI18n()
 const matchesStore = useMatchesStore()
 const predictionsStore = usePredictionsStore()
 
@@ -263,10 +265,10 @@ function formatDateTime(iso: string): string {
 
 function outcomeLabel(outcome: MatchOutcome): string {
   switch (outcome) {
-    case 'extra_time_home': return 'H+hossz.'
-    case 'extra_time_away': return 'V+hossz.'
-    case 'penalties_home': return 'H+tiz.'
-    case 'penalties_away': return 'V+tiz.'
+    case 'extra_time_home': return t('myTips.outcomeHomeET')
+    case 'extra_time_away': return t('myTips.outcomeAwayET')
+    case 'penalties_home': return t('myTips.outcomeHomePen')
+    case 'penalties_away': return t('myTips.outcomeAwayPen')
   }
 }
 </script>

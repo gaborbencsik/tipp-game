@@ -1,23 +1,23 @@
 <template>
   <AppLayout>
     <div class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl font-bold text-gray-900">Ranglista</h1>
+      <h1 class="text-2xl font-bold text-gray-900">{{ $t('leaderboard.title') }}</h1>
       <select
         v-if="groupsStore.groups.length > 0"
         v-model="selectedScope"
         class="text-sm text-gray-700 border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         @change="onScopeChange"
       >
-        <option value="global">Összesített</option>
+        <option value="global">{{ $t('leaderboard.global') }}</option>
         <option v-for="group in groupsStore.groups" :key="group.id" :value="group.id">
           {{ group.name }}
         </option>
       </select>
     </div>
 
-    <div v-if="isLoading" class="text-gray-500">Betöltés...</div>
+    <div v-if="isLoading" class="text-gray-500">{{ $t('common.loading') }}</div>
     <div v-else-if="error" class="text-red-600">{{ error }}</div>
-    <div v-else-if="entries.length === 0" class="text-gray-500">Még nincs ranglista adat.</div>
+    <div v-else-if="entries.length === 0" class="text-gray-500">{{ $t('leaderboard.empty') }}</div>
     <div v-else class="bg-white rounded-xl shadow-sm overflow-hidden">
       <table class="w-full text-sm table-fixed">
         <colgroup>
@@ -29,11 +29,11 @@
         </colgroup>
         <thead>
           <tr class="border-b border-gray-200 text-gray-500 text-left">
-            <th class="px-4 py-3">#</th>
-            <th class="px-4 py-3">Játékos</th>
-            <th class="px-4 py-3 text-right">Tipp</th>
-            <th class="px-4 py-3 text-right">Helyes</th>
-            <th class="px-4 py-3 text-right font-semibold">Pont</th>
+            <th class="px-4 py-3">{{ $t('leaderboard.rank') }}</th>
+            <th class="px-4 py-3">{{ $t('leaderboard.player') }}</th>
+            <th class="px-4 py-3 text-right">{{ $t('leaderboard.tips') }}</th>
+            <th class="px-4 py-3 text-right">{{ $t('leaderboard.correct') }}</th>
+            <th class="px-4 py-3 text-right font-semibold">{{ $t('leaderboard.points') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -52,7 +52,7 @@
                   class="w-7 h-7 rounded-full object-cover shrink-0"
                 />
                 <span class="font-medium text-gray-800 truncate">{{ entry.displayName }}</span>
-                <span v-if="entry.userId === authStore.user?.id" class="text-xs text-blue-600 shrink-0">(te)</span>
+                <span v-if="entry.userId === authStore.user?.id" class="text-xs text-blue-600 shrink-0">{{ $t('leaderboard.you') }}</span>
               </div>
             </td>
             <td class="px-4 py-3 text-right text-gray-600">{{ entry.predictionCount }}</td>
@@ -67,6 +67,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import AppLayout from '../components/AppLayout.vue'
 import { dicebearUrl } from '../lib/avatar.js'
 import { useLeaderboardStore } from '../stores/leaderboard.store.js'
@@ -77,6 +78,8 @@ import { supabase } from '../lib/supabase.js'
 import type { LeaderboardEntry } from '../types/index.js'
 
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
+
+const { t } = useI18n()
 
 async function getAccessToken(): Promise<string> {
   if (DEV_AUTH_BYPASS) return 'dev-bypass-token'
@@ -104,7 +107,7 @@ async function loadGroupLeaderboard(groupId: string): Promise<void> {
     const token = await getAccessToken()
     groupEntries.value = await api.groups.leaderboard(token, groupId)
   } catch (err) {
-    groupError.value = err instanceof Error ? err.message : 'Ismeretlen hiba'
+    groupError.value = err instanceof Error ? err.message : t('common.unknownError')
   } finally {
     groupIsLoading.value = false
   }

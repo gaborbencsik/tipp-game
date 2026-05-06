@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { formatRelativeDeadline } from '../lib/deadline.js'
 import type { PendingGroupSummary } from '../composables/usePendingSpecialTips.js'
 
@@ -11,6 +12,7 @@ const props = defineProps<{
 }>()
 
 const router = useRouter()
+const { t } = useI18n()
 const expanded = ref(false)
 
 const singleGroup = computed(() => props.pendingGroups.length === 1)
@@ -27,7 +29,7 @@ const globalNearestDeadline = computed<string | null>(() => {
 
 const deadlineInfo = computed(() => {
   if (!globalNearestDeadline.value) return null
-  return formatRelativeDeadline(globalNearestDeadline.value, props.now)
+  return formatRelativeDeadline(globalNearestDeadline.value, props.now, t)
 })
 
 function handleBannerClick(): void {
@@ -56,10 +58,10 @@ function navigateToGroup(groupId: string): void {
 
       <div class="flex-1 min-w-0">
         <p class="font-semibold text-amber-900 text-sm">
-          {{ totalPendingCount }} speciális tipp vár rád
+          {{ $t('specialBanner.pending', { count: totalPendingCount }) }}
         </p>
         <p v-if="deadlineInfo" class="text-xs" :class="deadlineInfo.cssClass">
-          Legközelebbi határidő: {{ deadlineInfo.label }}
+          {{ $t('specialBanner.nearestDeadline', { label: deadlineInfo.label }) }}
         </p>
 
         <div v-if="expanded && !singleGroup" class="mt-2 space-y-1">
@@ -69,9 +71,9 @@ function navigateToGroup(groupId: string): void {
             class="text-sm text-amber-800 py-1 cursor-pointer hover:underline truncate"
             @click.stop="navigateToGroup(group.groupId)"
           >
-            {{ group.groupName }} · {{ group.pendingCount }} tipp
+            {{ $t('specialBanner.groupInfo', { name: group.groupName, count: group.pendingCount }) }}
             <template v-if="group.nearestDeadline">
-              · {{ formatRelativeDeadline(group.nearestDeadline, now).label }}
+              · {{ formatRelativeDeadline(group.nearestDeadline, now, t).label }}
             </template>
           </div>
         </div>
@@ -84,7 +86,7 @@ function navigateToGroup(groupId: string): void {
           class="text-xs text-amber-700 underline cursor-pointer"
           @click.stop="expanded = !expanded"
         >
-          {{ expanded ? 'Bezárás' : 'Csoportok' }}
+          {{ expanded ? $t('specialBanner.collapse') : $t('specialBanner.expand') }}
         </span>
       </div>
     </div>

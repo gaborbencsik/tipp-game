@@ -1,35 +1,35 @@
 <template>
   <AppLayout>
     <div class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl font-bold text-gray-900">Csoportok</h1>
+      <h1 class="text-2xl font-bold text-gray-900">{{ $t('groups.title') }}</h1>
       <div v-if="store.groups.length > 0" class="flex gap-2">
         <button
           data-testid="join-group-btn"
           class="px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
           @click="showJoinForm = true"
         >
-          Csatlakozás
+          {{ $t('groups.join') }}
         </button>
         <button
           data-testid="create-group-btn"
           class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
           @click="showCreateForm = true"
         >
-          Csoport létrehozása
+          {{ $t('groups.createGroup') }}
         </button>
       </div>
     </div>
 
     <!-- Create form -->
     <div v-if="showCreateForm" data-testid="create-form" class="mb-6 bg-white border border-gray-200 rounded-xl p-5">
-      <h2 class="text-base font-semibold text-gray-900 mb-4">Új csoport létrehozása</h2>
+      <h2 class="text-base font-semibold text-gray-900 mb-4">{{ $t('groups.createTitle') }}</h2>
       <form @submit.prevent="onCreateSubmit">
         <div class="flex flex-col gap-3">
           <input
             v-model="createName"
             data-testid="create-name-input"
             type="text"
-            placeholder="Csoport neve"
+            :placeholder="$t('groups.namePlaceholder')"
             maxlength="60"
             required
             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -38,12 +38,12 @@
             v-model="createDescription"
             data-testid="create-description-input"
             type="text"
-            placeholder="Leírás (opcionális)"
+            :placeholder="$t('groups.descriptionPlaceholder')"
             maxlength="200"
             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <div v-if="leagueStore.leagues.length > 1" data-testid="league-select" class="flex flex-col gap-1">
-            <span class="text-sm font-medium text-gray-700">Liga</span>
+            <span class="text-sm font-medium text-gray-700">{{ $t('groups.leagueLabel') }}</span>
             <select
               v-model="selectedLeagueId"
               required
@@ -52,7 +52,7 @@
                 !selectedLeagueId ? 'text-gray-400' : 'text-gray-900'
               ]"
             >
-              <option value="" disabled>Válassz ligát...</option>
+              <option value="" disabled>{{ $t('groups.leaguePlaceholder') }}</option>
               <option v-for="league in leagueStore.leagues" :key="league.id" :value="league.id">
                 {{ league.name }}
               </option>
@@ -65,7 +65,7 @@
               class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800"
               @click="closeCreateForm"
             >
-              Mégse
+              {{ $t('common.cancel') }}
             </button>
             <button
               type="submit"
@@ -73,7 +73,7 @@
               :disabled="isSubmitting"
               class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
             >
-              Létrehozás
+              {{ $t('groups.create') }}
             </button>
           </div>
         </div>
@@ -82,14 +82,14 @@
 
     <!-- Join form -->
     <div v-if="showJoinForm" data-testid="join-form" class="mb-6 bg-white border border-gray-200 rounded-xl p-5">
-      <h2 class="text-base font-semibold text-gray-900 mb-4">Csatlakozás meghívó kóddal</h2>
+      <h2 class="text-base font-semibold text-gray-900 mb-4">{{ $t('groups.joinTitle') }}</h2>
       <form @submit.prevent="onJoinSubmit">
         <div class="flex flex-col gap-3">
           <input
             v-model="joinCode"
             data-testid="join-code-input"
             type="text"
-            placeholder="Meghívó kód (pl. ABCD1234)"
+            :placeholder="$t('groups.inviteCodePlaceholder')"
             maxlength="8"
             required
             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -101,7 +101,7 @@
               class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800"
               @click="closeJoinForm"
             >
-              Mégse
+              {{ $t('common.cancel') }}
             </button>
             <button
               type="submit"
@@ -109,7 +109,7 @@
               :disabled="isSubmitting"
               class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
             >
-              Csatlakozás
+              {{ $t('groups.join') }}
             </button>
           </div>
         </div>
@@ -121,21 +121,21 @@
     </div>
 
     <div v-else-if="store.groups.length === 0 && !showCreateForm && !showJoinForm" data-testid="empty-state" class="flex flex-col items-center justify-center py-24 gap-4">
-      <p class="text-gray-500 text-sm">Még nem vagy egyetlen csoport tagja sem.</p>
+      <p class="text-gray-500 text-sm">{{ $t('groups.emptyState') }}</p>
       <div class="flex gap-3">
         <button
           data-testid="empty-join-btn"
           class="px-5 py-2.5 text-sm font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
           @click="showJoinForm = true"
         >
-          Csatlakozás
+          {{ $t('groups.join') }}
         </button>
         <button
           data-testid="create-group-btn"
           class="px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors"
           @click="showCreateForm = true"
         >
-          Csoport létrehozása
+          {{ $t('groups.createGroup') }}
         </button>
       </div>
     </div>
@@ -165,23 +165,23 @@
                   :class="copiedState.get(group.id) === 'code' ? 'bg-green-100 text-green-600' : 'text-gray-400 hover:text-gray-600'"
                   @click.stop.prevent="copyCode(group.id, group.inviteCode)"
                 >
-                  {{ copiedState.get(group.id) === 'code' ? '✓ Másolva' : 'Kód' }}
+                  {{ copiedState.get(group.id) === 'code' ? $t('common.copied') : $t('common.code') }}
                 </button>
                 <button
                   class="text-xs px-1.5 py-0.5 rounded transition-all duration-200"
                   :class="copiedState.get(group.id) === 'url' ? 'bg-green-100 text-green-600' : 'text-blue-600 hover:text-blue-800'"
                   @click.stop.prevent="copyUrl(group.id, group.inviteCode)"
                 >
-                  {{ copiedState.get(group.id) === 'url' ? '✓ Másolva' : 'Link másolása' }}
+                  {{ copiedState.get(group.id) === 'url' ? $t('common.copied') : $t('common.copyLink') }}
                 </button>
               </div>
               <div v-else-if="group.isAdmin" class="flex items-center gap-2 mt-1.5">
-                <span data-testid="invite-inactive-badge" class="text-xs px-1.5 py-0.5 bg-red-100 text-red-600 rounded font-medium">Meghívó inaktív</span>
+                <span data-testid="invite-inactive-badge" class="text-xs px-1.5 py-0.5 bg-red-100 text-red-600 rounded font-medium">{{ $t('groups.inviteInactive') }}</span>
               </div>
             </div>
             <div class="flex items-center gap-2 shrink-0 ml-4">
               <span v-if="group.userRank != null" data-testid="rank-badge" class="text-xs font-semibold px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded">#{{ group.userRank }}</span>
-              <span class="text-sm text-gray-400">{{ group.memberCount }} tag</span>
+              <span class="text-sm text-gray-400">{{ $t('groups.memberCount', { count: group.memberCount }) }}</span>
             </div>
           </router-link>
         </li>
@@ -197,10 +197,12 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import AppLayout from '../components/AppLayout.vue'
 import { useGroupsStore } from '../stores/groups.store.js'
 import { useLeagueFavoritesStore } from '../stores/league-favorites.store.js'
 
+const { t } = useI18n()
 const store = useGroupsStore()
 const leagueStore = useLeagueFavoritesStore()
 const route = useRoute()
@@ -266,7 +268,7 @@ async function onCreateSubmit(): Promise<void> {
     ? leagueStore.leagues[0]!.id
     : selectedLeagueId.value
   if (!leagueId) {
-    createError.value = 'Válassz ki egy ligát'
+    createError.value = t('groups.leagueRequired')
     return
   }
   isSubmitting.value = true
@@ -278,7 +280,7 @@ async function onCreateSubmit(): Promise<void> {
     })
     closeCreateForm()
   } catch (err) {
-    createError.value = err instanceof Error ? err.message : 'Ismeretlen hiba'
+    createError.value = err instanceof Error ? err.message : t('common.unknownError')
   } finally {
     isSubmitting.value = false
   }
@@ -291,7 +293,7 @@ async function onJoinSubmit(): Promise<void> {
     await store.joinGroup({ inviteCode: joinCode.value.trim().toUpperCase() })
     closeJoinForm()
   } catch (err) {
-    joinError.value = err instanceof Error ? err.message : 'Ismeretlen hiba'
+    joinError.value = err instanceof Error ? err.message : t('common.unknownError')
   } finally {
     isSubmitting.value = false
   }

@@ -1,3 +1,5 @@
+import { useI18n } from 'vue-i18n'
+
 export interface DonationAmount {
   readonly label: string
   readonly amount: string
@@ -10,36 +12,38 @@ export interface UseDonationConfigReturn {
   readonly isConfigured: boolean
 }
 
-const PRESET_AMOUNTS: readonly { label: string; amount: number }[] = [
-  { label: 'Egy sör 🍺 — 1000 Ft', amount: 1000 },
-  { label: 'Egy kör 🍻 — 2000 Ft', amount: 2000 },
-  { label: 'VIP páholy 🏟️ — 4000 Ft', amount: 4000 },
+const PRESET_AMOUNTS: readonly { key: string; amount: number }[] = [
+  { key: 'donation.tier1', amount: 1000 },
+  { key: 'donation.tier2', amount: 2000 },
+  { key: 'donation.tier3', amount: 4000 },
 ]
 
-function buildUrl(template: string, amount: number): string {
+function buildUrl(template: string, amount: number, note: string): string {
   const minorUnits = (amount * 100).toString()
   return template
     .replace('{amount}', minorUnits)
     .replace('{currency}', 'HUF')
-    .replace('{note}', encodeURIComponent('VB Tippjáték támogatás'))
+    .replace('{note}', encodeURIComponent(note))
 }
 
 export function useDonationConfig(): UseDonationConfigReturn {
+  const { t } = useI18n()
   const urlTemplate = (import.meta.env.VITE_DONATION_URL as string | undefined) || undefined
   const isConfigured = urlTemplate !== undefined
+  const note = t('donation.noteParam')
 
   const amounts: readonly DonationAmount[] = urlTemplate
-    ? PRESET_AMOUNTS.map(({ label, amount }) => ({
-        label,
+    ? PRESET_AMOUNTS.map(({ key, amount }) => ({
+        label: t(key),
         amount: amount.toString(),
-        url: buildUrl(urlTemplate, amount),
+        url: buildUrl(urlTemplate, amount, note),
       }))
     : []
 
   const openAmountUrl = urlTemplate
     ?.replace('&amount={amount}', '')
     .replace('{currency}', 'HUF')
-    .replace('{note}', encodeURIComponent('VB Tippjáték támogatás'))
+    .replace('{note}', encodeURIComponent(note))
 
   return { amounts, openAmountUrl, isConfigured }
 }

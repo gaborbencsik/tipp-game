@@ -1,6 +1,6 @@
 <template>
   <div class="flex items-center justify-center min-h-screen">
-    <p class="text-gray-500">Bejelentkezés folyamatban...</p>
+    <p class="text-gray-500">{{ $t('authCallback.loading') }}</p>
   </div>
 </template>
 

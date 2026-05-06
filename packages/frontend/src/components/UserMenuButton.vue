@@ -42,7 +42,7 @@
           class="flex w-full items-center justify-between px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
           @click="adminOpen = !adminOpen"
         >
-          <span>Admin</span>
+          <span>{{ $t('nav.admin') }}</span>
           <span class="text-gray-400 text-xs">{{ adminOpen ? '▼' : '▶' }}</span>
         </button>
         <router-link
@@ -116,14 +116,14 @@
         class="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
         @click="menuOpen = false"
       >
-        Profil
+        {{ $t('nav.profile') }}
       </router-link>
       <button
         data-testid="menu-replay-onboarding"
         class="flex items-center w-full px-4 py-2.5 text-sm text-gray-500 hover:bg-gray-50"
         @click="menuOpen = false; authStore.resetOnboarding()"
       >
-        Bemutató újranézése
+        {{ $t('nav.replayOnboarding') }}
       </button>
       <div class="border-t border-gray-100" />
       <button
@@ -131,7 +131,7 @@
         class="flex items-center w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50"
         @click="menuOpen = false; authStore.logout()"
       >
-        Kijelentkezés
+        {{ $t('nav.logout') }}
       </button>
     </div>
   </div>

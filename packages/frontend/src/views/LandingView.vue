@@ -10,12 +10,12 @@
             VB Tippjáték
           </a>
           <ul class="lp-nav__links">
-            <li><a href="#hogyan">Hogyan működik?</a></li>
-            <li><a href="#funkciok">Funkciók</a></li>
-            <li><a href="#faq">FAQ</a></li>
+            <li><a href="#hogyan">{{ $t('landing.navHow') }}</a></li>
+            <li><a href="#funkciok">{{ $t('landing.navFeatures') }}</a></li>
+            <li><a href="#faq">{{ $t('landing.navFaq') }}</a></li>
           </ul>
-          <router-link v-if="loginEnabled" to="/login" class="lp-btn-primary lp-nav__cta">Bejelentkezés</router-link>
-          <button class="lp-nav__ham" aria-label="Menü" @click="mobMenuOpen = true">☰</button>
+          <router-link v-if="loginEnabled" to="/login" class="lp-btn-primary lp-nav__cta">{{ $t('landing.navLogin') }}</router-link>
+          <button class="lp-nav__ham" :aria-label="$t('landing.menuAria')" @click="mobMenuOpen = true">☰</button>
         </div>
       </div>
     </nav>
@@ -32,12 +32,12 @@
           <button class="lp-mob-close" @click="mobMenuOpen = false">✕</button>
         </div>
         <div class="lp-mob-nav">
-          <a class="lp-mob-nav__item" href="#hogyan" @click="mobMenuOpen = false">🔢 Hogyan működik?</a>
-          <a class="lp-mob-nav__item" href="#funkciok" @click="mobMenuOpen = false">⚡ Funkciók</a>
-          <a class="lp-mob-nav__item" href="#faq" @click="mobMenuOpen = false">❓ FAQ</a>
+          <a class="lp-mob-nav__item" href="#hogyan" @click="mobMenuOpen = false">{{ $t('landing.mobileNavHow') }}</a>
+          <a class="lp-mob-nav__item" href="#funkciok" @click="mobMenuOpen = false">{{ $t('landing.mobileNavFeatures') }}</a>
+          <a class="lp-mob-nav__item" href="#faq" @click="mobMenuOpen = false">{{ $t('landing.mobileNavFaq') }}</a>
         </div>
         <div class="lp-mob-drawer__cta">
-          <router-link v-if="loginEnabled" to="/login" @click="mobMenuOpen = false">Bejelentkezés →</router-link>
+          <router-link v-if="loginEnabled" to="/login" @click="mobMenuOpen = false">{{ $t('landing.mobileNavLogin') }}</router-link>
         </div>
       </div>
     </div>
@@ -47,20 +47,20 @@
       <div class="lp-container">
         <div class="lp-hero__inner">
           <div>
-            <div class="lp-hero__badge">⚽ VB 2026 — Várólista</div>
-            <h1 class="lp-hero__title">Foci VB tippverseny a barátaiddal.<br><em>Excel nélkül.</em></h1>
-            <p class="lp-hero__sub">Tippeljétek meg a VB meccseit, és egy élő ranglista megmutatja, ki a legjobb — kézi számolgatás nélkül.</p>
+            <div class="lp-hero__badge">{{ $t('landing.heroBadge') }}</div>
+            <h1 class="lp-hero__title">{{ $t('landing.heroTitle1') }}<br><em>{{ $t('landing.heroTitle2') }}</em></h1>
+            <p class="lp-hero__sub">{{ $t('landing.heroDesc') }}</p>
             <div v-if="heroSubmitted" class="lp-form-success">
               <svg width="16" height="16" fill="none" viewBox="0 0 16 16"><path d="M3 8l3.5 3.5 6.5-7" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              Feliratkoztál! Értesítünk, amint elindul.
+              {{ $t('landing.heroSuccess') }}
             </div>
             <form v-else class="lp-form-row" @submit.prevent="handleHeroSubmit">
-              <input v-model="heroEmail" type="email" placeholder="email-cím..." required autocomplete="email">
+              <input v-model="heroEmail" type="email" :placeholder="$t('landing.heroPlaceholder')" required autocomplete="email">
               <input type="text" name="website" v-model="honeypot" class="lp-hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
-              <button class="lp-btn-primary" type="submit" :disabled="submitting">Értesíts induláskor →</button>
+              <button class="lp-btn-primary" type="submit" :disabled="submitting">{{ $t('landing.heroSubmit') }}</button>
             </form>
             <p v-if="heroError" class="lp-form-error">{{ heroError }}</p>
-            <p class="lp-microcopy"><span class="lp-microcopy__dot"></span> Ingyenes. Spam nélkül. Leiratkozhatsz egy kattintással.</p>
+            <p class="lp-microcopy"><span class="lp-microcopy__dot"></span> {{ $t('landing.heroDisclaimer') }}</p>
           </div>
 
           <!-- Phone mockup -->
@@ -129,30 +129,30 @@
     <section class="lp-section lp-section--bg" id="hogyan">
       <div class="lp-container">
         <div class="lp-section__head">
-          <p class="lp-section__label">Három lépés</p>
-          <h2 class="lp-section__title">Hogyan működik?</h2>
-          <p class="lp-section__sub">Nincs Excel-tábla, nincs regisztrációs macera. Csak tipp, pont és verseny.</p>
+          <p class="lp-section__label">{{ $t('landing.howBadge') }}</p>
+          <h2 class="lp-section__title">{{ $t('landing.howTitle') }}</h2>
+          <p class="lp-section__sub">{{ $t('landing.howDesc') }}</p>
         </div>
         <div class="lp-how-steps">
           <div class="lp-how-step fade-up">
             <div class="lp-step__num">1</div>
             <div class="lp-step__body">
-              <h3>Hozz létre egy csoportot</h3>
-              <p>Hívd meg a barátaidat vagy kollégáidat egyedi meghívó kóddal — akár percek alatt.</p>
+              <h3>{{ $t('landing.howStep1Title') }}</h3>
+              <p>{{ $t('landing.howStep1Desc') }}</p>
             </div>
           </div>
           <div class="lp-how-step fade-up">
             <div class="lp-step__num">2</div>
             <div class="lp-step__body">
-              <h3>Tippeld meg a meccseket</h3>
-              <p>Minden mérkőzés előtt add le a tipped — egyszerű felületen, telefonról is, percek alatt.</p>
+              <h3>{{ $t('landing.howStep2Title') }}</h3>
+              <p>{{ $t('landing.howStep2Desc') }}</p>
             </div>
           </div>
           <div class="lp-how-step fade-up">
             <div class="lp-step__num">3</div>
             <div class="lp-step__body">
-              <h3>Kövesd a ranglistát</h3>
-              <p>A pontok automatikusan számolódnak, te csak szurkolsz és élvezed a versenyt.</p>
+              <h3>{{ $t('landing.howStep3Title') }}</h3>
+              <p>{{ $t('landing.howStep3Desc') }}</p>
             </div>
           </div>
         </div>
@@ -165,30 +165,30 @@
     <section class="lp-section" id="funkciok">
       <div class="lp-container">
         <div class="lp-section__head">
-          <p class="lp-section__label">Funkciók</p>
-          <h2 class="lp-section__title">Minden, amire szükséged van.</h2>
-          <p class="lp-section__sub">Semmi felesleg — csak a tipp, a pont, és a verseny.</p>
+          <p class="lp-section__label">{{ $t('landing.featuresBadge') }}</p>
+          <h2 class="lp-section__title">{{ $t('landing.featuresTitle') }}</h2>
+          <p class="lp-section__sub">{{ $t('landing.featuresDesc') }}</p>
         </div>
         <div class="lp-feat-grid">
           <div class="lp-feat-card fade-up">
             <div class="lp-feat-card__icon">⚽</div>
-            <h3>Csoportok</h3>
-            <p>Privát vagy publikus csoportot hozhatsz létre. A ranglista csak a tagoknak látszik.</p>
+            <h3>{{ $t('landing.feature1Title') }}</h3>
+            <p>{{ $t('landing.feature1Desc') }}</p>
           </div>
           <div class="lp-feat-card fade-up">
             <div class="lp-feat-card__icon">📊</div>
-            <h3>Automatikus pontozás</h3>
-            <p>Pontos tipp, helyes győztes, gólkülönbség — minden pontot ér. Azonnal frissül.</p>
+            <h3>{{ $t('landing.feature2Title') }}</h3>
+            <p>{{ $t('landing.feature2Desc') }}</p>
           </div>
           <div class="lp-feat-card fade-up">
             <div class="lp-feat-card__icon">🔔</div>
-            <h3>Meccs előtti figyelmeztetés</h3>
-            <p>Nem maradsz le egyetlen tippről sem. Értesítünk, mielőtt a meccs elkezdődik.</p>
+            <h3>{{ $t('landing.feature3Title') }}</h3>
+            <p>{{ $t('landing.feature3Desc') }}</p>
           </div>
           <div class="lp-feat-card fade-up">
             <div class="lp-feat-card__icon">🏆</div>
-            <h3>Ranglisták</h3>
-            <p>Mérd össze magad a különböző társaságaiddal — vagy akár az összes játékossal egyszerre.</p>
+            <h3>{{ $t('landing.feature4Title') }}</h3>
+            <p>{{ $t('landing.feature4Desc') }}</p>
           </div>
         </div>
       </div>
@@ -200,21 +200,21 @@
     <section class="lp-section lp-section--bg">
       <div class="lp-container">
         <div class="lp-section__head">
-          <p class="lp-section__label">Kinek való?</p>
-          <h2 class="lp-section__title">Neked való.</h2>
+          <p class="lp-section__label">{{ $t('landing.personasBadge') }}</p>
+          <h2 class="lp-section__title">{{ $t('landing.personasTitle') }}</h2>
         </div>
         <div class="lp-persona-grid">
           <div class="lp-persona lp-persona--featured fade-up">
             <div class="lp-persona__emoji">👨‍👩‍👧‍👦</div>
-            <h3>Baráti társaságok</h3>
-            <blockquote>"Minden VB-n van egy WhatsApp-csoport és egy Excel. Most legyen egy igazi app."</blockquote>
-            <p class="lp-persona__detail">Hívd meg a haverjaidat, osszátok meg a kódot, és kezdődjön a tipp-háború.</p>
+            <h3>{{ $t('landing.persona1Title') }}</h3>
+            <blockquote>{{ $t('landing.persona1Quote') }}</blockquote>
+            <p class="lp-persona__detail">{{ $t('landing.persona1Desc') }}</p>
           </div>
           <div class="lp-persona fade-up">
             <div class="lp-persona__emoji">🏢</div>
-            <h3>Munkahelyek</h3>
-            <blockquote>"A legjobb csapatépítő, amit a főnök is megenged."</blockquote>
-            <p class="lp-persona__detail">Kollégiális verseny, nulla adminisztráció. A HR is meg lesz elégedve.</p>
+            <h3>{{ $t('landing.persona2Title') }}</h3>
+            <blockquote>{{ $t('landing.persona2Quote') }}</blockquote>
+            <p class="lp-persona__detail">{{ $t('landing.persona2Desc') }}</p>
           </div>
         </div>
       </div>
@@ -228,15 +228,15 @@
         <div class="lp-scoring-grid">
           <div>
             <div class="lp-section__head">
-              <p class="lp-section__label">Pontozás</p>
-              <h2 class="lp-section__title">Minden tipp számít.</h2>
-              <p class="lp-section__sub">Az egyszerű tipptől a pontos végeredményig — a rendszer mindent automatikusan kezel.</p>
+              <p class="lp-section__label">{{ $t('landing.scoringBadge') }}</p>
+              <h2 class="lp-section__title">{{ $t('landing.scoringTitle') }}</h2>
+              <p class="lp-section__sub">{{ $t('landing.scoringDesc') }}</p>
             </div>
             <div class="lp-score-rules">
-              <div class="lp-score-row"><div class="lp-score-pts lp-score-pts--top">5</div><div class="lp-score-desc"><strong>Pontos végeredmény</strong><span>Telitalálat — a legjobb tipp</span></div></div>
-              <div class="lp-score-row"><div class="lp-score-pts">3</div><div class="lp-score-desc"><strong>Helyes gólkülönbség</strong><span>A különbség stimmel</span></div></div>
-              <div class="lp-score-row"><div class="lp-score-pts">2</div><div class="lp-score-desc"><strong>Helyes győztes</strong><span>Tudtad, ki nyer</span></div></div>
-              <div class="lp-score-row"><div class="lp-score-pts lp-score-pts--zero">0</div><div class="lp-score-desc"><strong>Téves tipp</strong><span>Következő meccs, új esély</span></div></div>
+              <div class="lp-score-row"><div class="lp-score-pts lp-score-pts--top">5</div><div class="lp-score-desc"><strong>{{ $t('landing.scoringExact') }}</strong><span>{{ $t('landing.scoringExactDesc') }}</span></div></div>
+              <div class="lp-score-row"><div class="lp-score-pts">3</div><div class="lp-score-desc"><strong>{{ $t('landing.scoringGoalDiff') }}</strong><span>{{ $t('landing.scoringGoalDiffDesc') }}</span></div></div>
+              <div class="lp-score-row"><div class="lp-score-pts">2</div><div class="lp-score-desc"><strong>{{ $t('landing.scoringWinner') }}</strong><span>{{ $t('landing.scoringWinnerDesc') }}</span></div></div>
+              <div class="lp-score-row"><div class="lp-score-pts lp-score-pts--zero">0</div><div class="lp-score-desc"><strong>{{ $t('landing.scoringWrong') }}</strong><span>{{ $t('landing.scoringWrongDesc') }}</span></div></div>
             </div>
           </div>
           <div class="lp-lb fade-up">
@@ -263,8 +263,8 @@
           <div class="lp-av">👨</div><div class="lp-av">👩</div><div class="lp-av">🧑</div><div class="lp-av">👨‍🦱</div><div class="lp-av">👩‍🦰</div>
         </div>
         <div class="lp-community__number">1 247</div>
-        <p class="lp-community__text">ember már feliratkozott a várólistára.</p>
-        <p class="lp-community__sub">Csatlakozz te is, mielőtt a VB elindul.</p>
+        <p class="lp-community__text">{{ $t('landing.communityCount') }}</p>
+        <p class="lp-community__sub">{{ $t('landing.communityJoin') }}</p>
       </div>
     </section>
 
@@ -274,8 +274,8 @@
     <section class="lp-section lp-section--bg" id="faq">
       <div class="lp-container">
         <div class="lp-section__head lp-section__head--center">
-          <p class="lp-section__label">Kérdések</p>
-          <h2 class="lp-section__title">Amit mindenki kérdez.</h2>
+          <p class="lp-section__label">{{ $t('landing.faqBadge') }}</p>
+          <h2 class="lp-section__title">{{ $t('landing.faqTitle') }}</h2>
         </div>
         <div class="lp-faq">
           <div v-for="(item, idx) in faqs" :key="idx" class="lp-faq__item">
@@ -294,37 +294,37 @@
     <!-- FOOTER CTA -->
     <footer class="lp-footer">
       <div class="lp-container">
-        <p class="lp-section__label">Ne maradj le</p>
-        <h2 class="lp-section__title">Legyen meg a tipped, <em class="lp-em">mielőtt a VB elindul.</em></h2>
+        <p class="lp-section__label">{{ $t('landing.footerCtaTitle') }}</p>
+        <h2 class="lp-section__title">{{ $t('landing.footerCtaDesc1') }} <em class="lp-em">{{ $t('landing.footerCtaDesc2') }}</em></h2>
         <div v-if="footerSubmitted" class="lp-form-success lp-footer__success">
           <svg width="16" height="16" fill="none" viewBox="0 0 16 16"><path d="M3 8l3.5 3.5 6.5-7" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          Feliratkoztál! Értesítünk, amint elindul.
+          {{ $t('landing.footerCtaSuccess') }}
         </div>
         <form v-else class="lp-footer__form" @submit.prevent="handleFooterSubmit">
-          <input v-model="footerEmail" type="email" placeholder="email-cím..." required autocomplete="email">
+          <input v-model="footerEmail" type="email" :placeholder="$t('landing.heroPlaceholder')" required autocomplete="email">
           <input type="text" name="website" v-model="honeypot" class="lp-hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
-          <button class="lp-btn-primary" type="submit" :disabled="submitting">Értesíts →</button>
+          <button class="lp-btn-primary" type="submit" :disabled="submitting">{{ $t('landing.footerCtaSubmit') }}</button>
         </form>
         <p v-if="footerError" class="lp-form-error">{{ footerError }}</p>
-        <p class="lp-footer__microcopy">Ingyenes. Spam nélkül. Leiratkozhatsz egy kattintással.</p>
+        <p class="lp-footer__microcopy">{{ $t('landing.footerCtaDisclaimer') }}</p>
         <div class="lp-footer__links">
-          <a href="#">⚽ VB Tippjáték</a>
-          <a href="#">Twitter / X</a>
-          <a href="#">Facebook</a>
-          <a href="#">Ko-fi ☕ Támogass</a>
-          <a href="#">Adatvédelem</a>
+          <a href="#">{{ $t('landing.footerBrand') }}</a>
+          <a href="#">{{ $t('landing.footerTwitter') }}</a>
+          <a href="#">{{ $t('landing.footerFacebook') }}</a>
+          <a href="#">{{ $t('landing.footerKofi') }}</a>
+          <a href="#">{{ $t('landing.footerPrivacy') }}</a>
         </div>
-        <p class="lp-footer__copy">© 2025–2026 VB Tippjáték · Nem áll kapcsolatban a FIFA-val.</p>
+        <p class="lp-footer__copy">{{ $t('landing.footerCopyright') }}</p>
       </div>
     </footer>
 
     <!-- STICKY BOTTOM CTA (csak mobilon) -->
     <div v-if="loginEnabled" class="lp-sticky-cta" :class="{ 'lp-sticky-cta--visible': stickyCta }">
       <div class="lp-sticky-cta__text">
-        <span class="lp-sticky-cta__label">⚽ VB 2026 Tippjáték</span>
-        <span class="lp-sticky-cta__sub">Ingyenes · Egy kattintásos belépés</span>
+        <span class="lp-sticky-cta__label">{{ $t('landing.stickyBrand') }}</span>
+        <span class="lp-sticky-cta__sub">{{ $t('landing.stickyDesc') }}</span>
       </div>
-      <router-link to="/login" class="lp-sticky-cta__btn">Bejelentkezés →</router-link>
+      <router-link to="/login" class="lp-sticky-cta__btn">{{ $t('landing.stickyLogin') }}</router-link>
     </div>
 
   </div>
@@ -333,8 +333,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { api } from '../api/index.js'
 
+const { t } = useI18n()
 const route = useRoute()
 const loginEnabled = computed(() => route.query['force_enable_login'] === 'true')
 
@@ -353,13 +355,13 @@ const heroError = ref('')
 const footerError = ref('')
 let mountedAt = 0
 
-const faqs = [
-  { q: 'Ingyenes a VB Tippjáték?', a: 'Igen, teljesen ingyenes. Nem kell fizetni semmit — sem a csoportért, sem a ranglistáért.' },
-  { q: 'Kell külön regisztrálni?', a: 'Nem. Google-fiókoddal egy kattintással bejelentkezhetsz — nincs jelszó, nincs hosszú regisztrációs folyamat.' },
-  { q: 'Mobilon is működik?', a: 'Igen, böngészőből mobilon is tökéletesen elérhető. Az app mobilra optimalizált, külön letöltés nélkül.' },
-  { q: 'Mikor indul el az app?', a: 'A VB 2026 előtt. Iratkozz fel a várólistára — értesítünk emailben, amint megnyílik a regisztráció.' },
-  { q: 'Kell focit érteni a tippeléshez?', a: 'Egyáltalán nem. Elég, ha szurkolsz — vagy ha csak nyerni akarsz a barátaidnál.' },
-]
+const faqs = computed(() => [
+  { q: t('landing.faq1Q'), a: t('landing.faq1A') },
+  { q: t('landing.faq2Q'), a: t('landing.faq2A') },
+  { q: t('landing.faq3Q'), a: t('landing.faq3A') },
+  { q: t('landing.faq4Q'), a: t('landing.faq4A') },
+  { q: t('landing.faq5Q'), a: t('landing.faq5A') },
+])
 
 let heroEl: HTMLElement | null = null
 
@@ -383,7 +385,7 @@ async function handleHeroSubmit(): Promise<void> {
     heroSubmitted.value = true
     stickyCta.value = false
   } catch (err) {
-    heroError.value = err instanceof Error ? err.message : 'Hiba történt. Próbáld újra később.'
+    heroError.value = err instanceof Error ? err.message : t('landing.errorGeneric')
   } finally {
     submitting.value = false
   }
@@ -397,7 +399,7 @@ async function handleFooterSubmit(): Promise<void> {
     await api.waitlist.subscribe(footerEmail.value, 'footer', honeypot.value, elapsed)
     footerSubmitted.value = true
   } catch (err) {
-    footerError.value = err instanceof Error ? err.message : 'Hiba történt. Próbáld újra később.'
+    footerError.value = err instanceof Error ? err.message : t('landing.errorGeneric')
   } finally {
     submitting.value = false
   }

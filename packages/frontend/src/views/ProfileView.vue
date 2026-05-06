@@ -1,6 +1,6 @@
 <template>
   <AppLayout>
-      <h1 class="text-2xl font-bold text-gray-900 mb-6">Profil</h1>
+      <h1 class="text-2xl font-bold text-gray-900 mb-6">{{ $t('profile.title') }}</h1>
 
       <div class="bg-white rounded shadow p-6 space-y-4">
         <div class="flex justify-center mb-4">
@@ -13,13 +13,13 @@
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('profile.emailLabel') }}</label>
           <p data-testid="email" class="text-gray-900">{{ authStore.user?.email }}</p>
         </div>
 
         <form @submit.prevent="save">
           <div class="mb-4">
-            <label for="displayName" class="block text-sm font-medium text-gray-700 mb-1">Megjelenített név</label>
+            <label for="displayName" class="block text-sm font-medium text-gray-700 mb-1">{{ $t('profile.displayNameLabel') }}</label>
             <input
               id="displayName"
               v-model="displayName"
@@ -35,7 +35,7 @@
           </div>
 
           <div v-if="saveSuccess" data-testid="save-success" class="mb-4 p-3 bg-green-50 border border-green-200 rounded text-sm text-green-700">
-            Profil elmentve!
+            {{ $t('profile.saved') }}
           </div>
 
           <button
@@ -44,15 +44,15 @@
             :disabled="isSaving"
             class="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50 transition-colors"
           >
-            {{ isSaving ? 'Mentés...' : 'Mentés' }}
+            {{ isSaving ? $t('common.saving') : $t('common.save') }}
           </button>
         </form>
       </div>
 
       <!-- Kedvenc csapat -->
       <div v-if="favStore.leagues.length > 0" class="bg-white rounded shadow p-6 space-y-4 mt-6">
-        <h2 class="text-lg font-semibold text-gray-900">Kedvenc csapat</h2>
-        <p class="text-sm text-gray-500">Ligánként választhatsz kedvenc csapatot. A liga első meccse után zárolódik.</p>
+        <h2 class="text-lg font-semibold text-gray-900">{{ $t('profile.favTitle') }}</h2>
+        <p class="text-sm text-gray-500">{{ $t('profile.favDesc') }}</p>
 
         <div v-for="league in favStore.leagues" :key="league.id" class="flex items-center gap-3">
           <span class="text-sm font-medium text-gray-700 w-32 shrink-0">{{ league.shortName }}</span>
@@ -72,7 +72,7 @@
             class="border rounded px-3 py-1.5 text-sm flex-1 disabled:opacity-50"
             @change="onFavChange(league.id, ($event.target as HTMLSelectElement).value)"
           >
-            <option value="" disabled>Válassz csapatot...</option>
+            <option value="" disabled>{{ $t('profile.favPlaceholder') }}</option>
             <option
               v-for="team in favStore.leagueTeamsMap[league.id] ?? []"
               :key="team.id"
@@ -82,8 +82,8 @@
             </option>
           </select>
 
-          <span v-if="favSaveStatus[league.id] === 'saved'" class="text-xs text-green-600" :data-testid="`fav-saved-${league.id}`">Elmentve ✓</span>
-          <span v-else-if="favSaveStatus[league.id] === 'error'" class="text-xs text-red-500" :data-testid="`fav-error-${league.id}`">Hiba történt</span>
+          <span v-if="favSaveStatus[league.id] === 'saved'" class="text-xs text-green-600" :data-testid="`fav-saved-${league.id}`">{{ $t('profile.favSaved') }}</span>
+          <span v-else-if="favSaveStatus[league.id] === 'error'" class="text-xs text-red-500" :data-testid="`fav-error-${league.id}`">{{ $t('profile.favError') }}</span>
         </div>
 
         <div v-if="favError" class="p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
@@ -95,11 +95,13 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/auth.store.js'
 import { useLeagueFavoritesStore } from '../stores/league-favorites.store.js'
 import AppLayout from '../components/AppLayout.vue'
 import { dicebearUrl } from '../lib/avatar.js'
 
+const { t } = useI18n()
 const authStore = useAuthStore()
 const favStore = useLeagueFavoritesStore()
 
@@ -139,7 +141,7 @@ async function onFavChange(leagueId: string, teamId: string): Promise<void> {
     favTimers[leagueId] = setTimeout(() => { favSaveStatus[leagueId] = null }, 3000)
   } catch (e) {
     favSaveStatus[leagueId] = 'error'
-    favError.value = e instanceof Error ? e.message : 'Ismeretlen hiba'
+    favError.value = e instanceof Error ? e.message : t('common.unknownError')
   }
 }
 
@@ -158,7 +160,7 @@ async function save(): Promise<void> {
     await authStore.updateProfile(displayName.value.trim())
     saveSuccess.value = true
   } catch (err) {
-    errorMessage.value = err instanceof Error ? err.message : 'Ismeretlen hiba'
+    errorMessage.value = err instanceof Error ? err.message : t('common.unknownError')
   } finally {
     isSaving.value = false
   }

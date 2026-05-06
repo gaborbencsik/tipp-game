@@ -17,7 +17,7 @@ function isCurrentUser(p: MatchPrediction): boolean {
 
 <template>
   <section class="bg-white rounded-lg shadow-sm border p-4">
-    <h2 class="text-lg font-semibold mb-3">Mások tippjei</h2>
+    <h2 class="text-lg font-semibold mb-3">{{ $t('matchPredictions.title') }}</h2>
     <ul class="space-y-1">
       <li
         v-for="p in predictions"
@@ -37,7 +37,7 @@ function isCurrentUser(p: MatchPrediction): boolean {
           class="text-sm font-semibold min-w-[4rem] text-right"
           :class="isExactMatch(p) ? 'text-green-700' : 'text-gray-600'"
         >
-          {{ p.pointsGlobal ?? '–' }} pont
+          {{ $t('matchPredictions.points', { n: p.pointsGlobal ?? '–' }) }}
         </span>
       </li>
     </ul>
