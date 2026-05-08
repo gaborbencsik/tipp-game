@@ -1,5 +1,8 @@
 <template>
   <div class="min-h-screen flex items-center justify-center bg-gray-50">
+    <div class="fixed top-4 right-4">
+      <LocaleToggle />
+    </div>
     <div class="w-full max-w-sm">
       <div class="text-center mb-8">
         <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ $t('login.title') }}</h1>
@@ -80,6 +83,7 @@ import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../stores/auth.store.js'
+import LocaleToggle from '../components/LocaleToggle.vue'
 
 const { t } = useI18n()
 const authStore = useAuthStore()

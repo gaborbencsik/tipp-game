@@ -54,6 +54,7 @@ const MOCK_USER: User = {
   displayName: 'Test User',
   avatarUrl: 'https://example.com/avatar.png',
   role: 'user',
+  preferredLocale: 'hu',
   onboardingCompletedAt: '2026-01-01T00:00:00.000Z',
 }
 
@@ -102,7 +103,7 @@ describe('ProfileView', () => {
     await vm.save()
     await flushPromises()
 
-    expect(updateSpy).toHaveBeenCalledWith('New Name')
+    expect(updateSpy).toHaveBeenCalledWith({ displayName: 'New Name', preferredLocale: 'hu' })
   })
 
   it('successful save → shows success message', async () => {

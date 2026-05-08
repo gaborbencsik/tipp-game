@@ -193,6 +193,7 @@ import type { Match, MatchOutcome, MatchPrediction, MatchStage, MatchStatus } fr
 import AppLayout from '../components/AppLayout.vue'
 import TeamBadge from '../components/TeamBadge.vue'
 import MatchPredictionsList from '../components/MatchPredictionsList.vue'
+import { getDateLocale } from '../lib/dateLocale.js'
 
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
 
@@ -339,7 +340,7 @@ function stageLabel(stage: MatchStage): string {
 }
 
 function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString('hu-HU', {
+  return new Date(iso).toLocaleTimeString(getDateLocale(), {
     hour: '2-digit',
     minute: '2-digit',
   })

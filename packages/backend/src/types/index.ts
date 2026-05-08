@@ -22,6 +22,7 @@ export interface DbUser {
   readonly displayName: string
   readonly avatarUrl: string | null
   readonly role: 'user' | 'admin'
+  readonly preferredLocale: string
   readonly onboardingCompletedAt: string | null
 }
 

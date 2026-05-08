@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 93 story kész (Must Have: 31/31, Should Have: 62/67)
+> 94 story kész (Must Have: 31/31, Should Have: 63/67)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -97,3 +97,4 @@
 | UX-015 | Kedvenc csapat zászló a ranglistán | Should Have |
 | UX-018 | Liga módosítás tiltása csoport létrehozás után | Should Have |
 | UX-017 | Liga megjelenítése a csoportokon | Should Have |
+| US-1002 | Felhasználói felület lokalizációja (i18n) | Should Have |

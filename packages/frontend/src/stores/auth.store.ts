@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase.js'
 import { api } from '../api/index.js'
+import { i18n } from '../i18n/index.js'
 import type { User } from '../types/index.js'
 
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
@@ -37,7 +38,17 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function handleSession(session: Session): Promise<void> {
-    user.value = await api.auth.me(session.access_token)
+    const locale = localStorage.getItem('locale') ?? undefined
+    user.value = await api.auth.me(session.access_token, locale)
+    syncLocaleFromUser()
+  }
+
+  function syncLocaleFromUser(): void {
+    if (user.value) {
+      const locale = user.value.preferredLocale
+      ;(i18n.global.locale as unknown as { value: string }).value = locale
+      localStorage.setItem('locale', locale)
+    }
   }
 
   async function restoreSession(): Promise<void> {
@@ -47,6 +58,7 @@ export const useAuthStore = defineStore('auth', () => {
         const parsed = JSON.parse(raw) as DevSession
         if (parsed.expiresAt > Date.now()) {
           user.value = parsed.user
+          syncLocaleFromUser()
         } else {
           sessionStorage.removeItem(DEV_SESSION_KEY)
         }
@@ -83,7 +95,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function login(): Promise<void> {
     if (DEV_AUTH_BYPASS) {
-      const dbUser = await api.auth.me('dev-bypass-token')
+      const dbUser = await api.auth.me('dev-bypass-token', localStorage.getItem('locale') ?? undefined)
       sessionStorage.setItem(DEV_SESSION_KEY, JSON.stringify({
         user: dbUser,
         expiresAt: Date.now() + DEV_SESSION_TTL_MS,
@@ -112,7 +124,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function loginWithEmail(email: string, password: string): Promise<void> {
     if (DEV_AUTH_BYPASS) {
-      const dbUser = await api.auth.me('dev-bypass-token')
+      const dbUser = await api.auth.me('dev-bypass-token', localStorage.getItem('locale') ?? undefined)
       sessionStorage.setItem(DEV_SESSION_KEY, JSON.stringify({
         user: dbUser,
         expiresAt: Date.now() + DEV_SESSION_TTL_MS,
@@ -129,7 +141,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function registerWithEmail(email: string, password: string, displayName: string): Promise<void> {
     if (DEV_AUTH_BYPASS) {
-      const dbUser = await api.auth.me('dev-bypass-token')
+      const dbUser = await api.auth.me('dev-bypass-token', localStorage.getItem('locale') ?? undefined)
       sessionStorage.setItem(DEV_SESSION_KEY, JSON.stringify({
         user: dbUser,
         expiresAt: Date.now() + DEV_SESSION_TTL_MS,
@@ -154,7 +166,7 @@ export const useAuthStore = defineStore('auth', () => {
     await router.push({ name: 'home' })
   }
 
-  async function updateProfile(displayName: string): Promise<void> {
+  async function updateProfile(params: { displayName: string; preferredLocale?: string }): Promise<void> {
     let token: string
     if (DEV_AUTH_BYPASS) {
       token = 'dev-bypass-token'
@@ -162,17 +174,18 @@ export const useAuthStore = defineStore('auth', () => {
       const { data: { session } } = await supabase.auth.getSession()
       token = session?.access_token ?? ''
     }
-    const updated = await api.users.updateProfile(token, displayName)
+    const updated = await api.users.updateProfile(token, params)
     if (user.value) {
-      user.value = { ...user.value, displayName: updated.displayName }
+      user.value = { ...user.value, displayName: updated.displayName, preferredLocale: updated.preferredLocale }
     }
+    syncLocaleFromUser()
     if (DEV_AUTH_BYPASS) {
       const raw = sessionStorage.getItem(DEV_SESSION_KEY)
       if (raw) {
         const parsed = JSON.parse(raw) as DevSession
         sessionStorage.setItem(DEV_SESSION_KEY, JSON.stringify({
           ...parsed,
-          user: { ...parsed.user, displayName: updated.displayName },
+          user: { ...parsed.user, displayName: updated.displayName, preferredLocale: updated.preferredLocale },
         }))
       }
     }

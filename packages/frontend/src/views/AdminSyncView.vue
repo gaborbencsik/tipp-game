@@ -39,7 +39,7 @@
         <div class="space-y-1">
           <div class="text-gray-600">
             <span class="font-medium">Utolsó sync:</span>
-            <span v-if="lastSyncAt" :title="lastSyncAt.toLocaleString('hu-HU')">
+            <span v-if="lastSyncAt" :title="lastSyncAt.toLocaleString(getDateLocale())">
               {{ lastSyncRelative }}
             </span>
             <span v-else class="text-gray-400">Még nem futott</span>
@@ -110,6 +110,7 @@ import { ref, computed, onMounted } from 'vue'
 import AppLayout from '../components/AppLayout.vue'
 import { supabase } from '../lib/supabase.js'
 import { api } from '../api/index.js'
+import { getDateLocale } from '../lib/dateLocale.js'
 
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
 

@@ -98,6 +98,7 @@ import { useAdminUsersStore } from '../stores/admin-users.store.js'
 import { useAuthStore } from '../stores/auth.store.js'
 import { dicebearUrl } from '../lib/avatar.js'
 import type { AdminUser } from '../types/index.js'
+import { getDateLocale } from '../lib/dateLocale.js'
 
 const store = useAdminUsersStore()
 const authStore = useAuthStore()
@@ -105,7 +106,7 @@ const authStore = useAuthStore()
 onMounted(() => { void store.fetchUsers() })
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('hu-HU')
+  return new Date(iso).toLocaleDateString(getDateLocale())
 }
 
 async function onRoleChange(user: AdminUser, newRole: 'user' | 'admin'): Promise<void> {

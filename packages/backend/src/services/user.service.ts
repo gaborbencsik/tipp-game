@@ -12,7 +12,7 @@ class AppError extends Error {
   }
 }
 
-export async function upsertUser(user: AuthenticatedUser): Promise<DbUser> {
+export async function upsertUser(user: AuthenticatedUser, preferredLocale?: string): Promise<DbUser> {
   // First attempt: upsert on supabase_id
   const bySupabaseId = await db
     .insert(users)
@@ -22,6 +22,7 @@ export async function upsertUser(user: AuthenticatedUser): Promise<DbUser> {
       displayName: user.displayName,
       avatarUrl: user.avatarUrl,
       role: user.role,
+      ...(preferredLocale ? { preferredLocale } : {}),
     })
     .onConflictDoUpdate({
       target: users.supabaseId,
@@ -55,6 +56,10 @@ export async function upsertUser(user: AuthenticatedUser): Promise<DbUser> {
   const row = bySupabaseId[0]
   if (!row) throw new Error('upsertUser: no row returned')
 
+  return mapRow(row)
+}
+
+function mapRow(row: typeof users.$inferSelect): DbUser {
   return {
     id: row.id,
     supabaseId: row.supabaseId,
@@ -62,29 +67,24 @@ export async function upsertUser(user: AuthenticatedUser): Promise<DbUser> {
     displayName: row.displayName,
     avatarUrl: row.avatarUrl ?? null,
     role: row.role,
+    preferredLocale: row.preferredLocale,
     onboardingCompletedAt: row.onboardingCompletedAt?.toISOString() ?? null,
   }
 }
 
-export async function updateProfile(userId: string, displayName: string): Promise<DbUser> {
+export async function updateProfile(userId: string, displayName: string, preferredLocale?: string): Promise<DbUser> {
+  const set: Record<string, unknown> = { displayName, updatedAt: new Date() }
+  if (preferredLocale !== undefined) set.preferredLocale = preferredLocale
   const rows = await db
     .update(users)
-    .set({ displayName, updatedAt: new Date() })
+    .set(set)
     .where(and(eq(users.id, userId), isNull(users.deletedAt)))
     .returning()
 
   const row = rows[0]
   if (!row) throw new AppError(404, 'User not found')
 
-  return {
-    id: row.id,
-    supabaseId: row.supabaseId,
-    email: row.email,
-    displayName: row.displayName,
-    avatarUrl: row.avatarUrl ?? null,
-    role: row.role,
-    onboardingCompletedAt: row.onboardingCompletedAt?.toISOString() ?? null,
-  }
+  return mapRow(row)
 }
 
 export async function completeOnboarding(userId: string): Promise<DbUser> {
@@ -97,13 +97,5 @@ export async function completeOnboarding(userId: string): Promise<DbUser> {
   const row = rows[0]
   if (!row) throw new AppError(404, 'User not found')
 
-  return {
-    id: row.id,
-    supabaseId: row.supabaseId,
-    email: row.email,
-    displayName: row.displayName,
-    avatarUrl: row.avatarUrl ?? null,
-    role: row.role,
-    onboardingCompletedAt: row.onboardingCompletedAt?.toISOString() ?? null,
-  }
+  return mapRow(row)
 }

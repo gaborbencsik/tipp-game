@@ -47,6 +47,7 @@ function mountWithUser() {
     displayName: 'Dev User',
     avatarUrl: null,
     role: 'admin',
+    preferredLocale: 'hu',
     onboardingCompletedAt: '2026-01-01T00:00:00.000Z',
   }
   return mount(HomeView, { global: { plugins: [pinia, buildRouter()] } })
@@ -105,6 +106,7 @@ describe('HomeView', () => {
       displayName: 'Regular User',
       avatarUrl: null,
       role: 'user',
+      preferredLocale: 'hu',
       onboardingCompletedAt: '2026-01-01T00:00:00.000Z',
     }
     const wrapper = mount(HomeView, { global: { plugins: [pinia, buildRouter()] } })

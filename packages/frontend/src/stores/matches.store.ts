@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { supabase } from '../lib/supabase.js'
 import { api } from '../api/index.js'
+import { getDateLocale } from '../lib/dateLocale.js'
 import type { Match, MatchDateGroup, MatchStage, MatchStatus } from '../types/index.js'
 
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
@@ -39,7 +40,7 @@ export const useMatchesStore = defineStore('matches', () => {
       }
     }
 
-    const formatter = new Intl.DateTimeFormat('hu-HU', {
+    const formatter = new Intl.DateTimeFormat(getDateLocale(), {
       year: 'numeric',
       month: 'long',
       day: 'numeric',

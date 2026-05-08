@@ -313,6 +313,7 @@ import SpecialPendingBanner from '../components/SpecialPendingBanner.vue'
 import DayNavigator from '../components/DayNavigator.vue'
 import { usePendingSpecialTips } from '../composables/usePendingSpecialTips.js'
 import { useDayNavigation } from '../composables/useDayNavigation.js'
+import { getDateLocale } from '../lib/dateLocale.js'
 
 const { t } = useI18n()
 const matchesStore = useMatchesStore()
@@ -578,11 +579,11 @@ function stageLabel(stage: MatchStage): string {
 }
 
 function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })
+  return new Date(iso).toLocaleTimeString(getDateLocale(), { hour: '2-digit', minute: '2-digit' })
 }
 
 function formatDateTime(iso: string): string {
-  return new Intl.DateTimeFormat('hu-HU', {
+  return new Intl.DateTimeFormat(getDateLocale(), {
     month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
   }).format(new Date(iso))
 }

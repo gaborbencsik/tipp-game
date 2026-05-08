@@ -1,5 +1,6 @@
 import { ref, computed, watch, type ComputedRef, type Ref } from 'vue'
 import type { MatchDateGroup } from '../types/index.js'
+import { getDateLocale } from '../lib/dateLocale.js'
 
 export interface UseDayNavigationOptions {
   groups: ComputedRef<MatchDateGroup[]>
@@ -20,11 +21,13 @@ export interface UseDayNavigationReturn {
   showSingleDay(): void
 }
 
-const shortFormatter = new Intl.DateTimeFormat('hu-HU', {
-  month: 'short',
-  day: 'numeric',
-  weekday: 'long',
-})
+function formatShortDate(date: Date): string {
+  return new Intl.DateTimeFormat(getDateLocale(), {
+    month: 'short',
+    day: 'numeric',
+    weekday: 'long',
+  }).format(date)
+}
 
 function getDefaultIndex(groups: MatchDateGroup[], defaultIndex: 'first' | 'last'): number {
   if (groups.length === 0) return 0
@@ -79,7 +82,7 @@ export function useDayNavigation(options: UseDayNavigationOptions): UseDayNaviga
   const dateLabel = computed((): string => {
     const group = currentGroup.value
     if (!group) return ''
-    return shortFormatter.format(new Date(group.date + 'T00:00:00'))
+    return formatShortDate(new Date(group.date + 'T00:00:00'))
   })
 
   function goNext(): void {

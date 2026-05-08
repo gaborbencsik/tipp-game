@@ -6,20 +6,28 @@ import { getFavoritesForUser, setFavorite } from '../services/user-league-favori
 const router = new Router()
 
 router.post('/api/auth/me', authMiddleware, async (ctx) => {
-  const dbUser = await upsertUser(ctx.state.user)
+  const body = ctx.request.body as { preferredLocale?: unknown } | undefined
+  const preferredLocale = (body && typeof body.preferredLocale === 'string' && ['hu', 'en'].includes(body.preferredLocale))
+    ? body.preferredLocale
+    : undefined
+  const dbUser = await upsertUser(ctx.state.user, preferredLocale)
   ctx.body = dbUser
 })
 
 router.put('/api/users/me', authMiddleware, async (ctx) => {
   const dbUser = await upsertUser(ctx.state.user)
-  const body = ctx.request.body as { displayName?: unknown }
+  const body = ctx.request.body as { displayName?: unknown; preferredLocale?: unknown }
   const displayName = body.displayName
   if (typeof displayName !== 'string' || displayName.trim().length === 0) {
     ctx.status = 400
     ctx.body = { error: 'displayName is required' }
     return
   }
-  const updated = await updateProfile(dbUser.id, displayName.trim())
+  const preferredLocale = body.preferredLocale
+  const validLocale = (typeof preferredLocale === 'string' && ['hu', 'en'].includes(preferredLocale))
+    ? preferredLocale
+    : undefined
+  const updated = await updateProfile(dbUser.id, displayName.trim(), validLocale)
   ctx.body = updated
 })
 

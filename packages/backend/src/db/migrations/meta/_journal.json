@@ -127,6 +127,13 @@
       "when": 1777638675544,
       "tag": "0017_football_api_external_ids",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1778089570428,
+      "tag": "0020_add_preferred_locale",
+      "breakpoints": true
     }
   ]
 }

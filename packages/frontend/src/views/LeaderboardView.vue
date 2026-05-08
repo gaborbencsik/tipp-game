@@ -21,19 +21,19 @@
     <div v-else class="bg-white rounded-xl shadow-sm overflow-hidden">
       <table class="w-full text-sm table-fixed">
         <colgroup>
-          <col class="w-12" />
+          <col class="w-10" />
           <col />
-          <col class="w-16" />
-          <col class="w-16" />
-          <col class="w-16" />
+          <col class="w-24" />
+          <col class="w-24" />
+          <col class="w-24" />
         </colgroup>
         <thead>
           <tr class="border-b border-gray-200 text-gray-500 text-left">
-            <th class="px-4 py-3">{{ $t('leaderboard.rank') }}</th>
-            <th class="px-4 py-3">{{ $t('leaderboard.player') }}</th>
-            <th class="px-4 py-3 text-right">{{ $t('leaderboard.tips') }}</th>
-            <th class="px-4 py-3 text-right">{{ $t('leaderboard.correct') }}</th>
-            <th class="px-4 py-3 text-right font-semibold">{{ $t('leaderboard.points') }}</th>
+            <th class="pl-4 pr-2 py-3">{{ $t('leaderboard.rank') }}</th>
+            <th class="px-2 py-3">{{ $t('leaderboard.player') }}</th>
+            <th class="px-3 py-3 text-right">{{ $t('leaderboard.tips') }}</th>
+            <th class="px-3 py-3 text-right">{{ $t('leaderboard.correct') }}</th>
+            <th class="pr-4 pl-2 py-3 text-right font-semibold">{{ $t('leaderboard.points') }}</th>
           </tr>
         </thead>
         <tbody>

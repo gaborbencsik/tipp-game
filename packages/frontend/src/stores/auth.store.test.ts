@@ -58,6 +58,7 @@ const MOCK_USER: User = {
   displayName: 'Dev User',
   avatarUrl: null,
   role: 'admin',
+  preferredLocale: 'hu',
   onboardingCompletedAt: '2026-01-01T00:00:00.000Z',
 }
 
@@ -216,7 +217,7 @@ describe('auth.store', () => {
     mockApiAuthMe.mockResolvedValue(MOCK_USER)
     const store = useAuthStore()
     await store.handleSession(MOCK_SESSION as Parameters<typeof store.handleSession>[0])
-    expect(mockApiAuthMe).toHaveBeenCalledWith('mock-access-token')
+    expect(mockApiAuthMe).toHaveBeenCalledWith('mock-access-token', undefined)
     expect(store.user).toEqual(MOCK_USER)
   })
 
@@ -336,7 +337,7 @@ describe('auth.store', () => {
     mockApiAuthMe.mockResolvedValue(MOCK_USER)
     const store = useAuthStore()
     await store.loginWithEmail('test@example.com', 'password123')
-    expect(mockApiAuthMe).toHaveBeenCalledWith('email-token')
+    expect(mockApiAuthMe).toHaveBeenCalledWith('email-token', 'hu')
     expect(store.user).toEqual(MOCK_USER)
   })
 
@@ -371,7 +372,7 @@ describe('auth.store', () => {
     mockApiAuthMe.mockResolvedValue(MOCK_USER)
     const store = useAuthStore()
     await store.registerWithEmail('new@example.com', 'password123', 'New User')
-    expect(mockApiAuthMe).toHaveBeenCalledWith('reg-token')
+    expect(mockApiAuthMe).toHaveBeenCalledWith('reg-token', 'hu')
     expect(store.user).toEqual(MOCK_USER)
   })
 

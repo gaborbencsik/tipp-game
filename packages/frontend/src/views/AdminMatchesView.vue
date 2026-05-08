@@ -274,6 +274,7 @@ import { useAdminMatchesStore } from '../stores/admin-matches.store.js'
 import { useAdminTeamsStore } from '../stores/admin-teams.store.js'
 import type { Match, MatchOutcome, MatchStage, MatchStatus } from '../types/index.js'
 import AppLayout from '../components/AppLayout.vue'
+import { getDateLocale } from '../lib/dateLocale.js'
 
 const store = useAdminMatchesStore()
 const teamsStore = useAdminTeamsStore()
@@ -409,7 +410,7 @@ function statusClass(status: MatchStatus): string {
 }
 
 function formatDateTime(iso: string): string {
-  return new Intl.DateTimeFormat('hu-HU', {
+  return new Intl.DateTimeFormat(getDateLocale(), {
     month: 'short', day: 'numeric',
     hour: '2-digit', minute: '2-digit',
   }).format(new Date(iso))

@@ -30,6 +30,19 @@
             />
           </div>
 
+          <div class="mb-4">
+            <label for="locale" class="block text-sm font-medium text-gray-700 mb-1">{{ $t('profile.localeLabel') }}</label>
+            <select
+              id="locale"
+              v-model="localeDraft"
+              data-testid="locale-select"
+              class="w-full border rounded px-3 py-2 text-sm"
+            >
+              <option value="hu">Magyar</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+
           <div v-if="errorMessage" data-testid="error-banner" class="mb-4 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
             {{ errorMessage }}
           </div>
@@ -112,6 +125,7 @@ const avatarSrc = computed((): string => {
 })
 
 const displayName = ref(authStore.user?.displayName ?? '')
+const localeDraft = ref(authStore.user?.preferredLocale ?? 'hu')
 const isSaving = ref(false)
 const errorMessage = ref<string | null>(null)
 const saveSuccess = ref(false)
@@ -157,7 +171,7 @@ async function save(): Promise<void> {
   errorMessage.value = null
   saveSuccess.value = false
   try {
-    await authStore.updateProfile(displayName.value.trim())
+    await authStore.updateProfile({ displayName: displayName.value.trim(), preferredLocale: localeDraft.value })
     saveSuccess.value = true
   } catch (err) {
     errorMessage.value = err instanceof Error ? err.message : t('common.unknownError')

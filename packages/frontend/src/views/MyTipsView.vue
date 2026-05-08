@@ -142,6 +142,7 @@ import TeamBadge from '../components/TeamBadge.vue'
 import { useMatchesStore } from '../stores/matches.store.js'
 import { usePredictionsStore } from '../stores/predictions.store.js'
 import type { Match, MatchOutcome } from '../types/index.js'
+import { getDateLocale } from '../lib/dateLocale.js'
 
 const { t } = useI18n()
 const matchesStore = useMatchesStore()
@@ -255,7 +256,7 @@ function rowBorderClass(match: Match): string {
 }
 
 function formatDateTime(iso: string): string {
-  return new Intl.DateTimeFormat('hu-HU', {
+  return new Intl.DateTimeFormat(getDateLocale(), {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',

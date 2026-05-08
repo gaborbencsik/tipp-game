@@ -235,6 +235,7 @@
     "title": "Profil",
     "emailLabel": "E-mail",
     "displayNameLabel": "Megjelenített név",
+    "localeLabel": "Nyelv",
     "saved": "Profil elmentve!",
     "favTitle": "Kedvenc csapat",
     "favDesc": "Ligánként választhatsz kedvenc csapatot. A liga első meccse után zárolódik.",

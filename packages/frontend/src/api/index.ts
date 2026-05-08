@@ -24,10 +24,11 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 export const api = {
   health: () => request<{ status: string; timestamp: string }>('/health'),
   auth: {
-    me: (token: string) =>
+    me: (token: string, preferredLocale?: string) =>
       request<User>('/auth/me', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
+        ...(preferredLocale ? { body: JSON.stringify({ preferredLocale }) } : {}),
       }),
   },
   teams: {
@@ -55,10 +56,10 @@ export const api = {
       }),
   },
   users: {
-    updateProfile: (token: string, displayName: string) =>
+    updateProfile: (token: string, params: { displayName: string; preferredLocale?: string }) =>
       request<User>('/users/me', {
         method: 'PUT',
-        body: JSON.stringify({ displayName }),
+        body: JSON.stringify(params),
         headers: { Authorization: `Bearer ${token}` },
       }),
     completeOnboarding: (token: string) =>

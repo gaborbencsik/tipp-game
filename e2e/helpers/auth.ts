@@ -8,6 +8,7 @@ const DEV_SESSION = {
     displayName: 'Dev User',
     avatarUrl: null,
     role: 'admin',
+    preferredLocale: 'hu',
     onboardingCompletedAt: '2020-01-01T00:00:00.000Z',
   },
   expiresAt: Date.now() + 90 * 24 * 60 * 60 * 1000,

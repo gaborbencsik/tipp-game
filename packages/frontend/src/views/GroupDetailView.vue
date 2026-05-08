@@ -59,23 +59,15 @@
       <div v-else-if="error" class="text-red-600">{{ error }}</div>
       <div v-else-if="entries.length === 0" class="text-gray-500">{{ $t('leaderboard.empty') }}</div>
       <div v-else class="bg-white rounded-xl shadow-sm overflow-hidden">
-        <table class="w-full text-sm table-fixed">
-          <colgroup>
-            <col class="w-12" />
-            <col />
-            <col class="w-16" />
-            <col class="w-16" />
-            <col class="w-14" />
-            <col class="w-16" />
-          </colgroup>
+        <table class="w-full text-sm">
           <thead>
             <tr class="border-b border-gray-200 text-gray-500 text-left">
-              <th class="px-4 py-3">{{ $t('groupDetail.rank') }}</th>
-              <th class="px-4 py-3">{{ $t('groupDetail.player') }}</th>
-              <th class="px-4 py-3 text-right">{{ $t('groupDetail.tips') }}</th>
-              <th class="px-4 py-3 text-right">{{ $t('groupDetail.correct') }}</th>
-              <th class="px-4 py-3 text-right" :title="$t('groupDetail.specialPointsTitle')">{{ $t('groupDetail.specialPoints') }}</th>
-              <th class="px-4 py-3 text-right font-semibold">{{ $t('groupDetail.totalPoints') }}</th>
+              <th class="pl-4 pr-2 py-3 w-10">{{ $t('groupDetail.rank') }}</th>
+              <th class="px-2 py-3">{{ $t('groupDetail.player') }}</th>
+              <th class="py-3 text-right" style="min-width:6rem;padding-left:0.5rem;padding-right:0.75rem">{{ $t('groupDetail.tips') }}</th>
+              <th class="py-3 text-right" style="min-width:5rem;padding-left:0.5rem;padding-right:0.75rem">{{ $t('groupDetail.correct') }}</th>
+              <th class="py-3 text-right" style="min-width:4.5rem;padding-left:0.5rem;padding-right:0.75rem" :title="$t('groupDetail.specialPointsTitle')">{{ $t('groupDetail.specialPoints') }}</th>
+              <th class="py-3 text-right font-semibold" style="min-width:4rem;padding-left:0.5rem;padding-right:1rem">{{ $t('groupDetail.totalPoints') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -800,6 +792,7 @@ import { useLeagueFavoritesStore } from '../stores/league-favorites.store.js'
 import { api } from '../api/index.js'
 import { supabase } from '../lib/supabase.js'
 import type { GroupMember, LeaderboardEntry, ScoringConfigInput, SpecialTypeInput, StatPredictionTemplate, GlobalTypeWithSubscription } from '../types/index.js'
+import { getDateLocale } from '../lib/dateLocale.js'
 
 type Tab = 'leaderboard' | 'my-predictions' | 'members' | 'settings' | 'special'
 
@@ -812,7 +805,7 @@ async function getAccessToken(): Promise<string> {
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('hu-HU', { year: 'numeric', month: 'short', day: 'numeric' })
+  return new Date(iso).toLocaleDateString(getDateLocale(), { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
 const route = useRoute()
@@ -1063,7 +1056,7 @@ function copyInviteUrl(): void {
 }
 
 function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString('hu-HU', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+  return new Date(iso).toLocaleString(getDateLocale(), { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
 function isDeadlinePassed(deadline: string): boolean {

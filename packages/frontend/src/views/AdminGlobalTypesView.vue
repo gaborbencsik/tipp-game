@@ -187,6 +187,7 @@ import { useAdminGlobalTypesStore } from '../stores/admin-global-types.store.js'
 import { api } from '../api/index.js'
 import { supabase } from '../lib/supabase.js'
 import type { SpecialPredictionType, SpecialTypeInput, Team } from '../types/index.js'
+import { getDateLocale } from '../lib/dateLocale.js'
 
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
 
@@ -237,7 +238,7 @@ function inputTypeLabel(inputType: string): string {
 }
 
 function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString('hu-HU', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+  return new Date(iso).toLocaleString(getDateLocale(), { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
 // Set answer dialog

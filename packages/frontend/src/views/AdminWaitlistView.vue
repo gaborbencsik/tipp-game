@@ -196,6 +196,7 @@ import { onMounted, ref } from 'vue'
 import AppLayout from '../components/AppLayout.vue'
 import { useAdminWaitlistStore } from '../stores/admin-waitlist.store.js'
 import type { WaitlistSource } from '../types/index.js'
+import { getDateLocale } from '../lib/dateLocale.js'
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -221,7 +222,7 @@ function onSearchInput(value: string): void {
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('hu-HU')
+  return new Date(iso).toLocaleDateString(getDateLocale())
 }
 
 function sourceBadgeClass(source: WaitlistSource): string {
