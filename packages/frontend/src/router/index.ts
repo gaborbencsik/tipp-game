@@ -44,6 +44,12 @@ export const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/admin/stats',
+      name: 'admin-stats',
+      component: () => import('../views/AdminStatsView.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true },
+    },
+    {
       path: '/admin/matches',
       name: 'admin-matches',
       component: () => import('../views/AdminMatchesView.vue'),

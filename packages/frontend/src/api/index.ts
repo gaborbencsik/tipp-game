@@ -1,4 +1,4 @@
-import type { User, Match, MatchesFilters, MatchInput, MatchResultInput, MatchPrediction, Prediction, PredictionInput, Team, TeamInput, AdminUser, Group, GroupInput, GroupMember, JoinGroupInput, LeaderboardEntry, ScoringConfigFull, ScoringConfigInput, WaitlistListResult, WaitlistFilters, WaitlistEntry, WaitlistSource, SpecialPredictionType, SpecialTypeInput, SpecialPredictionWithType, SpecialPredictionInput, StatPredictionTemplate, Player, PlayerInput, GlobalTypeWithSubscription, League, LeagueInput, UserLeagueFavorite, LeagueTeam, GroupMyPredictionsResult } from '../types/index.js'
+import type { User, Match, MatchesFilters, MatchInput, MatchResultInput, MatchPrediction, Prediction, PredictionInput, Team, TeamInput, AdminUser, Group, GroupInput, GroupMember, JoinGroupInput, LeaderboardEntry, ScoringConfigFull, ScoringConfigInput, WaitlistListResult, WaitlistFilters, WaitlistEntry, WaitlistSource, SpecialPredictionType, SpecialTypeInput, SpecialPredictionWithType, SpecialPredictionInput, StatPredictionTemplate, Player, PlayerInput, GlobalTypeWithSubscription, League, LeagueInput, UserLeagueFavorite, LeagueTeam, GroupMyPredictionsResult, AdminStatsResponse, AdminStatsMatchesResponse } from '../types/index.js'
 
 const BASE_URL = (import.meta.env.VITE_API_URL ?? '') + '/api'
 
@@ -450,6 +450,16 @@ export const api = {
       run: (token: string) =>
         request<{ results: Array<{ teamsUpserted: number; fixturesUpserted: number; resultsUpserted: number; errors: string[]; partial: boolean }> }>('/admin/sync/run', {
           method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+    },
+    stats: {
+      get: (token: string) =>
+        request<AdminStatsResponse>('/admin/stats', {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      matches: (token: string) =>
+        request<AdminStatsMatchesResponse>('/admin/stats/matches', {
           headers: { Authorization: `Bearer ${token}` },
         }),
     },

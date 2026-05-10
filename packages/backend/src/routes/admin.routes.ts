@@ -42,6 +42,7 @@ import {
 import { upsertUser } from '../services/user.service.js'
 import { getGlobalConfig, updateGlobalConfig } from '../services/scoring-config.service.js'
 import { getWaitlistEntries, deleteWaitlistEntry, addWaitlistEntry, isValidEmail } from '../services/waitlist.service.js'
+import { getAdminStats, getAdminStatsMatches } from '../services/admin-stats.service.js'
 import type { MatchOutcome, TeamInput, MatchInput, ScoringConfigInput, PlayerInput, SpecialTypeInput, LeagueInput } from '../types/index.js'
 import type { WaitlistFilters, WaitlistSource } from '../services/waitlist.service.js'
 
@@ -282,6 +283,16 @@ adminRouter.post('/waitlist', async (ctx) => {
   const entry = await addWaitlistEntry(email, source)
   ctx.status = 201
   ctx.body = entry
+})
+
+// --- Stats ---
+
+adminRouter.get('/stats', async (ctx) => {
+  ctx.body = await getAdminStats()
+})
+
+adminRouter.get('/stats/matches', async (ctx) => {
+  ctx.body = await getAdminStatsMatches()
 })
 
 export { adminRouter }

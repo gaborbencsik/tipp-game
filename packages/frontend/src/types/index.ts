@@ -160,6 +160,48 @@ export interface AdminUser {
   readonly createdAt: string
 }
 
+export interface AdminStatsSummary {
+  readonly userCount: number
+  readonly activeUsers7d: number
+  readonly predictionCount: number
+  readonly fillRate: number
+  readonly groupCount: number
+  readonly avgGroupSize: number
+  readonly zeroTipUsers: number
+}
+
+export interface AdminStatsUser {
+  readonly id: string
+  readonly avatarUrl: string | null
+  readonly displayName: string
+  readonly tipCount: number
+  readonly fillPercent: number
+  readonly points: number
+  readonly groupCount: number
+  readonly lastActivity: string | null
+  readonly isBanned: boolean
+}
+
+export interface AdminStatsResponse {
+  readonly summary: AdminStatsSummary
+  readonly users: AdminStatsUser[]
+}
+
+export interface AdminStatsMatch {
+  readonly matchId: string
+  readonly homeTeam: string
+  readonly awayTeam: string
+  readonly date: string
+  readonly tippedCount: number
+  readonly totalUsers: number
+  readonly fillPercent: number
+  readonly result: string | null
+}
+
+export interface AdminStatsMatchesResponse {
+  readonly matches: AdminStatsMatch[]
+}
+
 export interface Group {
   readonly id: string
   readonly name: string

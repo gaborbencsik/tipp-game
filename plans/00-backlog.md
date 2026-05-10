@@ -6,7 +6,6 @@
 
 | Story ID | Cím | Prioritás | Függőség |
 |----------|-----|-----------|----------|
-| US-807 | Admin használati statisztikák (dashboard) | Should Have | — |
 | US-1204 | NB II liga szinkronizáció támogatás | Nice to Have | US-1202, US-1203 |
 | US-1301 | Match Pulse – adatréteg és csapat KPI-ok gyűjtése | Should Have | US-1202, US-1203 |
 | US-1302 | Match Pulse – AI insight generálás (batch job) | Should Have | US-1301 |
@@ -27,4 +26,4 @@
 
 ---
 
-**Haladás: 93 / 111 story kész** — Must Have: 31/31, Should Have: 62/76, Nice to Have: 0/4
+**Haladás: 94 / 111 story kész** — Must Have: 31/31, Should Have: 63/76, Nice to Have: 0/4
