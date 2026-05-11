@@ -83,6 +83,7 @@ export interface MatchTeam {
 export interface MatchVenue {
   readonly name: string
   readonly city: string
+  readonly imageUrl: string | null
 }
 
 export interface MatchResult {

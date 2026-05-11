@@ -12,7 +12,6 @@
 | US-1303 | Match Pulse – automatikus insight generálás cron jobban | Should Have | US-1302, US-1203 |
 | US-1304 | Match Pulse – insight megjelenítése a meccs kártyán | Should Have | US-1302 |
 | US-1305 | Match Pulse – in-tournament statisztikák integrálása | Should Have | US-1303, US-1304 |
-| US-1401 | Stadion banner kép a meccs részletes nézeten | Should Have | — |
 | US-934 | Mások tippjeinek megjelenítése (speciális) | Should Have | — |
 | UX-004 | Focilabda kurzor ikon | Nice to Have | — |
 | UX-005 | Optimista törlés az admin listákon | Should Have | — |
@@ -26,4 +25,4 @@
 
 ---
 
-**Haladás: 94 / 111 story kész** — Must Have: 31/31, Should Have: 63/76, Nice to Have: 0/4
+**Haladás: 95 / 111 story kész** — Must Have: 31/31, Should Have: 64/76, Nice to Have: 0/4

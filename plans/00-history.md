@@ -99,3 +99,4 @@
 | UX-017 | Liga megjelenítése a csoportokon | Should Have |
 | US-1002 | Felhasználói felület lokalizációja (i18n) | Should Have |
 | US-807 | Admin használati statisztikák (dashboard) | Should Have |
+| US-1401 | Stadion banner kép a meccs részletes nézeten | Should Have |

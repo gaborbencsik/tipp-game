@@ -97,6 +97,7 @@ export const venues = pgTable('venues', {
   city:     varchar('city', { length: 100 }).notNull(),
   country:  varchar('country', { length: 100 }).notNull(),
   capacity: integer('capacity'),
+  imageUrl: text('image_url'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 

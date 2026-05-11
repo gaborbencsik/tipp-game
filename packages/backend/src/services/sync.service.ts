@@ -187,8 +187,8 @@ export async function upsertFixtures(
     // Look up or create venue
     let venueId: string | null = null
     const venueName = fixture.fixture.venue.name
-    const venueCity = fixture.fixture.venue.city
-    if (venueName && venueCity) {
+    const venueCity = fixture.fixture.venue.city ?? ''
+    if (venueName) {
       const [existingVenue] = await db
         .select({ id: venues.id })
         .from(venues)

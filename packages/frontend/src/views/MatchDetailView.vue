@@ -19,6 +19,8 @@
       </div>
 
       <template v-else>
+        <VenueBanner :venue="match.venue" />
+
         <div class="flex items-center justify-between mb-4">
           <span class="text-sm font-medium text-gray-500 uppercase tracking-wide">
             {{ stageLabel(match.stage) }}
@@ -192,6 +194,7 @@ import { supabase } from '../lib/supabase.js'
 import type { Match, MatchOutcome, MatchPrediction, MatchStage, MatchStatus } from '../types/index.js'
 import AppLayout from '../components/AppLayout.vue'
 import TeamBadge from '../components/TeamBadge.vue'
+import VenueBanner from '../components/VenueBanner.vue'
 import MatchPredictionsList from '../components/MatchPredictionsList.vue'
 import { getDateLocale } from '../lib/dateLocale.js'
 

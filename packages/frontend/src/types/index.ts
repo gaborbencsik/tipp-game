@@ -32,6 +32,7 @@ export interface MatchTeam {
 export interface MatchVenue {
   readonly name: string
   readonly city: string
+  readonly imageUrl: string | null
 }
 
 export type MatchOutcome = 'extra_time_home' | 'extra_time_away' | 'penalties_home' | 'penalties_away'

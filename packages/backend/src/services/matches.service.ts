@@ -53,7 +53,7 @@ export async function getMatches(filters: MatchesFilters = {}): Promise<Match[]>
       countryCode: row.away_team?.countryCode ?? null,
     },
     venue: row.venues
-      ? { name: row.venues.name, city: row.venues.city }
+      ? { name: row.venues.name, city: row.venues.city, imageUrl: row.venues.imageUrl ?? null }
       : null,
     league: row.leagues
       ? { id: row.leagues.id, name: row.leagues.name, shortName: row.leagues.shortName }

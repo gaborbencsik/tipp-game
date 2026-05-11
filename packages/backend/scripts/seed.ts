@@ -1,4 +1,5 @@
 import { db } from '../src/db/client.js'
+import { eq, sql } from 'drizzle-orm'
 import { scoringConfigs, teams, venues, leagues } from '../src/db/schema/index.js'
 
 async function seed(): Promise<void> {
@@ -17,16 +18,31 @@ async function seed(): Promise<void> {
 
   // ─── Venues (FIFA 2026) ──────────────────────────────────────────────────
   const venueData = [
-    { name: 'MetLife Stadium', city: 'East Rutherford', country: 'USA', capacity: 82500 },
-    { name: 'Estadio Azteca', city: 'Mexico City', country: 'Mexico', capacity: 87523 },
-    { name: 'AT&T Stadium', city: 'Arlington', country: 'USA', capacity: 80000 },
-    { name: 'SoFi Stadium', city: 'Inglewood', country: 'USA', capacity: 70240 },
-    { name: 'Estadio AKRON', city: 'Guadalajara', country: 'Mexico', capacity: 49850 },
-    { name: 'BC Place', city: 'Vancouver', country: 'Canada', capacity: 54500 },
+    { name: 'MetLife Stadium', city: 'East Rutherford', country: 'USA', capacity: 82500, imageUrl: '/venues/metlife-stadium.webp' },
+    { name: 'Estadio Azteca', city: 'Mexico City', country: 'Mexico', capacity: 87523, imageUrl: '/venues/estadio-azteca.webp' },
+    { name: 'AT&T Stadium', city: 'Arlington', country: 'USA', capacity: 80000, imageUrl: '/venues/att-stadium.webp' },
+    { name: 'SoFi Stadium', city: 'Inglewood', country: 'USA', capacity: 70240, imageUrl: '/venues/sofi-stadium.webp' },
+    { name: 'Estadio AKRON', city: 'Guadalajara', country: 'Mexico', capacity: 49850, imageUrl: '/venues/estadio-akron.webp' },
+    { name: 'BC Place', city: 'Vancouver', country: 'Canada', capacity: 54500, imageUrl: '/venues/bc-place.webp' },
+    { name: 'Hard Rock Stadium', city: 'Miami Gardens', country: 'USA', capacity: 64767, imageUrl: '/venues/hard-rock-stadium.webp' },
+    { name: 'Lincoln Financial Field', city: 'Philadelphia', country: 'USA', capacity: 69176, imageUrl: '/venues/lincoln-financial-field.webp' },
+    { name: 'NRG Stadium', city: 'Houston', country: 'USA', capacity: 72220, imageUrl: '/venues/nrg-stadium.webp' },
+    { name: 'Lumen Field', city: 'Seattle', country: 'USA', capacity: 68740, imageUrl: '/venues/lumen-field.webp' },
+    { name: "Levi's Stadium", city: 'Santa Clara', country: 'USA', capacity: 68500, imageUrl: '/venues/levis-stadium.webp' },
+    { name: 'Mercedes-Benz Stadium', city: 'Atlanta', country: 'USA', capacity: 71000, imageUrl: '/venues/mercedes-benz-stadium.webp' },
+    { name: 'Arrowhead Stadium', city: 'Kansas City', country: 'USA', capacity: 76416, imageUrl: '/venues/arrowhead-stadium.webp' },
+    { name: 'Gillette Stadium', city: 'Foxborough', country: 'USA', capacity: 65878, imageUrl: '/venues/gillette-stadium.webp' },
+    { name: 'Estadio BBVA', city: 'Monterrey', country: 'Mexico', capacity: 53500, imageUrl: '/venues/estadio-bbva.webp' },
+    { name: 'BMO Field', city: 'Toronto', country: 'Canada', capacity: 30000, imageUrl: '/venues/bmo-field.webp' },
   ]
 
   for (const venue of venueData) {
     await db.insert(venues).values(venue).onConflictDoNothing()
+  }
+
+  // Update imageUrl for all venues matching by name (case-insensitive)
+  for (const venue of venueData) {
+    await db.update(venues).set({ imageUrl: venue.imageUrl }).where(sql`lower(${venues.name}) = lower(${venue.name})`)
   }
 
   // ─── Teams (FIFA VB 2026 – 48 + NB I) ───────────────────────────────────
