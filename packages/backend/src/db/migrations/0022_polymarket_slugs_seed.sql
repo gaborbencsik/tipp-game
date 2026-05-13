@@ -3,8 +3,11 @@
 -- Team codes verified against live Polymarket Gamma API (previous session)
 -- Safe to re-run: only updates where polymarket_slug IS NULL
 
+-- Ensure column exists (idempotent guard for migration ordering)
+ALTER TABLE "matches" ADD COLUMN IF NOT EXISTS "polymarket_slug" text;--> statement-breakpoint
+
 -- Matchday 1
-UPDATE matches m SET polymarket_slug = 'fifwc-mex-rsa-2026-06-11' FROM teams t1, teams t2, leagues l WHERE m.home_team_id = t1.id AND m.away_team_id = t2.id AND m.league_id = l.id AND l.short_name = 'WC2026' AND m.polymarket_slug IS NULL AND t1.name = 'Mexico' AND t2.name = 'South Africa';
+UPDATE matches m SET polymarket_slug = 'fifwc-mex-rsa-2026-06-11' FROM teams t1, teams t2, leagues l WHERE m.home_team_id = t1.id AND m.away_team_id = t2.id AND m.league_id = l.id AND l.short_name = 'WC2026' AND m.polymarket_slug IS NULL AND t1.name = 'Mexico' AND t2.name = 'South Africa';--> statement-breakpoint
 
 UPDATE matches m SET polymarket_slug = 'fifwc-kr-cze-2026-06-11' FROM teams t1, teams t2, leagues l WHERE m.home_team_id = t1.id AND m.away_team_id = t2.id AND m.league_id = l.id AND l.short_name = 'WC2026' AND m.polymarket_slug IS NULL AND t1.name = 'South Korea' AND t2.name = 'Czech Republic';
 
