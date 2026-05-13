@@ -172,12 +172,12 @@
         </div>
 
         <!-- Insights section -->
-        <div v-if="matchOdds" class="mt-4 relative" data-testid="insights-section">
+        <div class="mt-4 relative" data-testid="insights-section">
           <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">{{ $t('matchDetail.insightsTitle') }}</h3>
-          <div class="blur-sm select-none pointer-events-none">
-            <MatchOddsBar :odds="blurredOdds" />
+          <div :class="{ 'blur-sm select-none pointer-events-none': route.query.showInsights !== 'true' }">
+            <MatchOddsBar :odds="route.query.showInsights === 'true' && matchOdds ? matchOdds : blurredOdds" />
           </div>
-          <div class="absolute inset-0 top-7 flex items-center justify-center rounded-lg">
+          <div v-if="route.query.showInsights !== 'true'" class="absolute inset-0 top-7 flex items-center justify-center rounded-lg">
             <span class="text-sm font-medium text-gray-500 bg-white/80 px-3 py-1.5 rounded-md border border-gray-200 shadow-sm">
               {{ $t('matchDetail.insightsComingSoon') }}
             </span>
@@ -234,14 +234,20 @@ const awayInputRef = ref<HTMLInputElement | null>(null)
 const matchPredictions = ref<MatchPrediction[]>([])
 const matchOdds = ref<MatchOdds | null>(null)
 const blurredOdds = computed((): MatchOdds | null => {
-  if (!matchOdds.value) return null
+  const m = match.value
+  if (!m) return null
   return {
-    ...matchOdds.value,
-    homeTeam: { name: matchOdds.value.homeTeam.name, odds: 0.33 },
-    draw: matchOdds.value.draw !== null ? 0.34 : null,
-    awayTeam: { name: matchOdds.value.awayTeam.name, odds: 0.33 },
+    homeTeam: { name: m.homeTeam.name, odds: 0.33 },
+    draw: 0.34,
+    awayTeam: { name: m.awayTeam.name, odds: 0.33 },
     oneDayChange: { home: null, draw: null, away: null },
     volume: null,
+    avgVolume: null,
+    competitive: null,
+    contextDescription: null,
+    source: 'polymarket',
+    sourceUrl: null,
+    updatedAt: new Date().toISOString(),
   }
 })
 let autosaveTimer: ReturnType<typeof setTimeout> | null = null
