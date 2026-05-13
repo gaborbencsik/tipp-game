@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 96 story kész (Must Have: 31/31, Should Have: 65/67)
+> 97 story kész (Must Have: 31/31, Should Have: 66/82)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
