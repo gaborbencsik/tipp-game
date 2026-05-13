@@ -176,6 +176,13 @@
       "when": 1778702172284,
       "tag": "0024_ensure_polymarket_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1778788572284,
+      "tag": "0025_rls_market_data_sync_state",
+      "breakpoints": true
     }
   ]
 }

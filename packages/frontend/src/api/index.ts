@@ -96,7 +96,7 @@ export const api = {
       })
     },
     odds: (token: string, matchId: string) =>
-      request<MatchOdds>(`/matches/${matchId}/odds`, {
+      request<MatchOdds | null>(`/matches/${matchId}/odds`, {
         headers: { Authorization: `Bearer ${token}` },
       }),
   },
