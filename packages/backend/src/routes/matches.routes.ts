@@ -32,13 +32,18 @@ router.get('/api/leagues/:leagueId/teams', authMiddleware, async (ctx) => {
 })
 
 router.get('/api/matches/:matchId/odds', authMiddleware, async (ctx) => {
-  const odds = await getLatestOdds(ctx.params.matchId)
-  if (!odds) {
+  try {
+    const odds = await getLatestOdds(ctx.params.matchId)
+    if (!odds) {
+      ctx.status = 404
+      ctx.body = { error: 'No odds available' }
+      return
+    }
+    ctx.body = odds
+  } catch {
     ctx.status = 404
     ctx.body = { error: 'No odds available' }
-    return
   }
-  ctx.body = odds
 })
 
 export { router as matchesRouter }

@@ -169,6 +169,13 @@
       "when": 1778570792952,
       "tag": "0023_free_phantom_reporter",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1778702172284,
+      "tag": "0024_ensure_polymarket_tables",
+      "breakpoints": true
     }
   ]
 }
