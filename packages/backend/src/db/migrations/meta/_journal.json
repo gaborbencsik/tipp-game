@@ -148,6 +148,27 @@
       "when": 1778570676490,
       "tag": "0021_fix_missing_wc_venues",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1778529372284,
+      "tag": "0021_swift_spencer_smythe",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1778615772284,
+      "tag": "0022_polymarket_slugs_seed",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1778570792952,
+      "tag": "0023_free_phantom_reporter",
+      "breakpoints": true
     }
   ]
 }

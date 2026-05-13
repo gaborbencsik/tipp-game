@@ -1,4 +1,4 @@
-import type { User, Match, MatchesFilters, MatchInput, MatchResultInput, MatchPrediction, Prediction, PredictionInput, Team, TeamInput, AdminUser, Group, GroupInput, GroupMember, JoinGroupInput, LeaderboardEntry, ScoringConfigFull, ScoringConfigInput, WaitlistListResult, WaitlistFilters, WaitlistEntry, WaitlistSource, SpecialPredictionType, SpecialTypeInput, SpecialPredictionWithType, SpecialPredictionInput, StatPredictionTemplate, Player, PlayerInput, GlobalTypeWithSubscription, League, LeagueInput, UserLeagueFavorite, LeagueTeam, GroupMyPredictionsResult, AdminStatsResponse, AdminStatsMatchesResponse } from '../types/index.js'
+import type { User, Match, MatchesFilters, MatchInput, MatchResultInput, MatchPrediction, Prediction, PredictionInput, Team, TeamInput, AdminUser, Group, GroupInput, GroupMember, JoinGroupInput, LeaderboardEntry, ScoringConfigFull, ScoringConfigInput, WaitlistListResult, WaitlistFilters, WaitlistEntry, WaitlistSource, SpecialPredictionType, SpecialTypeInput, SpecialPredictionWithType, SpecialPredictionInput, StatPredictionTemplate, Player, PlayerInput, GlobalTypeWithSubscription, League, LeagueInput, UserLeagueFavorite, LeagueTeam, GroupMyPredictionsResult, AdminStatsResponse, AdminStatsMatchesResponse, MatchOdds } from '../types/index.js'
 
 const BASE_URL = (import.meta.env.VITE_API_URL ?? '') + '/api'
 
@@ -95,6 +95,10 @@ export const api = {
         headers: { Authorization: `Bearer ${token}` },
       })
     },
+    odds: (token: string, matchId: string) =>
+      request<MatchOdds>(`/matches/${matchId}/odds`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
   },
   predictions: {
     mine: (token: string, userId: string) =>
@@ -438,17 +442,22 @@ export const api = {
     },
     sync: {
       getSettings: (token: string) =>
-        request<{ mode: string; lastSuccessfulSyncAt: string | null; apiCallsToday: number; syncInProgress: boolean }>('/admin/sync/settings', {
+        request<{ mode: string; lastSuccessfulSyncAt: string | null; apiCallsToday: number; syncInProgress: boolean; polymarketSyncEnabled: boolean }>('/admin/sync/settings', {
           headers: { Authorization: `Bearer ${token}` },
         }),
-      updateSettings: (token: string, mode: string) =>
-        request<{ mode: string }>('/admin/sync/settings', {
+      updateSettings: (token: string, settings: { mode?: string; polymarketSyncEnabled?: boolean }) =>
+        request<{ mode: string; polymarketSyncEnabled: boolean }>('/admin/sync/settings', {
           method: 'PUT',
-          body: JSON.stringify({ mode }),
+          body: JSON.stringify(settings),
           headers: { Authorization: `Bearer ${token}` },
         }),
       run: (token: string) =>
         request<{ results: Array<{ teamsUpserted: number; fixturesUpserted: number; resultsUpserted: number; errors: string[]; partial: boolean }> }>('/admin/sync/run', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      runPolymarket: (token: string) =>
+        request<{ synced: number; failed: number; errors: string[] }>('/admin/sync/polymarket-run', {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}` },
         }),

@@ -1,8 +1,9 @@
 import Router from '@koa/router'
 import { authMiddleware } from '../middleware/auth.middleware.js'
 import { adminMiddleware } from '../middleware/admin.middleware.js'
-import { getSyncState, setSyncMode, markSyncStarted, markSyncFinished, incrementApiCalls } from '../services/sync-state.service.js'
+import { getSyncState, setSyncMode, setPolymarketSyncEnabled, markSyncStarted, markSyncFinished, incrementApiCalls } from '../services/sync-state.service.js'
 import { runAllLeagues } from '../services/sync-runner.js'
+import { syncAllMatchOdds } from '../services/polymarket.service.js'
 import type { SyncMode } from '../types/index.js'
 
 const VALID_SYNC_MODES: readonly SyncMode[] = ['off', 'final_only', 'adaptive', 'full_live']
@@ -19,21 +20,28 @@ syncRouter.get('/settings', async (ctx) => {
     lastSuccessfulSyncAt: state.lastSuccessfulSyncAt,
     apiCallsToday: state.apiCallsToday,
     syncInProgress: state.syncInProgress,
+    polymarketSyncEnabled: state.polymarketSyncEnabled,
   }
 })
 
 syncRouter.put('/settings', async (ctx) => {
-  const { mode } = ctx.request.body as { mode?: string }
+  const { mode, polymarketSyncEnabled } = ctx.request.body as { mode?: string; polymarketSyncEnabled?: boolean }
 
-  if (!mode || !(VALID_SYNC_MODES as readonly string[]).includes(mode)) {
-    ctx.status = 400
-    ctx.body = { error: `Invalid mode. Valid modes: ${VALID_SYNC_MODES.join(', ')}` }
-    return
+  if (mode !== undefined) {
+    if (!(VALID_SYNC_MODES as readonly string[]).includes(mode)) {
+      ctx.status = 400
+      ctx.body = { error: `Invalid mode. Valid modes: ${VALID_SYNC_MODES.join(', ')}` }
+      return
+    }
+    await setSyncMode(mode as SyncMode)
   }
 
-  await setSyncMode(mode as SyncMode)
+  if (polymarketSyncEnabled !== undefined) {
+    await setPolymarketSyncEnabled(polymarketSyncEnabled)
+  }
+
   const state = await getSyncState()
-  ctx.body = { mode: state.mode }
+  ctx.body = { mode: state.mode, polymarketSyncEnabled: state.polymarketSyncEnabled }
 })
 
 syncRouter.post('/run', async (ctx) => {
@@ -55,6 +63,11 @@ syncRouter.post('/run', async (ctx) => {
     await markSyncFinished(false)
     throw err
   }
+})
+
+syncRouter.post('/polymarket-run', async (ctx) => {
+  const result = await syncAllMatchOdds()
+  ctx.body = result
 })
 
 export { syncRouter }

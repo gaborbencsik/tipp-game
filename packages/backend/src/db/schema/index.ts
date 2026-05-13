@@ -1,7 +1,7 @@
 import {
   pgTable, uuid, varchar, text, integer, boolean,
   timestamp, pgEnum, uniqueIndex, index,
-  jsonb, smallint
+  jsonb, smallint, doublePrecision
 } from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
 
@@ -125,6 +125,7 @@ export const matches = pgTable('matches', {
   scheduledAt: timestamp('scheduled_at', { withTimezone: true }).notNull(),
   status:      matchStatusEnum('status').notNull().default('scheduled'),
   externalId:  integer('external_id').unique(),
+  polymarketSlug: text('polymarket_slug'),
   createdAt:   timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt:   timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   deletedAt:   timestamp('deleted_at', { withTimezone: true }),
@@ -147,6 +148,35 @@ export const matchResults = pgTable('match_results', {
   updatedAt:        timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({
   matchIdIdx: uniqueIndex('match_results_match_id_idx').on(t.matchId),
+}))
+
+// ─── MATCH MARKET DATA ───────────────────────────────────────────────────────
+
+export const matchMarketData = pgTable('match_market_data', {
+  id:                  uuid('id').primaryKey().defaultRandom(),
+  matchId:             uuid('match_id').notNull().references(() => matches.id),
+  source:              text('source').notNull().default('polymarket'),
+  homeWin:             doublePrecision('home_win').notNull(),
+  draw:                doublePrecision('draw'),
+  awayWin:             doublePrecision('away_win').notNull(),
+  oneDayChangeHome:    doublePrecision('one_day_change_home'),
+  oneDayChangeDraw:    doublePrecision('one_day_change_draw'),
+  oneDayChangeAway:    doublePrecision('one_day_change_away'),
+  oneWeekChangeHome:   doublePrecision('one_week_change_home'),
+  oneWeekChangeDraw:   doublePrecision('one_week_change_draw'),
+  oneWeekChangeAway:   doublePrecision('one_week_change_away'),
+  marketVolume:        doublePrecision('market_volume'),
+  marketLiquidity:     doublePrecision('market_liquidity'),
+  bestBidHome:         doublePrecision('best_bid_home'),
+  bestAskHome:         doublePrecision('best_ask_home'),
+  lastTradePriceHome:  doublePrecision('last_trade_price_home'),
+  competitive:         doublePrecision('competitive'),
+  contextDescription:  text('context_description'),
+  rawPayload:          jsonb('raw_payload'),
+  fetchedAt:           timestamp('fetched_at', { withTimezone: true }).notNull().defaultNow(),
+  createdAt:           timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  matchFetchedIdx: index('idx_match_market_data_match_fetched').on(t.matchId, t.fetchedAt),
 }))
 
 // ─── SCORING CONFIGS ──────────────────────────────────────────────────────────
@@ -431,5 +461,6 @@ export const syncState = pgTable('sync_state', {
   apiCallsToday:        integer('api_calls_today').notNull().default(0),
   apiCallsDate:         text('api_calls_date').notNull().default(''),
   syncInProgress:       boolean('sync_in_progress').notNull().default(false),
+  polymarketSyncEnabled: boolean('polymarket_sync_enabled').notNull().default(false),
   updatedAt:            timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })

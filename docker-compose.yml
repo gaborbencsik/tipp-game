@@ -58,6 +58,7 @@ services:
       - "5173:5173"
     environment:
       VITE_DEV_AUTH_BYPASS: "true"
+      VITE_ODDS_ENABLED: "false"
       VITE_API_URL: http://localhost:3000
       VITE_DONATION_URL: https://revolut.me/gaborbencsik?currency={currency}&amount={amount}&note={note}
     volumes:

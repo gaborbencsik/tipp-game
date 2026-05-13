@@ -86,7 +86,21 @@
     "tipSaved": "Prediction saved!",
     "myTip": "My prediction:",
     "pointsLabel": "Points:",
-    "noTip": "You didn't submit a prediction for this match"
+    "noTip": "You didn't submit a prediction for this match",
+    "oddsTitle": "Market Odds",
+    "oddsSource": "Polymarket market estimate for match outcome",
+    "oddsDraw": "Draw",
+    "oddsVolume": "Volume",
+    "oddsConfidence1": "Very few votes on this match",
+    "oddsConfidence2": "Few votes",
+    "oddsConfidence2Sub": "estimate is uncertain",
+    "oddsConfidence3": "Average interest",
+    "oddsConfidence4": "Reliable estimate",
+    "oddsConfidence5": "Very reliable estimate",
+    "oddsConfidenceMultiplier": "{n}× more votes than other matches",
+    "oddsComingSoon": "Coming soon",
+    "insightsTitle": "Insights",
+    "insightsComingSoon": "Coming soon"
   },
   "myTips": {
     "title": "My Predictions",

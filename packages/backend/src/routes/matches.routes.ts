@@ -4,6 +4,7 @@ import { getMatches } from '../services/matches.service.js'
 import { getLeagues } from '../services/leagues.service.js'
 import { getMatchPredictions } from '../services/predictions.service.js'
 import { getTeamsForLeague } from '../services/user-league-favorites.service.js'
+import { getLatestOdds } from '../services/polymarket.service.js'
 import type { MatchesFilters, MatchStage, MatchStatus } from '../types/index.js'
 
 const router = new Router()
@@ -28,6 +29,16 @@ router.get('/api/matches/:matchId/predictions', authMiddleware, async (ctx) => {
 
 router.get('/api/leagues/:leagueId/teams', authMiddleware, async (ctx) => {
   ctx.body = await getTeamsForLeague(ctx.params.leagueId)
+})
+
+router.get('/api/matches/:matchId/odds', authMiddleware, async (ctx) => {
+  const odds = await getLatestOdds(ctx.params.matchId)
+  if (!odds) {
+    ctx.status = 404
+    ctx.body = { error: 'No odds available' }
+    return
+  }
+  ctx.body = odds
 })
 
 export { router as matchesRouter }

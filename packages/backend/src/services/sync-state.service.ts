@@ -9,6 +9,7 @@ export interface SyncStateRow {
   readonly apiCallsToday: number
   readonly apiCallsDate: string | null
   readonly syncInProgress: boolean
+  readonly polymarketSyncEnabled: boolean
 }
 
 const DEFAULT_STATE: SyncStateRow = {
@@ -17,6 +18,7 @@ const DEFAULT_STATE: SyncStateRow = {
   apiCallsToday: 0,
   apiCallsDate: null,
   syncInProgress: false,
+  polymarketSyncEnabled: false,
 }
 
 export async function getSyncState(): Promise<SyncStateRow> {
@@ -28,6 +30,7 @@ export async function getSyncState(): Promise<SyncStateRow> {
     apiCallsToday: row.apiCallsToday,
     apiCallsDate: row.apiCallsDate,
     syncInProgress: row.syncInProgress,
+    polymarketSyncEnabled: row.polymarketSyncEnabled,
   }
 }
 
@@ -107,4 +110,18 @@ export async function hasLiveMatch(): Promise<boolean> {
     .where(eq(matches.status, 'live'))
     .limit(1)
   return row !== undefined
+}
+
+export async function setPolymarketSyncEnabled(enabled: boolean): Promise<void> {
+  const [existing] = await db.select({ id: syncState.id }).from(syncState).limit(1)
+  if (existing) {
+    await db.update(syncState)
+      .set({ polymarketSyncEnabled: enabled, updatedAt: sql`now()` })
+      .where(eq(syncState.id, existing.id))
+  } else {
+    await db.insert(syncState).values({
+      id: crypto.randomUUID(),
+      polymarketSyncEnabled: enabled,
+    })
+  }
 }

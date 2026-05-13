@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 95 story kész (Must Have: 31/31, Should Have: 64/67)
+> 96 story kész (Must Have: 31/31, Should Have: 65/67)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -100,3 +100,4 @@
 | US-1002 | Felhasználói felület lokalizációja (i18n) | Should Have |
 | US-807 | Admin használati statisztikák (dashboard) | Should Have |
 | US-1401 | Stadion banner kép a meccs részletes nézeten | Should Have |
+| US-1501 | Polymarket meccs odds megjelenítése a meccs részletes nézetben | Should Have |

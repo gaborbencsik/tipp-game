@@ -42,6 +42,7 @@ describe('sync-state.service', () => {
         apiCallsToday: 0,
         apiCallsDate: null,
         syncInProgress: false,
+        polymarketSyncEnabled: false,
       })
     })
 
@@ -53,6 +54,7 @@ describe('sync-state.service', () => {
         apiCallsToday: 42,
         apiCallsDate: '2026-06-15',
         syncInProgress: false,
+        polymarketSyncEnabled: true,
         updatedAt: new Date(),
       }
       mockDb.select.mockReturnValue({

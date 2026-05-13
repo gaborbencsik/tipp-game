@@ -63,6 +63,20 @@ export interface MatchesFilters {
   readonly leagueId?: string
 }
 
+export interface MatchOdds {
+  readonly homeTeam: { readonly name: string; readonly odds: number }
+  readonly draw: number | null
+  readonly awayTeam: { readonly name: string; readonly odds: number }
+  readonly oneDayChange: { readonly home: number | null; readonly draw: number | null; readonly away: number | null }
+  readonly volume: number | null
+  readonly avgVolume: number | null
+  readonly competitive: number | null
+  readonly contextDescription: string | null
+  readonly source: string
+  readonly sourceUrl: string | null
+  readonly updatedAt: string
+}
+
 export interface MatchInput {
   readonly homeTeamId: string
   readonly awayTeamId: string

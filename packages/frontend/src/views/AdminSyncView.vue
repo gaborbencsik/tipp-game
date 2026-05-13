@@ -34,6 +34,38 @@
       </div>
     </section>
 
+    <!-- Polymarket sync toggle -->
+    <section class="mb-4 p-4 bg-white rounded-lg border">
+      <h2 class="text-sm font-semibold text-gray-700 mb-3">Polymarket odds szinkronizáció</h2>
+      <div class="flex items-center gap-3">
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input
+            v-model="polymarketEnabled"
+            type="checkbox"
+            class="sr-only peer"
+            @change="updatePolymarket"
+          />
+          <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+          <span class="ms-2 text-sm text-gray-600">{{ polymarketEnabled ? 'Aktív' : 'Kikapcsolva' }}</span>
+        </label>
+        <span v-if="polymarketSaving" class="text-xs text-gray-400">Mentés...</span>
+        <span v-if="polymarketSaved" class="text-xs text-green-600">Mentve ✓</span>
+      </div>
+      <div class="mt-3 flex items-center gap-3">
+        <button
+          class="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          :disabled="polymarketSyncing"
+          @click="triggerPolymarketSync"
+        >
+          <span v-if="polymarketSyncing">Szinkronizálás...</span>
+          <span v-else>Odds lekérése most</span>
+        </button>
+        <span v-if="polymarketSyncResult" class="text-xs text-green-600">{{ polymarketSyncResult }}</span>
+        <span v-if="polymarketSyncError" class="text-xs text-red-600">{{ polymarketSyncError }}</span>
+      </div>
+      <p class="text-xs text-gray-400 mt-2">5 percenként lekéri a Polymarket odds-okat az összes VB meccshez.</p>
+    </section>
+
     <!-- Sync status -->
     <section class="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
       <div class="flex items-center justify-between text-sm">
@@ -129,6 +161,12 @@ const modeSaved = ref(false)
 const syncing = ref(false)
 const syncResults = ref<SyncResult[]>([])
 const syncError = ref('')
+const polymarketEnabled = ref(false)
+const polymarketSaving = ref(false)
+const polymarketSaved = ref(false)
+const polymarketSyncing = ref(false)
+const polymarketSyncResult = ref('')
+const polymarketSyncError = ref('')
 
 const lastSyncAt = ref<Date | null>(null)
 const apiCallsToday = ref(0)
@@ -161,16 +199,42 @@ async function loadSettings(): Promise<void> {
   lastSyncAt.value = data.lastSuccessfulSyncAt ? new Date(data.lastSuccessfulSyncAt) : null
   apiCallsToday.value = data.apiCallsToday ?? 0
   syncInProgress.value = data.syncInProgress ?? false
+  polymarketEnabled.value = data.polymarketSyncEnabled ?? false
 }
 
 async function updateMode(): Promise<void> {
   modeLoading.value = true
   modeSaved.value = false
   const token = await getToken()
-  await api.admin.sync.updateSettings(token, syncMode.value)
+  await api.admin.sync.updateSettings(token, { mode: syncMode.value })
   modeLoading.value = false
   modeSaved.value = true
   setTimeout(() => { modeSaved.value = false }, 2000)
+}
+
+async function updatePolymarket(): Promise<void> {
+  polymarketSaving.value = true
+  polymarketSaved.value = false
+  const token = await getToken()
+  await api.admin.sync.updateSettings(token, { polymarketSyncEnabled: polymarketEnabled.value })
+  polymarketSaving.value = false
+  polymarketSaved.value = true
+  setTimeout(() => { polymarketSaved.value = false }, 2000)
+}
+
+async function triggerPolymarketSync(): Promise<void> {
+  polymarketSyncing.value = true
+  polymarketSyncResult.value = ''
+  polymarketSyncError.value = ''
+  try {
+    const token = await getToken()
+    const data = await api.admin.sync.runPolymarket(token)
+    polymarketSyncResult.value = `Kész: ${data.synced} szinkronizálva, ${data.failed} sikertelen`
+  } catch (err) {
+    polymarketSyncError.value = err instanceof Error ? err.message : 'Hiba történt'
+  } finally {
+    polymarketSyncing.value = false
+  }
 }
 
 async function triggerSync(): Promise<void> {

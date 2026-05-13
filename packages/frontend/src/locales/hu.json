@@ -86,7 +86,21 @@
     "tipSaved": "Tipp elmentve! ✓",
     "myTip": "Az én tippem:",
     "pointsLabel": "Pontok:",
-    "noTip": "Nem adtál tippet erre a mérkőzésre"
+    "noTip": "Nem adtál tippet erre a mérkőzésre",
+    "oddsTitle": "Piaci esélyek",
+    "oddsSource": "Polymarket piaci becslés a meccs kimeneteléről",
+    "oddsDraw": "Döntetlen",
+    "oddsVolume": "Forgalom",
+    "oddsConfidence1": "Alig szavaztak erre a meccsre",
+    "oddsConfidence2": "Kevés szavazat",
+    "oddsConfidence2Sub": "a becslés bizonytalan",
+    "oddsConfidence3": "Átlagos érdeklődés",
+    "oddsConfidence4": "Megbízható becslés",
+    "oddsConfidence5": "Nagyon megbízható becslés",
+    "oddsConfidenceMultiplier": "{n}× többen szavaztak a többi meccshez képest",
+    "oddsComingSoon": "Hamarosan elérhető",
+    "insightsTitle": "Elemzések",
+    "insightsComingSoon": "Hamarosan elérhető"
   },
   "myTips": {
     "title": "Tippjeim",

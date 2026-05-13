@@ -25,4 +25,4 @@
 
 ---
 
-**Haladás: 95 / 111 story kész** — Must Have: 31/31, Should Have: 64/76, Nice to Have: 0/4
+**Haladás: 96 / 111 story kész** — Must Have: 31/31, Should Have: 65/76, Nice to Have: 0/4

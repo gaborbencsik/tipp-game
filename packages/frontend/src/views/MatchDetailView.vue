@@ -171,6 +171,19 @@
           </template>
         </div>
 
+        <!-- Insights section -->
+        <div v-if="matchOdds" class="mt-4 relative" data-testid="insights-section">
+          <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">{{ $t('matchDetail.insightsTitle') }}</h3>
+          <div class="blur-sm select-none pointer-events-none">
+            <MatchOddsBar :odds="blurredOdds" />
+          </div>
+          <div class="absolute inset-0 top-7 flex items-center justify-center rounded-lg">
+            <span class="text-sm font-medium text-gray-500 bg-white/80 px-3 py-1.5 rounded-md border border-gray-200 shadow-sm">
+              {{ $t('matchDetail.insightsComingSoon') }}
+            </span>
+          </div>
+        </div>
+
         <MatchPredictionsList
           v-if="(match.status === 'finished' || match.status === 'live') && matchPredictions.length > 0"
           :predictions="matchPredictions"
@@ -191,11 +204,12 @@ import { usePredictionsStore } from '../stores/predictions.store.js'
 import { useAuthStore } from '../stores/auth.store.js'
 import { api } from '../api/index.js'
 import { supabase } from '../lib/supabase.js'
-import type { Match, MatchOutcome, MatchPrediction, MatchStage, MatchStatus } from '../types/index.js'
+import type { Match, MatchOutcome, MatchPrediction, MatchStage, MatchStatus, MatchOdds } from '../types/index.js'
 import AppLayout from '../components/AppLayout.vue'
 import TeamBadge from '../components/TeamBadge.vue'
 import VenueBanner from '../components/VenueBanner.vue'
 import MatchPredictionsList from '../components/MatchPredictionsList.vue'
+import MatchOddsBar from '../components/MatchOddsBar.vue'
 import { getDateLocale } from '../lib/dateLocale.js'
 
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
@@ -218,6 +232,18 @@ const draftOutcome = ref<MatchOutcome | null>(null)
 const homeInputRef = ref<HTMLInputElement | null>(null)
 const awayInputRef = ref<HTMLInputElement | null>(null)
 const matchPredictions = ref<MatchPrediction[]>([])
+const matchOdds = ref<MatchOdds | null>(null)
+const blurredOdds = computed((): MatchOdds | null => {
+  if (!matchOdds.value) return null
+  return {
+    ...matchOdds.value,
+    homeTeam: { name: matchOdds.value.homeTeam.name, odds: 0.33 },
+    draw: matchOdds.value.draw !== null ? 0.34 : null,
+    awayTeam: { name: matchOdds.value.awayTeam.name, odds: 0.33 },
+    oneDayChange: { home: null, draw: null, away: null },
+    volume: null,
+  }
+})
 let autosaveTimer: ReturnType<typeof setTimeout> | null = null
 
 const KNOCKOUT_STAGES: readonly MatchStage[] = ['round_of_16', 'quarter_final', 'semi_final', 'third_place', 'final']
@@ -243,6 +269,7 @@ onMounted(async () => {
   if (match.value?.status === 'finished' || match.value?.status === 'live') {
     await loadMatchPredictions()
   }
+  loadMatchOdds()
 })
 
 onUnmounted(() => {
@@ -310,6 +337,16 @@ async function loadMatchPredictions(): Promise<void> {
     matchPredictions.value = await api.predictions.forMatch(token, matchId.value)
   } catch {
     // silent — non-critical
+  }
+}
+
+async function loadMatchOdds(): Promise<void> {
+  try {
+    const token = await getToken()
+    if (!token) return
+    matchOdds.value = await api.matches.odds(token, matchId.value)
+  } catch {
+    // silent — odds are supplementary
   }
 }
 

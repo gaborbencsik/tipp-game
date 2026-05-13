@@ -1,0 +1,1 @@
+ALTER TABLE "sync_state" ADD COLUMN "polymarket_sync_enabled" boolean DEFAULT false NOT NULL;

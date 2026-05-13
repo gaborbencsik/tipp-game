@@ -3,6 +3,7 @@ import { serviceTokenMiddleware } from '../middleware/service-token.middleware.j
 import { getSyncState, markSyncStarted, markSyncFinished, incrementApiCalls, hasLiveMatch } from '../services/sync-state.service.js'
 import { shouldRunSync } from '../services/sync-gate.js'
 import { runAllLeagues } from '../services/sync-runner.js'
+import { syncAllMatchOdds } from '../services/polymarket.service.js'
 
 const internalSyncRouter = new Router({ prefix: '/api/internal/sync' })
 
@@ -41,6 +42,16 @@ internalSyncRouter.post('/tick', async (ctx) => {
     await markSyncFinished(false)
     throw err
   }
+})
+
+internalSyncRouter.post('/polymarket-tick', async (ctx) => {
+  const state = await getSyncState()
+  if (!state.polymarketSyncEnabled) {
+    ctx.body = { skipped: true, reason: 'polymarket sync disabled' }
+    return
+  }
+  const result = await syncAllMatchOdds()
+  ctx.body = result
 })
 
 export { internalSyncRouter }
