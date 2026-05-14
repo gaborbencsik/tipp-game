@@ -159,6 +159,7 @@ export interface Team {
   readonly group: string | null
   readonly teamType: 'national' | 'club'
   readonly countryCode: string | null
+  readonly externalId: number | null
 }
 
 export interface TeamInput {

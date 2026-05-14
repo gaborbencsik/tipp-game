@@ -118,22 +118,45 @@ export async function upsertTeams(
 
     // Check if short_code is taken — link or deduplicate
     const [existing] = await db
-      .select({ id: teams.id, externalId: teams.externalId })
+      .select({ id: teams.id, name: teams.name, externalId: teams.externalId })
       .from(teams)
       .where(eq(teams.shortCode, baseCode))
       .limit(1)
 
     if (existing && existing.externalId === null) {
-      // Manually-created team without external link — claim it
+      const nameMatches = existing.name.toLowerCase() === team.name.toLowerCase()
+      if (nameMatches) {
+        // Short code AND name match — safe to claim
+        await db.update(teams)
+          .set({
+            externalId: team.id,
+            name: team.name,
+            flagUrl: team.logo,
+            teamType: team.national ? 'national' : 'club',
+            updatedAt: sql`now()`,
+          })
+          .where(eq(teams.id, existing.id))
+        count++
+        continue
+      }
+    }
+
+    // Try name-based fallback (case-insensitive) when short_code didn't match
+    const [byName] = await db
+      .select({ id: teams.id, externalId: teams.externalId })
+      .from(teams)
+      .where(sql`lower(${teams.name}) = ${team.name.toLowerCase()}`)
+      .limit(1)
+
+    if (byName && byName.externalId === null) {
       await db.update(teams)
         .set({
           externalId: team.id,
-          name: team.name,
           flagUrl: team.logo,
           teamType: team.national ? 'national' : 'club',
           updatedAt: sql`now()`,
         })
-        .where(eq(teams.id, existing.id))
+        .where(eq(teams.id, byName.id))
       count++
       continue
     }

@@ -63,6 +63,7 @@ const TEAM_ROW = {
   group: 'A',
   teamType: 'national' as const,
   countryCode: 'de',
+  externalId: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 }
@@ -75,6 +76,7 @@ const TEAM_API: Team = {
   group: 'A',
   teamType: 'national',
   countryCode: 'de',
+  externalId: null,
 }
 
 function setupSelectChain(rows: unknown[]) {

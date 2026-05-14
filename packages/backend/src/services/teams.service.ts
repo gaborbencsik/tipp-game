@@ -21,6 +21,7 @@ function toApiTeam(row: typeof teams.$inferSelect): Team {
     group: row.group ?? null,
     teamType: row.teamType,
     countryCode: row.countryCode ?? null,
+    externalId: row.externalId ?? null,
   }
 }
 
