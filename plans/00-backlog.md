@@ -1,6 +1,6 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-05-13
+> Utoljára frissítve: 2026-05-14
 
 ## Nyitott story-k
 
@@ -15,9 +15,6 @@
 | US-934 | Mások tippjeinek megjelenítése (speciális) | Should Have | — |
 | UX-004 | Focilabda kurzor ikon | Nice to Have | — |
 | UX-005 | Optimista törlés az admin listákon | Should Have | — |
-| UX-009 | Match card vizuális redesign | Should Have | — |
-| UX-010 | Filter tabs (segmented control) redesign | Should Have | — |
-| UX-011 | Sidebar redesign (szekciócímkék, admin nav, mini LB) | Should Have | — |
 | UX-012 | Toast notification rendszer | Should Have | — |
 | UX-013 | Értesítési rendszer (notification bell + panel) | Nice to Have | — |
 | UX-016 | Kedvenc csapat dupla pont jelzés a meccs kártyán | Should Have | — |
@@ -29,4 +26,4 @@
 
 ---
 
-**Haladás: 97 / 117 story kész** — Must Have: 31/31, Should Have: 66/82, Nice to Have: 0/4
+**Haladás: 100 / 117 story kész** — Must Have: 31/31, Should Have: 69/82, Nice to Have: 0/4

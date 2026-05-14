@@ -28,33 +28,18 @@
         </div>
       </div>
 
-      <div class="flex gap-2 mb-6">
-        <button
-          class="px-3 py-1 text-sm rounded"
-          :class="!matchesStore.stageFilter ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'"
-          @click="matchesStore.stageFilter = null"
-        >
-          {{ $t('matches.allStages') }}
-        </button>
-        <button
-          class="px-3 py-1 text-sm rounded"
-          :class="matchesStore.stageFilter === 'group' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'"
-          @click="matchesStore.stageFilter = 'group'"
-        >
-          {{ $t('matches.groupStage') }}
-        </button>
-        <button
-          class="px-3 py-1 text-sm rounded"
-          :class="matchesStore.stageFilter && matchesStore.stageFilter !== 'group' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'"
-          @click="matchesStore.stageFilter = 'round_of_16'"
-        >
-          {{ $t('matches.knockout') }}
-        </button>
+      <!-- Desktop: segmented control + league select -->
+      <div class="hidden md:flex items-center gap-3 mb-6">
+        <SegmentedControl
+          :options="stageFilterOptions"
+          :model-value="matchesStore.stageFilter"
+          @update:model-value="matchesStore.stageFilter = $event as MatchStage | null"
+        />
 
         <select
           v-if="favStore.leagues.length > 1"
           :value="matchesStore.leagueFilter ?? ''"
-          class="ml-auto px-3 py-1 text-sm rounded border border-gray-300 bg-white text-gray-700"
+          class="ml-auto h-10 px-3 text-sm text-gray-900 bg-gray-50 border border-gray-300 rounded-lg transition-all duration-150 focus:border-blue-500 focus:bg-white focus:ring-3 focus:ring-blue-500/10 focus:outline-none"
           data-testid="league-filter"
           @change="matchesStore.leagueFilter = ($event.target as HTMLSelectElement).value || null"
         >
@@ -63,6 +48,38 @@
             {{ league.name }}
           </option>
         </select>
+      </div>
+
+      <!-- Mobile: compact selects -->
+      <div class="flex md:hidden gap-2 mb-4">
+        <select
+          :value="matchesStore.stageFilter ?? ''"
+          class="flex-1 h-10 px-3 text-sm text-gray-900 bg-gray-50 border border-gray-300 rounded-lg transition-all duration-150 focus:border-blue-500 focus:bg-white focus:ring-3 focus:ring-blue-500/10 focus:outline-none"
+          @change="matchesStore.stageFilter = (($event.target as HTMLSelectElement).value || null) as MatchStage | null"
+        >
+          <option v-for="opt in stageFilterOptions" :key="opt.value ?? '__null__'" :value="opt.value ?? ''">{{ opt.label }}</option>
+        </select>
+        <select
+          v-if="favStore.leagues.length > 1"
+          :value="matchesStore.leagueFilter ?? ''"
+          class="flex-1 h-10 px-3 text-sm text-gray-900 bg-gray-50 border border-gray-300 rounded-lg transition-all duration-150 focus:border-blue-500 focus:bg-white focus:ring-3 focus:ring-blue-500/10 focus:outline-none"
+          data-testid="league-filter-mobile"
+          @change="matchesStore.leagueFilter = ($event.target as HTMLSelectElement).value || null"
+        >
+          <option value="">{{ $t('matches.allLeagues') }}</option>
+          <option v-for="league in favStore.leagues" :key="league.id" :value="league.id">
+            {{ league.name }}
+          </option>
+        </select>
+      </div>
+
+      <div
+        v-if="untippedTodayCount > 0 && !alertBannerDismissed"
+        class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-2 text-sm text-amber-700"
+      >
+        <span>⚠️</span>
+        <span><strong>{{ untippedTodayCount }} mérkőzésen</strong> még nem tippeltél ma — a határidő hamarosan lejár!</span>
+        <button class="ml-auto text-amber-400 hover:text-amber-600 text-lg leading-none" @click="dismissAlertBanner">&times;</button>
       </div>
 
       <div v-if="matchesStore.isLoading" class="flex justify-center py-16">
@@ -115,8 +132,10 @@
 
           <template v-if="finishedSectionOpen">
             <div v-for="group in visibleFinishedGroups" :key="group.date" class="mb-8">
-              <h2 class="text-base font-semibold text-gray-600 mb-3 border-b border-gray-100 pb-1">
+              <h2 class="text-base font-semibold text-gray-700 mb-3 flex items-center gap-3">
                 {{ group.label }}
+                <span v-if="isToday(group.date)" class="text-[0.68rem] font-bold uppercase tracking-wide bg-blue-50 text-blue-600 border border-blue-200 px-2 py-0.5 rounded-full">Ma</span>
+                <span class="flex-1 h-px bg-gray-200"></span>
               </h2>
               <div
                 v-for="match in group.matches"
@@ -130,7 +149,8 @@
                       {{ stageLabel(match.stage) }}
                       <span v-if="match.groupName"> – {{ $t('matches.groupLabel', { name: match.groupName }) }}</span>
                     </span>
-                    <span class="text-xs font-bold px-2 py-0.5 rounded" :class="statusClass(match.status)">
+                    <span class="text-xs font-bold px-2 py-0.5 rounded inline-flex items-center gap-1" :class="statusClass(match.status)">
+                      <span v-if="match.status === 'live'" class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
                       {{ statusLabel(match.status) }}
                     </span>
                   </div>
@@ -138,7 +158,7 @@
                     <span class="font-semibold text-gray-800 text-right flex-1">
                       <TeamBadge :team="match.homeTeam" />
                     </span>
-                    <div class="text-xl font-bold text-gray-900 min-w-[5rem] text-center">
+                    <div class="text-xl font-bold min-w-[5rem] text-center" :class="match.status === 'live' ? 'text-red-600' : 'text-gray-900'">
                       <template v-if="match.result">
                         {{ match.result.homeGoals }} – {{ match.result.awayGoals }}
                       </template>
@@ -156,11 +176,14 @@
                 </router-link>
 
                 <div class="mt-3 pt-3 border-t border-gray-100">
-                  <div class="text-center text-xs text-gray-400">
+                  <div class="text-center text-xs text-gray-400 flex items-center justify-center gap-2">
                     <template v-if="predictionsStore.predictionByMatchId(match.id)">
-                      <span class="mr-1">🔒</span>
-                      <span class="mr-2">{{ $t('matches.myTip') }} <strong class="text-gray-600">{{ predictionsStore.predictionByMatchId(match.id)!.homeGoals }} – {{ predictionsStore.predictionByMatchId(match.id)!.awayGoals }}</strong></span>
-                      <span v-if="predictionsStore.predictionByMatchId(match.id)!.pointsGlobal !== null">· <strong class="text-blue-600">{{ predictionsStore.predictionByMatchId(match.id)!.pointsGlobal }} {{ $t('common.points') }}</strong></span>
+                      <span>🔒 {{ $t('matches.myTip') }} <strong class="text-gray-600">{{ predictionsStore.predictionByMatchId(match.id)!.homeGoals }} – {{ predictionsStore.predictionByMatchId(match.id)!.awayGoals }}</strong></span>
+                      <span
+                        v-if="predictionsStore.predictionByMatchId(match.id)!.pointsGlobal !== null"
+                        class="text-xs font-bold px-2 py-0.5 rounded"
+                        :class="pointsBadgeClass(predictionsStore.predictionByMatchId(match.id)!.pointsGlobal!)"
+                      >+{{ predictionsStore.predictionByMatchId(match.id)!.pointsGlobal }} {{ $t('common.points') }}</span>
                     </template>
                     <template v-else>
                       <span>{{ $t('matches.missedTip') }}</span>
@@ -190,8 +213,10 @@
           :key="group.date"
           class="mb-8"
         >
-          <h2 class="text-base font-semibold text-gray-600 mb-3 border-b border-gray-100 pb-1">
+          <h2 class="text-base font-semibold text-gray-700 mb-3 flex items-center gap-3">
             {{ group.label }}
+            <span v-if="isToday(group.date)" class="text-[0.68rem] font-bold uppercase tracking-wide bg-blue-50 text-blue-600 border border-blue-200 px-2 py-0.5 rounded-full">Ma</span>
+            <span class="flex-1 h-px bg-gray-200"></span>
           </h2>
           <div
             v-for="match in group.matches"
@@ -233,26 +258,31 @@
             <!-- Tipp szekció -->
             <div class="mt-3 pt-3 border-t border-gray-100">
               <template v-if="isTippable(match)">
+                <div v-if="!predictionsStore.predictionByMatchId(match.id)" class="text-center text-xs text-amber-600 italic mb-2">
+                  Még nem tippeltél erre a meccsre
+                </div>
                 <div class="flex items-center gap-2 justify-center">
                   <span class="text-sm">{{ predictionsStore.predictionByMatchId(match.id) ? '✅' : '⏳' }}</span>
                   <input
                     :ref="el => { if (el) homeInputs[match.id] = el as HTMLInputElement }"
                     :value="draftGoals[match.id]?.home ?? ''"
-                    type="number" min="0" max="99" placeholder="0"
+                    inputmode="numeric" pattern="[0-9]*" min="0" max="99" placeholder="0"
                     data-testid="input-home"
-                    class="w-14 text-center border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:border-blue-400"
+                    class="w-[2.6rem] h-8 text-center text-base font-bold text-gray-900 bg-gray-50 border-[1.5px] border-gray-300 rounded-md transition-all duration-150 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:border-blue-500 focus:bg-white focus:ring-3 focus:ring-blue-500/10 focus:outline-none disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed"
+                    :class="isDirty(match.id, 'home') ? 'border-blue-500 bg-indigo-50' : ''"
                     :disabled="predictionsStore.saveStatus[match.id] === 'saving'"
                     @focus="onGoalFocus(match.id, 'home', $event)"
                     @input="onGoalInput(match.id, 'home', ($event.target as HTMLInputElement).value)"
                     @keydown="onGoalKeydown(match.id, 'home', $event)"
                   />
-                  <span class="text-gray-400 text-sm">–</span>
+                  <span class="text-gray-400 font-bold">–</span>
                   <input
                     :ref="el => { if (el) awayInputs[match.id] = el as HTMLInputElement }"
                     :value="draftGoals[match.id]?.away ?? ''"
-                    type="number" min="0" max="99" placeholder="0"
+                    inputmode="numeric" pattern="[0-9]*" min="0" max="99" placeholder="0"
                     data-testid="input-away"
-                    class="w-14 text-center border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:border-blue-400"
+                    class="w-[2.6rem] h-8 text-center text-base font-bold text-gray-900 bg-gray-50 border-[1.5px] border-gray-300 rounded-md transition-all duration-150 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:border-blue-500 focus:bg-white focus:ring-3 focus:ring-blue-500/10 focus:outline-none disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed"
+                    :class="isDirty(match.id, 'away') ? 'border-blue-500 bg-indigo-50' : ''"
                     :disabled="predictionsStore.saveStatus[match.id] === 'saving'"
                     @focus="onGoalFocus(match.id, 'away', $event)"
                     @input="onGoalInput(match.id, 'away', ($event.target as HTMLInputElement).value)"
@@ -280,11 +310,14 @@
               </template>
 
               <template v-else>
-                <div class="text-center text-xs text-gray-400">
+                <div class="text-center text-xs text-gray-400 flex items-center justify-center gap-2">
                   <template v-if="predictionsStore.predictionByMatchId(match.id)">
-                    <span class="mr-1">🔒</span>
-                    <span class="mr-2">{{ $t('matches.myTip') }} <strong class="text-gray-600">{{ predictionsStore.predictionByMatchId(match.id)!.homeGoals }} – {{ predictionsStore.predictionByMatchId(match.id)!.awayGoals }}</strong></span>
-                    <span v-if="predictionsStore.predictionByMatchId(match.id)!.pointsGlobal !== null">· <strong class="text-blue-600">{{ predictionsStore.predictionByMatchId(match.id)!.pointsGlobal }} {{ $t('common.points') }}</strong></span>
+                    <span>🔒 {{ $t('matches.myTip') }} <strong class="text-gray-600">{{ predictionsStore.predictionByMatchId(match.id)!.homeGoals }} – {{ predictionsStore.predictionByMatchId(match.id)!.awayGoals }}</strong></span>
+                    <span
+                      v-if="predictionsStore.predictionByMatchId(match.id)!.pointsGlobal !== null"
+                      class="text-xs font-bold px-2 py-0.5 rounded"
+                      :class="pointsBadgeClass(predictionsStore.predictionByMatchId(match.id)!.pointsGlobal!)"
+                    >+{{ predictionsStore.predictionByMatchId(match.id)!.pointsGlobal }} {{ $t('common.points') }}</span>
                   </template>
                   <template v-else>
                     <span>{{ $t('matches.missedTip') }}</span>
@@ -311,6 +344,7 @@ import AppLayout from '../components/AppLayout.vue'
 import TeamBadge from '../components/TeamBadge.vue'
 import SpecialPendingBanner from '../components/SpecialPendingBanner.vue'
 import DayNavigator from '../components/DayNavigator.vue'
+import SegmentedControl from '../components/SegmentedControl.vue'
 import { usePendingSpecialTips } from '../composables/usePendingSpecialTips.js'
 import { useDayNavigation } from '../composables/useDayNavigation.js'
 import { getDateLocale } from '../lib/dateLocale.js'
@@ -321,6 +355,12 @@ const predictionsStore = usePredictionsStore()
 const groupsStore = useGroupsStore()
 const favStore = useLeagueFavoritesStore()
 const { pendingGroups, totalPendingCount, now: pendingNow } = usePendingSpecialTips()
+
+const stageFilterOptions = computed(() => [
+  { label: t('matches.allStages'), value: null },
+  { label: t('matches.groupStage'), value: 'group' },
+  { label: t('matches.knockout'), value: 'round_of_16' },
+])
 
 const now = ref(new Date())
 const draftGoals = ref<Record<string, { home: number | null, away: number | null }>>({})
@@ -413,6 +453,7 @@ const inputOrder = computed((): Array<{ matchId: string; side: 'home' | 'away' }
 })
 
 onMounted(async () => {
+  initAlertBanner()
   try {
     const stored = localStorage.getItem(LS_KEY)
     if (stored !== null) finishedSectionOpen.value = stored === 'true'
@@ -479,6 +520,15 @@ function isTippable(match: Match): boolean {
   return match.status === 'scheduled' && new Date(match.scheduledAt) > now.value
 }
 
+function isDirty(matchId: string, side: 'home' | 'away'): boolean {
+  const draft = draftGoals.value[matchId]?.[side]
+  if (draft == null) return false
+  const existing = predictionsStore.predictionByMatchId(matchId)
+  if (!existing) return draft !== null
+  const original = side === 'home' ? existing.homeGoals : existing.awayGoals
+  return draft !== original
+}
+
 const KNOCKOUT_STAGES: readonly MatchStage[] = ['round_of_16', 'quarter_final', 'semi_final', 'third_place', 'final']
 
 function showOutcomeSelector(matchId: string, stage: MatchStage): boolean {
@@ -498,9 +548,57 @@ function setOutcome(matchId: string, outcome: MatchOutcome): void {
 
 function cardBorderClass(match: Match): string {
   const prediction = predictionsStore.predictionByMatchId(match.id)
+
+  if (match.status === 'live') return 'border-red-300 border-l-4 border-l-red-500'
+
+  if (match.status === 'finished' && prediction) {
+    const pts = prediction.pointsGlobal ?? 0
+    if (pts >= 5) return 'border-l-4 border-l-green-500 border-gray-100'
+    if (pts >= 1) return 'border-l-4 border-l-amber-500 border-gray-100'
+    return 'border-l-4 border-l-gray-300 border-gray-100'
+  }
+
   if (isTippable(match) && !prediction) return 'border-amber-300 bg-amber-50'
-  if ((match.status === 'finished' || match.status === 'live') && !prediction) return 'border-red-200'
+  if (isTippable(match) && prediction) return 'border-blue-200'
+  if (match.status === 'finished' && !prediction) return 'border-l-4 border-l-gray-300 border-gray-100'
   return 'border-gray-100'
+}
+
+function pointsBadgeClass(points: number): string {
+  if (points >= 5) return 'bg-green-50 text-green-700 border border-green-200'
+  if (points >= 3) return 'bg-blue-50 text-blue-700 border border-blue-200'
+  if (points >= 1) return 'bg-amber-50 text-amber-700 border border-amber-200'
+  return 'bg-gray-100 text-gray-500 border border-gray-200'
+}
+
+function isToday(dateStr: string): boolean {
+  const d = new Date(dateStr)
+  const today = new Date()
+  return d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth() && d.getDate() === today.getDate()
+}
+
+const untippedTodayCount = computed((): number => {
+  const today = new Date()
+  return matchesStore.matches.filter(m => {
+    if (m.status !== 'scheduled') return false
+    const d = new Date(m.scheduledAt)
+    if (d.getFullYear() !== today.getFullYear() || d.getMonth() !== today.getMonth() || d.getDate() !== today.getDate()) return false
+    if (d <= now.value) return false
+    return !predictionsStore.predictionByMatchId(m.id)
+  }).length
+})
+
+const alertBannerDismissed = ref(false)
+
+function dismissAlertBanner(): void {
+  alertBannerDismissed.value = true
+  try { sessionStorage.setItem('alert_banner_dismissed', 'true') } catch { /* ignore */ }
+}
+
+function initAlertBanner(): void {
+  try {
+    alertBannerDismissed.value = sessionStorage.getItem('alert_banner_dismissed') === 'true'
+  } catch { /* ignore */ }
 }
 
 function onGoalFocus(matchId: string, side: 'home' | 'away', event: FocusEvent): void {

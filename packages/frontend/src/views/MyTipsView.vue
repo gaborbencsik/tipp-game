@@ -51,25 +51,27 @@
                   <input
                     :ref="el => { if (el) homeInputs[match.id] = el as HTMLInputElement }"
                     :value="draftGoals[match.id]?.home ?? ''"
-                    type="number"
+                    inputmode="numeric"
+                    pattern="[0-9]*"
                     min="0"
                     max="99"
                     placeholder="0"
-                    class="w-12 text-center border border-gray-300 rounded px-1 py-1 text-sm focus:outline-none focus:border-blue-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    class="w-[2.6rem] h-8 text-center text-base font-bold text-gray-900 bg-gray-50 border-[1.5px] border-gray-300 rounded-md transition-all duration-150 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:border-blue-500 focus:bg-white focus:ring-3 focus:ring-blue-500/10 focus:outline-none"
                     @focus="onFocus(match.id, 'home', $event)"
                     @input="onInput(match.id, 'home', ($event.target as HTMLInputElement).value)"
                     @keydown="onKeydown(match.id, 'home', $event)"
                     @blur="onBlur(match.id)"
                   />
-                  <span class="text-gray-400 text-sm">–</span>
+                  <span class="text-gray-400 font-bold">–</span>
                   <input
                     :ref="el => { if (el) awayInputs[match.id] = el as HTMLInputElement }"
                     :value="draftGoals[match.id]?.away ?? ''"
-                    type="number"
+                    inputmode="numeric"
+                    pattern="[0-9]*"
                     min="0"
                     max="99"
                     placeholder="0"
-                    class="w-12 text-center border border-gray-300 rounded px-1 py-1 text-sm focus:outline-none focus:border-blue-400 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    class="w-[2.6rem] h-8 text-center text-base font-bold text-gray-900 bg-gray-50 border-[1.5px] border-gray-300 rounded-md transition-all duration-150 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:border-blue-500 focus:bg-white focus:ring-3 focus:ring-blue-500/10 focus:outline-none"
                     @focus="onFocus(match.id, 'away', $event)"
                     @input="onInput(match.id, 'away', ($event.target as HTMLInputElement).value)"
                     @keydown="onKeydown(match.id, 'away', $event)"

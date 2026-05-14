@@ -37,76 +37,13 @@
         </p>
       </div>
       <template v-if="isAdmin">
-        <button
-          data-testid="admin-section-toggle"
-          class="flex w-full items-center justify-between px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
-          @click="adminOpen = !adminOpen"
-        >
-          <span>{{ $t('nav.admin') }}</span>
-          <span class="text-gray-400 text-xs">{{ adminOpen ? '▼' : '▶' }}</span>
-        </button>
         <router-link
-          v-show="adminOpen"
           to="/admin/matches"
           data-testid="menu-admin-matches"
-          class="flex items-center pl-6 pr-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+          class="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
           @click="menuOpen = false"
         >
-          Mérkőzések
-        </router-link>
-        <router-link
-          v-show="adminOpen"
-          to="/admin/teams"
-          data-testid="menu-admin-teams"
-          class="flex items-center pl-6 pr-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
-          @click="menuOpen = false"
-        >
-          Csapatok
-        </router-link>
-        <router-link
-          v-show="adminOpen"
-          to="/admin/players"
-          data-testid="menu-admin-players"
-          class="flex items-center pl-6 pr-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
-          @click="menuOpen = false"
-        >
-          Játékosok
-        </router-link>
-        <router-link
-          v-show="adminOpen"
-          to="/admin/users"
-          data-testid="menu-admin-users"
-          class="flex items-center pl-6 pr-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
-          @click="menuOpen = false"
-        >
-          Felhasználók
-        </router-link>
-        <router-link
-          v-show="adminOpen"
-          to="/admin/scoring"
-          data-testid="menu-admin-scoring"
-          class="flex items-center pl-6 pr-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
-          @click="menuOpen = false"
-        >
-          Pontrendszer
-        </router-link>
-        <router-link
-          v-show="adminOpen"
-          to="/admin/global-types"
-          data-testid="menu-admin-global-types"
-          class="flex items-center pl-6 pr-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
-          @click="menuOpen = false"
-        >
-          Speciális tippek
-        </router-link>
-        <router-link
-          v-show="adminOpen"
-          to="/admin/sync"
-          data-testid="menu-admin-sync"
-          class="flex items-center pl-6 pr-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
-          @click="menuOpen = false"
-        >
-          Szinkron
+          {{ $t('nav.admin') }}
         </router-link>
         <div class="border-t border-gray-100" />
       </template>
@@ -139,14 +76,11 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useRoute } from 'vue-router'
 import { useAuthStore } from '../stores/auth.store.js'
 import { dicebearUrl } from '../lib/avatar.js'
 
 const authStore = useAuthStore()
-const route = useRoute()
 const menuOpen = ref(false)
-const adminOpen = ref(route.path.startsWith('/admin'))
 const isAdmin = computed((): boolean => authStore.user?.role === 'admin')
 const avatarSrc = computed((): string => {
   const user = authStore.user

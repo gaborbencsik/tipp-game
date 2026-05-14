@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 97 story kész (Must Have: 31/31, Should Have: 66/82)
+> 100 story kész (Must Have: 31/31, Should Have: 69/82)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -101,3 +101,6 @@
 | US-807 | Admin használati statisztikák (dashboard) | Should Have |
 | US-1401 | Stadion banner kép a meccs részletes nézeten | Should Have |
 | US-1501 | Polymarket meccs odds megjelenítése a meccs részletes nézetben | Should Have |
+| UX-009 | Match card vizuális redesign | Should Have |
+| UX-010 | Filter tabs (segmented control) redesign | Should Have |
+| UX-011 | Sidebar redesign (szekciócímkék, hover expand) | Should Have |

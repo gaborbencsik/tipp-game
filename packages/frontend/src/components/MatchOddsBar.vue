@@ -27,7 +27,7 @@
           :style="{ width: homePct + '%' }"
           data-testid="odds-stacked-home"
         >
-          <span v-if="homePct > 12" class="truncate px-1">{{ odds.homeTeam.name }} {{ homePct }}%</span>
+          <span v-if="homePct >= 25" class="truncate px-1">{{ odds.homeTeam.name }} {{ homePct }}%</span>
           <span v-else class="truncate px-1">{{ homePct }}%</span>
         </div>
         <div
@@ -43,7 +43,7 @@
           :style="{ width: awayPct + '%' }"
           data-testid="odds-stacked-away"
         >
-          <span v-if="awayPct > 12" class="truncate px-1">{{ odds.awayTeam.name }} {{ awayPct }}%</span>
+          <span v-if="awayPct >= 25" class="truncate px-1">{{ odds.awayTeam.name }} {{ awayPct }}%</span>
           <span v-else class="truncate px-1">{{ awayPct }}%</span>
         </div>
       </div>

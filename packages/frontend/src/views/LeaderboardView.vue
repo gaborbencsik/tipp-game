@@ -5,7 +5,7 @@
       <select
         v-if="groupsStore.groups.length > 0"
         v-model="selectedScope"
-        class="text-sm text-gray-700 border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+        class="h-10 px-3 text-sm text-gray-900 bg-gray-50 border border-gray-300 rounded-lg transition-all duration-150 focus:border-blue-500 focus:bg-white focus:ring-3 focus:ring-blue-500/10 focus:outline-none"
         @change="onScopeChange"
       >
         <option value="global">{{ $t('leaderboard.global') }}</option>

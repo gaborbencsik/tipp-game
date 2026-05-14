@@ -69,31 +69,33 @@
 
           <!-- Tippelhető meccs -->
           <template v-if="isTippable(match)">
-            <div class="flex items-center gap-2 justify-center">
+            <div class="flex items-center gap-3 justify-center">
               <input
                 ref="homeInputRef"
                 :value="draftGoals.home ?? ''"
-                type="number"
+                inputmode="numeric"
+                pattern="[0-9]*"
                 min="0"
                 max="99"
                 placeholder="0"
                 data-testid="input-home"
-                class="w-14 text-center border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:border-blue-400"
+                class="w-[2.6rem] h-8 text-center text-base font-bold text-gray-900 bg-gray-50 border-[1.5px] border-gray-300 rounded-md transition-all duration-150 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:border-blue-500 focus:bg-white focus:ring-3 focus:ring-blue-500/10 focus:outline-none disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed"
                 :disabled="predictionsStore.saveStatus[match.id] === 'saving'"
                 @focus="onGoalFocus('home', $event)"
                 @input="onGoalInput('home', ($event.target as HTMLInputElement).value)"
                 @keydown="onGoalKeydown('home', $event)"
               />
-              <span class="text-gray-400 text-sm">–</span>
+              <span class="text-gray-400 font-bold">–</span>
               <input
                 ref="awayInputRef"
                 :value="draftGoals.away ?? ''"
-                type="number"
+                inputmode="numeric"
+                pattern="[0-9]*"
                 min="0"
                 max="99"
                 placeholder="0"
                 data-testid="input-away"
-                class="w-14 text-center border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:border-blue-400"
+                class="w-[2.6rem] h-8 text-center text-base font-bold text-gray-900 bg-gray-50 border-[1.5px] border-gray-300 rounded-md transition-all duration-150 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:border-blue-500 focus:bg-white focus:ring-3 focus:ring-blue-500/10 focus:outline-none disabled:bg-gray-100 disabled:text-gray-400 disabled:border-gray-200 disabled:cursor-not-allowed"
                 :disabled="predictionsStore.saveStatus[match.id] === 'saving'"
                 @focus="onGoalFocus('away', $event)"
                 @input="onGoalInput('away', ($event.target as HTMLInputElement).value)"
