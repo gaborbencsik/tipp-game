@@ -69,9 +69,11 @@ export const teams = pgTable('teams', {
   group:       varchar('group', { length: 20 }),
   teamType:    teamTypeEnum('team_type').notNull().default('national'),
   countryCode: varchar('country_code', { length: 10 }),
-  externalId:  integer('external_id').unique(),
-  createdAt:   timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt:   timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  externalId:       integer('external_id').unique(),
+  transfermarktId:  integer('transfermarkt_id'),
+  squadMarketValue: integer('squad_market_value'),
+  createdAt:        timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt:        timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
 // ─── PLAYERS ─────────────────────────────────────────────────────────────────
@@ -87,6 +89,30 @@ export const players = pgTable('players', {
   updatedAt:   timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({
   teamIdIdx: index('players_team_id_idx').on(t.teamId),
+}))
+
+// ─── PLAYER STATS ────────────────────────────────────────────────────────────
+
+export const playerStats = pgTable('player_stats', {
+  id:           uuid('id').primaryKey().defaultRandom(),
+  playerId:     uuid('player_id').notNull().references(() => players.id, { onDelete: 'cascade' }),
+  season:       smallint('season').notNull(),
+  leagueName:   varchar('league_name', { length: 100 }).notNull(),
+  appearances:  smallint('appearances').notNull().default(0),
+  goals:        smallint('goals').notNull().default(0),
+  assists:      smallint('assists').notNull().default(0),
+  conceded:     smallint('conceded').notNull().default(0),
+  passes:       integer('passes').notNull().default(0),
+  keyPasses:    smallint('key_passes').notNull().default(0),
+  passAccuracy: smallint('pass_accuracy'),
+  duelsTotal:   integer('duels_total').notNull().default(0),
+  duelsWon:     integer('duels_won').notNull().default(0),
+  yellowCards:  smallint('yellow_cards').notNull().default(0),
+  redCards:     smallint('red_cards').notNull().default(0),
+  createdAt:    timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt:    timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  playerSeasonLeagueIdx: uniqueIndex('player_stats_player_season_league_idx').on(t.playerId, t.season, t.leagueName),
 }))
 
 // ─── VENUES ───────────────────────────────────────────────────────────────────
@@ -379,8 +405,13 @@ export const teamsRelations = relations(teams, ({ many }) => ({
   players: many(players),
 }))
 
-export const playersRelations = relations(players, ({ one }) => ({
+export const playersRelations = relations(players, ({ one, many }) => ({
   team: one(teams, { fields: [players.teamId], references: [teams.id] }),
+  stats: many(playerStats),
+}))
+
+export const playerStatsRelations = relations(playerStats, ({ one }) => ({
+  player: one(players, { fields: [playerStats.playerId], references: [players.id] }),
 }))
 
 export const matchesRelations = relations(matches, ({ one, many }) => ({
@@ -462,5 +493,9 @@ export const syncState = pgTable('sync_state', {
   apiCallsDate:         text('api_calls_date').notNull().default(''),
   syncInProgress:       boolean('sync_in_progress').notNull().default(false),
   polymarketSyncEnabled: boolean('polymarket_sync_enabled').notNull().default(false),
-  updatedAt:            timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  playerSyncEnabled:         boolean('player_sync_enabled').notNull().default(false),
+  lastPlayerSyncAt:          timestamp('last_player_sync_at', { withTimezone: true }),
+  transfermarktSyncEnabled:  boolean('transfermarkt_sync_enabled').notNull().default(false),
+  lastTransfermarktSyncAt:   timestamp('last_transfermarkt_sync_at', { withTimezone: true }),
+  updatedAt:                 timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })

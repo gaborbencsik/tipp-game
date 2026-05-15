@@ -486,5 +486,58 @@ export interface ApiFootballTeam {
 
 export interface ApiFootballResponse<T> {
   readonly results: number
+  readonly paging: { readonly current: number; readonly total: number }
   readonly response: readonly T[]
+}
+
+// ─── PLAYER SYNC (api-football.com) ──────────────────────────────────────────
+
+export interface ApiFootballSquadPlayer {
+  readonly id: number
+  readonly name: string
+  readonly age: number | null
+  readonly number: number | null
+  readonly position: string | null
+  readonly photo: string | null
+}
+
+export interface ApiFootballSquad {
+  readonly team: { readonly id: number; readonly name: string; readonly logo: string }
+  readonly players: readonly ApiFootballSquadPlayer[]
+}
+
+export interface ApiFootballPlayerStat {
+  readonly team: { readonly id: number }
+  readonly league: { readonly id: number | null; readonly name: string | null; readonly season: number }
+  readonly games: { readonly appearences: number | null; readonly position: string | null; readonly number: number | null }
+  readonly goals: { readonly total: number | null; readonly assists: number | null; readonly conceded: number | null }
+  readonly passes: { readonly total: number | null; readonly key: number | null; readonly accuracy: number | null }
+  readonly duels: { readonly total: number | null; readonly won: number | null }
+  readonly cards: { readonly yellow: number | null; readonly red: number | null }
+}
+
+export interface ApiFootballPlayerEntry {
+  readonly player: {
+    readonly id: number
+    readonly name: string
+    readonly firstname: string
+    readonly lastname: string
+    readonly age: number | null
+    readonly photo: string | null
+  }
+  readonly statistics: readonly ApiFootballPlayerStat[]
+}
+
+export interface PlayerSyncResult {
+  readonly inserted: number
+  readonly updated: number
+  readonly statsUpserted: number
+  readonly skipped: number
+  readonly errors: readonly string[]
+}
+
+export interface TransfermarktSyncResult {
+  readonly updated: number
+  readonly skipped: number
+  readonly errors: readonly string[]
 }

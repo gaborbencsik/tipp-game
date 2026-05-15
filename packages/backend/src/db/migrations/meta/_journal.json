@@ -183,6 +183,34 @@
       "when": 1778788572284,
       "tag": "0025_rls_market_data_sync_state",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1778874972284,
+      "tag": "0026_rls_subscriptions_and_favorites",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1778961372284,
+      "tag": "0027_player_stats_and_sync",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1779047772284,
+      "tag": "0028_transfermarkt_market_value",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1779134172284,
+      "tag": "0029_player_stats_league_name_unique",
+      "breakpoints": true
     }
   ]
 }
