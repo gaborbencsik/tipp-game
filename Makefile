@@ -1,7 +1,7 @@
 .PHONY: help install dev build test typecheck \
         db-up db-down db-logs db-migrate db-seed db-reset \
         logs ps clean sh-backend sh-frontend sh-db \
-        e2e e2e-ui e2e-down
+        e2e e2e-ui e2e-down sbx sbx-run sbx-rm
 
 # Default target
 help:
@@ -133,3 +133,14 @@ e2e-ui:
 	@until curl -sf http://localhost:5173 > /dev/null 2>&1; do sleep 1; done
 	npx playwright install chromium --with-deps 2>/dev/null || npx playwright install chromium
 	npx playwright test --ui
+
+# ─── Sandbox ────────────────────────────────────────────────────────────────
+
+sbx:
+	sbx create --name hobby --kit ~/kits/my-kit claude .
+
+sbx-run:
+	sbx run hobby
+
+sbx-rm:
+	sbx rm hobby

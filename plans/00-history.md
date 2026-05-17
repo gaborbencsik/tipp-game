@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 100 story kész (Must Have: 31/31, Should Have: 69/82)
+> 101 story kész (Must Have: 31/31, Should Have: 70/82)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -104,3 +104,4 @@
 | UX-009 | Match card vizuális redesign | Should Have |
 | UX-010 | Filter tabs (segmented control) redesign | Should Have |
 | UX-011 | Sidebar redesign (szekciócímkék, hover expand) | Should Have |
+| US-1301-POC | Match Pulse – csapat KPI-ok POC (24 hónapos időablak) | Should Have |
