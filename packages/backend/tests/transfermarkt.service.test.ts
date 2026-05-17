@@ -88,11 +88,11 @@ describe('syncTransfermarktValues', () => {
     mockFetch
       .mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ squadMarketValue: '773.50 M EUR' }),
+        json: async () => ({ data: { squadDetails: { currentMarketValue: { value: 773_500_000 } } } }),
       })
       .mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ squadMarketValue: '120.00 M EUR' }),
+        json: async () => ({ data: { squadDetails: { currentMarketValue: { value: 120_000_000 } } } }),
       })
 
     const { syncTransfermarktValues } = await import('../src/services/transfermarkt.service.js')
@@ -123,7 +123,7 @@ describe('syncTransfermarktValues', () => {
       .mockResolvedValueOnce({ ok: false, status: 500 })
       .mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ squadMarketValue: '120.00 M EUR' }),
+        json: async () => ({ data: { squadDetails: { currentMarketValue: { value: 120_000_000 } } } }),
       })
 
     const { syncTransfermarktValues } = await import('../src/services/transfermarkt.service.js')
@@ -150,7 +150,7 @@ describe('syncTransfermarktValues', () => {
 
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ squadMarketValue: null }),
+      json: async () => ({ data: { squadDetails: { currentMarketValue: { value: null } } } }),
     })
 
     const { syncTransfermarktValues } = await import('../src/services/transfermarkt.service.js')
