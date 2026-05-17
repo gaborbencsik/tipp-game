@@ -58,7 +58,6 @@ async function seed(): Promise<void> {
     { name: 'Peru', shortCode: 'PER', group: 'B', teamType: 'national' as const, countryCode: 'pe' },
     { name: 'Ausztrália', shortCode: 'AUS', group: 'B', teamType: 'national' as const, countryCode: 'au' },
     // Group C
-    { name: 'Mexikó II', shortCode: 'MX2', group: 'C', teamType: 'national' as const, countryCode: 'mx' },
     { name: 'Ecuador', shortCode: 'ECU', group: 'C', teamType: 'national' as const, countryCode: 'ec' },
     { name: 'Venezuela', shortCode: 'VEN', group: 'C', teamType: 'national' as const, countryCode: 've' },
     { name: 'Új-Zéland', shortCode: 'NZL', group: 'C', teamType: 'national' as const, countryCode: 'nz' },
@@ -98,7 +97,6 @@ async function seed(): Promise<void> {
     { name: 'Elefántcsontpart', shortCode: 'CIV', group: 'J', teamType: 'national' as const, countryCode: 'ci' },
     { name: 'Honduras', shortCode: 'HON', group: 'J', teamType: 'national' as const, countryCode: 'hn' },
     // Group K
-    { name: 'Portugália B', shortCode: 'PT2', group: 'K', teamType: 'national' as const, countryCode: 'pt' },
     { name: 'Lengyelország', shortCode: 'POL', group: 'K', teamType: 'national' as const, countryCode: 'pl' },
     { name: 'Ghána', shortCode: 'GHA', group: 'K', teamType: 'national' as const, countryCode: 'gh' },
     { name: 'Uruguay', shortCode: 'URU', group: 'K', teamType: 'national' as const, countryCode: 'uy' },

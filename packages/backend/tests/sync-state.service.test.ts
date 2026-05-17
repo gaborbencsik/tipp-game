@@ -43,6 +43,10 @@ describe('sync-state.service', () => {
         apiCallsDate: null,
         syncInProgress: false,
         polymarketSyncEnabled: false,
+        playerSyncEnabled: false,
+        lastPlayerSyncAt: null,
+        transfermarktSyncEnabled: false,
+        lastTransfermarktSyncAt: null,
       })
     })
 
@@ -55,6 +59,10 @@ describe('sync-state.service', () => {
         apiCallsDate: '2026-06-15',
         syncInProgress: false,
         polymarketSyncEnabled: true,
+        playerSyncEnabled: false,
+        lastPlayerSyncAt: null,
+        transfermarktSyncEnabled: false,
+        lastTransfermarktSyncAt: null,
         updatedAt: new Date(),
       }
       mockDb.select.mockReturnValue({

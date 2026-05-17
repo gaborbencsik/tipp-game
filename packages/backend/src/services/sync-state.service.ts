@@ -10,6 +10,10 @@ export interface SyncStateRow {
   readonly apiCallsDate: string | null
   readonly syncInProgress: boolean
   readonly polymarketSyncEnabled: boolean
+  readonly playerSyncEnabled: boolean
+  readonly lastPlayerSyncAt: Date | null
+  readonly transfermarktSyncEnabled: boolean
+  readonly lastTransfermarktSyncAt: Date | null
 }
 
 const DEFAULT_STATE: SyncStateRow = {
@@ -19,6 +23,10 @@ const DEFAULT_STATE: SyncStateRow = {
   apiCallsDate: null,
   syncInProgress: false,
   polymarketSyncEnabled: false,
+  playerSyncEnabled: false,
+  lastPlayerSyncAt: null,
+  transfermarktSyncEnabled: false,
+  lastTransfermarktSyncAt: null,
 }
 
 export async function getSyncState(): Promise<SyncStateRow> {
@@ -31,6 +39,10 @@ export async function getSyncState(): Promise<SyncStateRow> {
     apiCallsDate: row.apiCallsDate,
     syncInProgress: row.syncInProgress,
     polymarketSyncEnabled: row.polymarketSyncEnabled,
+    playerSyncEnabled: row.playerSyncEnabled,
+    lastPlayerSyncAt: row.lastPlayerSyncAt,
+    transfermarktSyncEnabled: row.transfermarktSyncEnabled,
+    lastTransfermarktSyncAt: row.lastTransfermarktSyncAt,
   }
 }
 
@@ -124,4 +136,48 @@ export async function setPolymarketSyncEnabled(enabled: boolean): Promise<void> 
       polymarketSyncEnabled: enabled,
     })
   }
+}
+
+export async function setPlayerSyncEnabled(enabled: boolean): Promise<void> {
+  const [existing] = await db.select({ id: syncState.id }).from(syncState).limit(1)
+  if (existing) {
+    await db.update(syncState)
+      .set({ playerSyncEnabled: enabled, updatedAt: sql`now()` })
+      .where(eq(syncState.id, existing.id))
+  } else {
+    await db.insert(syncState).values({
+      id: crypto.randomUUID(),
+      playerSyncEnabled: enabled,
+    })
+  }
+}
+
+export async function markPlayerSyncFinished(): Promise<void> {
+  const [existing] = await db.select({ id: syncState.id }).from(syncState).limit(1)
+  if (!existing) return
+  await db.update(syncState)
+    .set({ lastPlayerSyncAt: sql`now()`, updatedAt: sql`now()` })
+    .where(eq(syncState.id, existing.id))
+}
+
+export async function setTransfermarktSyncEnabled(enabled: boolean): Promise<void> {
+  const [existing] = await db.select({ id: syncState.id }).from(syncState).limit(1)
+  if (existing) {
+    await db.update(syncState)
+      .set({ transfermarktSyncEnabled: enabled, updatedAt: sql`now()` })
+      .where(eq(syncState.id, existing.id))
+  } else {
+    await db.insert(syncState).values({
+      id: crypto.randomUUID(),
+      transfermarktSyncEnabled: enabled,
+    })
+  }
+}
+
+export async function markTransfermarktSyncFinished(): Promise<void> {
+  const [existing] = await db.select({ id: syncState.id }).from(syncState).limit(1)
+  if (!existing) return
+  await db.update(syncState)
+    .set({ lastTransfermarktSyncAt: sql`now()`, updatedAt: sql`now()` })
+    .where(eq(syncState.id, existing.id))
 }
