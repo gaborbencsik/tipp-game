@@ -323,7 +323,8 @@ export async function runSync(
   leagueInternalId: string,
   season: number,
   client: FootballApiClient,
-  mode: SyncMode
+  mode: SyncMode,
+  dateRange?: { from?: string; to?: string }
 ): Promise<SyncRunResult> {
   const startedAt = new Date().toISOString()
   const errors: string[] = []
@@ -343,7 +344,12 @@ export async function runSync(
 
   // Step 2: Fetch and upsert fixtures + results
   try {
-    const fixturesResponse = await client.fetchFixtures({ league: leagueExternalId, season })
+    const fixturesResponse = await client.fetchFixtures({
+      league: leagueExternalId,
+      season,
+      ...(dateRange?.from ? { from: dateRange.from } : {}),
+      ...(dateRange?.to ? { to: dateRange.to } : {}),
+    })
     fixturesUpserted = await upsertFixtures(fixturesResponse.response, leagueInternalId)
 
     try {

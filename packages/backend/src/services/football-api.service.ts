@@ -11,6 +11,8 @@ export interface FixtureParams {
   readonly league: number
   readonly season: number
   readonly status?: string
+  readonly from?: string
+  readonly to?: string
 }
 
 export interface TeamParams {
@@ -117,6 +119,8 @@ export function createFootballApiClient(config: FootballApiConfig): FootballApiC
       url.searchParams.set('league', String(params.league))
       url.searchParams.set('season', String(params.season))
       if (params.status) url.searchParams.set('status', params.status)
+      if (params.from) url.searchParams.set('from', params.from)
+      if (params.to) url.searchParams.set('to', params.to)
       return fetchWithRetry(url)
     },
 

@@ -52,6 +52,32 @@ describe('football-api.service', () => {
       expect(result.results).toBe(2)
       expect(result.response).toHaveLength(2)
     })
+
+    it('appends from and to query params when provided', async () => {
+      mockFetch.mockResolvedValueOnce(new Response(JSON.stringify({ results: 0, response: [] }), { status: 200 }))
+
+      const client = createFootballApiClient({ apiKey: 'key', baseUrl: 'https://api.test', timeoutMs: 5000 })
+      await client.fetchFixtures({ league: 10, season: 2026, from: '2026-05-01', to: '2026-07-10' })
+
+      const [url] = mockFetch.mock.calls[0]
+      const urlString = url.toString()
+      expect(urlString).toContain('league=10')
+      expect(urlString).toContain('season=2026')
+      expect(urlString).toContain('from=2026-05-01')
+      expect(urlString).toContain('to=2026-07-10')
+    })
+
+    it('omits from and to when not provided', async () => {
+      mockFetch.mockResolvedValueOnce(new Response(JSON.stringify({ results: 0, response: [] }), { status: 200 }))
+
+      const client = createFootballApiClient({ apiKey: 'key', baseUrl: 'https://api.test', timeoutMs: 5000 })
+      await client.fetchFixtures({ league: 1, season: 2026 })
+
+      const [url] = mockFetch.mock.calls[0]
+      const urlString = url.toString()
+      expect(urlString).not.toContain('from=')
+      expect(urlString).not.toContain('to=')
+    })
   })
 
   describe('fetchTeams', () => {

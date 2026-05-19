@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 103 story kész (Must Have: 31/31, Should Have: 72/82)
+> 104 story kész (Must Have: 31/31, Should Have: 73/82)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -107,3 +107,4 @@
 | US-1301-POC | Match Pulse – csapat KPI-ok POC (24 hónapos időablak) | Should Have |
 | US-1406 | Transfermarkt keret-összérték szinkronizáció | Should Have |
 | UX-020 | Admin sync felület konzisztens redesign + meccs-sync szekció előkészítése | Should Have |
+| US-1404 | Pre-VB edzőmeccsek liga konfigurálása és szinkronizálása | Should Have |

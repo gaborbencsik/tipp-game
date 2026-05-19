@@ -218,6 +218,13 @@
       "when": 1779220572284,
       "tag": "0030_last_polymarket_sync_at",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1779306972284,
+      "tag": "0031_pre_wc_friendly_league",
+      "breakpoints": true
     }
   ]
 }
