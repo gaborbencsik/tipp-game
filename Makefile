@@ -136,11 +136,11 @@ e2e-ui:
 
 # ─── Sandbox ────────────────────────────────────────────────────────────────
 
-sbx:
-	sbx create --name hobby --kit ~/kits/my-kit claude .
+sbx-create:
+	sbx create --name tipp-game --kit ~/kits/my-kit claude .
 
 sbx-run:
-	sbx run hobby
+	sbx run tipp-game
 
 sbx-rm:
-	sbx rm hobby
+	sbx rm tipp-game
