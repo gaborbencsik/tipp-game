@@ -14,6 +14,9 @@ const {
   mockGetSettings,
   mockUpdateSettings,
   mockRun,
+  mockRunPolymarket,
+  mockRunPlayers,
+  mockRunTransfermarkt,
 } = vi.hoisted(() => ({
   mockGetSession: vi.fn().mockResolvedValue({
     data: { session: { access_token: 'mock-token' } },
@@ -23,9 +26,19 @@ const {
     lastSuccessfulSyncAt: null,
     apiCallsToday: 0,
     syncInProgress: false,
+    polymarketSyncEnabled: false,
+    lastPolymarketSyncAt: null,
+    playerSyncEnabled: false,
+    lastPlayerSyncAt: null,
+    transfermarktSyncEnabled: false,
+    lastTransfermarktSyncAt: null,
+    configuredLeagues: [],
   }),
   mockUpdateSettings: vi.fn().mockResolvedValue({ mode: 'adaptive' }),
   mockRun: vi.fn().mockResolvedValue({ results: [] }),
+  mockRunPolymarket: vi.fn().mockResolvedValue({ synced: 0, failed: 0 }),
+  mockRunPlayers: vi.fn().mockResolvedValue({ inserted: 0, updated: 0, statsUpserted: 0 }),
+  mockRunTransfermarkt: vi.fn().mockResolvedValue({ updated: 0, skipped: 0 }),
 }))
 
 vi.mock('@/lib/supabase', () => ({
@@ -48,6 +61,9 @@ vi.mock('@/api/index', () => ({
         getSettings: (...args: unknown[]) => mockGetSettings(...args),
         updateSettings: (...args: unknown[]) => mockUpdateSettings(...args),
         run: (...args: unknown[]) => mockRun(...args),
+        runPolymarket: (...args: unknown[]) => mockRunPolymarket(...args),
+        runPlayers: (...args: unknown[]) => mockRunPlayers(...args),
+        runTransfermarkt: (...args: unknown[]) => mockRunTransfermarkt(...args),
       },
     },
   },
@@ -64,6 +80,13 @@ async function mountView(settingsOverride?: Record<string, unknown>) {
       lastSuccessfulSyncAt: null,
       apiCallsToday: 0,
       syncInProgress: false,
+      polymarketSyncEnabled: false,
+      lastPolymarketSyncAt: null,
+      playerSyncEnabled: false,
+      lastPlayerSyncAt: null,
+      transfermarktSyncEnabled: false,
+      lastTransfermarktSyncAt: null,
+      configuredLeagues: [],
       ...settingsOverride,
     })
   }
@@ -82,6 +105,13 @@ describe('AdminSyncView', () => {
       lastSuccessfulSyncAt: null,
       apiCallsToday: 0,
       syncInProgress: false,
+      polymarketSyncEnabled: false,
+      lastPolymarketSyncAt: null,
+      playerSyncEnabled: false,
+      lastPlayerSyncAt: null,
+      transfermarktSyncEnabled: false,
+      lastTransfermarktSyncAt: null,
+      configuredLeagues: [],
     })
   })
 
@@ -150,5 +180,112 @@ describe('AdminSyncView', () => {
 
     expect(mockRun).toHaveBeenCalled()
     expect(mockGetSettings).toHaveBeenCalledTimes(2)
+  })
+
+  describe('UX-020 layout', () => {
+    it('renders page title "Adatszinkronizáció"', async () => {
+      const wrapper = await mountView()
+      expect(wrapper.find('h1').text()).toBe('Adatszinkronizáció')
+    })
+
+    it('renders match sync section first', async () => {
+      const wrapper = await mountView()
+      const sections = wrapper.findAll('section[data-testid$="-sync-section"]')
+      expect(sections.length).toBe(4)
+      expect(sections[0]!.attributes('data-testid')).toBe('match-sync-section')
+    })
+
+    it('removes the standalone gray Sync status card', async () => {
+      const wrapper = await mountView()
+      expect(wrapper.find('[data-testid="sync-status-card"]').exists()).toBe(false)
+    })
+
+    it('renders sync mode select inside match sync section', async () => {
+      const wrapper = await mountView()
+      const matchSection = wrapper.find('[data-testid="match-sync-section"]')
+      expect(matchSection.find('#match-sync-mode').exists()).toBe(true)
+    })
+
+    it('shows API calls counter inside match sync section', async () => {
+      const wrapper = await mountView({ apiCallsToday: 42 })
+      const matchSection = wrapper.find('[data-testid="match-sync-section"]')
+      expect(matchSection.text()).toContain('42 / 100')
+    })
+
+    it('shows sync mode help text matching the selected mode', async () => {
+      const wrapper = await mountView({ mode: 'adaptive' })
+      expect(wrapper.text()).toContain('Élő meccs alatt percenként')
+    })
+
+    it('updates help text when mode changes', async () => {
+      const wrapper = await mountView({ mode: 'off' })
+      expect(wrapper.text()).toContain('A cron nem fut')
+    })
+
+    it('disables manual sync button when mode is off', async () => {
+      const wrapper = await mountView({ mode: 'off' })
+      const syncButton = wrapper.findAll('button').find(b => b.text().includes('Szinkronizálás indítása'))!
+      expect(syncButton.attributes('disabled')).toBeDefined()
+      expect(wrapper.text()).toContain('Off módban nem fut')
+    })
+
+    it('renders configured leagues as chips', async () => {
+      const wrapper = await mountView({
+        configuredLeagues: [
+          { name: 'VB', externalId: 1, season: 2026 },
+          { name: 'NB I', externalId: 848, season: 2025 },
+        ],
+      })
+      const chips = wrapper.find('[data-testid="configured-leagues"]')
+      expect(chips.exists()).toBe(true)
+      expect(chips.text()).toContain('VB')
+      expect(chips.text()).toContain('2026')
+      expect(chips.text()).toContain('NB I')
+      expect(chips.text()).toContain('2025')
+    })
+
+    it('shows warning when no leagues are configured', async () => {
+      const wrapper = await mountView({ configuredLeagues: [] })
+      expect(wrapper.text()).toContain('Nincs konfigurált liga')
+    })
+
+    it('shows polymarket "Utolsó futás" with relative time when set', async () => {
+      const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString()
+      const wrapper = await mountView({ lastPolymarketSyncAt: tenMinAgo })
+      const polySection = wrapper.find('[data-testid="polymarket-sync-section"]')
+      expect(polySection.text()).toContain('Utolsó futás')
+      expect(polySection.text()).toContain('10 perce')
+    })
+
+    it('shows polymarket "Még nem futott" placeholder when null', async () => {
+      const wrapper = await mountView({ lastPolymarketSyncAt: null })
+      const polySection = wrapper.find('[data-testid="polymarket-sync-section"]')
+      expect(polySection.text()).toContain('Még nem futott')
+    })
+
+    it('shows toggle frequency label "Aktív (5 percenként)" when polymarket enabled', async () => {
+      const wrapper = await mountView({ polymarketSyncEnabled: true })
+      const polySection = wrapper.find('[data-testid="polymarket-sync-section"]')
+      expect(polySection.text()).toContain('Aktív (5 percenként)')
+    })
+
+    it('shows toggle frequency label "Aktív (napi 1×)" when player sync enabled', async () => {
+      const wrapper = await mountView({ playerSyncEnabled: true })
+      const playerSection = wrapper.find('[data-testid="player-sync-section"]')
+      expect(playerSection.text()).toContain('Aktív (napi 1×)')
+    })
+
+    it('shows toggle frequency label "Aktív (napi 1×)" when transfermarkt enabled', async () => {
+      const wrapper = await mountView({ transfermarktSyncEnabled: true })
+      const tmSection = wrapper.find('[data-testid="transfermarkt-sync-section"]')
+      expect(tmSection.text()).toContain('Aktív (napi 1×)')
+    })
+
+    it('shows "Kikapcsolva" label when toggle is off', async () => {
+      const wrapper = await mountView({ polymarketSyncEnabled: false, playerSyncEnabled: false, transfermarktSyncEnabled: false })
+      expect(wrapper.find('[data-testid="polymarket-sync-section"]').text()).toContain('Kikapcsolva')
+      expect(wrapper.find('[data-testid="player-sync-section"]').text()).toContain('Kikapcsolva')
+      expect(wrapper.find('[data-testid="transfermarkt-sync-section"]').text()).toContain('Kikapcsolva')
+    })
   })
 })

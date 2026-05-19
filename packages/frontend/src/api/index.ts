@@ -442,7 +442,7 @@ export const api = {
     },
     sync: {
       getSettings: (token: string) =>
-        request<{ mode: string; lastSuccessfulSyncAt: string | null; apiCallsToday: number; syncInProgress: boolean; polymarketSyncEnabled: boolean; playerSyncEnabled: boolean; lastPlayerSyncAt: string | null; transfermarktSyncEnabled: boolean; lastTransfermarktSyncAt: string | null }>('/admin/sync/settings', {
+        request<{ mode: string; lastSuccessfulSyncAt: string | null; apiCallsToday: number; syncInProgress: boolean; polymarketSyncEnabled: boolean; lastPolymarketSyncAt: string | null; playerSyncEnabled: boolean; lastPlayerSyncAt: string | null; transfermarktSyncEnabled: boolean; lastTransfermarktSyncAt: string | null; configuredLeagues: Array<{ name: string; externalId: number; season: number }> }>('/admin/sync/settings', {
           headers: { Authorization: `Bearer ${token}` },
         }),
       updateSettings: (token: string, settings: { mode?: string; polymarketSyncEnabled?: boolean; playerSyncEnabled?: boolean; transfermarktSyncEnabled?: boolean }) =>

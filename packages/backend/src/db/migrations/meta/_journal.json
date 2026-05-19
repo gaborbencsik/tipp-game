@@ -211,6 +211,13 @@
       "when": 1779134172284,
       "tag": "0029_player_stats_league_name_unique",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1779220572284,
+      "tag": "0030_last_polymarket_sync_at",
+      "breakpoints": true
     }
   ]
 }

@@ -19,6 +19,7 @@ import {
   markSyncStarted,
   markSyncFinished,
   hasLiveMatch,
+  markPolymarketSyncFinished,
 } from '../src/services/sync-state.service.js'
 
 describe('sync-state.service', () => {
@@ -43,6 +44,7 @@ describe('sync-state.service', () => {
         apiCallsDate: null,
         syncInProgress: false,
         polymarketSyncEnabled: false,
+        lastPolymarketSyncAt: null,
         playerSyncEnabled: false,
         lastPlayerSyncAt: null,
         transfermarktSyncEnabled: false,
@@ -151,6 +153,36 @@ describe('sync-state.service', () => {
 
       await markSyncFinished(true)
       expect(mockDb.update).toHaveBeenCalled()
+    })
+  })
+
+  describe('markPolymarketSyncFinished', () => {
+    it('updates last_polymarket_sync_at when row exists', async () => {
+      const setSpy = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue(undefined) })
+      mockDb.select.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue([{ id: 'uuid-1' }]),
+        }),
+      })
+      mockDb.update.mockReturnValue({ set: setSpy })
+
+      await markPolymarketSyncFinished()
+
+      expect(setSpy).toHaveBeenCalledWith(expect.objectContaining({
+        lastPolymarketSyncAt: expect.anything(),
+      }))
+    })
+
+    it('is a no-op when no row exists', async () => {
+      mockDb.select.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue([]),
+        }),
+      })
+
+      await markPolymarketSyncFinished()
+
+      expect(mockDb.update).not.toHaveBeenCalled()
     })
   })
 

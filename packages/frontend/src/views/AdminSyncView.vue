@@ -1,7 +1,7 @@
 <template>
   <AppLayout>
     <div class="flex items-center justify-between mb-4">
-      <h1 class="text-2xl font-bold">Futball API szinkronizáció</h1>
+      <h1 class="text-2xl font-bold">Adatszinkronizáció</h1>
     </div>
     <div class="flex flex-wrap gap-2 mb-6">
       <router-link to="/admin/stats" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Statisztikák</router-link>
@@ -15,173 +15,87 @@
       <router-link to="/admin/sync" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Szinkron</router-link>
     </div>
 
-    <!-- Sync mode -->
-    <section class="mb-4 p-4 bg-white rounded-lg border">
-      <h2 class="text-sm font-semibold text-gray-700 mb-3">Sync mód</h2>
-      <div class="flex items-center gap-3">
-        <select
-          v-model="syncMode"
-          class="border rounded px-3 py-1.5 text-sm"
-          @change="updateMode"
-        >
-          <option value="off">Off</option>
-          <option value="final_only">Final only</option>
-          <option value="adaptive">Adaptive</option>
-          <option value="full_live">Full live</option>
-        </select>
-        <span v-if="modeLoading" class="text-xs text-gray-400">Mentés...</span>
-        <span v-if="modeSaved" class="text-xs text-green-600">Mentve ✓</span>
-      </div>
-    </section>
+    <!-- ─── Mérkőzés szinkronizáció ─────────────────────────────────────── -->
+    <section class="mb-4 p-4 bg-white rounded-lg border" data-testid="match-sync-section">
+      <h2 class="text-sm font-semibold text-gray-700 mb-3">Mérkőzés szinkronizáció</h2>
 
-    <!-- Polymarket sync toggle -->
-    <section class="mb-4 p-4 bg-white rounded-lg border">
-      <h2 class="text-sm font-semibold text-gray-700 mb-3">Polymarket odds szinkronizáció</h2>
-      <div class="flex items-center gap-3">
-        <label class="relative inline-flex items-center cursor-pointer">
-          <input
-            v-model="polymarketEnabled"
-            type="checkbox"
-            class="sr-only peer"
-            @change="updatePolymarket"
-          />
-          <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-          <span class="ms-2 text-sm text-gray-600">{{ polymarketEnabled ? 'Aktív' : 'Kikapcsolva' }}</span>
-        </label>
-        <span v-if="polymarketSaving" class="text-xs text-gray-400">Mentés...</span>
-        <span v-if="polymarketSaved" class="text-xs text-green-600">Mentve ✓</span>
-      </div>
-      <div class="mt-3 flex items-center gap-3">
-        <button
-          class="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          :disabled="polymarketSyncing"
-          @click="triggerPolymarketSync"
-        >
-          <span v-if="polymarketSyncing">Szinkronizálás...</span>
-          <span v-else>Odds lekérése most</span>
-        </button>
-        <span v-if="polymarketSyncResult" class="text-xs text-green-600">{{ polymarketSyncResult }}</span>
-        <span v-if="polymarketSyncError" class="text-xs text-red-600">{{ polymarketSyncError }}</span>
-      </div>
-      <p class="text-xs text-gray-400 mt-2">5 percenként lekéri a Polymarket odds-okat az összes VB meccshez.</p>
-    </section>
-
-    <!-- Player sync toggle -->
-    <section class="mb-4 p-4 bg-white rounded-lg border">
-      <h2 class="text-sm font-semibold text-gray-700 mb-3">Játékos szinkronizáció</h2>
-      <div class="flex items-center gap-3">
-        <label class="relative inline-flex items-center cursor-pointer">
-          <input
-            v-model="playerSyncEnabled"
-            type="checkbox"
-            class="sr-only peer"
-            @change="updatePlayerSync"
-          />
-          <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-          <span class="ms-2 text-sm text-gray-600">{{ playerSyncEnabled ? 'Aktív (napi 1×)' : 'Kikapcsolva' }}</span>
-        </label>
-        <span v-if="playerSyncSaving" class="text-xs text-gray-400">Mentés...</span>
-        <span v-if="playerSyncSaved" class="text-xs text-green-600">Mentve ✓</span>
-      </div>
-      <div v-if="lastPlayerSyncAt" class="mt-2 text-xs text-gray-500">
-        Utolsó futás: {{ lastPlayerSyncAt.toLocaleString(getDateLocale()) }}
-      </div>
-      <div class="mt-3 flex items-center gap-3">
-        <button
-          class="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          :disabled="playerSyncing"
-          @click="triggerPlayerSync"
-        >
-          <span v-if="playerSyncing">Szinkronizálás...</span>
-          <span v-else>Játékosok szinkronizálása most</span>
-        </button>
-        <span v-if="playerSyncResult" class="text-xs text-green-600">{{ playerSyncResult }}</span>
-        <span v-if="playerSyncError" class="text-xs text-red-600">{{ playerSyncError }}</span>
-      </div>
-      <p class="text-xs text-gray-400 mt-2">Lekéri a válogatott kereteket és statisztikákat az api-football.com-ról.</p>
-    </section>
-
-    <!-- Transfermarkt sync toggle -->
-    <section class="mb-4 p-4 bg-white rounded-lg border">
-      <h2 class="text-sm font-semibold text-gray-700 mb-3">Transfermarkt piaci értékek</h2>
-      <div class="flex items-center gap-3">
-        <label class="relative inline-flex items-center cursor-pointer">
-          <input
-            v-model="transfermarktEnabled"
-            type="checkbox"
-            class="sr-only peer"
-            @change="updateTransfermarkt"
-          />
-          <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-          <span class="ms-2 text-sm text-gray-600">{{ transfermarktEnabled ? 'Aktív (napi 1×)' : 'Kikapcsolva' }}</span>
-        </label>
-        <span v-if="transfermarktSaving" class="text-xs text-gray-400">Mentés...</span>
-        <span v-if="transfermarktSaved" class="text-xs text-green-600">Mentve ✓</span>
-      </div>
-      <div v-if="lastTransfermarktSyncAt" class="mt-2 text-xs text-gray-500">
-        Utolsó futás: {{ lastTransfermarktSyncAt.toLocaleString(getDateLocale()) }}
-      </div>
-      <div class="mt-3 flex items-center gap-3">
-        <button
-          class="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          :disabled="transfermarktSyncing"
-          @click="triggerTransfermarktSync"
-        >
-          <span v-if="transfermarktSyncing">Szinkronizálás...</span>
-          <span v-else>Piaci értékek lekérése most</span>
-        </button>
-        <span v-if="transfermarktSyncResult" class="text-xs text-green-600">{{ transfermarktSyncResult }}</span>
-        <span v-if="transfermarktSyncError" class="text-xs text-red-600">{{ transfermarktSyncError }}</span>
-      </div>
-      <p class="text-xs text-gray-400 mt-2">Lekéri a csapatok keret-összértékét a Transfermarkt API-ból.</p>
-    </section>
-
-    <!-- Sync status -->
-    <section class="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-      <div class="flex items-center justify-between text-sm">
-        <div class="space-y-1">
-          <div class="text-gray-600">
-            <span class="font-medium">Utolsó sync:</span>
-            <span v-if="lastSyncAt" :title="lastSyncAt.toLocaleString(getDateLocale())">
-              {{ lastSyncRelative }}
-            </span>
-            <span v-else class="text-gray-400">Még nem futott</span>
-          </div>
-          <div class="text-gray-600">
-            <span class="font-medium">API hívások:</span>
-            <span :class="apiCallsRatio > 0.8 ? 'text-red-600 font-semibold' : ''">
-              {{ apiCallsToday }} / {{ apiDailyLimit }}
-            </span>
-          </div>
+      <!-- Sync mode + help text -->
+      <div class="flex flex-col gap-1 mb-3">
+        <label for="match-sync-mode" class="text-xs text-gray-600">Szinkron mód</label>
+        <div class="flex items-center gap-3">
+          <select
+            id="match-sync-mode"
+            v-model="syncMode"
+            class="border rounded px-3 py-1.5 text-sm"
+            @change="updateMode"
+          >
+            <option value="off">Off – nincs automatikus futás</option>
+            <option value="final_only">Final only – csak a befejezett meccsek</option>
+            <option value="adaptive">Adaptive – élő meccskor sűrűbben</option>
+            <option value="full_live">Full live – percenként, élőben</option>
+          </select>
+          <span v-if="modeLoading" class="text-xs text-gray-400">Mentés...</span>
+          <span v-if="modeSaved" class="text-xs text-green-600">Mentve ✓</span>
         </div>
-        <div v-if="syncInProgress" class="flex items-center gap-2 text-blue-600 text-xs font-medium">
-          <svg class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+        <p class="text-xs text-gray-400 mt-1">{{ syncModeHelp }}</p>
+      </div>
+
+      <!-- Configured leagues chips -->
+      <div v-if="configuredLeagues.length > 0" class="mb-3">
+        <p class="text-xs text-gray-600 mb-1">Konfigurált ligák:</p>
+        <div class="flex flex-wrap gap-1.5" data-testid="configured-leagues">
+          <span
+            v-for="league in configuredLeagues"
+            :key="league.externalId"
+            class="px-2 py-0.5 text-xs bg-blue-50 text-blue-700 rounded border border-blue-100"
+          >
+            {{ league.name }} <span class="text-blue-400">({{ league.season }})</span>
+          </span>
+        </div>
+      </div>
+      <p v-else class="text-xs text-amber-600 mb-3">
+        Nincs konfigurált liga (állítsd be a FOOTBALL_INTERNAL_*_LEAGUE_ID env változókat).
+      </p>
+
+      <!-- Last run + API quota -->
+      <div class="text-xs text-gray-500 space-y-0.5 mb-3">
+        <div>
+          Utolsó futás:
+          <span v-if="lastSyncAt" :title="lastSyncAt.toLocaleString(getDateLocale())">{{ lastSyncRelative }}</span>
+          <span v-else class="text-gray-400">Még nem futott</span>
+        </div>
+        <div>
+          API hívások:
+          <span :class="apiCallsRatio > 0.8 ? 'text-red-600 font-semibold' : ''">
+            {{ apiCallsToday }} / {{ apiDailyLimit }}
+          </span>
+        </div>
+        <div v-if="syncInProgress" class="flex items-center gap-1 text-blue-600 font-medium">
+          <svg class="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
           </svg>
           Folyamatban...
         </div>
       </div>
-    </section>
 
-    <!-- Manual sync trigger -->
-    <section class="p-4 bg-white rounded-lg border">
-      <h2 class="text-sm font-semibold text-gray-700 mb-3">Manuális szinkronizáció</h2>
-      <button
-        class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        :disabled="syncing || syncMode === 'off'"
-        @click="triggerSync"
-      >
-        <span v-if="syncing">Szinkronizálás...</span>
-        <span v-else>Szinkronizálás indítása</span>
-      </button>
-
-      <p v-if="syncMode === 'off'" class="mt-2 text-xs text-amber-600">
-        A sync mód "Off" — először válts másik módra.
-      </p>
+      <!-- Trigger -->
+      <div class="flex items-center gap-3">
+        <button
+          class="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          :disabled="syncing || syncMode === 'off'"
+          @click="triggerSync"
+        >
+          <span v-if="syncing">Szinkronizálás...</span>
+          <span v-else>Szinkronizálás indítása</span>
+        </button>
+        <span v-if="syncMode === 'off'" class="text-xs text-amber-600">
+          Off módban nem fut — válassz másik módot.
+        </span>
+      </div>
 
       <!-- Results -->
-      <div v-if="syncResults.length > 0" class="mt-4 space-y-3">
+      <div v-if="syncResults.length > 0" class="mt-3 space-y-2">
         <div
           v-for="(result, i) in syncResults"
           :key="i"
@@ -202,8 +116,122 @@
         </div>
       </div>
 
-      <!-- Error -->
-      <p v-if="syncError" class="mt-3 text-sm text-red-600">{{ syncError }}</p>
+      <p v-if="syncError" class="mt-2 text-sm text-red-600">{{ syncError }}</p>
+
+      <p class="text-xs text-gray-400 mt-2">
+        Lekéri a konfigurált ligák csapatait, meccseit és eredményeit az api-football.com-ról.
+      </p>
+    </section>
+
+    <!-- ─── Polymarket odds szinkronizáció ───────────────────────────────── -->
+    <section class="mb-4 p-4 bg-white rounded-lg border" data-testid="polymarket-sync-section">
+      <h2 class="text-sm font-semibold text-gray-700 mb-3">Polymarket odds szinkronizáció</h2>
+      <div class="flex items-center gap-3">
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input
+            v-model="polymarketEnabled"
+            type="checkbox"
+            class="sr-only peer"
+            @change="updatePolymarket"
+          />
+          <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+          <span class="ms-2 text-sm text-gray-600">{{ polymarketEnabled ? 'Aktív (5 percenként)' : 'Kikapcsolva' }}</span>
+        </label>
+        <span v-if="polymarketSaving" class="text-xs text-gray-400">Mentés...</span>
+        <span v-if="polymarketSaved" class="text-xs text-green-600">Mentve ✓</span>
+      </div>
+      <div class="mt-2 text-xs text-gray-500">
+        Utolsó futás:
+        <span v-if="lastPolymarketSyncAt" :title="lastPolymarketSyncAt.toLocaleString(getDateLocale())">{{ relativeTime(lastPolymarketSyncAt) }}</span>
+        <span v-else class="text-gray-400">Még nem futott</span>
+      </div>
+      <div class="mt-3 flex items-center gap-3">
+        <button
+          class="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          :disabled="polymarketSyncing"
+          @click="triggerPolymarketSync"
+        >
+          <span v-if="polymarketSyncing">Szinkronizálás...</span>
+          <span v-else>Odds lekérése most</span>
+        </button>
+        <span v-if="polymarketSyncResult" class="text-xs text-green-600">{{ polymarketSyncResult }}</span>
+        <span v-if="polymarketSyncError" class="text-xs text-red-600">{{ polymarketSyncError }}</span>
+      </div>
+      <p class="text-xs text-gray-400 mt-2">5 percenként lekéri a Polymarket odds-okat az összes VB meccshez.</p>
+    </section>
+
+    <!-- ─── Játékos szinkronizáció ───────────────────────────────────────── -->
+    <section class="mb-4 p-4 bg-white rounded-lg border" data-testid="player-sync-section">
+      <h2 class="text-sm font-semibold text-gray-700 mb-3">Játékos szinkronizáció</h2>
+      <div class="flex items-center gap-3">
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input
+            v-model="playerSyncEnabled"
+            type="checkbox"
+            class="sr-only peer"
+            @change="updatePlayerSync"
+          />
+          <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+          <span class="ms-2 text-sm text-gray-600">{{ playerSyncEnabled ? 'Aktív (napi 1×)' : 'Kikapcsolva' }}</span>
+        </label>
+        <span v-if="playerSyncSaving" class="text-xs text-gray-400">Mentés...</span>
+        <span v-if="playerSyncSaved" class="text-xs text-green-600">Mentve ✓</span>
+      </div>
+      <div class="mt-2 text-xs text-gray-500">
+        Utolsó futás:
+        <span v-if="lastPlayerSyncAt" :title="lastPlayerSyncAt.toLocaleString(getDateLocale())">{{ relativeTime(lastPlayerSyncAt) }}</span>
+        <span v-else class="text-gray-400">Még nem futott</span>
+      </div>
+      <div class="mt-3 flex items-center gap-3">
+        <button
+          class="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          :disabled="playerSyncing"
+          @click="triggerPlayerSync"
+        >
+          <span v-if="playerSyncing">Szinkronizálás...</span>
+          <span v-else>Játékosok szinkronizálása most</span>
+        </button>
+        <span v-if="playerSyncResult" class="text-xs text-green-600">{{ playerSyncResult }}</span>
+        <span v-if="playerSyncError" class="text-xs text-red-600">{{ playerSyncError }}</span>
+      </div>
+      <p class="text-xs text-gray-400 mt-2">Lekéri a válogatott kereteket és statisztikákat az api-football.com-ról.</p>
+    </section>
+
+    <!-- ─── Transfermarkt szinkronizáció ─────────────────────────────────── -->
+    <section class="mb-4 p-4 bg-white rounded-lg border" data-testid="transfermarkt-sync-section">
+      <h2 class="text-sm font-semibold text-gray-700 mb-3">Transfermarkt szinkronizáció</h2>
+      <div class="flex items-center gap-3">
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input
+            v-model="transfermarktEnabled"
+            type="checkbox"
+            class="sr-only peer"
+            @change="updateTransfermarkt"
+          />
+          <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+          <span class="ms-2 text-sm text-gray-600">{{ transfermarktEnabled ? 'Aktív (napi 1×)' : 'Kikapcsolva' }}</span>
+        </label>
+        <span v-if="transfermarktSaving" class="text-xs text-gray-400">Mentés...</span>
+        <span v-if="transfermarktSaved" class="text-xs text-green-600">Mentve ✓</span>
+      </div>
+      <div class="mt-2 text-xs text-gray-500">
+        Utolsó futás:
+        <span v-if="lastTransfermarktSyncAt" :title="lastTransfermarktSyncAt.toLocaleString(getDateLocale())">{{ relativeTime(lastTransfermarktSyncAt) }}</span>
+        <span v-else class="text-gray-400">Még nem futott</span>
+      </div>
+      <div class="mt-3 flex items-center gap-3">
+        <button
+          class="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          :disabled="transfermarktSyncing"
+          @click="triggerTransfermarktSync"
+        >
+          <span v-if="transfermarktSyncing">Szinkronizálás...</span>
+          <span v-else>Piaci értékek lekérése most</span>
+        </button>
+        <span v-if="transfermarktSyncResult" class="text-xs text-green-600">{{ transfermarktSyncResult }}</span>
+        <span v-if="transfermarktSyncError" class="text-xs text-red-600">{{ transfermarktSyncError }}</span>
+      </div>
+      <p class="text-xs text-gray-400 mt-2">Lekéri a csapatok keret-összértékét a Transfermarkt API-ból.</p>
     </section>
   </AppLayout>
 </template>
@@ -225,18 +253,33 @@ interface SyncResult {
   partial: boolean
 }
 
+interface ConfiguredLeague {
+  name: string
+  externalId: number
+  season: number
+}
+
+const SYNC_MODE_HELP: Record<string, string> = {
+  off: 'A cron nem fut, csak kézi indítás.',
+  final_only: 'Csak a már lejátszott meccsek eredményét frissíti.',
+  adaptive: 'Élő meccs alatt percenként, egyébként ritkábban fut.',
+  full_live: 'Folyamatosan, percenként frissít minden meccset.',
+}
+
 const syncMode = ref('off')
 const modeLoading = ref(false)
 const modeSaved = ref(false)
 const syncing = ref(false)
 const syncResults = ref<SyncResult[]>([])
 const syncError = ref('')
+
 const polymarketEnabled = ref(false)
 const polymarketSaving = ref(false)
 const polymarketSaved = ref(false)
 const polymarketSyncing = ref(false)
 const polymarketSyncResult = ref('')
 const polymarketSyncError = ref('')
+const lastPolymarketSyncAt = ref<Date | null>(null)
 
 const playerSyncEnabled = ref(false)
 const playerSyncSaving = ref(false)
@@ -258,19 +301,24 @@ const lastSyncAt = ref<Date | null>(null)
 const apiCallsToday = ref(0)
 const apiDailyLimit = 100
 const syncInProgress = ref(false)
+const configuredLeagues = ref<ConfiguredLeague[]>([])
 
 const apiCallsRatio = computed((): number => apiCallsToday.value / apiDailyLimit)
 
-const lastSyncRelative = computed((): string => {
-  if (!lastSyncAt.value) return ''
-  const diff = Date.now() - lastSyncAt.value.getTime()
+const syncModeHelp = computed((): string => SYNC_MODE_HELP[syncMode.value] ?? '')
+
+function relativeTime(date: Date | null): string {
+  if (!date) return ''
+  const diff = Date.now() - date.getTime()
   const minutes = Math.floor(diff / 60000)
   if (minutes < 1) return 'most'
   if (minutes < 60) return `${minutes} perce`
   const hours = Math.floor(minutes / 60)
   if (hours < 24) return `${hours} órája`
   return `${Math.floor(hours / 24)} napja`
-})
+}
+
+const lastSyncRelative = computed((): string => relativeTime(lastSyncAt.value))
 
 async function getToken(): Promise<string> {
   if (DEV_AUTH_BYPASS) return 'dev-bypass-token'
@@ -286,10 +334,12 @@ async function loadSettings(): Promise<void> {
   apiCallsToday.value = data.apiCallsToday ?? 0
   syncInProgress.value = data.syncInProgress ?? false
   polymarketEnabled.value = data.polymarketSyncEnabled ?? false
+  lastPolymarketSyncAt.value = data.lastPolymarketSyncAt ? new Date(data.lastPolymarketSyncAt) : null
   playerSyncEnabled.value = data.playerSyncEnabled ?? false
   lastPlayerSyncAt.value = data.lastPlayerSyncAt ? new Date(data.lastPlayerSyncAt) : null
   transfermarktEnabled.value = data.transfermarktSyncEnabled ?? false
   lastTransfermarktSyncAt.value = data.lastTransfermarktSyncAt ? new Date(data.lastTransfermarktSyncAt) : null
+  configuredLeagues.value = data.configuredLeagues ?? []
 }
 
 async function updateMode(): Promise<void> {
@@ -320,6 +370,7 @@ async function triggerPolymarketSync(): Promise<void> {
     const token = await getToken()
     const data = await api.admin.sync.runPolymarket(token)
     polymarketSyncResult.value = `Kész: ${data.synced} szinkronizálva, ${data.failed} sikertelen`
+    await loadSettings()
   } catch (err) {
     polymarketSyncError.value = err instanceof Error ? err.message : 'Hiba történt'
   } finally {

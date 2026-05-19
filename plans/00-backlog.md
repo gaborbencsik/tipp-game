@@ -1,6 +1,6 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-05-17
+> Utoljára frissítve: 2026-05-19
 
 ## Nyitott story-k
 
@@ -26,10 +26,9 @@
 | US-1403 | Automatikus játékos-szinkronizáció futball API-ból | Should Have | ~~US-1202~~, ~~US-1203~~ |
 | US-1404 | Pre-VB edzőmeccsek liga konfigurálása és szinkronizálása | Should Have | ~~US-1202~~, ~~US-1203~~ |
 | US-1405 | Tippjeim oldal redesign – személyes statisztikai dashboard | Should Have | — |
-| US-1406 | Transfermarkt keret-összérték szinkronizáció | Should Have | — |
 | US-1502 | Élő meccs eredmény megjelenítés és virtuális pontszámítás | Should Have | — |
 | SEC-002 | HMAC-aláírt meghívó URL-ek | Nice to Have | — |
 
 ---
 
-**Haladás: 101 / 124 story kész** — Must Have: 31/31, Should Have: 70/89, Nice to Have: 0/4
+**Haladás: 103 / 125 story kész** — Must Have: 31/31, Should Have: 72/90, Nice to Have: 0/4

@@ -1,6 +1,6 @@
 import Router from '@koa/router'
 import { serviceTokenMiddleware } from '../middleware/service-token.middleware.js'
-import { getSyncState, markSyncStarted, markSyncFinished, incrementApiCalls, hasLiveMatch, markPlayerSyncFinished, markTransfermarktSyncFinished } from '../services/sync-state.service.js'
+import { getSyncState, markSyncStarted, markSyncFinished, incrementApiCalls, hasLiveMatch, markPolymarketSyncFinished, markPlayerSyncFinished, markTransfermarktSyncFinished } from '../services/sync-state.service.js'
 import { shouldRunSync } from '../services/sync-gate.js'
 import { runAllLeagues } from '../services/sync-runner.js'
 import { syncAllMatchOdds } from '../services/polymarket.service.js'
@@ -54,6 +54,7 @@ internalSyncRouter.post('/polymarket-tick', async (ctx) => {
     return
   }
   const result = await syncAllMatchOdds()
+  await markPolymarketSyncFinished()
   ctx.body = result
 })
 

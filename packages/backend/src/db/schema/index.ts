@@ -493,6 +493,7 @@ export const syncState = pgTable('sync_state', {
   apiCallsDate:         text('api_calls_date').notNull().default(''),
   syncInProgress:       boolean('sync_in_progress').notNull().default(false),
   polymarketSyncEnabled: boolean('polymarket_sync_enabled').notNull().default(false),
+  lastPolymarketSyncAt:      timestamp('last_polymarket_sync_at', { withTimezone: true }),
   playerSyncEnabled:         boolean('player_sync_enabled').notNull().default(false),
   lastPlayerSyncAt:          timestamp('last_player_sync_at', { withTimezone: true }),
   transfermarktSyncEnabled:  boolean('transfermarkt_sync_enabled').notNull().default(false),

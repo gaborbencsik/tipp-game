@@ -10,6 +10,7 @@ export interface SyncStateRow {
   readonly apiCallsDate: string | null
   readonly syncInProgress: boolean
   readonly polymarketSyncEnabled: boolean
+  readonly lastPolymarketSyncAt: Date | null
   readonly playerSyncEnabled: boolean
   readonly lastPlayerSyncAt: Date | null
   readonly transfermarktSyncEnabled: boolean
@@ -23,6 +24,7 @@ const DEFAULT_STATE: SyncStateRow = {
   apiCallsDate: null,
   syncInProgress: false,
   polymarketSyncEnabled: false,
+  lastPolymarketSyncAt: null,
   playerSyncEnabled: false,
   lastPlayerSyncAt: null,
   transfermarktSyncEnabled: false,
@@ -39,6 +41,7 @@ export async function getSyncState(): Promise<SyncStateRow> {
     apiCallsDate: row.apiCallsDate,
     syncInProgress: row.syncInProgress,
     polymarketSyncEnabled: row.polymarketSyncEnabled,
+    lastPolymarketSyncAt: row.lastPolymarketSyncAt,
     playerSyncEnabled: row.playerSyncEnabled,
     lastPlayerSyncAt: row.lastPlayerSyncAt,
     transfermarktSyncEnabled: row.transfermarktSyncEnabled,
@@ -136,6 +139,14 @@ export async function setPolymarketSyncEnabled(enabled: boolean): Promise<void> 
       polymarketSyncEnabled: enabled,
     })
   }
+}
+
+export async function markPolymarketSyncFinished(): Promise<void> {
+  const [existing] = await db.select({ id: syncState.id }).from(syncState).limit(1)
+  if (!existing) return
+  await db.update(syncState)
+    .set({ lastPolymarketSyncAt: sql`now()`, updatedAt: sql`now()` })
+    .where(eq(syncState.id, existing.id))
 }
 
 export async function setPlayerSyncEnabled(enabled: boolean): Promise<void> {

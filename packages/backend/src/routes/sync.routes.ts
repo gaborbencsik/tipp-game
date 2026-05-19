@@ -1,8 +1,8 @@
 import Router from '@koa/router'
 import { authMiddleware } from '../middleware/auth.middleware.js'
 import { adminMiddleware } from '../middleware/admin.middleware.js'
-import { getSyncState, setSyncMode, setPolymarketSyncEnabled, setPlayerSyncEnabled, setTransfermarktSyncEnabled, markSyncStarted, markSyncFinished, incrementApiCalls, markPlayerSyncFinished, markTransfermarktSyncFinished } from '../services/sync-state.service.js'
-import { runAllLeagues } from '../services/sync-runner.js'
+import { getSyncState, setSyncMode, setPolymarketSyncEnabled, setPlayerSyncEnabled, setTransfermarktSyncEnabled, markSyncStarted, markSyncFinished, incrementApiCalls, markPolymarketSyncFinished, markPlayerSyncFinished, markTransfermarktSyncFinished } from '../services/sync-state.service.js'
+import { runAllLeagues, getConfiguredLeagueDescriptors } from '../services/sync-runner.js'
 import { syncAllMatchOdds } from '../services/polymarket.service.js'
 import { syncPlayers } from '../services/player-sync.service.js'
 import { syncTransfermarktValues } from '../services/transfermarkt.service.js'
@@ -24,10 +24,12 @@ syncRouter.get('/settings', async (ctx) => {
     apiCallsToday: state.apiCallsToday,
     syncInProgress: state.syncInProgress,
     polymarketSyncEnabled: state.polymarketSyncEnabled,
+    lastPolymarketSyncAt: state.lastPolymarketSyncAt,
     playerSyncEnabled: state.playerSyncEnabled,
     lastPlayerSyncAt: state.lastPlayerSyncAt,
     transfermarktSyncEnabled: state.transfermarktSyncEnabled,
     lastTransfermarktSyncAt: state.lastTransfermarktSyncAt,
+    configuredLeagues: getConfiguredLeagueDescriptors(),
   }
 })
 
@@ -82,6 +84,7 @@ syncRouter.post('/run', async (ctx) => {
 
 syncRouter.post('/polymarket-run', async (ctx) => {
   const result = await syncAllMatchOdds()
+  await markPolymarketSyncFinished()
   ctx.body = result
 })
 
