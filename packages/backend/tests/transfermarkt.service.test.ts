@@ -1,58 +1,48 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { parseMarketValue } from '../src/services/transfermarkt.service.js'
 
 describe('parseMarketValue', () => {
-  it('parses millions correctly', async () => {
-    const { parseMarketValue } = await import('../src/services/transfermarkt.service.js')
+  it('parses millions correctly', () => {
     expect(parseMarketValue('773.50 M EUR')).toBe(773_500_000)
   })
 
-  it('parses integer millions', async () => {
-    const { parseMarketValue } = await import('../src/services/transfermarkt.service.js')
+  it('parses integer millions', () => {
     expect(parseMarketValue('100 M EUR')).toBe(100_000_000)
   })
 
-  it('parses thousands', async () => {
-    const { parseMarketValue } = await import('../src/services/transfermarkt.service.js')
+  it('parses thousands', () => {
     expect(parseMarketValue('500 K EUR')).toBe(500_000)
   })
 
-  it('parses billions', async () => {
-    const { parseMarketValue } = await import('../src/services/transfermarkt.service.js')
+  it('parses billions', () => {
     expect(parseMarketValue('1.20 B EUR')).toBe(1_200_000_000)
   })
 
-  it('rounds fractional results to integer', async () => {
-    const { parseMarketValue } = await import('../src/services/transfermarkt.service.js')
+  it('rounds fractional results to integer', () => {
     expect(parseMarketValue('1.234 M EUR')).toBe(1_234_000)
   })
 
-  it('handles comma as decimal separator', async () => {
-    const { parseMarketValue } = await import('../src/services/transfermarkt.service.js')
+  it('handles comma as decimal separator', () => {
     expect(parseMarketValue('773,50 M EUR')).toBe(773_500_000)
   })
 
-  it('returns null for null input', async () => {
-    const { parseMarketValue } = await import('../src/services/transfermarkt.service.js')
+  it('returns null for null input', () => {
     expect(parseMarketValue(null)).toBeNull()
   })
 
-  it('returns null for undefined input', async () => {
-    const { parseMarketValue } = await import('../src/services/transfermarkt.service.js')
+  it('returns null for undefined input', () => {
     expect(parseMarketValue(undefined)).toBeNull()
   })
 
-  it('returns null for empty string', async () => {
-    const { parseMarketValue } = await import('../src/services/transfermarkt.service.js')
+  it('returns null for empty string', () => {
     expect(parseMarketValue('')).toBeNull()
   })
 
-  it('returns null for unparseable string', async () => {
-    const { parseMarketValue } = await import('../src/services/transfermarkt.service.js')
+  it('returns null for unparseable string', () => {
     expect(parseMarketValue('N/A')).toBeNull()
   })
 
-  it('returns null for missing unit', async () => {
-    const { parseMarketValue } = await import('../src/services/transfermarkt.service.js')
+  it('returns null for missing unit', () => {
     expect(parseMarketValue('500 EUR')).toBeNull()
   })
 })
@@ -62,12 +52,14 @@ describe('syncTransfermarktValues', () => {
 
   beforeEach(() => {
     vi.resetModules()
+    vi.spyOn(console, 'log').mockImplementation(() => {})
     mockFetch = vi.fn()
     vi.stubGlobal('fetch', mockFetch)
   })
 
   afterEach(() => {
     vi.unstubAllGlobals()
+    vi.restoreAllMocks()
   })
 
   it('updates teams with valid market values', async () => {
