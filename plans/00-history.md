@@ -113,3 +113,4 @@
 | UX-017 | Leadott speciális tipp kártyán UUID helyett játékosnév és határidő megjelenítése | Should Have |
 | US-1402 | Játékos-választó ligaszűrés és szabad szöveges fallback | Should Have |
 | US-1403 | Automatikus játékos-szinkronizáció futball API-ból | Should Have |
+| US-1502 | Élő meccs eredmény megjelenítés és virtuális pontszámítás | Should Have |

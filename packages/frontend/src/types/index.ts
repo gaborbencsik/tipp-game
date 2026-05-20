@@ -64,6 +64,19 @@ export interface MatchesFilters {
   readonly leagueIds?: readonly string[]
 }
 
+export interface VirtualPointEntry {
+  readonly matchId: string
+  readonly scheduledAt: string
+  readonly homeTeam: { readonly shortCode: string; readonly name: string; readonly flagUrl: string | null }
+  readonly awayTeam: { readonly shortCode: string; readonly name: string; readonly flagUrl: string | null }
+  readonly predHomeGoals: number
+  readonly predAwayGoals: number
+  readonly liveHomeScore: number
+  readonly liveAwayScore: number
+  readonly minute: number | null
+  readonly virtualPoints: number
+}
+
 export interface MatchOdds {
   readonly homeTeam: { readonly name: string; readonly odds: number }
   readonly draw: number | null

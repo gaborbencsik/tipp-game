@@ -510,10 +510,52 @@
 
     <!-- Tippjeim tab -->
     <div v-if="activeTab === 'my-predictions'" data-testid="my-predictions-tab">
+      <!-- Élő tippjeim -->
+      <div v-if="virtualPoints.length > 0" data-testid="live-predictions-section" class="mb-6">
+        <h2 class="text-sm font-semibold text-gray-700 mb-2">{{ $t('groupDetail.liveSectionTitle') }}</h2>
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-gray-200 text-gray-500 text-left">
+                <th class="px-4 py-3">{{ $t('groupDetail.matchCol') }}</th>
+                <th class="px-4 py-3 text-center">{{ $t('groupDetail.tipCol') }}</th>
+                <th class="px-4 py-3 text-center">{{ $t('groupDetail.liveScoreCol') }}</th>
+                <th class="px-4 py-3 text-right">{{ $t('groupDetail.pointCol') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="entry in virtualPoints"
+                :key="entry.matchId"
+                data-testid="live-prediction-row"
+                class="border-b border-gray-100 last:border-0"
+              >
+                <td class="px-4 py-3">
+                  <div class="flex flex-col gap-0.5">
+                    <div class="flex items-center gap-2">
+                      <span data-testid="live-badge" class="text-[10px] font-bold bg-red-100 text-red-700 px-1.5 py-0.5 rounded">{{ $t('groupDetail.liveBadge') }}</span>
+                      <span v-if="entry.minute !== null" class="text-xs text-gray-500">{{ $t('groupDetail.liveMinute', { n: entry.minute }) }}</span>
+                    </div>
+                    <span class="font-medium text-gray-800">{{ entry.homeTeam.shortCode }} – {{ entry.awayTeam.shortCode }}</span>
+                  </div>
+                </td>
+                <td class="px-4 py-3 text-center text-gray-600 font-mono">{{ entry.predHomeGoals }}–{{ entry.predAwayGoals }}</td>
+                <td data-testid="live-score" class="px-4 py-3 text-center text-gray-800 font-mono font-semibold">{{ entry.liveHomeScore }}–{{ entry.liveAwayScore }}</td>
+                <td class="px-4 py-3 text-right">
+                  <span data-testid="virtual-points" class="font-semibold" :class="entry.virtualPoints > 0 ? 'text-blue-700' : 'text-gray-400'">
+                    {{ $t('groupDetail.liveVirtualPoints', { n: entry.virtualPoints }) }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <div v-if="groupsStore.myGroupPredictionsLoading" class="text-gray-500">{{ $t('common.loading') }}</div>
       <div v-else-if="groupsStore.myGroupPredictionsError" class="text-red-600">{{ groupsStore.myGroupPredictionsError }}</div>
       <div v-else-if="!myGroupPredictions || myGroupPredictions.predictions.length === 0" data-testid="my-predictions-empty" class="text-gray-500 text-sm">
-        {{ $t('groupDetail.myPredEmpty') }}
+        <span v-if="virtualPoints.length === 0">{{ $t('groupDetail.myPredEmpty') }}</span>
       </div>
       <div v-else>
         <div class="mb-4 text-sm font-medium text-gray-700">
@@ -797,7 +839,7 @@ import { useAuthStore } from '../stores/auth.store.js'
 import { useLeagueFavoritesStore } from '../stores/league-favorites.store.js'
 import { api } from '../api/index.js'
 import { supabase } from '../lib/supabase.js'
-import type { GroupMember, LeaderboardEntry, ScoringConfigInput, SpecialTypeInput, StatPredictionTemplate, GlobalTypeWithSubscription } from '../types/index.js'
+import type { GroupMember, LeaderboardEntry, ScoringConfigInput, SpecialTypeInput, StatPredictionTemplate, GlobalTypeWithSubscription, VirtualPointEntry } from '../types/index.js'
 import { getDateLocale } from '../lib/dateLocale.js'
 
 type Tab = 'leaderboard' | 'my-predictions' | 'members' | 'settings' | 'special'
@@ -1207,9 +1249,47 @@ async function switchToMyPredictionsTab(): Promise<void> {
   if (!groupsStore.myGroupPredictionsMap[groupId]) {
     await groupsStore.fetchMyGroupPredictions(groupId)
   }
+  await fetchVirtualPoints()
+  startVirtualPointsPolling()
 }
 
 const myGroupPredictions = computed(() => groupsStore.myGroupPredictionsMap[groupId] ?? null)
+
+const virtualPoints = ref<VirtualPointEntry[]>([])
+let virtualPointsTimer: ReturnType<typeof setInterval> | null = null
+
+async function fetchVirtualPoints(): Promise<void> {
+  try {
+    const token = await getAccessToken()
+    virtualPoints.value = await api.matches.virtualPoints(token, groupId)
+  } catch {
+    virtualPoints.value = []
+  }
+}
+
+function startVirtualPointsPolling(): void {
+  stopVirtualPointsPolling()
+  virtualPointsTimer = setInterval(() => {
+    if (activeTab.value !== 'my-predictions') {
+      stopVirtualPointsPolling()
+      return
+    }
+    void fetchVirtualPoints()
+  }, 30_000)
+}
+
+function stopVirtualPointsPolling(): void {
+  if (virtualPointsTimer) {
+    clearInterval(virtualPointsTimer)
+    virtualPointsTimer = null
+  }
+}
+
+watch(() => activeTab.value, tab => {
+  if (tab !== 'my-predictions') stopVirtualPointsPolling()
+})
+
+onUnmounted(() => stopVirtualPointsPolling())
 
 onMounted(async () => {
   isLoading.value = true

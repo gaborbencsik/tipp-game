@@ -235,7 +235,12 @@
     "matchCol": "Mérkőzés",
     "tipCol": "Tipp",
     "resultCol": "Eredmény",
-    "pointCol": "Pont"
+    "pointCol": "Pont",
+    "liveSectionTitle": "Élő tippjeim",
+    "liveBadge": "ÉLŐ",
+    "liveScoreCol": "Élő állás",
+    "liveVirtualPoints": "~{n} pont (élő)",
+    "liveMinute": "{n}'"
   },
   "leaderboard": {
     "title": "Ranglista",

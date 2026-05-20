@@ -5,6 +5,8 @@ import { getLeagues } from '../services/leagues.service.js'
 import { getMatchPredictions } from '../services/predictions.service.js'
 import { getTeamsForLeague } from '../services/user-league-favorites.service.js'
 import { getLatestOdds } from '../services/polymarket.service.js'
+import { getVirtualPointsForUserInGroup } from '../services/virtual-points.service.js'
+import { upsertUser } from '../services/user.service.js'
 import type { MatchesFilters, MatchStage, MatchStatus } from '../types/index.js'
 
 const router = new Router()
@@ -44,6 +46,26 @@ router.get('/api/matches/:matchId/odds', authMiddleware, async (ctx) => {
     ctx.body = odds ?? null
   } catch {
     ctx.body = null
+  }
+})
+
+router.get('/api/matches/virtual-points', authMiddleware, async (ctx) => {
+  const groupId = ctx.query['groupId']
+  if (typeof groupId !== 'string' || groupId.length === 0) {
+    ctx.status = 400
+    ctx.body = { error: 'groupId query parameter is required' }
+    return
+  }
+  const dbUser = await upsertUser(ctx.state.user)
+  try {
+    ctx.body = await getVirtualPointsForUserInGroup(groupId, dbUser.id)
+  } catch (err) {
+    if (err instanceof Error && 'status' in err) {
+      ctx.status = (err as { status: number }).status
+      ctx.body = { error: err.message }
+      return
+    }
+    throw err
   }
 })
 

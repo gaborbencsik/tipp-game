@@ -2,6 +2,7 @@ import { sql, eq } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { teams, matches, matchResults, venues, auditLogs } from '../db/schema/index.js'
 import { calculateAndSavePoints, calculateAndSaveGroupPoints } from './scoring.service.js'
+import { upsertLiveState, deleteLiveState, finalizeLiveToResult } from './live-match-state.service.js'
 import type {
   ApiFootballFixture,
   ApiFootballTeam,
@@ -292,15 +293,12 @@ export async function upsertResults(
 
   for (const fixture of apiFixtures) {
     const status = FIXTURE_STATUS_MAP[fixture.fixture.status.short]
-    if (status !== 'finished') {
+    if (status !== 'finished' && status !== 'live' && status !== 'cancelled') {
       continue
     }
 
     const homeGoals = fixture.goals.home
     const awayGoals = fixture.goals.away
-    if (homeGoals === null || awayGoals === null) {
-      continue
-    }
 
     const [match] = await db
       .select({ id: matches.id })
@@ -312,23 +310,34 @@ export async function upsertResults(
       continue
     }
 
+    if (status === 'cancelled') {
+      await deleteLiveState(match.id)
+      continue
+    }
+
+    if (status === 'live') {
+      if (homeGoals === null || awayGoals === null) continue
+      await upsertLiveState({
+        matchId: match.id,
+        homeScore: homeGoals,
+        awayScore: awayGoals,
+        minute: fixture.fixture.status.elapsed,
+        apiStatus: fixture.fixture.status.short,
+      })
+      continue
+    }
+
+    if (homeGoals === null || awayGoals === null) {
+      continue
+    }
+
     const outcomeAfterDraw = derivePenaltyOutcome(fixture.score.penalty)
 
-    await db.insert(matchResults).values({
-      id: crypto.randomUUID(),
+    await finalizeLiveToResult({
       matchId: match.id,
       homeGoals,
       awayGoals,
       outcomeAfterDraw,
-      recordedBy: null,
-    }).onConflictDoUpdate({
-      target: matchResults.matchId,
-      set: {
-        homeGoals: sql`excluded.home_goals`,
-        awayGoals: sql`excluded.away_goals`,
-        outcomeAfterDraw: sql`excluded.outcome_after_draw`,
-        updatedAt: sql`now()`,
-      },
     })
 
     await calculateAndSavePoints(match.id, { homeGoals, awayGoals, outcomeAfterDraw: outcomeAfterDraw ?? null })

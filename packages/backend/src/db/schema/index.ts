@@ -176,6 +176,17 @@ export const matchResults = pgTable('match_results', {
   matchIdIdx: uniqueIndex('match_results_match_id_idx').on(t.matchId),
 }))
 
+// ─── LIVE MATCH STATES ────────────────────────────────────────────────────────
+
+export const liveMatchStates = pgTable('live_match_states', {
+  matchId:    uuid('match_id').primaryKey().references(() => matches.id, { onDelete: 'cascade' }),
+  homeScore:  smallint('home_score').notNull(),
+  awayScore:  smallint('away_score').notNull(),
+  minute:     smallint('minute'),
+  apiStatus:  text('api_status'),
+  updatedAt:  timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
 // ─── MATCH MARKET DATA ───────────────────────────────────────────────────────
 
 export const matchMarketData = pgTable('match_market_data', {
@@ -421,6 +432,7 @@ export const matchesRelations = relations(matches, ({ one, many }) => ({
   venue: one(venues, { fields: [matches.venueId], references: [venues.id] }),
   league: one(leagues, { fields: [matches.leagueId], references: [leagues.id] }),
   result: one(matchResults, { fields: [matches.id], references: [matchResults.matchId] }),
+  liveState: one(liveMatchStates, { fields: [matches.id], references: [liveMatchStates.matchId] }),
   predictions: many(predictions),
 }))
 
@@ -433,6 +445,10 @@ export const leaguesRelations = relations(leagues, ({ many }) => ({
 export const matchResultsRelations = relations(matchResults, ({ one }) => ({
   match: one(matches, { fields: [matchResults.matchId], references: [matches.id] }),
   recordedByUser: one(users, { fields: [matchResults.recordedBy], references: [users.id] }),
+}))
+
+export const liveMatchStatesRelations = relations(liveMatchStates, ({ one }) => ({
+  match: one(matches, { fields: [liveMatchStates.matchId], references: [matches.id] }),
 }))
 
 export const predictionsRelations = relations(predictions, ({ one, many }) => ({

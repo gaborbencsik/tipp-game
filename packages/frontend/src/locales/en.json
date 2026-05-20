@@ -235,7 +235,12 @@
     "matchCol": "Match",
     "tipCol": "Prediction",
     "resultCol": "Result",
-    "pointCol": "Points"
+    "pointCol": "Points",
+    "liveSectionTitle": "My live predictions",
+    "liveBadge": "LIVE",
+    "liveScoreCol": "Live score",
+    "liveVirtualPoints": "~{n} pts (live)",
+    "liveMinute": "{n}'"
   },
   "leaderboard": {
     "title": "Leaderboard",

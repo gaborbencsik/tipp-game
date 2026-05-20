@@ -22,6 +22,12 @@ vi.mock('../src/services/scoring.service.js', () => ({
   calculateAndSaveGroupPoints: (...args: unknown[]) => mockCalculateAndSaveGroupPoints(...args),
 }))
 
+vi.mock('../src/services/live-match-state.service.js', () => ({
+  upsertLiveState: vi.fn().mockResolvedValue(undefined),
+  deleteLiveState: vi.fn().mockResolvedValue(undefined),
+  finalizeLiveToResult: vi.fn().mockResolvedValue(undefined),
+}))
+
 import { db } from '../src/db/client.js'
 import { upsertResults } from '../src/services/sync.service.js'
 
