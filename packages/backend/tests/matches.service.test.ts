@@ -199,6 +199,22 @@ describe('getMatches', () => {
     expect(mockWhere).toHaveBeenCalledOnce()
   })
 
+  it('leagueIds filter (non-empty) → where called once', async () => {
+    mockOrderBy.mockResolvedValue([])
+
+    await getMatches({ leagueIds: ['l1', 'l2'] })
+
+    expect(mockWhere).toHaveBeenCalledOnce()
+  })
+
+  it('leagueIds empty array → does not add inArray condition', async () => {
+    mockOrderBy.mockResolvedValue([])
+
+    await getMatches({ leagueIds: [] })
+
+    expect(mockWhere).toHaveBeenCalledOnce()
+  })
+
   it('venue null → match.venue is null', async () => {
     const row = makeRow()
     row.venues = null as unknown as typeof VENUE

@@ -29,7 +29,7 @@
       </div>
 
       <!-- Desktop: segmented control + league select -->
-      <div class="hidden md:flex items-center gap-3 mb-6">
+      <div v-if="!hasNoUserLeague" class="hidden md:flex items-center gap-3 mb-6">
         <SegmentedControl
           :options="stageFilterOptions"
           :model-value="matchesStore.stageFilter"
@@ -37,21 +37,21 @@
         />
 
         <select
-          v-if="favStore.leagues.length > 1"
+          v-if="userLeagues.length > 1"
           :value="matchesStore.leagueFilter ?? ''"
           class="ml-auto h-10 px-3 text-sm text-gray-900 bg-gray-50 border border-gray-300 rounded-lg transition-all duration-150 focus:border-blue-500 focus:bg-white focus:ring-3 focus:ring-blue-500/10 focus:outline-none"
           data-testid="league-filter"
           @change="matchesStore.leagueFilter = ($event.target as HTMLSelectElement).value || null"
         >
           <option value="">{{ $t('matches.allLeagues') }}</option>
-          <option v-for="league in favStore.leagues" :key="league.id" :value="league.id">
+          <option v-for="league in userLeagues" :key="league.id" :value="league.id">
             {{ league.name }}
           </option>
         </select>
       </div>
 
       <!-- Mobile: compact selects -->
-      <div class="flex md:hidden gap-2 mb-4">
+      <div v-if="!hasNoUserLeague" class="flex md:hidden gap-2 mb-4">
         <select
           :value="matchesStore.stageFilter ?? ''"
           class="flex-1 h-10 px-3 text-sm text-gray-900 bg-gray-50 border border-gray-300 rounded-lg transition-all duration-150 focus:border-blue-500 focus:bg-white focus:ring-3 focus:ring-blue-500/10 focus:outline-none"
@@ -60,14 +60,14 @@
           <option v-for="opt in stageFilterOptions" :key="opt.value ?? '__null__'" :value="opt.value ?? ''">{{ opt.label }}</option>
         </select>
         <select
-          v-if="favStore.leagues.length > 1"
+          v-if="userLeagues.length > 1"
           :value="matchesStore.leagueFilter ?? ''"
           class="flex-1 h-10 px-3 text-sm text-gray-900 bg-gray-50 border border-gray-300 rounded-lg transition-all duration-150 focus:border-blue-500 focus:bg-white focus:ring-3 focus:ring-blue-500/10 focus:outline-none"
           data-testid="league-filter-mobile"
           @change="matchesStore.leagueFilter = ($event.target as HTMLSelectElement).value || null"
         >
           <option value="">{{ $t('matches.allLeagues') }}</option>
-          <option v-for="league in favStore.leagues" :key="league.id" :value="league.id">
+          <option v-for="league in userLeagues" :key="league.id" :value="league.id">
             {{ league.name }}
           </option>
         </select>
@@ -82,7 +82,18 @@
         <button class="ml-auto text-amber-400 hover:text-amber-600 text-lg leading-none" @click="dismissAlertBanner">&times;</button>
       </div>
 
-      <div v-if="matchesStore.isLoading" class="flex justify-center py-16">
+      <div v-if="hasNoUserLeague" class="text-center py-16" data-testid="no-group-league-cta">
+        <p class="text-gray-700 font-medium mb-2">{{ $t('matches.noGroupLeagueTitle') }}</p>
+        <p class="text-gray-500 mb-4">{{ $t('matches.noGroupLeagueCta') }}</p>
+        <router-link
+          to="/app/groups"
+          class="inline-block px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700"
+        >
+          {{ $t('matches.noGroupLeagueLink') }}
+        </router-link>
+      </div>
+
+      <div v-else-if="matchesStore.isLoading" class="flex justify-center py-16">
         <div data-testid="spinner" class="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
       </div>
 
@@ -371,6 +382,18 @@ const autosaveTimers: Record<string, ReturnType<typeof setTimeout>> = {}
 const draftOutcomes = ref<Record<string, MatchOutcome | null>>({})
 const favBannerDismissed = ref(false)
 
+type UserLeague = { readonly id: string; readonly name: string; readonly shortName: string }
+
+const userLeagues = computed<readonly UserLeague[]>(() => {
+  const seen = new Map<string, UserLeague>()
+  for (const g of groupsStore.groups) {
+    if (g.league && !seen.has(g.league.id)) seen.set(g.league.id, g.league)
+  }
+  return [...seen.values()]
+})
+
+const hasNoUserLeague = computed((): boolean => userLeagues.value.length === 0)
+
 const showFavBanner = computed((): boolean => {
   if (favBannerDismissed.value) return false
   if (favStore.leagues.length === 0) return false
@@ -460,12 +483,28 @@ onMounted(async () => {
   } catch {
     // ignore
   }
-  await matchesStore.fetchMatches()
+
+  try {
+    if (groupsStore.groups.length === 0) await groupsStore.fetchMyGroups()
+  } catch {
+    // tolerate — userLeagues will be empty, empty state CTA handles it
+  }
+
+  const userLeagueIdSet = new Set(
+    groupsStore.groups.map(g => g.league?.id).filter((id): id is string => Boolean(id)),
+  )
+  const userLeagueIds = [...userLeagueIdSet]
+
+  if (userLeagueIds.length === 0) {
+    matchesStore.matches = []
+    return
+  }
+
+  await matchesStore.fetchMatches(userLeagueIds)
   await predictionsStore.fetchMyPredictions()
   initDrafts()
 
   try {
-    if (groupsStore.groups.length === 0) await groupsStore.fetchMyGroups()
     await Promise.all(
       groupsStore.groups.map(g => groupsStore.fetchSpecialPredictions(g.id))
     )
@@ -479,17 +518,18 @@ onMounted(async () => {
     // silent — fav banner simply won't show
   }
 
-  const userLeagueIds = new Set(groupsStore.groups.map(g => g.league?.id).filter(Boolean))
   try {
     const storedLeague = localStorage.getItem(LS_LEAGUE_KEY)
-    if (storedLeague) {
+    if (storedLeague && userLeagueIdSet.has(storedLeague)) {
       matchesStore.leagueFilter = storedLeague
-    } else if (userLeagueIds.size === 1) {
-      matchesStore.leagueFilter = [...userLeagueIds][0]!
+    } else if (userLeagueIds.length === 1) {
+      matchesStore.leagueFilter = userLeagueIds[0]!
+    } else {
+      matchesStore.leagueFilter = null
     }
   } catch {
-    if (userLeagueIds.size === 1) {
-      matchesStore.leagueFilter = [...userLeagueIds][0]!
+    if (userLeagueIds.length === 1) {
+      matchesStore.leagueFilter = userLeagueIds[0]!
     }
   }
 })

@@ -1,5 +1,5 @@
 import { alias } from 'drizzle-orm/pg-core'
-import { and, eq, isNull } from 'drizzle-orm'
+import { and, eq, inArray, isNull } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { matches, teams, venues, matchResults, leagues } from '../db/schema/index.js'
 import { calculateAndSavePoints, calculateAndSaveGroupPoints } from './scoring.service.js'
@@ -22,6 +22,9 @@ export async function getMatches(filters: MatchesFilters = {}): Promise<Match[]>
   if (filters.stage) conditions.push(eq(matches.stage, filters.stage))
   if (filters.status) conditions.push(eq(matches.status, filters.status))
   if (filters.leagueId) conditions.push(eq(matches.leagueId, filters.leagueId))
+  if (filters.leagueIds && filters.leagueIds.length > 0) {
+    conditions.push(inArray(matches.leagueId, [...filters.leagueIds]))
+  }
 
   const rows = await db
     .select()

@@ -90,6 +90,9 @@ export const api = {
       if (filters?.stage) params.set('stage', filters.stage)
       if (filters?.status) params.set('status', filters.status)
       if (filters?.leagueId) params.set('leagueId', filters.leagueId)
+      if (filters?.leagueIds) {
+        for (const id of filters.leagueIds) params.append('leagueIds', id)
+      }
       const query = params.toString() ? `?${params.toString()}` : ''
       return request<Match[]>(`/matches${query}`, {
         headers: { Authorization: `Bearer ${token}` },

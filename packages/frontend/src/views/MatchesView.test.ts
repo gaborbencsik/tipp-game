@@ -63,13 +63,15 @@ vi.mock('@/stores/groups.store', () => ({
   }),
 }))
 
+const DEFAULT_LEAGUE = { id: 'l-default', name: 'Default League', shortName: 'DEF' }
+
 // scheduled match with future kickoff (tomorrow = within 7 days)
 const MATCH_SCHEDULED: Match = {
   id: 'match-sched',
   homeTeam: { id: 'ht3', name: 'Brazil', shortCode: 'BRA', flagUrl: null, teamType: 'national' as const, countryCode: 'br' },
   awayTeam: { id: 'at3', name: 'Argentina', shortCode: 'ARG', flagUrl: null, teamType: 'national' as const, countryCode: 'ar' },
   venue: { name: 'Stadium', city: 'Sao Paulo', imageUrl: null },
-  league: null,
+  league: DEFAULT_LEAGUE,
   stage: 'final',
   groupName: null,
   matchNumber: 64,
@@ -84,7 +86,7 @@ const MATCH_FAR_FUTURE: Match = {
   homeTeam: { id: 'ht5', name: 'Portugal', shortCode: 'POR', flagUrl: null, teamType: 'national' as const, countryCode: 'pt' },
   awayTeam: { id: 'at5', name: 'Belgium', shortCode: 'BEL', flagUrl: null, teamType: 'national' as const, countryCode: 'be' },
   venue: null,
-  league: null,
+  league: DEFAULT_LEAGUE,
   stage: 'group',
   groupName: 'C',
   matchNumber: 10,
@@ -98,7 +100,7 @@ const MATCH_LIVE: Match = {
   homeTeam: { id: 'ht1', name: 'Germany', shortCode: 'GER', flagUrl: null, teamType: 'national' as const, countryCode: 'de' },
   awayTeam: { id: 'at1', name: 'France', shortCode: 'FRA', flagUrl: null, teamType: 'national' as const, countryCode: 'fr' },
   venue: { name: 'Arena', city: 'Munich', imageUrl: null },
-  league: null,
+  league: DEFAULT_LEAGUE,
   stage: 'group',
   groupName: 'A',
   matchNumber: 1,
@@ -112,7 +114,7 @@ const MATCH_FINISHED: Match = {
   homeTeam: { id: 'ht2', name: 'Spain', shortCode: 'ESP', flagUrl: null, teamType: 'national' as const, countryCode: 'es' },
   awayTeam: { id: 'at2', name: 'Italy', shortCode: 'ITA', flagUrl: null, teamType: 'national' as const, countryCode: 'it' },
   venue: null,
-  league: null,
+  league: DEFAULT_LEAGUE,
   stage: 'group',
   groupName: 'B',
   matchNumber: 2,
@@ -137,9 +139,17 @@ function buildRouter() {
   return buildTestRouter({ '/app/matches': MatchesView })
 }
 
+const DEFAULT_GROUP_WITH_LEAGUE = {
+  id: 'g-default', name: 'Default', description: null, inviteCode: 'X', inviteActive: true,
+  createdBy: 'u1', memberCount: 2, isAdmin: false, userRank: null, favoriteTeamDoublePoints: false,
+  league: { id: 'l-default', name: 'Default League', shortName: 'DEF' },
+  createdAt: '2026-01-01T00:00:00.000Z',
+} as unknown as import('@/types/index').Group
+
 async function mountView(apiMatches: Match[] = [], apiPredictions: Prediction[] = []) {
   mockMatchesList.mockResolvedValue(apiMatches)
   mockPredictionsMine.mockResolvedValue(apiPredictions)
+  if (mockGroupsGroups.length === 0) mockGroupsGroups.push(DEFAULT_GROUP_WITH_LEAGUE)
   const pinia = createPinia()
   setActivePinia(pinia)
   const wrapper = mount(MatchesView, { global: { plugins: [pinia, buildRouter()] } })
@@ -168,6 +178,7 @@ describe('MatchesView', () => {
   it('spinner visible during loading', async () => {
     let resolveList!: (v: Match[]) => void
     mockMatchesList.mockReturnValue(new Promise<Match[]>(res => { resolveList = res }))
+    mockGroupsGroups.push(DEFAULT_GROUP_WITH_LEAGUE)
     const pinia = createPinia()
     setActivePinia(pinia)
     const wrapper = mount(MatchesView, { global: { plugins: [pinia, buildRouter()] } })
@@ -230,6 +241,7 @@ describe('MatchesView', () => {
 
   it('error → error message displayed', async () => {
     mockMatchesList.mockRejectedValue(new Error('Hálózati hiba'))
+    mockGroupsGroups.push(DEFAULT_GROUP_WITH_LEAGUE)
     const pinia = createPinia()
     setActivePinia(pinia)
     const wrapper = mount(MatchesView, { global: { plugins: [pinia, buildRouter()] } })
@@ -358,28 +370,25 @@ describe('MatchesView', () => {
 
   // ─── League filter ───────────────────────────────────────────────────────────
 
-  it('league select visible when >1 league', async () => {
-    mockLeaguesList.mockResolvedValue([
-      { id: 'l1', name: 'World Cup 2026', shortName: 'WC26', createdAt: '', updatedAt: '' },
-      { id: 'l2', name: 'Euro 2026', shortName: 'EU26', createdAt: '', updatedAt: '' },
-    ])
+  it('league select visible when >1 user-group league', async () => {
+    mockGroupsGroups.push(
+      { id: 'g1', name: 'A', description: null, inviteCode: 'X', inviteActive: true, createdBy: 'u1', memberCount: 2, isAdmin: false, userRank: null, favoriteTeamDoublePoints: false, league: { id: 'l1', name: 'World Cup 2026', shortName: 'WC26' }, createdAt: '2026-01-01T00:00:00.000Z' } as unknown as import('@/types/index').Group,
+      { id: 'g2', name: 'B', description: null, inviteCode: 'Y', inviteActive: true, createdBy: 'u1', memberCount: 3, isAdmin: false, userRank: null, favoriteTeamDoublePoints: false, league: { id: 'l2', name: 'Euro 2026', shortName: 'EU26' }, createdAt: '2026-01-01T00:00:00.000Z' } as unknown as import('@/types/index').Group,
+    )
     const { wrapper } = await mountView([MATCH_SCHEDULED])
     expect(wrapper.find('[data-testid="league-filter"]').exists()).toBe(true)
   })
 
-  it('league select hidden when ≤1 league', async () => {
-    mockLeaguesList.mockResolvedValue([
-      { id: 'l1', name: 'World Cup 2026', shortName: 'WC26', createdAt: '', updatedAt: '' },
-    ])
+  it('league select hidden when ≤1 user-group league', async () => {
     const { wrapper } = await mountView([MATCH_SCHEDULED])
     expect(wrapper.find('[data-testid="league-filter"]').exists()).toBe(false)
   })
 
   it('selecting a league sets matchesStore.leagueFilter', async () => {
-    mockLeaguesList.mockResolvedValue([
-      { id: 'l1', name: 'World Cup 2026', shortName: 'WC26', createdAt: '', updatedAt: '' },
-      { id: 'l2', name: 'Euro 2026', shortName: 'EU26', createdAt: '', updatedAt: '' },
-    ])
+    mockGroupsGroups.push(
+      { id: 'g1', name: 'A', description: null, inviteCode: 'X', inviteActive: true, createdBy: 'u1', memberCount: 2, isAdmin: false, userRank: null, favoriteTeamDoublePoints: false, league: { id: 'l1', name: 'World Cup 2026', shortName: 'WC26' }, createdAt: '2026-01-01T00:00:00.000Z' } as unknown as import('@/types/index').Group,
+      { id: 'g2', name: 'B', description: null, inviteCode: 'Y', inviteActive: true, createdBy: 'u1', memberCount: 3, isAdmin: false, userRank: null, favoriteTeamDoublePoints: false, league: { id: 'l2', name: 'Euro 2026', shortName: 'EU26' }, createdAt: '2026-01-01T00:00:00.000Z' } as unknown as import('@/types/index').Group,
+    )
     const { wrapper, matchesStore } = await mountView([MATCH_SCHEDULED])
     const select = wrapper.find('[data-testid="league-filter"]')
     await select.setValue('l2')
@@ -387,10 +396,10 @@ describe('MatchesView', () => {
   })
 
   it('selecting "Összes liga" resets leagueFilter to null', async () => {
-    mockLeaguesList.mockResolvedValue([
-      { id: 'l1', name: 'World Cup 2026', shortName: 'WC26', createdAt: '', updatedAt: '' },
-      { id: 'l2', name: 'Euro 2026', shortName: 'EU26', createdAt: '', updatedAt: '' },
-    ])
+    mockGroupsGroups.push(
+      { id: 'g1', name: 'A', description: null, inviteCode: 'X', inviteActive: true, createdBy: 'u1', memberCount: 2, isAdmin: false, userRank: null, favoriteTeamDoublePoints: false, league: { id: 'l1', name: 'World Cup 2026', shortName: 'WC26' }, createdAt: '2026-01-01T00:00:00.000Z' } as unknown as import('@/types/index').Group,
+      { id: 'g2', name: 'B', description: null, inviteCode: 'Y', inviteActive: true, createdBy: 'u1', memberCount: 3, isAdmin: false, userRank: null, favoriteTeamDoublePoints: false, league: { id: 'l2', name: 'Euro 2026', shortName: 'EU26' }, createdAt: '2026-01-01T00:00:00.000Z' } as unknown as import('@/types/index').Group,
+    )
     const { wrapper, matchesStore } = await mountView([MATCH_SCHEDULED])
     matchesStore.leagueFilter = 'l1'
     const select = wrapper.find('[data-testid="league-filter"]')
@@ -400,10 +409,15 @@ describe('MatchesView', () => {
 
   // ─── Default league filter (US-611) ──────────────────────────────────────────
 
-  it('no groups → leagueFilter stays null', async () => {
-    mockGroupsGroups.length = 0
-    const { matchesStore } = await mountView([MATCH_SCHEDULED])
-    expect(matchesStore.leagueFilter).toBeNull()
+  it('no groups → empty state CTA visible', async () => {
+    // Override mountView default by clearing groups in a custom mount
+    mockMatchesList.mockResolvedValue([])
+    mockPredictionsMine.mockResolvedValue([])
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    const wrapper = mount(MatchesView, { global: { plugins: [pinia, buildRouter()] } })
+    await flushPromises()
+    expect(wrapper.find('[data-testid="no-group-league-cta"]').exists()).toBe(true)
   })
 
   it('1 group with 1 league → leagueFilter auto-set to that league', async () => {

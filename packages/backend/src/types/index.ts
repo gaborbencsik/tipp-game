@@ -110,6 +110,7 @@ export interface MatchesFilters {
   readonly stage?: MatchStage
   readonly status?: MatchStatus
   readonly leagueId?: string
+  readonly leagueIds?: readonly string[]
 }
 
 export interface MatchInput {

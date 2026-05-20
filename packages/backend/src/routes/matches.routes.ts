@@ -11,10 +11,17 @@ const router = new Router()
 
 router.get('/api/matches', authMiddleware, async (ctx) => {
   const { stage, status, leagueId } = ctx.query as Record<string, string | undefined>
+  const rawLeagueIds = ctx.query['leagueIds']
+  const leagueIds = Array.isArray(rawLeagueIds)
+    ? rawLeagueIds.filter((v): v is string => typeof v === 'string' && v.length > 0)
+    : typeof rawLeagueIds === 'string' && rawLeagueIds.length > 0
+      ? [rawLeagueIds]
+      : undefined
   const filters: MatchesFilters = {
     ...(stage ? { stage: stage as MatchStage } : {}),
     ...(status ? { status: status as MatchStatus } : {}),
     ...(leagueId ? { leagueId } : {}),
+    ...(leagueIds && leagueIds.length > 0 ? { leagueIds } : {}),
   }
   ctx.body = await getMatches(filters)
 })

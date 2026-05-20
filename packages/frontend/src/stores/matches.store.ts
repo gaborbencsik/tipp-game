@@ -54,12 +54,15 @@ export const useMatchesStore = defineStore('matches', () => {
     }))
   })
 
-  async function fetchMatches(): Promise<void> {
+  async function fetchMatches(leagueIds?: readonly string[]): Promise<void> {
     isLoading.value = true
     error.value = null
     try {
       const token = await getAccessToken()
-      matches.value = await api.matches.list(token)
+      matches.value = await api.matches.list(
+        token,
+        leagueIds && leagueIds.length > 0 ? { leagueIds } : undefined,
+      )
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Ismeretlen hiba'
     } finally {
