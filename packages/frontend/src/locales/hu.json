@@ -317,7 +317,8 @@
   },
   "playerSelect": {
     "placeholder": "Keresés játékosra...",
-    "noResults": "Nincs ilyen játékos"
+    "noResults": "Nincs ilyen játékos",
+    "freeTextPlaceholder": "Írd be a játékos nevét"
   },
   "teamSelect": {
     "placeholder": "Válassz csapatot..."

@@ -317,7 +317,8 @@
   },
   "playerSelect": {
     "placeholder": "Search for a player...",
-    "noResults": "No players found"
+    "noResults": "No players found",
+    "freeTextPlaceholder": "Enter the player's name"
   },
   "teamSelect": {
     "placeholder": "Select a team..."

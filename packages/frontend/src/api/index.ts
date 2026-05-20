@@ -38,8 +38,8 @@ export const api = {
       }),
   },
   players: {
-    list: (token: string) =>
-      request<Player[]>('/players', {
+    list: (token: string, leagueId?: string) =>
+      request<Player[]>(`/players${leagueId ? `?leagueId=${encodeURIComponent(leagueId)}` : ''}`, {
         headers: { Authorization: `Bearer ${token}` },
       }),
   },

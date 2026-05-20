@@ -111,3 +111,4 @@
 | US-1404B | Pre-VB fixture szűrés – statikus 66-os fixture lista, 3-way split | Should Have |
 | UX-020 | Mérkőzések oldal liga-szűrés javítása – csoport-ligák alapú szűrés | Should Have |
 | UX-017 | Leadott speciális tipp kártyán UUID helyett játékosnév és határidő megjelenítése | Should Have |
+| US-1402 | Játékos-választó ligaszűrés és szabad szöveges fallback | Should Have |

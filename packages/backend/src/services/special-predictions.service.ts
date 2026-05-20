@@ -1,6 +1,7 @@
 import { and, eq, isNull, inArray } from 'drizzle-orm'
 import { db } from '../db/client.js'
-import { groups, groupMembers, specialPredictionTypes, specialPredictions, teams, players, groupGlobalTypeSubscriptions } from '../db/schema/index.js'
+import { groups, groupMembers, specialPredictionTypes, specialPredictions, teams, players, groupGlobalTypeSubscriptions, groupLeagues } from '../db/schema/index.js'
+import { countPlayersForLeague } from './players.service.js'
 import type { SpecialPrediction, SpecialPredictionInput, SpecialPredictionInputType, SpecialPredictionWithType } from '../types/index.js'
 
 class AppError extends Error {
@@ -214,17 +215,31 @@ export async function upsertPrediction(
   }
 
   if (type.inputType === 'player_select') {
-    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-    if (!UUID_RE.test(answer)) {
-      throw new AppError(400, 'Invalid player id')
-    }
-    const playerRows = await db
-      .select({ id: players.id })
-      .from(players)
-      .where(eq(players.id, answer))
+    const groupLeagueRows = await db
+      .select({ leagueId: groupLeagues.leagueId })
+      .from(groupLeagues)
+      .where(eq(groupLeagues.groupId, groupId))
       .limit(1)
-    if (!playerRows[0]) {
-      throw new AppError(400, 'Invalid player id')
+    const leagueId = groupLeagueRows[0]?.leagueId ?? null
+    const playerCount = leagueId ? await countPlayersForLeague(leagueId) : 0
+
+    if (playerCount > 0) {
+      const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+      if (!UUID_RE.test(answer)) {
+        throw new AppError(400, 'Invalid player id')
+      }
+      const playerRows = await db
+        .select({ id: players.id })
+        .from(players)
+        .where(eq(players.id, answer))
+        .limit(1)
+      if (!playerRows[0]) {
+        throw new AppError(400, 'Invalid player id')
+      }
+    } else {
+      if (answer.length > 200) {
+        throw new AppError(400, 'Player name must be at most 200 characters')
+      }
     }
   }
 

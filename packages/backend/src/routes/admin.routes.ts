@@ -170,7 +170,7 @@ adminRouter.put('/scoring-config', async (ctx) => {
 
 adminRouter.get('/players', async (ctx) => {
   const teamId = typeof ctx.query['teamId'] === 'string' ? ctx.query['teamId'] : undefined
-  ctx.body = await getPlayers(teamId)
+  ctx.body = await getPlayers({ teamId })
 })
 
 adminRouter.get('/players/:id', async (ctx) => {

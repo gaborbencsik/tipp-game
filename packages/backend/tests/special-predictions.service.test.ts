@@ -8,7 +8,7 @@ const { mockSelect, mockInsert } = vi.hoisted(() => ({
 }))
 
 vi.mock('../src/db/client.js', () => ({
-  db: { select: mockSelect, insert: mockInsert },
+  db: { select: mockSelect, selectDistinctOn: mockSelect, insert: mockInsert },
 }))
 
 import { getMyPredictions, upsertPrediction } from '../src/services/special-predictions.service.js'
@@ -377,11 +377,15 @@ describe('upsertPrediction', () => {
 
   it('accepts player_select with valid player UUID', async () => {
     const predRow = { ...PRED_ROW, typeId: 'type-uuid-4', answer: VALID_PLAYER_UUID }
-    // 1. assertGroupExists, 2. assertGroupMember, 3. select type, 4. select player (UUID lookup)
+    // 1. assertGroupExists, 2. assertGroupMember, 3. select type,
+    // 4. groupLeagues, 5. teamIdsForLeague, 6. countPlayersForLeague, 7. select player
     setupSelectSequence([
       [GROUP_ROW],
       [MEMBER_ROW],
       [TYPE_ROW_PLAYER_SELECT],
+      [{ leagueId: 'league-1' }],
+      [{ id: 'team-1' }],
+      [{ count: 5 }],
       [PLAYER_ROW],
     ])
     const { insertFn } = makeInsertChain([predRow])
@@ -397,6 +401,9 @@ describe('upsertPrediction', () => {
       [GROUP_ROW],
       [MEMBER_ROW],
       [TYPE_ROW_PLAYER_SELECT],
+      [{ leagueId: 'league-1' }],
+      [{ id: 'team-1' }],
+      [{ count: 5 }],
     ])
 
     await expect(upsertPrediction(GROUP_ID, USER_ID, { typeId: 'type-uuid-4', answer: 'not-a-uuid' }))
@@ -404,15 +411,49 @@ describe('upsertPrediction', () => {
   })
 
   it('throws 400 for player_select with non-existent player UUID', async () => {
-    // 1. assertGroupExists, 2. assertGroupMember, 3. select type, 4. select player (empty)
     setupSelectSequence([
       [GROUP_ROW],
       [MEMBER_ROW],
       [TYPE_ROW_PLAYER_SELECT],
+      [{ leagueId: 'league-1' }],
+      [{ id: 'team-1' }],
+      [{ count: 5 }],
       [],
     ])
 
     await expect(upsertPrediction(GROUP_ID, USER_ID, { typeId: 'type-uuid-4', answer: VALID_PLAYER_UUID }))
       .rejects.toMatchObject({ status: 400, message: 'Invalid player id' })
+  })
+
+  it('accepts player_select free-text when league has no players', async () => {
+    const predRow = { ...PRED_ROW, typeId: 'type-uuid-4', answer: 'Egy nem regisztrált játékos' }
+    // 1-3 same; 4. groupLeagues, 5. teamIdsForLeague (no teams) → count short-circuits to 0
+    setupSelectSequence([
+      [GROUP_ROW],
+      [MEMBER_ROW],
+      [TYPE_ROW_PLAYER_SELECT],
+      [{ leagueId: 'league-1' }],
+      [],
+    ])
+    const { insertFn } = makeInsertChain([predRow])
+    mockInsert.mockImplementation(insertFn)
+
+    const result = await upsertPrediction(GROUP_ID, USER_ID, { typeId: 'type-uuid-4', answer: 'Egy nem regisztrált játékos' })
+
+    expect(result.answer).toBe('Egy nem regisztrált játékos')
+  })
+
+  it('rejects player_select free-text longer than 200 characters', async () => {
+    setupSelectSequence([
+      [GROUP_ROW],
+      [MEMBER_ROW],
+      [TYPE_ROW_PLAYER_SELECT],
+      [{ leagueId: 'league-1' }],
+      [],
+    ])
+
+    const longName = 'a'.repeat(201)
+    await expect(upsertPrediction(GROUP_ID, USER_ID, { typeId: 'type-uuid-4', answer: longName }))
+      .rejects.toMatchObject({ status: 400, message: 'Player name must be at most 200 characters' })
   })
 })

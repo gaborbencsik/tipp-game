@@ -609,6 +609,7 @@
             <div v-else-if="sp.inputType === 'player_select'" class="mb-2">
               <PlayerSelectCombobox
                 :model-value="pendingAnswers[sp.typeId] ?? sp.answer ?? null"
+                :league-id="currentGroup?.league?.id ?? null"
                 @update:model-value="v => { if (v) pendingAnswers[sp.typeId] = v; else delete pendingAnswers[sp.typeId] }"
               />
             </div>
@@ -669,6 +670,7 @@
         <div v-else-if="setAnswerInputType === 'player_select'" class="mb-3">
           <PlayerSelectCombobox
             :model-value="setAnswerValue || null"
+            :league-id="currentGroup?.league?.id ?? null"
             @update:model-value="v => { setAnswerValue = v ?? '' }"
           />
         </div>

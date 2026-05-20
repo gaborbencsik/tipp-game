@@ -1,6 +1,6 @@
-import { eq } from 'drizzle-orm'
+import { and, eq, inArray, sql } from 'drizzle-orm'
 import { db } from '../db/client.js'
-import { players, teams } from '../db/schema/index.js'
+import { players, teams, matches } from '../db/schema/index.js'
 import type { Player, PlayerInput } from '../types/index.js'
 
 class AppError extends Error {
@@ -31,19 +31,58 @@ function toApiPlayer(row: PlayerRow): Player {
   }
 }
 
-export async function getPlayers(teamId?: string): Promise<Player[]> {
-  let query = db
+export interface GetPlayersOptions {
+  readonly teamId?: string
+  readonly leagueId?: string
+}
+
+async function teamIdsForLeague(leagueId: string): Promise<string[]> {
+  const rows = await db
+    .selectDistinctOn([teams.id], { id: teams.id })
+    .from(matches)
+    .innerJoin(teams, sql`${teams.id} = ${matches.homeTeamId} OR ${teams.id} = ${matches.awayTeamId}`)
+    .where(eq(matches.leagueId, leagueId))
+  return rows.map(r => r.id)
+}
+
+export async function getPlayers(opts: GetPlayersOptions = {}): Promise<Player[]> {
+  const { teamId, leagueId } = opts
+
+  if (leagueId) {
+    const teamIds = await teamIdsForLeague(leagueId)
+    if (teamIds.length === 0) return []
+    const filter = teamId
+      ? and(inArray(players.teamId, teamIds), eq(players.teamId, teamId))
+      : inArray(players.teamId, teamIds)
+    const rows = await db
+      .select()
+      .from(players)
+      .leftJoin(teams, eq(players.teamId, teams.id))
+      .where(filter)
+      .orderBy(players.name)
+    return rows.map(toApiPlayer)
+  }
+
+  const baseQuery = db
     .select()
     .from(players)
     .leftJoin(teams, eq(players.teamId, teams.id))
     .orderBy(players.name)
 
-  if (teamId) {
-    query = query.where(eq(players.teamId, teamId)) as typeof query
-  }
-
-  const rows = await query
+  const rows = teamId
+    ? await baseQuery.where(eq(players.teamId, teamId))
+    : await baseQuery
   return rows.map(toApiPlayer)
+}
+
+export async function countPlayersForLeague(leagueId: string): Promise<number> {
+  const teamIds = await teamIdsForLeague(leagueId)
+  if (teamIds.length === 0) return 0
+  const rows = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(players)
+    .where(inArray(players.teamId, teamIds))
+  return rows[0]?.count ?? 0
 }
 
 export async function getPlayerById(id: string): Promise<Player> {

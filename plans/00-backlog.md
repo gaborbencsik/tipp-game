@@ -21,7 +21,6 @@
 | UX-016 | Kedvenc csapat dupla pont jelzés a meccs kártyán | Should Have | — |
 | UX-019 | Onboarding frissítés – új funkciók bemutatása | Should Have | — |
 | US-1401B | Pontszámítási konfiguráció védelme és újraszámolás | Should Have | — |
-| US-1402 | Játékos-választó ligaszűrés és szabad szöveges fallback | Should Have | — |
 | US-1403 | Automatikus játékos-szinkronizáció futball API-ból | Should Have | ~~US-1202~~, ~~US-1203~~ |
 | US-1405 | Tippjeim oldal redesign – személyes statisztikai dashboard | Should Have | — |
 | US-1502 | Élő meccs eredmény megjelenítés és virtuális pontszámítás | Should Have | — |
@@ -29,4 +28,4 @@
 
 ---
 
-**Haladás: 107 / 127 story kész** — Must Have: 31/31, Should Have: 76/92, Nice to Have: 0/4
+**Haladás: 108 / 127 story kész** — Must Have: 31/31, Should Have: 77/92, Nice to Have: 0/4

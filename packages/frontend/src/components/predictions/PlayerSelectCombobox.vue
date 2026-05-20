@@ -1,5 +1,15 @@
 <template>
-  <div class="relative" ref="containerRef">
+  <div v-if="freeTextMode">
+    <input
+      type="text"
+      :value="modelValue ?? ''"
+      maxlength="200"
+      class="w-full border rounded px-2 py-1.5 text-sm"
+      :placeholder="$t('playerSelect.freeTextPlaceholder')"
+      @input="onFreeTextInput"
+    />
+  </div>
+  <div v-else class="relative" ref="containerRef">
     <div class="flex items-center border rounded overflow-hidden">
       <input
         ref="inputRef"
@@ -42,12 +52,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { supabase } from '../../lib/supabase.js'
 import { api } from '../../api/index.js'
 import type { Player } from '../../types/index.js'
 
-const props = defineProps<{ modelValue: string | null }>()
+const props = defineProps<{ modelValue: string | null; leagueId?: string | null }>()
 const emit = defineEmits<{ 'update:modelValue': [value: string | null] }>()
 
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
@@ -66,15 +76,22 @@ const containerRef = ref<HTMLElement | null>(null)
 const inputRef = ref<HTMLInputElement | null>(null)
 
 async function loadPlayers(): Promise<void> {
-  if (loaded.value) return
+  loaded.value = false
   try {
     const token = await getAccessToken()
-    playersList.value = await api.players.list(token)
+    playersList.value = props.leagueId
+      ? await api.players.list(token, props.leagueId)
+      : await api.players.list(token)
+  } catch {
+    playersList.value = []
+  } finally {
     loaded.value = true
-  } catch { /* ignore */ }
+  }
 }
 
-onMounted(loadPlayers)
+watch(() => props.leagueId, loadPlayers, { immediate: true })
+
+const freeTextMode = computed((): boolean => loaded.value && playersList.value.length === 0)
 
 const normalize = (s: string): string =>
   s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -104,6 +121,11 @@ function onFocus(): void {
 function onInput(e: Event): void {
   searchText.value = (e.target as HTMLInputElement).value
   dropdownOpen.value = true
+}
+
+function onFreeTextInput(e: Event): void {
+  const value = (e.target as HTMLInputElement).value
+  emit('update:modelValue', value.length > 0 ? value : null)
 }
 
 function selectPlayer(p: Player): void {
