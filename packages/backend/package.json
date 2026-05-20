@@ -15,7 +15,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:seed": "tsx scripts/seed.ts",
-    "db:seed-local": "tsx scripts/seed-local.ts"
+    "db:seed-local": "tsx scripts/seed-local.ts",
+    "fetch:pre-wc": "tsx scripts/fetch-pre-wc-friendlies.ts"
   },
   "dependencies": {
     "@koa/cors": "^5.0.0",

@@ -1,5 +1,26 @@
 import { describe, it, expect } from 'vitest'
-import { parseRound, FIXTURE_STATUS_MAP, derivePenaltyOutcome } from '../src/services/sync.service.js'
+import {
+  parseRound,
+  FIXTURE_STATUS_MAP,
+  derivePenaltyOutcome,
+  filterFixturesByAllowlist,
+  teamsFromFixtures,
+} from '../src/services/sync.service.js'
+import type { ApiFootballFixture, ApiFootballTeamEntry } from '../src/types/index.js'
+
+function makeTeam(id: number, name: string, code: string | null = null): ApiFootballTeamEntry {
+  return { id, name, code, logo: '', national: true }
+}
+
+function makeFixture(id: number, home: ApiFootballTeamEntry, away: ApiFootballTeamEntry): ApiFootballFixture {
+  return {
+    fixture: { id, date: '2026-06-01T18:00:00+00:00', status: { short: 'NS', long: 'Not Started', elapsed: null }, venue: { id: null, name: null, city: null } },
+    league: { id: 10, round: 'Regular Season - 1' },
+    teams: { home, away },
+    goals: { home: null, away: null },
+    score: { fulltime: { home: null, away: null }, penalty: { home: null, away: null } },
+  }
+}
 
 describe('sync.service – pure functions', () => {
   describe('parseRound', () => {
@@ -95,6 +116,58 @@ describe('sync.service – pure functions', () => {
 
     it('returns null when both are null', () => {
       expect(derivePenaltyOutcome({ home: null, away: null })).toBeNull()
+    })
+  })
+
+  describe('filterFixturesByAllowlist', () => {
+    const f1 = makeFixture(1001, makeTeam(1, 'A'), makeTeam(2, 'B'))
+    const f2 = makeFixture(1002, makeTeam(3, 'C'), makeTeam(4, 'D'))
+    const f3 = makeFixture(1003, makeTeam(5, 'E'), makeTeam(6, 'F'))
+
+    it('returns empty array when allowlist is empty', () => {
+      expect(filterFixturesByAllowlist([f1, f2, f3], [])).toEqual([])
+    })
+
+    it('returns only fixtures whose id is in allowlist (partial match)', () => {
+      expect(filterFixturesByAllowlist([f1, f2, f3], [1001, 1003])).toEqual([f1, f3])
+    })
+
+    it('returns all fixtures when allowlist contains every id', () => {
+      expect(filterFixturesByAllowlist([f1, f2, f3], [1001, 1002, 1003])).toEqual([f1, f2, f3])
+    })
+
+    it('ignores allowlist ids that do not match any fixture', () => {
+      expect(filterFixturesByAllowlist([f1, f2], [9999, 1001])).toEqual([f1])
+    })
+
+    it('returns empty array when fixture list is empty', () => {
+      expect(filterFixturesByAllowlist([], [1001])).toEqual([])
+    })
+  })
+
+  describe('teamsFromFixtures', () => {
+    it('returns empty array for empty input', () => {
+      expect(teamsFromFixtures([])).toEqual([])
+    })
+
+    it('returns one entry per unique team id', () => {
+      const teamA = makeTeam(1, 'A')
+      const teamB = makeTeam(2, 'B')
+      const teamC = makeTeam(3, 'C')
+      const fixtures = [makeFixture(101, teamA, teamB), makeFixture(102, teamA, teamC)]
+
+      const result = teamsFromFixtures(fixtures)
+
+      expect(result).toHaveLength(3)
+      const ids = result.map((t) => t.team.id).sort()
+      expect(ids).toEqual([1, 2, 3])
+    })
+
+    it('wraps each team with venue: null (suitable for upsertTeams)', () => {
+      const fixtures = [makeFixture(101, makeTeam(1, 'A'), makeTeam(2, 'B'))]
+      const result = teamsFromFixtures(fixtures)
+
+      expect(result.every((t) => t.venue === null)).toBe(true)
     })
   })
 })

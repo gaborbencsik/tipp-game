@@ -386,7 +386,55 @@ Az implementáció során szükséges lesz:
 
 ---
 
-## 10. Hivatkozások
+## 11. Pre-VB Edzőmeccsek szűrés (US-1404B)
+
+Az api-football `league=10` ("Friendlies: International") liga U17/U19/U21 utánpótlás-, B- és tartalék-csapatos meccseket is tartalmaz, valamint olyan válogatott-meccseket is, amelyek a tippjáték szempontjából irrelevánsak. A korábban próbált heurisztika + WC-résztvevő szűrés helyett a Pre-VB-1/2/3 ligákat **statikusan kurált fixture-listák** töltik fel.
+
+### Statikus fixture csoportok
+
+A 66 felvett meccs forráskódba van égetve, három 22-es csoportra bontva:
+
+```
+packages/backend/src/constants/pre-vb-fixture-groups.ts
+  export const PRE_VB_FIXTURE_GROUPS = {
+    'PRE-VB-1': [/* 22 fixture id, idő szerint rendezve */],
+    'PRE-VB-2': [/* 22 fixture id */],
+    'PRE-VB-3': [/* 22 fixture id */],
+  }
+```
+
+### Sync viselkedés
+
+- `runSplitSync` egyszer lekéri a teljes `league=10&season=2026` választ a `from=2026-05-01&to=2026-07-10` ablakra
+- Csoportonként szűri a választ az adott allowlist-tel (`filterFixturesByAllowlist`)
+- A kurált 66 meccsből csak az kerül a DB-be, ami az API-ban is megvan
+- **Új fixture nem kerül be automatikusan**: az allowlist a forrás, nem az API
+- **Eltűnő/törölt API-fixture**: a DB-ben már szinkronizált meccs változatlan marad (legfeljebb státusza nem frissül)
+- **Csapat több ligában**: ugyanaz a válogatott szerepelhet mindhárom Pre-VB ligában (a `teams` rekord egy, a `matches` rekordok 3 különböző `league_id`-vel)
+
+### Bővítés / módosítás
+
+A 66-os listát módosítani csak a `pre-vb-fixture-groups.ts` szerkesztésével lehet, ami git-ben review-zható. A DB-szinten nincs allowlist tárolás.
+
+### Diagnosztikai script
+
+`npm run fetch:pre-wc` (`packages/backend/`) — diff toolként működik:
+- Lekéri a teljes friendlies listát (`2026-05-01` – `2026-07-10`)
+- Csoportonként megmutatja, mely kurált fixture-ök vannak az API válaszban (KEEP)
+- Listázza a kurált, de hiányzó fixture id-kat (HIÁNYZÓ)
+- Listázza az API-ban szereplő, de nem kurált meccseket (PLUSZ — diagnosztika, nem kerül a DB-be)
+
+### Liga UUID-k
+
+A 0032 migráció determinisztikus UUID-kkal hozza létre a PRE-VB-1/2/3 ligákat (cross-env lookup). A sync runtime-ban `short_name` alapján olvassa ki őket a DB-ből — `FOOTBALL_INTERNAL_FRIENDLY_LEAGUE_ID` env változó **nincs**, nem szükséges.
+
+### Fixture-ország (`leagueId`) zárolás
+
+A `upsertFixtures` `ON CONFLICT DO UPDATE` szándékosan kihagyja a `leagueId` mezőt: egy már szinkronizált meccs nem tud átkerülni egy másik PRE-VB-N ligába. A statikus csoportok között egy fixture id pontosan egy csoportban szerepel — a zárolás csak extra védelem arra az esetre, ha az allowlist megosztás véletlenül változna.
+
+---
+
+## 12. Hivatkozások
 
 - API dokumentáció: https://www.api-football.com/documentation-v3
 - Árazás: https://www.api-football.com/pricing

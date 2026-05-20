@@ -7,7 +7,6 @@ const ENV_KEYS = [
   'FOOTBALL_API_NBI_LEAGUE_ID',
   'FOOTBALL_INTERNAL_NBI_LEAGUE_ID',
   'FOOTBALL_API_FRIENDLY_LEAGUE_ID',
-  'FOOTBALL_INTERNAL_FRIENDLY_LEAGUE_ID',
 ] as const
 
 describe('getConfiguredLeagueDescriptors', () => {
@@ -52,22 +51,20 @@ describe('getConfiguredLeagueDescriptors', () => {
     ])
   })
 
-  it('returns Pre-VB Edzőmeccsek descriptor when FRIENDLY env vars are set', () => {
+  it('returns Pre-VB Edzőmeccsek descriptor when only API env var is set (split league does not need internal id env)', () => {
     process.env['FOOTBALL_API_FRIENDLY_LEAGUE_ID'] = '10'
-    process.env['FOOTBALL_INTERNAL_FRIENDLY_LEAGUE_ID'] = 'friendly-uuid'
 
     expect(getConfiguredLeagueDescriptors()).toEqual([
       { name: 'Pre-VB Edzőmeccsek', externalId: 10, season: 2026 },
     ])
   })
 
-  it('returns all three descriptors when every env pair is set', () => {
+  it('returns all three descriptors when every required env var is set', () => {
     process.env['FOOTBALL_API_WC_LEAGUE_ID'] = '1'
     process.env['FOOTBALL_INTERNAL_WC_LEAGUE_ID'] = 'wc-uuid'
     process.env['FOOTBALL_API_NBI_LEAGUE_ID'] = '848'
     process.env['FOOTBALL_INTERNAL_NBI_LEAGUE_ID'] = 'nbi-uuid'
     process.env['FOOTBALL_API_FRIENDLY_LEAGUE_ID'] = '10'
-    process.env['FOOTBALL_INTERNAL_FRIENDLY_LEAGUE_ID'] = 'friendly-uuid'
 
     expect(getConfiguredLeagueDescriptors()).toEqual([
       { name: 'VB', externalId: 1, season: 2026 },

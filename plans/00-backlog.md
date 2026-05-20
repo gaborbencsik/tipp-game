@@ -1,6 +1,6 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-05-19
+> Utoljára frissítve: 2026-05-20
 
 ## Nyitott story-k
 
@@ -21,6 +21,7 @@
 | UX-016 | Kedvenc csapat dupla pont jelzés a meccs kártyán | Should Have | — |
 | UX-017 | Leadott speciális tipp kártyán UUID helyett játékosnév és határidő megjelenítése | Should Have | — |
 | UX-019 | Onboarding frissítés – új funkciók bemutatása | Should Have | — |
+| UX-020 | Mérkőzések oldal liga-szűrés javítása – csoport-ligák alapú szűrés | Should Have | — |
 | US-1401B | Pontszámítási konfiguráció védelme és újraszámolás | Should Have | — |
 | US-1402 | Játékos-választó ligaszűrés és szabad szöveges fallback | Should Have | — |
 | US-1403 | Automatikus játékos-szinkronizáció futball API-ból | Should Have | ~~US-1202~~, ~~US-1203~~ |
@@ -30,4 +31,4 @@
 
 ---
 
-**Haladás: 104 / 125 story kész** — Must Have: 31/31, Should Have: 73/90, Nice to Have: 0/4
+**Haladás: 105 / 127 story kész** — Must Have: 31/31, Should Have: 74/92, Nice to Have: 0/4

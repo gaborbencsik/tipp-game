@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 104 story kész (Must Have: 31/31, Should Have: 73/82)
+> 105 story kész (Must Have: 31/31, Should Have: 74/82)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -108,3 +108,4 @@
 | US-1406 | Transfermarkt keret-összérték szinkronizáció | Should Have |
 | UX-020 | Admin sync felület konzisztens redesign + meccs-sync szekció előkészítése | Should Have |
 | US-1404 | Pre-VB edzőmeccsek liga konfigurálása és szinkronizálása | Should Have |
+| US-1404B | Pre-VB fixture szűrés – statikus 66-os fixture lista, 3-way split | Should Have |

@@ -225,6 +225,13 @@
       "when": 1779306972284,
       "tag": "0031_pre_wc_friendly_league",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1779393372284,
+      "tag": "0032_pre_wc_friendly_league_split",
+      "breakpoints": true
     }
   ]
 }
