@@ -268,10 +268,12 @@ describe('createGroup', () => {
 
   it('active global types exist → auto-subscribes new group', async () => {
     const globalTypes = [{ id: 'gt-1' }, { id: 'gt-2' }]
+    const firstMatch = new Date('2026-06-11T19:00:00Z')
     mockSelect
       .mockReturnValueOnce(makeSelectChain([{ count: 0 }]))   // createdCount
       .mockReturnValueOnce(makeSelectChain([]))                // inviteCode uniqueness
       .mockReturnValueOnce(makeSelectChain(globalTypes))       // globalTypes query
+      .mockReturnValueOnce(makeSelectChain([{ first: firstMatch }])) // league first match
       .mockReturnValueOnce(makeSelectChain([{ id: 'l-1', name: 'VB 2026', shortName: 'VB' }]))  // fetchGroupLeague
 
     const insertFn = vi.fn()
@@ -288,8 +290,8 @@ describe('createGroup', () => {
     await createGroup({ name: 'Barátok', leagueId: 'l-1' }, USER_ID)
     expect(insertFn).toHaveBeenCalledTimes(4)
     expect(subscriptionValuesFn).toHaveBeenCalledWith([
-      { groupId: 'group-uuid-1', globalTypeId: 'gt-1' },
-      { groupId: 'group-uuid-1', globalTypeId: 'gt-2' },
+      { groupId: 'group-uuid-1', globalTypeId: 'gt-1', deadlineOverride: firstMatch },
+      { groupId: 'group-uuid-1', globalTypeId: 'gt-2', deadlineOverride: firstMatch },
     ])
   })
 

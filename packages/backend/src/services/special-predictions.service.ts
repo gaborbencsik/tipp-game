@@ -48,9 +48,9 @@ export async function getMyPredictions(
     ))
     .orderBy(specialPredictionTypes.createdAt)
 
-  // Subscribed global types
+  // Subscribed global types (with optional per-group deadline override)
   const globalTypeRows = await db
-    .select({ spt: specialPredictionTypes })
+    .select({ spt: specialPredictionTypes, deadlineOverride: groupGlobalTypeSubscriptions.deadlineOverride })
     .from(groupGlobalTypeSubscriptions)
     .innerJoin(specialPredictionTypes, eq(groupGlobalTypeSubscriptions.globalTypeId, specialPredictionTypes.id))
     .where(and(
@@ -60,7 +60,7 @@ export async function getMyPredictions(
     ))
 
   const allTypes = [
-    ...globalTypeRows.map(r => ({ ...r.spt, _isGlobal: true as const })),
+    ...globalTypeRows.map(r => ({ ...r.spt, deadline: r.deadlineOverride ?? r.spt.deadline, _isGlobal: true as const })),
     ...groupTypes.map(t => ({ ...t, _isGlobal: false as const })),
   ]
 
@@ -156,9 +156,10 @@ export async function upsertPrediction(
     .limit(1)
 
   // If not found, try global type with active subscription
+  let effectiveDeadline: Date | null = null
   if (!typeRows[0]) {
-    typeRows = await db
-      .select({ spt: specialPredictionTypes })
+    const globalRows = await db
+      .select({ spt: specialPredictionTypes, deadlineOverride: groupGlobalTypeSubscriptions.deadlineOverride })
       .from(specialPredictionTypes)
       .innerJoin(groupGlobalTypeSubscriptions, eq(groupGlobalTypeSubscriptions.globalTypeId, specialPredictionTypes.id))
       .where(and(
@@ -168,13 +169,17 @@ export async function upsertPrediction(
         eq(groupGlobalTypeSubscriptions.groupId, groupId),
       ))
       .limit(1)
-      .then(rows => rows.map(r => r.spt))
+    typeRows = globalRows.map(r => r.spt)
+    if (globalRows[0]) {
+      effectiveDeadline = globalRows[0].deadlineOverride ?? globalRows[0].spt.deadline
+    }
   }
 
   const type = typeRows[0]
   if (!type) throw new AppError(404, 'Special prediction type not found')
 
-  if (type.deadline <= new Date()) {
+  const deadline = effectiveDeadline ?? type.deadline
+  if (deadline <= new Date()) {
     throw new AppError(409, 'Deadline has passed for this prediction type')
   }
 

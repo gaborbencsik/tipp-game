@@ -325,10 +325,11 @@ export const specialPredictions = pgTable('special_predictions', {
 // ─── GROUP GLOBAL TYPE SUBSCRIPTIONS ─────────────────────────────────────────
 
 export const groupGlobalTypeSubscriptions = pgTable('group_global_type_subscriptions', {
-  id:           uuid('id').primaryKey().defaultRandom(),
-  groupId:      uuid('group_id').notNull().references(() => groups.id, { onDelete: 'cascade' }),
-  globalTypeId: uuid('global_type_id').notNull().references(() => specialPredictionTypes.id, { onDelete: 'cascade' }),
-  subscribedAt: timestamp('subscribed_at', { withTimezone: true }).notNull().defaultNow(),
+  id:               uuid('id').primaryKey().defaultRandom(),
+  groupId:          uuid('group_id').notNull().references(() => groups.id, { onDelete: 'cascade' }),
+  globalTypeId:     uuid('global_type_id').notNull().references(() => specialPredictionTypes.id, { onDelete: 'cascade' }),
+  subscribedAt:     timestamp('subscribed_at', { withTimezone: true }).notNull().defaultNow(),
+  deadlineOverride: timestamp('deadline_override', { withTimezone: true }),
 }, (t) => ({
   uniqueSub:     uniqueIndex('ggts_unique').on(t.groupId, t.globalTypeId),
   groupIdx:      index('ggts_group_idx').on(t.groupId),

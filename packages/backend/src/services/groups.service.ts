@@ -1,6 +1,6 @@
-import { and, eq, isNull, sql } from 'drizzle-orm'
+import { and, eq, isNull, sql, min } from 'drizzle-orm'
 import { db } from '../db/client.js'
-import { groups, groupMembers, users, specialPredictionTypes, groupGlobalTypeSubscriptions, groupLeagues, leagues } from '../db/schema/index.js'
+import { groups, groupMembers, users, specialPredictionTypes, groupGlobalTypeSubscriptions, groupLeagues, leagues, matches } from '../db/schema/index.js'
 import type { Group, GroupInput, GroupMember } from '../types/index.js'
 import { getGroupLeaderboard } from './group-leaderboard.service.js'
 
@@ -150,9 +150,19 @@ export async function createGroup(input: GroupInput, userId: string): Promise<Gr
     ))
 
   if (globalTypes.length > 0) {
+    const firstMatchRow = await db
+      .select({ first: min(matches.scheduledAt) })
+      .from(matches)
+      .where(and(eq(matches.leagueId, input.leagueId), isNull(matches.deletedAt)))
+    const deadlineOverride = firstMatchRow[0]?.first ?? null
+
     await db
       .insert(groupGlobalTypeSubscriptions)
-      .values(globalTypes.map(gt => ({ groupId: group.id, globalTypeId: gt.id })))
+      .values(globalTypes.map(gt => ({
+        groupId: group.id,
+        globalTypeId: gt.id,
+        deadlineOverride,
+      })))
       .onConflictDoNothing()
   }
 
