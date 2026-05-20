@@ -246,6 +246,13 @@
       "when": 1779286673981,
       "tag": "0034_typical_prodigy",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1779288662754,
+      "tag": "0035_smart_pet_avengers",
+      "breakpoints": true
     }
   ]
 }

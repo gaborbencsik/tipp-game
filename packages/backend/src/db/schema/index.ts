@@ -236,7 +236,7 @@ export const scoringConfigs = pgTable('scoring_configs', {
 
 export const groups = pgTable('groups', {
   id:              uuid('id').primaryKey().defaultRandom(),
-  name:            varchar('name', { length: 50 }).notNull().unique(),
+  name:            varchar('name', { length: 50 }).notNull(),
   description:     text('description'),
   inviteCode:      varchar('invite_code', { length: 8 }).notNull().unique(),
   inviteActive:    boolean('invite_active').notNull().default(true),
@@ -248,7 +248,6 @@ export const groups = pgTable('groups', {
   deletedAt:       timestamp('deleted_at', { withTimezone: true }),
 }, (t) => ({
   inviteCodeIdx: uniqueIndex('groups_invite_code_idx').on(t.inviteCode),
-  nameIdx:       uniqueIndex('groups_name_idx').on(t.name),
 }))
 
 // ─── GROUP MEMBERS ────────────────────────────────────────────────────────────
