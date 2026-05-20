@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 105 story kész (Must Have: 31/31, Should Have: 74/82)
+> 109 story kész (Must Have: 31/31, Should Have: 78/92)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -112,3 +112,4 @@
 | UX-020 | Mérkőzések oldal liga-szűrés javítása – csoport-ligák alapú szűrés | Should Have |
 | UX-017 | Leadott speciális tipp kártyán UUID helyett játékosnév és határidő megjelenítése | Should Have |
 | US-1402 | Játékos-választó ligaszűrés és szabad szöveges fallback | Should Have |
+| US-1403 | Automatikus játékos-szinkronizáció futball API-ból | Should Have |

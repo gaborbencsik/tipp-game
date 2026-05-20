@@ -12,6 +12,34 @@ const internalSyncRouter = new Router({ prefix: '/api/internal/sync' })
 
 internalSyncRouter.use(serviceTokenMiddleware)
 
+const PLAYER_SYNC_INTERVAL_MS = 24 * 60 * 60 * 1000
+
+interface PlayerSyncOutcome {
+  readonly skipped?: boolean
+  readonly reason?: string
+  readonly synced?: boolean
+  readonly result?: unknown
+  readonly error?: string
+}
+
+async function runPlayerSyncIfDue(): Promise<PlayerSyncOutcome> {
+  const state = await getSyncState()
+  if (!state.playerSyncEnabled) {
+    return { skipped: true, reason: 'player sync disabled' }
+  }
+  if (state.lastPlayerSyncAt) {
+    const elapsed = Date.now() - state.lastPlayerSyncAt.getTime()
+    if (elapsed < PLAYER_SYNC_INTERVAL_MS) {
+      return { skipped: true, reason: 'player sync ran less than 24h ago' }
+    }
+  }
+  const config = buildConfig()
+  const client = createFootballApiClient(config)
+  const result = await syncPlayers(client)
+  await markPlayerSyncFinished()
+  return { synced: true, result }
+}
+
 internalSyncRouter.post('/tick', async (ctx) => {
   const state = await getSyncState()
 
@@ -40,7 +68,15 @@ internalSyncRouter.post('/tick', async (ctx) => {
     const totalApiCalls = results.length * 2
     await markSyncFinished(true)
     await incrementApiCalls(totalApiCalls)
-    ctx.body = { synced: true, results }
+
+    let playerSync: PlayerSyncOutcome
+    try {
+      playerSync = await runPlayerSyncIfDue()
+    } catch (err) {
+      playerSync = { error: err instanceof Error ? err.message : String(err) }
+    }
+
+    ctx.body = { synced: true, results, playerSync }
   } catch (err) {
     await markSyncFinished(false)
     throw err
@@ -58,28 +94,8 @@ internalSyncRouter.post('/polymarket-tick', async (ctx) => {
   ctx.body = result
 })
 
-const PLAYER_SYNC_INTERVAL_MS = 24 * 60 * 60 * 1000
-
 internalSyncRouter.post('/player-tick', async (ctx) => {
-  const state = await getSyncState()
-  if (!state.playerSyncEnabled) {
-    ctx.body = { skipped: true, reason: 'player sync disabled' }
-    return
-  }
-
-  if (state.lastPlayerSyncAt) {
-    const elapsed = Date.now() - state.lastPlayerSyncAt.getTime()
-    if (elapsed < PLAYER_SYNC_INTERVAL_MS) {
-      ctx.body = { skipped: true, reason: 'player sync ran less than 24h ago' }
-      return
-    }
-  }
-
-  const config = buildConfig()
-  const client = createFootballApiClient(config)
-  const result = await syncPlayers(client)
-  await markPlayerSyncFinished()
-  ctx.body = { synced: true, result }
+  ctx.body = await runPlayerSyncIfDue()
 })
 
 const TRANSFERMARKT_SYNC_INTERVAL_MS = 24 * 60 * 60 * 1000
