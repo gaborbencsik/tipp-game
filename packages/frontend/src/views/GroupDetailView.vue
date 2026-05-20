@@ -600,6 +600,7 @@
             <div v-if="sp.inputType === 'team_select'" class="mb-2">
               <TeamSelectDropdown
                 :model-value="pendingAnswers[sp.typeId] ?? sp.answer ?? null"
+                :league-id="currentGroup?.league?.id ?? null"
                 @update:model-value="v => { if (v) pendingAnswers[sp.typeId] = v; else delete pendingAnswers[sp.typeId] }"
               />
             </div>
@@ -659,6 +660,7 @@
         <div v-if="setAnswerInputType === 'team_select'" class="mb-3">
           <TeamSelectDropdown
             :model-value="setAnswerValue || null"
+            :league-id="currentGroup?.league?.id ?? null"
             @update:model-value="v => { setAnswerValue = v ?? '' }"
           />
         </div>

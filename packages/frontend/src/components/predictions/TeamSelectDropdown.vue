@@ -10,12 +10,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, watch } from 'vue'
 import { supabase } from '../../lib/supabase.js'
 import { api } from '../../api/index.js'
-import type { Team } from '../../types/index.js'
+import type { Team, LeagueTeam } from '../../types/index.js'
 
-defineProps<{ modelValue: string | null }>()
+const props = defineProps<{ modelValue: string | null; leagueId?: string | null }>()
 defineEmits<{ 'update:modelValue': [value: string | null] }>()
 
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
@@ -26,19 +26,18 @@ async function getAccessToken(): Promise<string> {
   return data.session?.access_token ?? ''
 }
 
-const teamsList = ref<Team[]>([])
-const loaded = ref(false)
+const teamsList = ref<Array<Team | LeagueTeam>>([])
 
 async function loadTeams(): Promise<void> {
-  if (loaded.value) return
   try {
     const token = await getAccessToken()
-    teamsList.value = await api.teams.list(token)
-    loaded.value = true
+    teamsList.value = props.leagueId
+      ? await api.leagueTeams.forLeague(token, props.leagueId)
+      : await api.teams.list(token)
   } catch { /* ignore */ }
 }
 
-onMounted(loadTeams)
+watch(() => props.leagueId, loadTeams, { immediate: true })
 
 function displayName(id: string | null): string {
   if (!id) return ''
