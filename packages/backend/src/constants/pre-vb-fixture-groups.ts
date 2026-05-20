@@ -3,14 +3,13 @@
 // Új fixture nem kerül be automatikusan; eltűnő/törlődő API fixture-rel a meccs
 // a DB-ben marad (státusza nem frissül a konkrét eseményig).
 //
-// Csoportonként pontosan 22 meccs (összesen 66). A short_name kulcsa megegyezik
-// a leagues tábla short_name oszlopával (lásd 0032_pre_wc_friendly_league_split.sql).
+// PRE-VB-1: 21 meccs, PRE-VB-2: 22, PRE-VB-3: 22 (összesen 65). A short_name kulcsa
+// megegyezik a leagues tábla short_name oszlopával (lásd 0032_pre_wc_friendly_league_split.sql).
 
 export type PreVbGroupShortName = 'PRE-VB-1' | 'PRE-VB-2' | 'PRE-VB-3'
 
 export const PRE_VB_FIXTURE_GROUPS: Readonly<Record<PreVbGroupShortName, readonly number[]>> = {
   'PRE-VB-1': [
-    1545695, // 2026-05-21 15:30  Qatar vs Sudan
     1528281, // 2026-05-23 02:00  Mexico vs Ghana
     1545261, // 2026-05-26 16:00  Morocco vs Burundi
     1543816, // 2026-05-28 12:00  Egypt vs Russia
