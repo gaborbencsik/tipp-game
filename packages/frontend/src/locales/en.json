@@ -132,7 +132,13 @@
     "leagueRequired": "Please select a league",
     "memberCount": "{count} members",
     "inviteInactive": "Invite inactive",
-    "emptyState": "You haven't joined any groups yet."
+    "emptyState": "You haven't joined any groups yet.",
+    "inviteError": {
+      "notFound": "This invite link is no longer valid.",
+      "inactive": "This invite link is no longer active.",
+      "alreadyMember": "You are already a member of this group.",
+      "generic": "Joining the group failed."
+    }
   },
   "groupDetail": {
     "backToGroups": "Groups",

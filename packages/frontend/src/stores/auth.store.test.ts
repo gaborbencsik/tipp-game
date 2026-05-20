@@ -542,4 +542,111 @@ describe('auth.store', () => {
       expect(fakeStorage.getItem(DEV_SESSION_KEY)).toBeNull()
     })
   })
+
+  // ─── pendingInviteCode (localStorage) ────────────────────────────────────────
+
+  describe('pendingInviteCode helpers', () => {
+    const PENDING_INVITE_KEY = 'pendingInviteCode'
+
+    function makeLocalStorage(initial: Record<string, string> = {}): Storage {
+      const store: Record<string, string> = { ...initial }
+      return {
+        getItem: (key: string) => store[key] ?? null,
+        setItem: (key: string, value: string) => { store[key] = value },
+        removeItem: (key: string) => { delete store[key] },
+        clear: () => { Object.keys(store).forEach(k => delete store[k]) },
+        key: (index: number) => Object.keys(store)[index] ?? null,
+        get length() { return Object.keys(store).length },
+      }
+    }
+
+    afterEach(() => {
+      vi.unstubAllGlobals()
+    })
+
+    it('savePendingInviteCode() writes to localStorage and state', () => {
+      const fakeLocal = makeLocalStorage()
+      vi.stubGlobal('localStorage', fakeLocal)
+
+      setActivePinia(createPinia())
+      const store = useAuthStore()
+      store.savePendingInviteCode('ABC123')
+
+      expect(store.pendingInviteCode).toBe('ABC123')
+      expect(fakeLocal.getItem(PENDING_INVITE_KEY)).toBe('ABC123')
+    })
+
+    it('clearPendingInviteCode() clears localStorage and state', () => {
+      const fakeLocal = makeLocalStorage({ [PENDING_INVITE_KEY]: 'XYZ789' })
+      vi.stubGlobal('localStorage', fakeLocal)
+
+      setActivePinia(createPinia())
+      const store = useAuthStore()
+      expect(store.pendingInviteCode).toBe('XYZ789')
+
+      store.clearPendingInviteCode()
+
+      expect(store.pendingInviteCode).toBeNull()
+      expect(fakeLocal.getItem(PENDING_INVITE_KEY)).toBeNull()
+    })
+
+    it('savePendingInviteCode() does not throw when localStorage.setItem throws', () => {
+      const throwingStorage: Storage = {
+        getItem: () => null,
+        setItem: () => { throw new Error('QuotaExceeded') },
+        removeItem: () => { throw new Error('QuotaExceeded') },
+        clear: () => {},
+        key: () => null,
+        length: 0,
+      }
+      vi.stubGlobal('localStorage', throwingStorage)
+
+      setActivePinia(createPinia())
+      const store = useAuthStore()
+      expect(() => store.savePendingInviteCode('CODE')).not.toThrow()
+      expect(store.pendingInviteCode).toBe('CODE')
+    })
+
+    it('clearPendingInviteCode() does not throw when localStorage.removeItem throws', () => {
+      const throwingStorage: Storage = {
+        getItem: () => null,
+        setItem: () => {},
+        removeItem: () => { throw new Error('QuotaExceeded') },
+        clear: () => {},
+        key: () => null,
+        length: 0,
+      }
+      vi.stubGlobal('localStorage', throwingStorage)
+
+      setActivePinia(createPinia())
+      const store = useAuthStore()
+      expect(() => store.clearPendingInviteCode()).not.toThrow()
+      expect(store.pendingInviteCode).toBeNull()
+    })
+
+    it('store init reads existing pendingInviteCode from localStorage', () => {
+      const fakeLocal = makeLocalStorage({ [PENDING_INVITE_KEY]: 'PRELOADED' })
+      vi.stubGlobal('localStorage', fakeLocal)
+
+      setActivePinia(createPinia())
+      const store = useAuthStore()
+      expect(store.pendingInviteCode).toBe('PRELOADED')
+    })
+
+    it('store init returns null when localStorage.getItem throws', () => {
+      const throwingStorage: Storage = {
+        getItem: () => { throw new Error('SecurityError') },
+        setItem: () => {},
+        removeItem: () => {},
+        clear: () => {},
+        key: () => null,
+        length: 0,
+      }
+      vi.stubGlobal('localStorage', throwingStorage)
+
+      setActivePinia(createPinia())
+      const store = useAuthStore()
+      expect(store.pendingInviteCode).toBeNull()
+    })
+  })
 })

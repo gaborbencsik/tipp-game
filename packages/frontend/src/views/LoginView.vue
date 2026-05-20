@@ -83,6 +83,7 @@ import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../stores/auth.store.js'
+import { extractInviteCodeFromRedirect } from '../lib/inviteRedirect.js'
 import LocaleToggle from '../components/LocaleToggle.vue'
 
 const { t } = useI18n()
@@ -103,6 +104,10 @@ async function handleSubmit(): Promise<void> {
   infoMessage.value = ''
   isLoading.value = true
   try {
+    const inviteCode = extractInviteCodeFromRedirect(route.query.redirect)
+    if (inviteCode) {
+      authStore.savePendingInviteCode(inviteCode)
+    }
     if (mode.value === 'login') {
       await authStore.loginWithEmail(email.value, password.value)
     } else {

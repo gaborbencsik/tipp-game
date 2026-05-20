@@ -6,9 +6,15 @@ import type { Group } from '@/types/index'
 import GroupsView from '@/views/GroupsView.vue'
 import { buildTestRouter } from '@/test-utils/router'
 
+const mockReplace = vi.fn().mockResolvedValue(undefined)
+const mockRouteQuery: { value: Record<string, unknown> } = { value: {} }
 vi.mock('vue-router', async (importOriginal) => {
   const actual = await importOriginal<typeof import('vue-router')>()
-  return { ...actual, useRouter: () => ({ push: vi.fn() }) }
+  return {
+    ...actual,
+    useRouter: () => ({ push: vi.fn(), replace: mockReplace }),
+    useRoute: () => ({ get query() { return mockRouteQuery.value } }),
+  }
 })
 
 vi.mock('@/lib/supabase', () => ({
@@ -96,6 +102,8 @@ describe('GroupsView', () => {
     mockStoreState.error = null
     mockFetchMyGroups.mockReset()
     mockFetchMyGroups.mockResolvedValue(undefined)
+    mockReplace.mockClear()
+    mockRouteQuery.value = {}
   })
 
   it('üres állapotban empty-state jelenik meg', () => {
@@ -188,5 +196,38 @@ describe('GroupsView', () => {
     mockStoreState.groups = [{ ...SAMPLE_GROUP, userRank: null }]
     const wrapper = mountView()
     expect(wrapper.find('[data-testid="rank-badge"]').exists()).toBe(false)
+  })
+
+  it('inviteError=notFound query → banner megjelenik a fordított szöveggel', () => {
+    mockRouteQuery.value = { inviteError: 'notFound' }
+    const wrapper = mountView()
+    const banner = wrapper.find('[data-testid="invite-error-banner"]')
+    expect(banner.exists()).toBe(true)
+    expect(banner.text()).toContain('A meghívó link már nem érvényes.')
+  })
+
+  it('inviteError=alreadyMember → banner az "Already a member" üzenetet mutatja', () => {
+    mockRouteQuery.value = { inviteError: 'alreadyMember' }
+    const wrapper = mountView()
+    expect(wrapper.find('[data-testid="invite-error-banner"]').text()).toContain('Már tagja vagy a csoportnak.')
+  })
+
+  it('érvénytelen inviteError értéknél nincs banner', () => {
+    mockRouteQuery.value = { inviteError: 'notARealKey' }
+    const wrapper = mountView()
+    expect(wrapper.find('[data-testid="invite-error-banner"]').exists()).toBe(false)
+  })
+
+  it('inviteError query nélkül nincs banner', () => {
+    mockRouteQuery.value = {}
+    const wrapper = mountView()
+    expect(wrapper.find('[data-testid="invite-error-banner"]').exists()).toBe(false)
+  })
+
+  it('dismiss gomb router.replace-szel törli az inviteError query-t', async () => {
+    mockRouteQuery.value = { inviteError: 'generic', other: 'keep' }
+    const wrapper = mountView()
+    await wrapper.find('[data-testid="invite-error-dismiss"]').trigger('click')
+    expect(mockReplace).toHaveBeenCalledWith({ query: { other: 'keep' } })
   })
 })

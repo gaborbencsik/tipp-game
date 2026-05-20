@@ -6,11 +6,13 @@ import { useAuthStore } from '@/stores/auth.store'
 import { buildTestRouter } from '@/test-utils/router'
 
 const mockPush = vi.fn().mockResolvedValue(undefined)
+const mockRoute = { query: {} as Record<string, unknown> }
 vi.mock('vue-router', async (importOriginal) => {
   const actual = await importOriginal<typeof import('vue-router')>()
   return {
     ...actual,
     useRouter: () => ({ push: mockPush }),
+    useRoute: () => mockRoute,
   }
 })
 
@@ -42,6 +44,7 @@ describe('LoginView', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     mockPush.mockClear()
+    mockRoute.query = {}
   })
 
   afterEach(() => {
@@ -154,5 +157,37 @@ describe('LoginView', () => {
     await wrapper.find('input[type="password"]').setValue('password123')
     await wrapper.find('form').trigger('submit')
     expect(store.isAuthenticated()).toBe(true)
+  })
+
+  it('login submit with redirect=/app/join/CODE → savePendingInviteCode("CODE") called', async () => {
+    mockRoute.query = { redirect: '/app/join/ABC123' }
+    const wrapper = mount(LoginView, {
+      global: { plugins: [createPinia(), buildRouter()] },
+    })
+    const store = useAuthStore()
+    vi.spyOn(store, 'loginWithEmail').mockResolvedValue(undefined)
+    const saveSpy = vi.spyOn(store, 'savePendingInviteCode')
+
+    await wrapper.find('input[type="email"]').setValue('user@example.com')
+    await wrapper.find('input[type="password"]').setValue('password123')
+    await wrapper.find('form').trigger('submit')
+
+    expect(saveSpy).toHaveBeenCalledWith('ABC123')
+  })
+
+  it('login submit without invite redirect → savePendingInviteCode NOT called', async () => {
+    mockRoute.query = {}
+    const wrapper = mount(LoginView, {
+      global: { plugins: [createPinia(), buildRouter()] },
+    })
+    const store = useAuthStore()
+    vi.spyOn(store, 'loginWithEmail').mockResolvedValue(undefined)
+    const saveSpy = vi.spyOn(store, 'savePendingInviteCode')
+
+    await wrapper.find('input[type="email"]').setValue('user@example.com')
+    await wrapper.find('input[type="password"]').setValue('password123')
+    await wrapper.find('form').trigger('submit')
+
+    expect(saveSpy).not.toHaveBeenCalled()
   })
 })

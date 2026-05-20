@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 109 story kész (Must Have: 31/31, Should Have: 78/92)
+> 111 story kész (Must Have: 31/31, Should Have: 80/93)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -114,3 +114,4 @@
 | US-1402 | Játékos-választó ligaszűrés és szabad szöveges fallback | Should Have |
 | US-1403 | Automatikus játékos-szinkronizáció futball API-ból | Should Have |
 | US-1502 | Élő meccs eredmény megjelenítés és virtuális pontszámítás | Should Have |
+| US-944 | Csoportmeghívó kontextus megőrzése és automatikus csoportba lépés bejelentkezés után | Should Have |

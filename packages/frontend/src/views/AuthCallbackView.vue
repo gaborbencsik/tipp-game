@@ -9,9 +9,36 @@ import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '../lib/supabase.js'
 import { useAuthStore } from '../stores/auth.store.js'
+import { useGroupsStore } from '../stores/groups.store.js'
 
 const authStore = useAuthStore()
+const groupsStore = useGroupsStore()
 const router = useRouter()
+
+function mapJoinErrorToKey(err: unknown): string {
+  const message = err instanceof Error ? err.message : ''
+  if (message.includes('not found')) return 'notFound'
+  if (message.includes('no longer active')) return 'inactive'
+  if (message.includes('Already a member')) return 'alreadyMember'
+  return 'generic'
+}
+
+async function handlePostLogin(): Promise<void> {
+  const code = authStore.pendingInviteCode
+  if (!code) {
+    await router.push({ name: 'home' })
+    return
+  }
+  try {
+    const group = await groupsStore.joinGroup({ inviteCode: code })
+    authStore.clearPendingInviteCode()
+    await router.replace(`/app/groups/${group.id}`)
+  } catch (err) {
+    authStore.clearPendingInviteCode()
+    const errorKey = mapJoinErrorToKey(err)
+    await router.replace({ path: '/app/groups', query: { inviteError: errorKey } })
+  }
+}
 
 onMounted(async () => {
   let unsubscribeFn: (() => void) | null = null
@@ -21,7 +48,7 @@ onMounted(async () => {
     if (session) {
       await authStore.handleSession(session)
     }
-    await router.push({ name: 'home' })
+    await handlePostLogin()
   })
   unsubscribeFn = () => result.data.subscription.unsubscribe()
 
@@ -30,7 +57,7 @@ onMounted(async () => {
   if (data.session) {
     unsubscribeFn()
     await authStore.handleSession(data.session)
-    await router.push({ name: 'home' })
+    await handlePostLogin()
   }
 })
 </script>

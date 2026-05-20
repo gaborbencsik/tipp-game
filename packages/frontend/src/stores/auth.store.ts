@@ -11,6 +11,15 @@ const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
 
 const DEV_SESSION_TTL_MS = 90 * 24 * 60 * 60 * 1000
 const DEV_SESSION_KEY = 'dev_session'
+const PENDING_INVITE_KEY = 'pendingInviteCode'
+
+function readPendingInviteCodeFromStorage(): string | null {
+  try {
+    return localStorage.getItem(PENDING_INVITE_KEY)
+  } catch {
+    return null
+  }
+}
 
 interface DevSession {
   user: User
@@ -27,6 +36,7 @@ class AuthError extends Error {
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
   const ready = ref(false)
+  const pendingInviteCode = ref<string | null>(readPendingInviteCodeFromStorage())
   const router = useRouter()
 
   function isAuthenticated(): boolean {
@@ -35,6 +45,24 @@ export const useAuthStore = defineStore('auth', () => {
 
   function isAdmin(): boolean {
     return user.value?.role === 'admin'
+  }
+
+  function savePendingInviteCode(code: string): void {
+    pendingInviteCode.value = code
+    try {
+      localStorage.setItem(PENDING_INVITE_KEY, code)
+    } catch {
+      // localStorage disabled (private mode) — in-memory state still works
+    }
+  }
+
+  function clearPendingInviteCode(): void {
+    pendingInviteCode.value = null
+    try {
+      localStorage.removeItem(PENDING_INVITE_KEY)
+    } catch {
+      // localStorage disabled
+    }
   }
 
   async function handleSession(session: Session): Promise<void> {
@@ -231,6 +259,6 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  return { user, ready, isAuthenticated, isAdmin, handleSession, restoreSession, login, logout, loginWithEmail, registerWithEmail, updateProfile, completeOnboarding, resetOnboarding }
+  return { user, ready, pendingInviteCode, isAuthenticated, isAdmin, savePendingInviteCode, clearPendingInviteCode, handleSession, restoreSession, login, logout, loginWithEmail, registerWithEmail, updateProfile, completeOnboarding, resetOnboarding }
 })
 

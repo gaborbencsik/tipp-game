@@ -132,7 +132,13 @@
     "leagueRequired": "Válassz ki egy ligát",
     "memberCount": "{count} tag",
     "inviteInactive": "Meghívó inaktív",
-    "emptyState": "Még nem vagy egyetlen csoport tagja sem."
+    "emptyState": "Még nem vagy egyetlen csoport tagja sem.",
+    "inviteError": {
+      "notFound": "A meghívó link már nem érvényes.",
+      "inactive": "A meghívó link már nem aktív.",
+      "alreadyMember": "Már tagja vagy a csoportnak.",
+      "generic": "A csoportba lépés sikertelen."
+    }
   },
   "groupDetail": {
     "backToGroups": "← Csoportok",

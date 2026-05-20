@@ -14,7 +14,6 @@
 | US-1305 | Match Pulse – in-tournament statisztikák integrálása | Should Have | US-1303, US-1304 |
 | US-1306 | Match Pulse – insight felfedése felhasználónként és admin reveal statisztika | Should Have | US-1302, US-1304 |
 | US-934 | Mások tippjeinek megjelenítése (speciális) | Should Have | — |
-| US-944 | Csoportmeghívó kontextus megőrzése és automatikus csoportba lépés bejelentkezés után | Should Have | — |
 | UX-004 | Focilabda kurzor ikon | Nice to Have | — |
 | UX-005 | Optimista törlés az admin listákon | Should Have | — |
 | UX-012 | Toast notification rendszer | Should Have | — |
@@ -27,4 +26,4 @@
 
 ---
 
-**Haladás: 110 / 128 story kész** — Must Have: 31/31, Should Have: 79/93, Nice to Have: 0/4
+**Haladás: 111 / 128 story kész** — Must Have: 31/31, Should Have: 80/93, Nice to Have: 0/4

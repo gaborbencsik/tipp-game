@@ -1,5 +1,17 @@
 <template>
   <AppLayout>
+    <div
+      v-if="inviteErrorKey"
+      data-testid="invite-error-banner"
+      class="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded mb-4 flex items-center justify-between"
+    >
+      <span>{{ $t(`groups.inviteError.${inviteErrorKey}`) }}</span>
+      <button
+        data-testid="invite-error-dismiss"
+        class="text-red-700 hover:text-red-900 text-lg leading-none"
+        @click="dismissInviteError"
+      >×</button>
+    </div>
     <div class="flex items-center justify-between mb-6">
       <h1 class="text-2xl font-bold text-gray-900">{{ $t('groups.title') }}</h1>
       <div v-if="store.groups.length > 0" class="flex gap-2">
@@ -195,8 +207,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import AppLayout from '../components/AppLayout.vue'
 import { useGroupsStore } from '../stores/groups.store.js'
@@ -206,6 +218,19 @@ const { t } = useI18n()
 const store = useGroupsStore()
 const leagueStore = useLeagueFavoritesStore()
 const route = useRoute()
+const router = useRouter()
+
+const VALID_INVITE_ERRORS = ['notFound', 'inactive', 'alreadyMember', 'generic'] as const
+const inviteErrorKey = computed(() => {
+  const value = route.query.inviteError
+  if (typeof value !== 'string') return null
+  return (VALID_INVITE_ERRORS as readonly string[]).includes(value) ? value : null
+})
+
+function dismissInviteError(): void {
+  const { inviteError: _omit, ...rest } = route.query
+  void router.replace({ query: rest })
+}
 
 const showCreateForm = ref(false)
 const showJoinForm = ref(false)
