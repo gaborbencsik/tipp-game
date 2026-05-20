@@ -19,7 +19,6 @@
 | UX-012 | Toast notification rendszer | Should Have | — |
 | UX-013 | Értesítési rendszer (notification bell + panel) | Nice to Have | — |
 | UX-016 | Kedvenc csapat dupla pont jelzés a meccs kártyán | Should Have | — |
-| UX-017 | Leadott speciális tipp kártyán UUID helyett játékosnév és határidő megjelenítése | Should Have | — |
 | UX-019 | Onboarding frissítés – új funkciók bemutatása | Should Have | — |
 | US-1401B | Pontszámítási konfiguráció védelme és újraszámolás | Should Have | — |
 | US-1402 | Játékos-választó ligaszűrés és szabad szöveges fallback | Should Have | — |
@@ -30,4 +29,4 @@
 
 ---
 
-**Haladás: 106 / 127 story kész** — Must Have: 31/31, Should Have: 75/92, Nice to Have: 0/4
+**Haladás: 107 / 127 story kész** — Must Have: 31/31, Should Have: 76/92, Nice to Have: 0/4

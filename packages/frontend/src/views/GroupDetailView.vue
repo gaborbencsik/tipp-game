@@ -580,10 +580,12 @@
 
           <div class="flex flex-wrap gap-2 text-xs mb-3">
             <span class="text-gray-500">{{ $t('groupDetail.specialMaxPoints', { n: sp.maxPoints }) }}</span>
-            <span class="text-gray-500">·</span>
-            <span :class="formatRelativeDeadline(sp.deadline, now, t).cssClass">
-              {{ formatRelativeDeadline(sp.deadline, now, t).label }}
-            </span>
+            <template v-if="formatRelativeDeadline(sp.deadline, now, t)">
+              <span class="text-gray-500">·</span>
+              <span :class="formatRelativeDeadline(sp.deadline, now, t)!.cssClass">
+                {{ formatRelativeDeadline(sp.deadline, now, t)!.label }}
+              </span>
+            </template>
           </div>
 
           <!-- Already evaluated -->

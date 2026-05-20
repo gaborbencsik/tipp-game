@@ -73,7 +73,7 @@ function navigateToGroup(groupId: string): void {
           >
             {{ $t('specialBanner.groupInfo', { name: group.groupName, count: group.pendingCount }) }}
             <template v-if="group.nearestDeadline">
-              · {{ formatRelativeDeadline(group.nearestDeadline, now, t).label }}
+              · {{ formatRelativeDeadline(group.nearestDeadline, now, t)?.label }}
             </template>
           </div>
         </div>

@@ -5,8 +5,14 @@ export interface DeadlineInfo {
 
 type TranslateFn = (key: string, params?: Record<string, unknown>) => string
 
-export function formatRelativeDeadline(deadline: string, now: number, t?: TranslateFn): DeadlineInfo {
+export function formatRelativeDeadline(
+  deadline: string | null | undefined,
+  now: number,
+  t?: TranslateFn,
+): DeadlineInfo | null {
+  if (deadline === null || deadline === undefined || deadline === '') return null
   const deadlineMs = new Date(deadline).getTime()
+  if (Number.isNaN(deadlineMs)) return null
   const diffMs = deadlineMs - now
 
   if (diffMs <= 0) {
