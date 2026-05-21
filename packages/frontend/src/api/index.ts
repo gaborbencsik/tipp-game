@@ -123,6 +123,12 @@ export const api = {
         headers: { Authorization: `Bearer ${token}` },
       }),
   },
+  scoringConfig: {
+    default: (token: string) =>
+      request<ScoringConfigFull>('/scoring-config/default', {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+  },
   groups: {
     mine: (token: string) =>
       request<Group[]>('/groups/mine', {

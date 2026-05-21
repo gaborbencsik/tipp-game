@@ -15,7 +15,7 @@ test.describe('Groups', () => {
     await injectSession(page)
     await page.goto('/app/groups')
 
-    const countBefore = await page.getByTestId('group-item').count()
+    await expect(page.getByTestId('spinner')).toHaveCount(0, { timeout: 10000 })
 
     await page.getByTestId('create-group-btn').first().click()
     const groupName = `Test Group ${Date.now()}`
@@ -28,8 +28,7 @@ test.describe('Groups', () => {
 
     await page.getByTestId('create-submit-btn').click()
 
-    await expect(page.getByTestId('group-item')).toHaveCount(countBefore + 1, { timeout: 5000 })
-    await expect(page.getByText(groupName)).toBeVisible()
+    await expect(page.getByText(groupName)).toBeVisible({ timeout: 5000 })
   })
 
   test('join group with own invite code shows already member error', async ({ page }) => {

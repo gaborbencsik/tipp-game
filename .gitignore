@@ -151,3 +151,4 @@ result.json
 .idea/
 .vscode/
 screenshots/
+.playwright-mcp/

@@ -1,277 +1,301 @@
 <template>
   <AppLayout>
-    <h1 class="text-2xl font-bold text-gray-900 mb-6">{{ $t('myTips.title') }}</h1>
-
-    <div v-if="matchesStore.isLoading || predictionsStore.isLoading" class="flex justify-center py-16">
-      <div class="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-    </div>
-
-    <div v-else-if="matchesStore.matchesByDate.length === 0" class="text-center text-gray-500 py-16">
-      {{ $t('myTips.empty') }}
-    </div>
-
-    <div v-else>
-      <div
-        v-for="group in [...matchesStore.matchesByDate].reverse()"
-        :key="group.date"
-        class="mb-8"
+    <div class="flex items-center justify-between gap-3 mb-6 flex-wrap">
+      <h1 class="text-2xl font-bold text-gray-900">{{ $t('myStats.title') }}</h1>
+      <select
+        v-if="userLeagues.length > 1"
+        :value="matchesStore.leagueFilter ?? ''"
+        class="h-10 px-3 text-sm text-gray-900 bg-gray-50 border border-gray-300 rounded-lg transition-all duration-150 focus:border-blue-500 focus:bg-white focus:ring-3 focus:ring-blue-500/10 focus:outline-none"
+        data-testid="league-filter"
+        @change="matchesStore.leagueFilter = ($event.target as HTMLSelectElement).value || null"
       >
-        <h2 class="text-lg font-semibold text-gray-700 mb-3 border-b border-gray-200 pb-1">
-          {{ group.label }}
-        </h2>
+        <option value="">{{ $t('matches.allLeagues') }}</option>
+        <option v-for="league in userLeagues" :key="league.id" :value="league.id">
+          {{ league.name }}
+        </option>
+      </select>
+    </div>
 
-        <div
-          v-for="match in group.matches"
-          :key="match.id"
-          class="bg-white rounded-lg shadow-sm border p-4 mb-3"
-          :class="rowBorderClass(match)"
+    <!-- Loading -->
+    <div v-if="isLoading" class="space-y-4">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div v-for="n in 4" :key="n" class="h-24 bg-gray-100 rounded-xl animate-pulse" />
+      </div>
+      <div class="h-6 bg-gray-100 rounded-lg animate-pulse" />
+      <div class="space-y-2">
+        <div v-for="n in 5" :key="n" class="h-16 bg-gray-100 rounded-lg animate-pulse" />
+      </div>
+    </div>
+
+    <!-- Empty: no predictions at all -->
+    <div
+      v-else-if="stats.submittedCount === 0 && stats.totalAvailable > 0"
+      class="bg-white border border-gray-200 rounded-xl p-8 text-center"
+    >
+      <div class="text-4xl mb-3">⚽</div>
+      <p class="text-gray-700 mb-4">{{ $t('myStats.emptyState') }}</p>
+      <router-link
+        to="/app/matches"
+        class="inline-block px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700"
+      >
+        {{ $t('myStats.goToMatches') }}
+      </router-link>
+    </div>
+
+    <div v-else class="space-y-6">
+      <!-- KPI cards -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <KpiCard
+          :label="$t('myStats.submitted')"
+          :value="stats.submittedCount"
+          :suffix="`/ ${stats.totalAvailable}`"
+          icon="📝"
+        />
+        <KpiCard
+          :label="$t('myStats.totalPoints')"
+          :value="stats.totalPoints"
+          icon="🎯"
+        />
+        <KpiCard
+          :label="$t('myStats.accuracy')"
+          :value="stats.evaluatedCount === 0 ? '—' : stats.accuracyPercent + '%'"
+          :hint="stats.evaluatedCount === 0 ? $t('myStats.noEvaluated') : `${stats.correctCount}/${stats.evaluatedCount}`"
+          :tone="stats.accuracyPercent >= 50 ? 'positive' : 'default'"
+          icon="✅"
+        />
+        <KpiCard
+          :label="streakLabel"
+          :value="streakValue"
+          :hint="streakHint"
+          :tone="streakTone"
+          icon="🔥"
+        />
+      </div>
+
+      <!-- Distribution bar -->
+      <div v-if="stats.evaluatedCount > 0 || stats.distribution.missed > 0">
+        <PointDistributionBar
+          :distribution="stats.distribution"
+          :labels="distributionLabels"
+        />
+      </div>
+
+      <!-- Filters -->
+      <div class="flex items-center gap-2 overflow-x-auto pb-1 -mx-4 px-4 md:mx-0 md:px-0">
+        <button
+          v-for="f in filters"
+          :key="f.key"
+          type="button"
+          class="shrink-0 px-3 py-1.5 text-sm font-medium rounded-full border transition-colors flex items-center gap-1.5"
+          :class="activeFilter === f.key ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'"
+          :data-testid="`filter-chip-${f.key}`"
+          @click="activeFilter = f.key"
         >
-          <div class="flex items-center justify-between gap-4">
-            <!-- Teams + score -->
-            <div class="flex items-center gap-3 flex-1 min-w-0">
-              <div class="text-lg shrink-0">{{ statusIcon(match) }}</div>
-              <div class="min-w-0">
-                <div class="flex items-center gap-2 text-sm font-medium text-gray-800">
-                  <span class="truncate"><TeamBadge :team="match.homeTeam" /></span>
-                  <span class="text-gray-400 shrink-0">
-                    <template v-if="match.result">{{ match.result.homeGoals }}–{{ match.result.awayGoals }}</template>
-                    <template v-else>vs</template>
-                  </span>
-                  <span class="truncate"><TeamBadge :team="match.awayTeam" /></span>
-                </div>
-                <div class="text-xs text-gray-400 mt-0.5">{{ formatDateTime(match.scheduledAt) }}</div>
-              </div>
-            </div>
+          {{ f.label }}
+          <span
+            class="text-xs font-normal px-1.5 py-0.5 rounded-full"
+            :class="activeFilter === f.key ? 'bg-blue-700 text-white' : 'bg-gray-100 text-gray-500'"
+          >{{ f.count }}</span>
+        </button>
+      </div>
 
-            <!-- Tipp / státusz -->
-            <div class="shrink-0">
-              <template v-if="isTippable(match)">
-                <!-- Inline szerkesztés -->
-                <div v-if="activeMatchId === match.id" class="flex items-center gap-1">
-                  <input
-                    :ref="el => { if (el) homeInputs[match.id] = el as HTMLInputElement }"
-                    :value="draftGoals[match.id]?.home ?? ''"
-                    inputmode="numeric"
-                    pattern="[0-9]*"
-                    min="0"
-                    max="99"
-                    placeholder="0"
-                    class="w-[2.6rem] h-8 text-center text-base font-bold text-gray-900 bg-gray-50 border-[1.5px] border-gray-300 rounded-md transition-all duration-150 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:border-blue-500 focus:bg-white focus:ring-3 focus:ring-blue-500/10 focus:outline-none"
-                    @focus="onFocus(match.id, 'home', $event)"
-                    @input="onInput(match.id, 'home', ($event.target as HTMLInputElement).value)"
-                    @keydown="onKeydown(match.id, 'home', $event)"
-                    @blur="onBlur(match.id)"
-                  />
-                  <span class="text-gray-400 font-bold">–</span>
-                  <input
-                    :ref="el => { if (el) awayInputs[match.id] = el as HTMLInputElement }"
-                    :value="draftGoals[match.id]?.away ?? ''"
-                    inputmode="numeric"
-                    pattern="[0-9]*"
-                    min="0"
-                    max="99"
-                    placeholder="0"
-                    class="w-[2.6rem] h-8 text-center text-base font-bold text-gray-900 bg-gray-50 border-[1.5px] border-gray-300 rounded-md transition-all duration-150 appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none focus:border-blue-500 focus:bg-white focus:ring-3 focus:ring-blue-500/10 focus:outline-none"
-                    @focus="onFocus(match.id, 'away', $event)"
-                    @input="onInput(match.id, 'away', ($event.target as HTMLInputElement).value)"
-                    @keydown="onKeydown(match.id, 'away', $event)"
-                    @blur="onBlur(match.id)"
-                  />
-                </div>
+      <!-- List -->
+      <div v-if="filteredItems.length === 0" class="text-center py-10 text-gray-500">
+        <p class="mb-3">{{ $t('myStats.noFilterResults') }}</p>
+        <button
+          v-if="activeFilter !== 'all'"
+          type="button"
+          class="text-sm font-medium text-blue-600 hover:text-blue-700"
+          @click="activeFilter = 'all'"
+        >
+          {{ $t('myStats.resetFilter') }}
+        </button>
+      </div>
 
-                <!-- Megjelenítés / kattintható -->
-                <template v-else>
-                  <template v-if="predictionsStore.predictionByMatchId(match.id)">
-                    <button
-                      class="text-sm font-semibold text-green-700 hover:text-green-900 transition-colors"
-                      @click="openEdit(match.id)"
-                    >
-                      {{ predictionsStore.predictionByMatchId(match.id)!.homeGoals }}
-                      –
-                      {{ predictionsStore.predictionByMatchId(match.id)!.awayGoals }}
-                    </button>
-                    <div class="text-xs text-gray-400 text-right">
-                      <span v-if="predictionsStore.saveStatus[match.id] === 'saved'" class="text-green-600">{{ $t('myTips.saved') }}</span>
-                      <span v-else>{{ $t('myTips.savedShort') }}</span>
-                    </div>
-                  </template>
-                  <template v-else>
-                    <button
-                      class="text-xs font-medium text-amber-700 bg-amber-50 px-2 py-1 rounded hover:bg-amber-100 transition-colors"
-                      @click="openEdit(match.id)"
-                    >
-                      {{ $t('myTips.tipNow') }}
-                    </button>
-                  </template>
-                </template>
-              </template>
-
-              <template v-else-if="match.status === 'finished' || match.status === 'live'">
-                <template v-if="predictionsStore.predictionByMatchId(match.id)">
-                  <div class="text-sm font-semibold text-gray-700 text-right">
-                    {{ predictionsStore.predictionByMatchId(match.id)!.homeGoals }}
-                    –
-                    {{ predictionsStore.predictionByMatchId(match.id)!.awayGoals }}
-                    <span v-if="predictionsStore.predictionByMatchId(match.id)!.outcomeAfterDraw" class="text-xs font-normal text-gray-500 ml-1">
-                      · {{ outcomeLabel(predictionsStore.predictionByMatchId(match.id)!.outcomeAfterDraw!) }}
-                    </span>
-                  </div>
-                  <div v-if="predictionsStore.predictionByMatchId(match.id)!.pointsGlobal !== null" class="text-xs font-bold text-blue-600 text-right">
-                    {{ predictionsStore.predictionByMatchId(match.id)!.pointsGlobal }} {{ $t('common.points') }}
-                  </div>
-                </template>
-                <template v-else>
-                  <span class="text-xs text-red-500 font-medium">{{ $t('myTips.missed') }}</span>
-                </template>
-              </template>
-
-              <template v-else>
-                <span class="text-xs text-gray-400">–</span>
-              </template>
-            </div>
-          </div>
-        </div>
+      <div v-else class="space-y-2 max-w-3xl" data-testid="prediction-list">
+        <PredictionListItem
+          v-for="item in filteredItems"
+          :key="item.match.id"
+          :match="item.match"
+          :prediction="item.prediction"
+          :scoring-config="scoringConfig"
+          :points-label="$t('myStats.points')"
+          :missed-label="$t('myStats.missedShort')"
+          data-testid="prediction-item"
+          @click="goToMatch(item.match.id)"
+        />
       </div>
     </div>
   </AppLayout>
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 import AppLayout from '../components/AppLayout.vue'
-import TeamBadge from '../components/TeamBadge.vue'
+import KpiCard from '../components/dashboard/KpiCard.vue'
+import PointDistributionBar from '../components/dashboard/PointDistributionBar.vue'
+import PredictionListItem from '../components/dashboard/PredictionListItem.vue'
 import { useMatchesStore } from '../stores/matches.store.js'
 import { usePredictionsStore } from '../stores/predictions.store.js'
-import type { Match, MatchOutcome } from '../types/index.js'
-import { getDateLocale } from '../lib/dateLocale.js'
+import { useGroupsStore } from '../stores/groups.store.js'
+import { useMyStats, type ScoringBuckets } from '../composables/useMyStats.js'
+import { api } from '../api/index.js'
+import { supabase } from '../lib/supabase.js'
+import type { Match, Prediction } from '../types/index.js'
+
+type FilterKey = 'all' | 'correct' | 'exact' | 'zero' | 'missed'
+
+const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
 
 const { t } = useI18n()
+const router = useRouter()
 const matchesStore = useMatchesStore()
 const predictionsStore = usePredictionsStore()
+const groupsStore = useGroupsStore()
 
-const now = new Date()
-const activeMatchId = ref<string | null>(null)
-const draftGoals = ref<Record<string, { home: number | null; away: number | null }>>({})
-const homeInputs = ref<Record<string, HTMLInputElement>>({})
-const awayInputs = ref<Record<string, HTMLInputElement>>({})
-const autosaveTimers: Record<string, ReturnType<typeof setTimeout>> = {}
+const scoringConfig = ref<ScoringBuckets | null>(null)
+const activeFilter = ref<FilterKey>('all')
+
+const isLoading = computed(() => matchesStore.isLoading || predictionsStore.isLoading)
+
+async function getAccessToken(): Promise<string> {
+  if (DEV_AUTH_BYPASS) return 'dev-bypass-token'
+  const { data } = await supabase.auth.getSession()
+  return data.session?.access_token ?? ''
+}
 
 onMounted(async () => {
-  await Promise.all([
-    matchesStore.matches.length === 0 ? matchesStore.fetchMatches() : Promise.resolve(),
-    predictionsStore.predictions.length === 0 ? predictionsStore.fetchMyPredictions() : Promise.resolve(),
-  ])
-  initDrafts()
+  const tasks: Promise<unknown>[] = []
+  if (matchesStore.matches.length === 0) tasks.push(matchesStore.fetchMatches())
+  if (predictionsStore.predictions.length === 0) tasks.push(predictionsStore.fetchMyPredictions())
+  if (groupsStore.groups.length === 0) tasks.push(groupsStore.fetchMyGroups())
+  tasks.push(loadScoringConfig())
+  await Promise.all(tasks)
 })
 
-function initDrafts(): void {
-  for (const match of matchesStore.matches) {
-    const existing = predictionsStore.predictionByMatchId(match.id)
-    if (existing) {
-      draftGoals.value[match.id] = { home: existing.homeGoals, away: existing.awayGoals }
+async function loadScoringConfig(): Promise<void> {
+  try {
+    const token = await getAccessToken()
+    const config = await api.scoringConfig.default(token)
+    scoringConfig.value = {
+      exactScore: config.exactScore,
+      correctWinnerAndDiff: config.correctWinnerAndDiff,
+      correctWinner: config.correctWinner,
+      correctDraw: config.correctDraw,
+      correctOutcome: config.correctOutcome,
+      incorrect: config.incorrect,
+    }
+  } catch {
+    scoringConfig.value = null
+  }
+}
+
+const matchesRef = computed(() => {
+  const leagueId = matchesStore.leagueFilter
+  if (!leagueId) return matchesStore.matches
+  return matchesStore.matches.filter(m => m.league?.id === leagueId)
+})
+const predictionsRef = computed(() => predictionsStore.predictions)
+
+interface UserLeague {
+  readonly id: string
+  readonly name: string
+  readonly shortName: string
+}
+
+const userLeagues = computed<readonly UserLeague[]>(() => {
+  const seen = new Map<string, UserLeague>()
+  for (const g of groupsStore.groups) {
+    if (g.league && !seen.has(g.league.id)) seen.set(g.league.id, g.league)
+  }
+  return [...seen.values()]
+})
+
+const stats = useMyStats({
+  predictions: predictionsRef,
+  matches: matchesRef,
+  scoringConfig,
+})
+
+const distributionLabels = computed(() => ({
+  exact: t('myStats.distExact'),
+  winnerAndDiff: t('myStats.distWinnerAndDiff'),
+  winner: t('myStats.distWinner'),
+  draw: t('myStats.distDraw'),
+  incorrect: t('myStats.distZero'),
+  missed: t('myStats.distMissed'),
+}))
+
+const streakValue = computed(() => {
+  const v = stats.value.currentStreak
+  if (v === 0) return '—'
+  return Math.abs(v).toString()
+})
+
+const streakLabel = computed(() => t('myStats.currentStreak'))
+
+const streakHint = computed(() => {
+  if (stats.value.currentStreak === 0) return `${t('myStats.bestStreak')}: ${stats.value.bestStreak}`
+  return stats.value.currentStreak > 0 ? t('myStats.currentStreakHint') : t('myStats.currentStreakHintNeg')
+})
+
+const streakTone = computed<'positive' | 'negative' | 'neutral'>(() => {
+  if (stats.value.currentStreak > 0) return 'positive'
+  if (stats.value.currentStreak < 0) return 'negative'
+  return 'neutral'
+})
+
+interface ListItem {
+  readonly match: Match
+  readonly prediction: Prediction | null
+}
+
+const allItems = computed<ListItem[]>(() => {
+  const predByMatch = new Map(predictionsStore.predictions.map(p => [p.matchId, p] as const))
+  const items: ListItem[] = []
+  for (const match of matchesRef.value) {
+    const pred = predByMatch.get(match.id) ?? null
+    if (pred || match.status === 'finished' || match.status === 'live') {
+      items.push({ match, prediction: pred })
     }
   }
-}
+  items.sort((a, b) => new Date(b.match.scheduledAt).getTime() - new Date(a.match.scheduledAt).getTime())
+  return items
+})
 
-function openEdit(matchId: string): void {
-  activeMatchId.value = matchId
-  if (!draftGoals.value[matchId]) {
-    draftGoals.value[matchId] = { home: null, away: null }
-  }
-  nextTick(() => {
-    homeInputs.value[matchId]?.focus()
-    homeInputs.value[matchId]?.select()
-  })
-}
-
-function onFocus(matchId: string, side: 'home' | 'away', event: FocusEvent): void {
-  const input = event.target as HTMLInputElement
-  if (draftGoals.value[matchId]?.[side] == null) {
-    const current = draftGoals.value[matchId] ?? { home: null, away: null }
-    draftGoals.value = { ...draftGoals.value, [matchId]: { ...current, [side]: 0 } }
-  }
-  nextTick(() => input.select())
-}
-
-function onInput(matchId: string, side: 'home' | 'away', raw: string): void {
-  const val = raw === '' ? null : Math.min(99, Math.max(0, parseInt(raw, 10)))
-  const current = draftGoals.value[matchId] ?? { home: null, away: null }
-  draftGoals.value = { ...draftGoals.value, [matchId]: { ...current, [side]: val } }
-  if (autosaveTimers[matchId]) clearTimeout(autosaveTimers[matchId])
-  autosaveTimers[matchId] = setTimeout(() => { void savePrediction(matchId) }, 2000)
-}
-
-function onKeydown(matchId: string, side: 'home' | 'away', event: KeyboardEvent): void {
-  if (/^[0-9]$/.test(event.key)) {
-    event.preventDefault()
-    const val = parseInt(event.key, 10)
-    const current = draftGoals.value[matchId] ?? { home: null, away: null }
-    draftGoals.value = { ...draftGoals.value, [matchId]: { ...current, [side]: val } }
-    if (autosaveTimers[matchId]) clearTimeout(autosaveTimers[matchId])
-    autosaveTimers[matchId] = setTimeout(() => { void savePrediction(matchId) }, 2000)
-    if (side === 'home') {
-      nextTick(() => {
-        awayInputs.value[matchId]?.focus()
-        awayInputs.value[matchId]?.select()
-      })
-    } else {
-      nextTick(() => awayInputs.value[matchId]?.blur())
-    }
+function matchesFilter(item: ListItem, key: FilterKey): boolean {
+  const p = item.prediction
+  switch (key) {
+    case 'all':
+      return true
+    case 'correct':
+      return !!p && p.pointsGlobal !== null && p.pointsGlobal > 0
+    case 'exact':
+      if (!p || p.pointsGlobal === null) return false
+      const exact = scoringConfig.value?.exactScore
+      if (exact !== undefined) return p.pointsGlobal === exact
+      const max = Math.max(...predictionsStore.predictions.map(x => x.pointsGlobal ?? 0))
+      return p.pointsGlobal === max && max > 0
+    case 'zero':
+      return !!p && p.pointsGlobal === 0
+    case 'missed':
+      return !p && item.match.status === 'finished'
   }
 }
 
-function onBlur(matchId: string): void {
-  // kis delay hogy a másik input fókuszálható legyen ugyanazon a meccsen
-  setTimeout(() => {
-    const homeActive = document.activeElement === homeInputs.value[matchId]
-    const awayActive = document.activeElement === awayInputs.value[matchId]
-    if (!homeActive && !awayActive) {
-      void savePrediction(matchId)
-      activeMatchId.value = null
-    }
-  }, 100)
-}
+const filteredItems = computed(() => allItems.value.filter(item => matchesFilter(item, activeFilter.value)))
 
-async function savePrediction(matchId: string): Promise<void> {
-  const draft = draftGoals.value[matchId]
-  if (draft?.home == null || draft?.away == null) return
-  await predictionsStore.upsertPrediction({ matchId, homeGoals: draft.home, awayGoals: draft.away })
-}
+const filters = computed(() => ([
+  { key: 'all' as const, label: t('myStats.filterAll'), count: allItems.value.filter(i => matchesFilter(i, 'all')).length },
+  { key: 'correct' as const, label: t('myStats.filterCorrect'), count: allItems.value.filter(i => matchesFilter(i, 'correct')).length },
+  { key: 'exact' as const, label: t('myStats.filterExact'), count: allItems.value.filter(i => matchesFilter(i, 'exact')).length },
+  { key: 'zero' as const, label: t('myStats.filterZero'), count: allItems.value.filter(i => matchesFilter(i, 'zero')).length },
+  { key: 'missed' as const, label: t('myStats.filterMissed'), count: allItems.value.filter(i => matchesFilter(i, 'missed')).length },
+]))
 
-function isTippable(match: Match): boolean {
-  return match.status === 'scheduled' && new Date(match.scheduledAt) > now
-}
-
-function statusIcon(match: Match): string {
-  const prediction = predictionsStore.predictionByMatchId(match.id)
-  if (isTippable(match)) return prediction ? '✅' : '⏳'
-  if (match.status === 'finished' || match.status === 'live') return prediction ? '🔒' : '❌'
-  return '–'
-}
-
-function rowBorderClass(match: Match): string {
-  const prediction = predictionsStore.predictionByMatchId(match.id)
-  if (isTippable(match) && !prediction) return 'border-amber-300 bg-amber-50'
-  if ((match.status === 'finished' || match.status === 'live') && !prediction) return 'border-red-200'
-  return 'border-gray-100'
-}
-
-function formatDateTime(iso: string): string {
-  return new Intl.DateTimeFormat(getDateLocale(), {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(iso))
-}
-
-function outcomeLabel(outcome: MatchOutcome): string {
-  switch (outcome) {
-    case 'extra_time_home': return t('myTips.outcomeHomeET')
-    case 'extra_time_away': return t('myTips.outcomeAwayET')
-    case 'penalties_home': return t('myTips.outcomeHomePen')
-    case 'penalties_away': return t('myTips.outcomeAwayPen')
-  }
+function goToMatch(matchId: string): void {
+  router.push(`/app/matches/${matchId}`)
 }
 </script>

@@ -15,6 +15,7 @@ import { waitlistRouter } from './routes/waitlist.routes.js'
 import { specialPredictionsRouter } from './routes/special-predictions.routes.js'
 import { syncRouter } from './routes/sync.routes.js'
 import { internalSyncRouter } from './routes/internal-sync.routes.js'
+import { scoringConfigRouter } from './routes/scoring-config.routes.js'
 
 const allowedOrigins = (process.env.CORS_ORIGIN ?? 'http://localhost:5173').split(',').map(o => o.trim())
 
@@ -53,6 +54,8 @@ app.use(syncRouter.routes())
 app.use(syncRouter.allowedMethods())
 app.use(internalSyncRouter.routes())
 app.use(internalSyncRouter.allowedMethods())
+app.use(scoringConfigRouter.routes())
+app.use(scoringConfigRouter.allowedMethods())
 
 app.on('error', (err: Error, ctx: Koa.Context) => {
   const entry: Record<string, unknown> = {

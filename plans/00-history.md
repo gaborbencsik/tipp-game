@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 112 story kész (Must Have: 31/31, Should Have: 81/93)
+> 113 story kész (Must Have: 31/31, Should Have: 82/93)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -118,3 +118,4 @@
 | US-1401B | Pontszámítási konfiguráció védelme és újraszámolás | Should Have |
 | BUG-003 | Drizzle migráció silent skip fix – saját idx-alapú runner | Should Have |
 | UX-012 | Toast notification rendszer | Should Have |
+| US-1405 | Tippjeim oldal redesign – személyes statisztikai dashboard | Should Have |

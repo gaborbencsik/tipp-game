@@ -16,12 +16,33 @@ async function post(path: string, body?: unknown): Promise<unknown> {
   return res.json()
 }
 
+async function del(path: string): Promise<void> {
+  const res = await fetch(`${BASE}${path}`, { method: 'DELETE', headers: HEADERS })
+  if (!res.ok && res.status !== 404) {
+    throw new Error(`API ${path} failed: ${res.status} ${await res.text()}`)
+  }
+}
+
+async function get(path: string): Promise<unknown> {
+  const res = await fetch(`${BASE}${path}`, { headers: HEADERS })
+  if (!res.ok) {
+    throw new Error(`API ${path} failed: ${res.status} ${await res.text()}`)
+  }
+  return res.json()
+}
+
 export interface TestUser {
   id: string
   supabaseId: string
   email: string
   displayName: string
   role: string
+}
+
+export interface UserGroupSummary {
+  id: string
+  name: string
+  league: { id: string; name: string; shortName: string } | null
 }
 
 export interface TestLeague {
@@ -88,4 +109,45 @@ export async function createMatch(
 
 export async function createGroup(name: string, leagueId: string): Promise<TestGroup> {
   return post('/api/groups', { name, leagueId }) as Promise<TestGroup>
+}
+
+export async function getMyGroups(): Promise<UserGroupSummary[]> {
+  return get('/api/groups/mine') as Promise<UserGroupSummary[]>
+}
+
+export async function deleteAllMyGroups(): Promise<void> {
+  const groups = await getMyGroups()
+  for (const g of groups) {
+    await del(`/api/groups/${g.id}`)
+  }
+}
+
+export async function ensureGroupInLeague(name: string, leagueId: string): Promise<void> {
+  const groups = await getMyGroups()
+  if (groups.some(g => g.league?.id === leagueId)) return
+  try {
+    await createGroup(name, leagueId)
+  } catch (err) {
+    if (err instanceof Error && err.message.includes('Maximum number of created groups')) return
+    throw err
+  }
+}
+
+export interface TestPrediction {
+  id: string
+  matchId: string
+  homeGoals: number
+  awayGoals: number
+}
+
+export async function createPrediction(
+  matchId: string,
+  homeGoals: number,
+  awayGoals: number,
+): Promise<TestPrediction> {
+  return post('/api/predictions', {
+    matchId,
+    homeGoals,
+    awayGoals,
+  }) as Promise<TestPrediction>
 }

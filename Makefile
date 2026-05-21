@@ -35,6 +35,10 @@ help:
 	@echo "    make e2e-ui        Playwright E2E tesztek UI módban"
 	@echo ""
 	@echo "    make clean         node_modules + Docker volume törlése"
+	@echo "  Sandbox"
+	@echo "    make sbx           Sandbox létrehozása"
+	@echo "    make sbx-run       Sandbox futtatása"
+	@echo "    make sbx-rm        Sandbox törlése"
 
 # ─── Fejlesztés ──────────────────────────────────────────────────────────────
 

@@ -1,23 +1,28 @@
 import type { Page } from '@playwright/test'
+import { ensureUser } from './api.js'
 
-const DEV_SESSION = {
-  user: {
-    id: '00000000-0000-0000-0000-000000000001',
-    supabaseId: '00000000-0000-0000-0000-000000000001',
-    email: 'admin@dev.local',
-    displayName: 'Dev User',
-    avatarUrl: null,
-    role: 'admin',
-    preferredLocale: 'hu',
-    onboardingCompletedAt: '2020-01-01T00:00:00.000Z',
-  },
-  expiresAt: Date.now() + 90 * 24 * 60 * 60 * 1000,
+const DEV_SESSION_BASE = {
+  email: 'admin@dev.local',
+  displayName: 'Dev User',
+  avatarUrl: null,
+  role: 'admin',
+  preferredLocale: 'hu',
+  onboardingCompletedAt: '2020-01-01T00:00:00.000Z',
 }
 
 export async function injectSession(page: Page): Promise<void> {
-  await page.addInitScript((session) => {
-    window.sessionStorage.setItem('dev_session', JSON.stringify(session))
-  }, DEV_SESSION)
+  const dbUser = await ensureUser()
+  const session = {
+    user: {
+      ...DEV_SESSION_BASE,
+      id: dbUser.id,
+      supabaseId: dbUser.supabaseId,
+    },
+    expiresAt: Date.now() + 90 * 24 * 60 * 60 * 1000,
+  }
+  await page.addInitScript((s) => {
+    window.sessionStorage.setItem('dev_session', JSON.stringify(s))
+  }, session)
 }
 
 export async function loginViaUI(page: Page): Promise<void> {
