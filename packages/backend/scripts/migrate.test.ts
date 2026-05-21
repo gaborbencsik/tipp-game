@@ -6,7 +6,7 @@ import {
   type DbExecutor,
   type Journal,
   type MigrationLoader,
-} from './migrate.js'
+} from '../src/db/migrator.js'
 
 interface FakeRow {
   readonly hash: string

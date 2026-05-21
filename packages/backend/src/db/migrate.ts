@@ -1,19 +1,25 @@
-import { migrate } from 'drizzle-orm/node-postgres/migrator'
-import { db } from './client.js'
-import path from 'path'
-import { fileURLToPath } from 'url'
+import pg from 'pg'
+import { runMigrationsOnClient } from './migrator.js'
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
-
-async function runMigrations(): Promise<void> {
-  console.log('Running migrations...')
-  await migrate(db, {
-    migrationsFolder: path.join(__dirname, 'migrations'),
-  })
-  console.log('Migrations complete.')
+async function main(): Promise<void> {
+  const client = new pg.Client({ connectionString: process.env.DATABASE_URL })
+  await client.connect()
+  try {
+    console.log('Running migrations...')
+    const result = await runMigrationsOnClient(client)
+    if (result.applied.length === 0) {
+      console.log(`Up to date — ${result.skipped} migration(s) already applied.`)
+    } else {
+      console.log(`Applied ${result.applied.length} migration(s), skipped ${result.skipped}.`)
+    }
+  } finally {
+    await client.end()
+  }
 }
 
-runMigrations().catch((err: unknown) => {
-  console.error('Migration failed:', err)
-  process.exit(1)
-})
+main()
+  .then(() => process.exit(0))
+  .catch((err: unknown) => {
+    console.error('Migration failed:', err)
+    process.exit(1)
+  })
