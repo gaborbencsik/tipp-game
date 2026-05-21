@@ -116,3 +116,4 @@
 | US-1502 | Élő meccs eredmény megjelenítés és virtuális pontszámítás | Should Have |
 | US-944 | Csoportmeghívó kontextus megőrzése és automatikus csoportba lépés bejelentkezés után | Should Have |
 | US-1401B | Pontszámítási konfiguráció védelme és újraszámolás | Should Have |
+| BUG-003 | Drizzle migráció silent skip fix – saját idx-alapú runner | Should Have |
