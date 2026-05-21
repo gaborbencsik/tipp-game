@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { supabase } from '../lib/supabase.js'
 import { api } from '../api/index.js'
+import { useToastStore } from './toast.store.js'
 import type { Match, MatchInput, MatchResultInput } from '../types/index.js'
 
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
@@ -32,45 +33,61 @@ export const useAdminMatchesStore = defineStore('admin-matches', () => {
 
   async function createMatch(input: MatchInput): Promise<void> {
     error.value = null
+    const toast = useToastStore()
     try {
       const token = await getAccessToken()
       await api.admin.matches.create(token, input)
       await fetchMatches()
+      toast.addToast('Mérkőzés létrehozva', 'success')
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Ismeretlen hiba'
+      const msg = err instanceof Error ? err.message : 'Ismeretlen hiba'
+      error.value = msg
+      toast.addToast(`Hiba: ${msg}`, 'error')
     }
   }
 
   async function updateMatch(id: string, input: Partial<MatchInput>): Promise<void> {
     error.value = null
+    const toast = useToastStore()
     try {
       const token = await getAccessToken()
       await api.admin.matches.update(token, id, input)
       await fetchMatches()
+      toast.addToast('Mérkőzés frissítve', 'success')
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Ismeretlen hiba'
+      const msg = err instanceof Error ? err.message : 'Ismeretlen hiba'
+      error.value = msg
+      toast.addToast(`Hiba: ${msg}`, 'error')
     }
   }
 
   async function deleteMatch(id: string): Promise<void> {
     error.value = null
+    const toast = useToastStore()
     try {
       const token = await getAccessToken()
       await api.admin.matches.delete(token, id)
       matches.value = matches.value.filter(m => m.id !== id)
+      toast.addToast('Mérkőzés törölve', 'success')
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Ismeretlen hiba'
+      const msg = err instanceof Error ? err.message : 'Ismeretlen hiba'
+      error.value = msg
+      toast.addToast(`Hiba: ${msg}`, 'error')
     }
   }
 
   async function setResult(id: string, input: MatchResultInput): Promise<void> {
     error.value = null
+    const toast = useToastStore()
     try {
       const token = await getAccessToken()
       await api.admin.matches.setResult(token, id, input)
       await fetchMatches()
+      toast.addToast('Eredmény elmentve', 'success')
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Ismeretlen hiba'
+      const msg = err instanceof Error ? err.message : 'Ismeretlen hiba'
+      error.value = msg
+      toast.addToast(`Hiba: ${msg}`, 'error')
     }
   }
 

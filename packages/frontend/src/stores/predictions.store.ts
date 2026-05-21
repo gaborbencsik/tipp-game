@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { supabase } from '../lib/supabase.js'
 import { useAuthStore } from './auth.store.js'
+import { useToastStore } from './toast.store.js'
 import { api } from '../api/index.js'
 import type { Prediction, PredictionInput } from '../types/index.js'
 
@@ -42,6 +43,7 @@ export const usePredictionsStore = defineStore('predictions', () => {
   async function upsertPrediction(input: PredictionInput): Promise<void> {
     saveStatus.value = { ...saveStatus.value, [input.matchId]: 'saving' }
     error.value = null
+    const toast = useToastStore()
     try {
       const token = await getAccessToken()
       const saved = await api.predictions.upsert(token, input)
@@ -52,9 +54,12 @@ export const usePredictionsStore = defineStore('predictions', () => {
         predictions.value = [...predictions.value, saved]
       }
       saveStatus.value = { ...saveStatus.value, [input.matchId]: 'saved' }
+      toast.addToast(`Tipp elmentve: ${saved.homeGoals} - ${saved.awayGoals}`, 'success')
     } catch (err) {
       saveStatus.value = { ...saveStatus.value, [input.matchId]: 'error' }
-      error.value = err instanceof Error ? err.message : 'Ismeretlen hiba'
+      const message = err instanceof Error ? err.message : 'Ismeretlen hiba'
+      error.value = message
+      toast.addToast('Hiba történt. Próbáld újra!', 'error')
     }
   }
 

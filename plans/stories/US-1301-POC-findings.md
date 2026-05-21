@@ -56,7 +56,7 @@ Null goals edge case: előfordulhat FT statusszal is — ezeket szintén skip-el
 
 **Eredmény:** Sync után 60/100 csapat párosítva (48 VB + 12 NB I).
 
-## Következő lépések (US-1301 teljes implementáció)
+## Következő lépések (US-1308 teljes implementáció)
 
 1. `match_insights` tábla létrehozása (migráció)
 2. A `collectTeamStats` logika beépítése a service-be (a POC kódot újra kell írni, a `fetchTeamFixtures` metódust hozzá kell adni a FootballApiClient-hez)

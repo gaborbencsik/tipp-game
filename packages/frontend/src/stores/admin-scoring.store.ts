@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { supabase } from '../lib/supabase.js'
 import { api } from '../api/index.js'
+import { useToastStore } from './toast.store.js'
 import type { ScoringConfigFull, ScoringConfigInput, ScoringConfigWithImpact, ScoringOverrideInput, RecalcStatus } from '../types/index.js'
 
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
@@ -43,11 +44,13 @@ export const useAdminScoringStore = defineStore('admin-scoring', () => {
     saveStatus.value = 'saving'
     error.value = null
     conflictError.value = null
+    const toast = useToastStore()
     try {
       const token = await getAccessToken()
       const updated = await api.admin.scoringConfig.update(token, input)
       mergeUpdated(updated)
       saveStatus.value = 'saved'
+      toast.addToast('Pontrendszer frissítve', 'success')
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Ismeretlen hiba'
       if (message.includes('frozen')) {
@@ -57,24 +60,29 @@ export const useAdminScoringStore = defineStore('admin-scoring', () => {
         error.value = message
       }
       saveStatus.value = 'error'
+      toast.addToast(`Hiba: ${message}`, 'error')
     }
   }
 
   async function overrideConfig(input: ScoringOverrideInput): Promise<void> {
     saveStatus.value = 'saving'
     error.value = null
+    const toast = useToastStore()
     try {
       const token = await getAccessToken()
       const updated = await api.admin.scoringConfig.override(token, input)
       mergeUpdated(updated)
       saveStatus.value = 'saved'
+      toast.addToast('Override mentve', 'success')
       if (input.recalculate) {
         recalcRunState.value = 'running'
         await fetchRecalcStatus()
       }
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Ismeretlen hiba'
+      const msg = err instanceof Error ? err.message : 'Ismeretlen hiba'
+      error.value = msg
       saveStatus.value = 'error'
+      toast.addToast(`Hiba: ${msg}`, 'error')
     }
   }
 

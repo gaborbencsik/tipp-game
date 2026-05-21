@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { supabase } from '../lib/supabase.js'
 import { api } from '../api/index.js'
+import { useToastStore } from './toast.store.js'
 import type { AdminUser } from '../types/index.js'
 
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
@@ -32,23 +33,31 @@ export const useAdminUsersStore = defineStore('admin-users', () => {
 
   async function updateUserRole(id: string, role: 'user' | 'admin'): Promise<void> {
     error.value = null
+    const toast = useToastStore()
     try {
       const token = await getAccessToken()
       const updated = await api.admin.users.updateRole(token, id, role)
       users.value = users.value.map(u => (u.id === id ? updated : u))
+      toast.addToast('Szerepkör frissítve', 'success')
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Ismeretlen hiba'
+      const msg = err instanceof Error ? err.message : 'Ismeretlen hiba'
+      error.value = msg
+      toast.addToast(`Hiba: ${msg}`, 'error')
     }
   }
 
   async function banUser(id: string, ban: boolean): Promise<void> {
     error.value = null
+    const toast = useToastStore()
     try {
       const token = await getAccessToken()
       const updated = await api.admin.users.ban(token, id, ban)
       users.value = users.value.map(u => (u.id === id ? updated : u))
+      toast.addToast(ban ? 'Felhasználó letiltva' : 'Felhasználó feloldva', 'success')
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Ismeretlen hiba'
+      const msg = err instanceof Error ? err.message : 'Ismeretlen hiba'
+      error.value = msg
+      toast.addToast(`Hiba: ${msg}`, 'error')
     }
   }
 
