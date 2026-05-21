@@ -172,6 +172,7 @@ export const matchResults = pgTable('match_results', {
   recordedBy:       uuid('recorded_by').references(() => users.id),
   recordedAt:       timestamp('recorded_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt:        timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  pointsCalculatedAt: timestamp('points_calculated_at', { withTimezone: true }),
 }, (t) => ({
   matchIdIdx: uniqueIndex('match_results_match_id_idx').on(t.matchId),
 }))
@@ -228,6 +229,7 @@ export const scoringConfigs = pgTable('scoring_configs', {
   correctDraw:          smallint('correct_draw').notNull().default(2),
   correctOutcome:       smallint('correct_outcome').notNull().default(1),
   incorrect:            smallint('incorrect').notNull().default(0),
+  frozenAt:             timestamp('frozen_at', { withTimezone: true }),
   createdAt:            timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt:            timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
@@ -514,5 +516,7 @@ export const syncState = pgTable('sync_state', {
   lastPlayerSyncAt:          timestamp('last_player_sync_at', { withTimezone: true }),
   transfermarktSyncEnabled:  boolean('transfermarkt_sync_enabled').notNull().default(false),
   lastTransfermarktSyncAt:   timestamp('last_transfermarkt_sync_at', { withTimezone: true }),
+  recalcInProgress:          boolean('recalc_in_progress').notNull().default(false),
+  lastRecalcResult:          jsonb('last_recalc_result'),
   updatedAt:                 timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })

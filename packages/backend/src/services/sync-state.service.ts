@@ -1,7 +1,7 @@
 import { eq, and, sql, lt } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { syncState, matches } from '../db/schema/index.js'
-import type { SyncMode } from '../types/index.js'
+import type { SyncMode, RecalcResult, RecalcStatus } from '../types/index.js'
 
 export interface SyncStateRow {
   readonly mode: SyncMode
@@ -15,6 +15,8 @@ export interface SyncStateRow {
   readonly lastPlayerSyncAt: Date | null
   readonly transfermarktSyncEnabled: boolean
   readonly lastTransfermarktSyncAt: Date | null
+  readonly recalcInProgress: boolean
+  readonly lastRecalcResult: RecalcResult | null
 }
 
 const DEFAULT_STATE: SyncStateRow = {
@@ -29,6 +31,8 @@ const DEFAULT_STATE: SyncStateRow = {
   lastPlayerSyncAt: null,
   transfermarktSyncEnabled: false,
   lastTransfermarktSyncAt: null,
+  recalcInProgress: false,
+  lastRecalcResult: null,
 }
 
 export async function getSyncState(): Promise<SyncStateRow> {
@@ -46,6 +50,8 @@ export async function getSyncState(): Promise<SyncStateRow> {
     lastPlayerSyncAt: row.lastPlayerSyncAt,
     transfermarktSyncEnabled: row.transfermarktSyncEnabled,
     lastTransfermarktSyncAt: row.lastTransfermarktSyncAt,
+    recalcInProgress: row.recalcInProgress,
+    lastRecalcResult: (row.lastRecalcResult as RecalcResult | null) ?? null,
   }
 }
 
@@ -191,4 +197,47 @@ export async function markTransfermarktSyncFinished(): Promise<void> {
   await db.update(syncState)
     .set({ lastTransfermarktSyncAt: sql`now()`, updatedAt: sql`now()` })
     .where(eq(syncState.id, existing.id))
+}
+
+export async function markRecalcStarted(): Promise<boolean> {
+  const rows = await db.update(syncState)
+    .set({ recalcInProgress: true, updatedAt: sql`now()` })
+    .where(
+      and(
+        eq(syncState.recalcInProgress, false),
+        eq(syncState.syncInProgress, false),
+      )
+    )
+    .returning({ id: syncState.id })
+
+  return rows.length > 0
+}
+
+export async function markRecalcFinished(result: RecalcResult): Promise<void> {
+  const [existing] = await db.select({ id: syncState.id }).from(syncState).limit(1)
+  if (!existing) return
+  await db.update(syncState)
+    .set({
+      recalcInProgress: false,
+      lastRecalcResult: result,
+      updatedAt: sql`now()`,
+    })
+    .where(eq(syncState.id, existing.id))
+}
+
+export async function getRecalcStatus(): Promise<RecalcStatus> {
+  const [row] = await db
+    .select({
+      recalcInProgress: syncState.recalcInProgress,
+      lastRecalcResult: syncState.lastRecalcResult,
+    })
+    .from(syncState)
+    .limit(1)
+
+  if (!row) return { status: 'idle', lastResult: null }
+
+  return {
+    status: row.recalcInProgress ? 'running' : 'idle',
+    lastResult: (row.lastRecalcResult as RecalcResult | null) ?? null,
+  }
 }

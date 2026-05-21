@@ -73,27 +73,68 @@ describe('live-match-state.service', () => {
   })
 
   describe('finalizeLiveToResult', () => {
-    it('runs delete + upsert match_results in a transaction', async () => {
+    function buildTx(existingRow: unknown | null) {
       const txDelete = { where: vi.fn().mockResolvedValue(undefined) }
       const txInsertOnConflict = vi.fn().mockResolvedValue(undefined)
       const txInsertValues = vi.fn().mockReturnValue({ onConflictDoUpdate: txInsertOnConflict })
       const txInsert = { values: txInsertValues }
+      const txSelectLimit = vi.fn().mockResolvedValue(existingRow ? [existingRow] : [])
+      const txSelectWhere = vi.fn().mockReturnValue({ limit: txSelectLimit })
+      const txSelectFrom = vi.fn().mockReturnValue({ where: txSelectWhere })
+      const txSelect = vi.fn().mockReturnValue({ from: txSelectFrom })
       const tx = {
         delete: vi.fn().mockReturnValue(txDelete),
         insert: vi.fn().mockReturnValue(txInsert),
+        select: txSelect,
       }
+      return { tx, txInsertValues }
+    }
+
+    it('returns wasInserted=true when no existing result', async () => {
+      const { tx, txInsertValues } = buildTx(null)
       mockDb.transaction.mockImplementation(async (cb: (tx: unknown) => Promise<unknown>) => cb(tx))
 
-      await finalizeLiveToResult({
+      const result = await finalizeLiveToResult({
         matchId: 'm1', homeGoals: 2, awayGoals: 2, outcomeAfterDraw: 'home_pen',
       })
 
-      expect(mockDb.transaction).toHaveBeenCalledOnce()
-      expect(tx.delete).toHaveBeenCalledOnce()
-      expect(tx.insert).toHaveBeenCalledOnce()
+      expect(result).toEqual({ wasInserted: true, scoreChanged: false })
       expect(txInsertValues).toHaveBeenCalledWith(expect.objectContaining({
         matchId: 'm1', homeGoals: 2, awayGoals: 2, outcomeAfterDraw: 'home_pen',
       }))
+    })
+
+    it('returns scoreChanged=true when score differs from existing', async () => {
+      const { tx } = buildTx({ homeGoals: 1, awayGoals: 0, outcomeAfterDraw: null })
+      mockDb.transaction.mockImplementation(async (cb: (tx: unknown) => Promise<unknown>) => cb(tx))
+
+      const result = await finalizeLiveToResult({
+        matchId: 'm1', homeGoals: 2, awayGoals: 1, outcomeAfterDraw: null,
+      })
+
+      expect(result).toEqual({ wasInserted: false, scoreChanged: true })
+    })
+
+    it('returns scoreChanged=false when score equals existing', async () => {
+      const { tx } = buildTx({ homeGoals: 2, awayGoals: 1, outcomeAfterDraw: null })
+      mockDb.transaction.mockImplementation(async (cb: (tx: unknown) => Promise<unknown>) => cb(tx))
+
+      const result = await finalizeLiveToResult({
+        matchId: 'm1', homeGoals: 2, awayGoals: 1, outcomeAfterDraw: null,
+      })
+
+      expect(result).toEqual({ wasInserted: false, scoreChanged: false })
+    })
+
+    it('returns scoreChanged=true when outcomeAfterDraw differs', async () => {
+      const { tx } = buildTx({ homeGoals: 2, awayGoals: 2, outcomeAfterDraw: 'penalties_home' })
+      mockDb.transaction.mockImplementation(async (cb: (tx: unknown) => Promise<unknown>) => cb(tx))
+
+      const result = await finalizeLiveToResult({
+        matchId: 'm1', homeGoals: 2, awayGoals: 2, outcomeAfterDraw: 'penalties_away',
+      })
+
+      expect(result).toEqual({ wasInserted: false, scoreChanged: true })
     })
   })
 })

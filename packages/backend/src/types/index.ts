@@ -46,6 +46,33 @@ export interface ScoringConfigFull {
   readonly correctDraw: number
   readonly correctOutcome: number
   readonly incorrect: number
+  readonly frozenAt: string | null
+}
+
+export interface ScoringConfigWithImpact extends ScoringConfigFull {
+  readonly affectedMatches: number
+  readonly affectedPredictions: number
+}
+
+export interface ScoringOverrideInput {
+  readonly values: ScoringConfigInput
+  readonly reason: 'wrong_setup' | 'organizer_request' | 'technical_fix' | 'other'
+  readonly comment?: string | null
+  readonly recalculate: boolean
+}
+
+export interface RecalcResult {
+  readonly matchesRecalculated: number
+  readonly predictionsUpdated: number
+  readonly durationMs: number
+  readonly groupId: string | null
+  readonly finishedAt: string
+  readonly error?: string
+}
+
+export interface RecalcStatus {
+  readonly status: 'idle' | 'running'
+  readonly lastResult: RecalcResult | null
 }
 
 export interface ScoringConfigInput {

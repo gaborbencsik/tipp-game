@@ -5,12 +5,13 @@ const mockDb = vi.hoisted(() => ({
   insert: vi.fn(),
   delete: vi.fn(),
   transaction: vi.fn(),
+  update: vi.fn(),
 }))
 
 const liveStateMocks = vi.hoisted(() => ({
   upsertLiveState: vi.fn().mockResolvedValue(undefined),
   deleteLiveState: vi.fn().mockResolvedValue(undefined),
-  finalizeLiveToResult: vi.fn().mockResolvedValue(undefined),
+  finalizeLiveToResult: vi.fn().mockResolvedValue({ wasInserted: true, scoreChanged: false }),
 }))
 
 const scoringMocks = vi.hoisted(() => ({
@@ -62,7 +63,13 @@ function mockMatchLookup(matchId: string | null): void {
 }
 
 describe('upsertResults – live/finished/cancelled branches', () => {
-  beforeEach(() => { vi.clearAllMocks() })
+  beforeEach(() => {
+    vi.clearAllMocks()
+    liveStateMocks.finalizeLiveToResult.mockResolvedValue({ wasInserted: true, scoreChanged: false })
+    const updateWhere = vi.fn().mockResolvedValue(undefined)
+    const updateSet = vi.fn().mockReturnValue({ where: updateWhere })
+    mockDb.update.mockReturnValue({ set: updateSet })
+  })
 
   it('writes live state for live fixture with goals', async () => {
     mockMatchLookup('m-uuid')
@@ -135,5 +142,34 @@ describe('upsertResults – live/finished/cancelled branches', () => {
 
     expect(mockDb.select).not.toHaveBeenCalled()
     expect(liveStateMocks.upsertLiveState).not.toHaveBeenCalled()
+  })
+
+  it('skips scoring when result already exists and score unchanged', async () => {
+    mockMatchLookup('m-uuid')
+    liveStateMocks.finalizeLiveToResult.mockResolvedValueOnce({ wasInserted: false, scoreChanged: false })
+    await upsertResults([fixture({ id: 100, short: 'FT', homeGoals: 2, awayGoals: 1 })])
+
+    expect(liveStateMocks.finalizeLiveToResult).toHaveBeenCalledOnce()
+    expect(scoringMocks.calculateAndSavePoints).not.toHaveBeenCalled()
+    expect(scoringMocks.calculateAndSaveGroupPoints).not.toHaveBeenCalled()
+    expect(mockDb.update).not.toHaveBeenCalled()
+  })
+
+  it('rescoring runs when score changed (correction)', async () => {
+    mockMatchLookup('m-uuid')
+    liveStateMocks.finalizeLiveToResult.mockResolvedValueOnce({ wasInserted: false, scoreChanged: true })
+    await upsertResults([fixture({ id: 100, short: 'FT', homeGoals: 2, awayGoals: 1 })])
+
+    expect(scoringMocks.calculateAndSavePoints).toHaveBeenCalledOnce()
+    expect(scoringMocks.calculateAndSaveGroupPoints).toHaveBeenCalledOnce()
+    expect(mockDb.update).toHaveBeenCalledOnce()
+  })
+
+  it('marks pointsCalculatedAt after successful scoring on insert', async () => {
+    mockMatchLookup('m-uuid')
+    liveStateMocks.finalizeLiveToResult.mockResolvedValueOnce({ wasInserted: true, scoreChanged: false })
+    await upsertResults([fixture({ id: 100, short: 'FT', homeGoals: 2, awayGoals: 1 })])
+
+    expect(mockDb.update).toHaveBeenCalledOnce()
   })
 })

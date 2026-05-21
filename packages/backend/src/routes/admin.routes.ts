@@ -40,7 +40,9 @@ import {
   banUser,
 } from '../services/admin-users.service.js'
 import { upsertUser } from '../services/user.service.js'
-import { getGlobalConfig, updateGlobalConfig } from '../services/scoring-config.service.js'
+import { getGlobalConfigWithImpact, updateGlobalConfig, overrideGlobalConfig } from '../services/scoring-config.service.js'
+import { startRecalculation } from '../services/recalculate.service.js'
+import { getRecalcStatus } from '../services/sync-state.service.js'
 import { getWaitlistEntries, deleteWaitlistEntry, addWaitlistEntry, isValidEmail } from '../services/waitlist.service.js'
 import { getAdminStats, getAdminStatsMatches } from '../services/admin-stats.service.js'
 import type { MatchOutcome, TeamInput, MatchInput, ScoringConfigInput, PlayerInput, SpecialTypeInput, LeagueInput } from '../types/index.js'
@@ -148,7 +150,7 @@ adminRouter.put('/users/:id/ban', async (ctx) => {
 // ─── Scoring config ───────────────────────────────────────────────────────────
 
 adminRouter.get('/scoring-config', async (ctx) => {
-  ctx.body = await getGlobalConfig()
+  ctx.body = await getGlobalConfigWithImpact()
 })
 
 adminRouter.put('/scoring-config', async (ctx) => {
@@ -164,6 +166,65 @@ adminRouter.put('/scoring-config', async (ctx) => {
     }
   }
   ctx.body = await updateGlobalConfig(body as unknown as ScoringConfigInput)
+})
+
+adminRouter.post('/scoring-config/override', async (ctx) => {
+  const body = ctx.request.body as Record<string, unknown>
+  const values = body['values'] as Record<string, unknown> | undefined
+  const reason = body['reason']
+  const comment = body['comment']
+  const recalculate = body['recalculate']
+  if (!values || typeof values !== 'object') {
+    ctx.status = 400
+    ctx.body = { error: 'Field \'values\' is required' }
+    return
+  }
+  if (typeof reason !== 'string' || reason.trim().length === 0) {
+    ctx.status = 400
+    ctx.body = { error: 'Field \'reason\' is required' }
+    return
+  }
+  const fields: Array<keyof ScoringConfigInput> = [
+    'exactScore', 'correctWinnerAndDiff', 'correctWinner', 'correctDraw', 'correctOutcome', 'incorrect',
+  ]
+  for (const field of fields) {
+    if (typeof values[field] !== 'number') {
+      ctx.status = 400
+      ctx.body = { error: `values.${field} must be a number` }
+      return
+    }
+  }
+  const dbUser = await upsertUser(ctx.state.user)
+  const config = await overrideGlobalConfig(values as unknown as ScoringConfigInput)
+  console.log(JSON.stringify({
+    level: 'info',
+    event: 'scoring_config_override',
+    scope: 'global',
+    configId: config.id,
+    adminUserId: dbUser.id,
+    reason,
+    comment: typeof comment === 'string' && comment.length > 0 ? comment : null,
+    recalculate: recalculate === true,
+  }))
+  if (recalculate === true) {
+    await startRecalculation()
+  }
+  ctx.body = config
+})
+
+adminRouter.post('/scoring/recalculate-all', async (ctx) => {
+  const acquired = await startRecalculation()
+  if (!acquired) {
+    ctx.status = 409
+    ctx.body = { error: 'Sync or recalculation already in progress' }
+    return
+  }
+  ctx.status = 202
+  ctx.body = { status: 'started' }
+})
+
+adminRouter.get('/scoring/recalculate-status', async (ctx) => {
+  ctx.body = await getRecalcStatus()
 })
 
 // ─── Players ─────────────────────────────────────────────────────────────────

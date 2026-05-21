@@ -31,6 +31,11 @@ vi.mock('../src/db/client.js', () => ({
   db: { select: mockSelect, insert: mockInsert },
 }))
 
+const mockFreeze = vi.hoisted(() => vi.fn().mockResolvedValue(undefined))
+vi.mock('../src/services/scoring-freeze.service.js', () => ({
+  freezeApplicableConfigs: mockFreeze,
+}))
+
 import { upsertPrediction, getPredictionsForUser } from '../src/services/predictions.service.js'
 import * as schema from '../src/db/schema/index.js'
 
@@ -193,6 +198,20 @@ describe('upsertPrediction', () => {
         set: expect.objectContaining({ homeGoals: 2, awayGoals: 1 }),
       })
     )
+  })
+
+  it('successful upsert → freezeApplicableConfigs(userId) called', async () => {
+    let call = 0
+    mockLimit.mockImplementation(() => {
+      call++
+      if (call === 1) return Promise.resolve([DB_USER_ROW])
+      return Promise.resolve([FUTURE_MATCH_ROW])
+    })
+    mockFreeze.mockClear()
+
+    await upsertPrediction(SUPABASE_ID, VALID_INPUT)
+
+    expect(mockFreeze).toHaveBeenCalledWith(DB_USER_ID)
   })
 })
 

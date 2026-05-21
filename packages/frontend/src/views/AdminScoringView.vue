@@ -19,6 +19,14 @@
       {{ store.error }}
     </div>
 
+    <div
+      v-if="store.isFrozen"
+      data-testid="frozen-banner"
+      class="mb-4 p-3 bg-amber-100 text-amber-800 border border-amber-300 rounded text-sm"
+    >
+      A pontrendszer zárolt — már érkeztek tippek erre a konfigurációra. Csak felülírással módosítható.
+    </div>
+
     <div v-if="store.isLoading" data-testid="spinner" class="text-center py-8 text-gray-500">
       Betöltés…
     </div>
@@ -38,18 +46,38 @@
           min="0"
           max="10"
           required
-          class="w-20 border rounded px-2 py-1 text-center"
+          :disabled="store.isFrozen"
+          class="w-20 border rounded px-2 py-1 text-center disabled:bg-gray-100"
         />
       </div>
 
-      <div class="flex items-center gap-4 pt-2">
+      <div class="flex flex-wrap items-center gap-3 pt-2">
         <button
+          v-if="!store.isFrozen"
           type="submit"
           data-testid="submit-btn"
           class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
           :disabled="store.saveStatus === 'saving'"
         >
           Mentés
+        </button>
+        <button
+          v-if="store.isFrozen"
+          type="button"
+          data-testid="override-btn"
+          class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+          @click="openOverride"
+        >
+          Felülírás
+        </button>
+        <button
+          type="button"
+          data-testid="recalc-btn"
+          class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50"
+          :disabled="store.recalcRunState === 'running' || store.recalcRunState === 'starting'"
+          @click="onRecalc"
+        >
+          {{ store.recalcRunState === 'running' ? 'Újraszámolás folyamatban…' : 'Újraszámolás' }}
         </button>
         <span
           v-if="store.saveStatus === 'saved'"
@@ -67,16 +95,28 @@
         </span>
       </div>
     </form>
+
+    <ScoringOverrideModal
+      v-if="overrideOpen"
+      title="Pontrendszer felülírása"
+      warning="A pontrendszer zárolt. A felülírás új értékekkel írja felül és (opcionálisan) újraszámolja a pontokat."
+      :affected-matches="store.config?.affectedMatches"
+      :affected-predictions="store.config?.affectedPredictions"
+      @cancel="overrideOpen = false"
+      @confirm="onOverrideConfirm"
+    />
   </AppLayout>
 </template>
 
 <script setup lang="ts">
-import { reactive, watch, onMounted } from 'vue'
+import { reactive, ref, watch, onMounted } from 'vue'
 import AppLayout from '../components/AppLayout.vue'
+import ScoringOverrideModal from '../components/admin/ScoringOverrideModal.vue'
 import { useAdminScoringStore } from '../stores/admin-scoring.store.js'
 import type { ScoringConfigInput } from '../types/index.js'
 
 const store = useAdminScoringStore()
+const overrideOpen = ref(false)
 
 const fields: Array<{ key: keyof ScoringConfigInput; label: string }> = [
   { key: 'exactScore', label: 'Pontos találat' },
@@ -121,6 +161,24 @@ watch(
 
 async function submitForm(): Promise<void> {
   await store.updateConfig({ ...draft })
+}
+
+function openOverride(): void {
+  overrideOpen.value = true
+}
+
+async function onOverrideConfirm(payload: { reason: string; comment: string; recalculate: boolean }): Promise<void> {
+  overrideOpen.value = false
+  await store.overrideConfig({
+    values: { ...draft },
+    reason: payload.reason,
+    comment: payload.comment || undefined,
+    recalculate: payload.recalculate,
+  })
+}
+
+async function onRecalc(): Promise<void> {
+  await store.triggerRecalculate()
 }
 
 onMounted(() => {

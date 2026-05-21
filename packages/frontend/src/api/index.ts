@@ -1,4 +1,4 @@
-import type { User, Match, MatchesFilters, MatchInput, MatchResultInput, MatchPrediction, Prediction, PredictionInput, Team, TeamInput, AdminUser, Group, GroupInput, GroupMember, JoinGroupInput, LeaderboardEntry, ScoringConfigFull, ScoringConfigInput, WaitlistListResult, WaitlistFilters, WaitlistEntry, WaitlistSource, SpecialPredictionType, SpecialTypeInput, SpecialPredictionWithType, SpecialPredictionInput, StatPredictionTemplate, Player, PlayerInput, GlobalTypeWithSubscription, League, LeagueInput, UserLeagueFavorite, LeagueTeam, GroupMyPredictionsResult, AdminStatsResponse, AdminStatsMatchesResponse, MatchOdds, VirtualPointEntry } from '../types/index.js'
+import type { User, Match, MatchesFilters, MatchInput, MatchResultInput, MatchPrediction, Prediction, PredictionInput, Team, TeamInput, AdminUser, Group, GroupInput, GroupMember, JoinGroupInput, LeaderboardEntry, ScoringConfigFull, ScoringConfigInput, ScoringConfigWithImpact, ScoringOverrideInput, RecalcStatus, WaitlistListResult, WaitlistFilters, WaitlistEntry, WaitlistSource, SpecialPredictionType, SpecialTypeInput, SpecialPredictionWithType, SpecialPredictionInput, StatPredictionTemplate, Player, PlayerInput, GlobalTypeWithSubscription, League, LeagueInput, UserLeagueFavorite, LeagueTeam, GroupMyPredictionsResult, AdminStatsResponse, AdminStatsMatchesResponse, MatchOdds, VirtualPointEntry } from '../types/index.js'
 
 const BASE_URL = (import.meta.env.VITE_API_URL ?? '') + '/api'
 
@@ -180,12 +180,18 @@ export const api = {
         headers: { Authorization: `Bearer ${token}` },
       }),
     getScoringConfig: (token: string, groupId: string) =>
-      request<ScoringConfigFull | null>(`/groups/${groupId}/scoring-config`, {
+      request<ScoringConfigWithImpact | null>(`/groups/${groupId}/scoring-config`, {
         headers: { Authorization: `Bearer ${token}` },
       }),
     setScoringConfig: (token: string, groupId: string, input: ScoringConfigInput) =>
       request<ScoringConfigFull>(`/groups/${groupId}/scoring-config`, {
         method: 'PUT',
+        body: JSON.stringify(input),
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+    overrideScoringConfig: (token: string, groupId: string, input: ScoringOverrideInput) =>
+      request<ScoringConfigFull>(`/groups/${groupId}/scoring-config/override`, {
+        method: 'POST',
         body: JSON.stringify(input),
         headers: { Authorization: `Bearer ${token}` },
       }),
@@ -332,13 +338,30 @@ export const api = {
     },
     scoringConfig: {
       get: (token: string) =>
-        request<ScoringConfigFull>('/admin/scoring-config', {
+        request<ScoringConfigWithImpact>('/admin/scoring-config', {
           headers: { Authorization: `Bearer ${token}` },
         }),
       update: (token: string, input: ScoringConfigInput) =>
         request<ScoringConfigFull>('/admin/scoring-config', {
           method: 'PUT',
           body: JSON.stringify(input),
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      override: (token: string, input: ScoringOverrideInput) =>
+        request<ScoringConfigFull>('/admin/scoring-config/override', {
+          method: 'POST',
+          body: JSON.stringify(input),
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+    },
+    scoring: {
+      recalculateAll: (token: string) =>
+        request<{ status: string }>('/admin/scoring/recalculate-all', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      recalculateStatus: (token: string) =>
+        request<RecalcStatus>('/admin/scoring/recalculate-status', {
           headers: { Authorization: `Bearer ${token}` },
         }),
     },

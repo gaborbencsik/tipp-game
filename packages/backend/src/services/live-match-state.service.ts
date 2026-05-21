@@ -56,23 +56,50 @@ export async function deleteLiveState(matchId: string): Promise<void> {
   await db.delete(liveMatchStates).where(eq(liveMatchStates.matchId, matchId))
 }
 
-export async function finalizeLiveToResult(input: FinalizeInput): Promise<void> {
-  await db.transaction(async (tx) => {
+export interface FinalizeResult {
+  readonly wasInserted: boolean
+  readonly scoreChanged: boolean
+}
+
+export async function finalizeLiveToResult(input: FinalizeInput): Promise<FinalizeResult> {
+  return db.transaction(async (tx) => {
     await tx.delete(liveMatchStates).where(eq(liveMatchStates.matchId, input.matchId))
+
+    const existingRows = await tx
+      .select({
+        homeGoals: matchResults.homeGoals,
+        awayGoals: matchResults.awayGoals,
+        outcomeAfterDraw: matchResults.outcomeAfterDraw,
+      })
+      .from(matchResults)
+      .where(eq(matchResults.matchId, input.matchId))
+      .limit(1)
+
+    const existing = existingRows[0]
+    const wasInserted = !existing
+    const newOutcome = input.outcomeAfterDraw ?? null
+    const scoreChanged = !!existing && (
+      existing.homeGoals !== input.homeGoals ||
+      existing.awayGoals !== input.awayGoals ||
+      (existing.outcomeAfterDraw ?? null) !== newOutcome
+    )
+
     await tx.insert(matchResults).values({
       matchId: input.matchId,
       homeGoals: input.homeGoals,
       awayGoals: input.awayGoals,
-      outcomeAfterDraw: input.outcomeAfterDraw ?? null,
+      outcomeAfterDraw: newOutcome,
       recordedBy: input.recordedBy ?? null,
     }).onConflictDoUpdate({
       target: matchResults.matchId,
       set: {
         homeGoals: input.homeGoals,
         awayGoals: input.awayGoals,
-        outcomeAfterDraw: input.outcomeAfterDraw ?? null,
+        outcomeAfterDraw: newOutcome,
         updatedAt: new Date(),
       },
     })
+
+    return { wasInserted, scoreChanged }
   })
 }

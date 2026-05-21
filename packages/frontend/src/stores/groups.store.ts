@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { supabase } from '../lib/supabase.js'
 import { api } from '../api/index.js'
-import type { Group, GroupInput, GroupMember, JoinGroupInput, ScoringConfigFull, ScoringConfigInput, SpecialPredictionType, SpecialTypeInput, SpecialPredictionWithType, SpecialPredictionInput, GlobalTypeWithSubscription, GroupMyPredictionsResult } from '../types/index.js'
+import type { Group, GroupInput, GroupMember, JoinGroupInput, ScoringConfigFull, ScoringConfigInput, ScoringConfigWithImpact, ScoringOverrideInput, SpecialPredictionType, SpecialTypeInput, SpecialPredictionWithType, SpecialPredictionInput, GlobalTypeWithSubscription, GroupMyPredictionsResult } from '../types/index.js'
 
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
 
@@ -19,7 +19,7 @@ export const useGroupsStore = defineStore('groups', () => {
   const membersMap = ref<Record<string, GroupMember[]>>({})
   const membersLoading = ref(false)
   const membersError = ref<string | null>(null)
-  const groupScoringConfigs = ref<Record<string, ScoringConfigFull | null>>({})
+  const groupScoringConfigs = ref<Record<string, ScoringConfigWithImpact | null>>({})
   const groupScoringLoading = ref(false)
   const groupScoringError = ref<string | null>(null)
   const groupScoringSaveStatus = ref<'idle' | 'saving' | 'saved' | 'error'>('idle')
@@ -146,11 +146,39 @@ export const useGroupsStore = defineStore('groups', () => {
     try {
       const token = await getAccessToken()
       const updated = await api.groups.setScoringConfig(token, groupId, input)
-      groupScoringConfigs.value[groupId] = updated
+      mergeGroupScoring(groupId, updated)
       groupScoringSaveStatus.value = 'saved'
       setTimeout(() => { groupScoringSaveStatus.value = 'idle' }, 3000)
-    } catch {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Ismeretlen hiba'
+      if (message.includes('frozen')) {
+        groupScoringError.value = message
+        await fetchGroupScoringConfig(groupId)
+      }
       groupScoringSaveStatus.value = 'error'
+    }
+  }
+
+  async function overrideGroupScoringConfig(groupId: string, input: ScoringOverrideInput): Promise<void> {
+    groupScoringSaveStatus.value = 'saving'
+    try {
+      const token = await getAccessToken()
+      const updated = await api.groups.overrideScoringConfig(token, groupId, input)
+      mergeGroupScoring(groupId, updated)
+      groupScoringSaveStatus.value = 'saved'
+      setTimeout(() => { groupScoringSaveStatus.value = 'idle' }, 3000)
+    } catch (err) {
+      groupScoringError.value = err instanceof Error ? err.message : 'Ismeretlen hiba'
+      groupScoringSaveStatus.value = 'error'
+    }
+  }
+
+  function mergeGroupScoring(groupId: string, updated: ScoringConfigFull): void {
+    const existing = groupScoringConfigs.value[groupId]
+    groupScoringConfigs.value[groupId] = {
+      ...updated,
+      affectedMatches: existing?.affectedMatches ?? 0,
+      affectedPredictions: existing?.affectedPredictions ?? 0,
     }
   }
 
@@ -299,6 +327,7 @@ export const useGroupsStore = defineStore('groups', () => {
     deleteGroup,
     fetchGroupScoringConfig,
     setGroupScoringConfig,
+    overrideGroupScoringConfig,
     fetchSpecialTypes,
     createSpecialType,
     updateSpecialType,

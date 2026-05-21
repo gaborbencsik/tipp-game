@@ -9,7 +9,7 @@ const mockDb = vi.hoisted(() => ({
 vi.mock('../src/db/client.js', () => ({ db: mockDb }))
 
 vi.mock('../src/db/schema/index.js', () => ({
-  syncState: { id: 'id', mode: 'mode', lastSuccessfulSyncAt: 'last_successful_sync_at', apiCallsToday: 'api_calls_today', apiCallsDate: 'api_calls_date', syncInProgress: 'sync_in_progress', updatedAt: 'updated_at' },
+  syncState: { id: 'id', mode: 'mode', lastSuccessfulSyncAt: 'last_successful_sync_at', apiCallsToday: 'api_calls_today', apiCallsDate: 'api_calls_date', syncInProgress: 'sync_in_progress', recalcInProgress: 'recalc_in_progress', lastRecalcResult: 'last_recalc_result', updatedAt: 'updated_at' },
   matches: { id: 'id', status: 'status' },
 }))
 
@@ -20,6 +20,9 @@ import {
   markSyncFinished,
   hasLiveMatch,
   markPolymarketSyncFinished,
+  markRecalcStarted,
+  markRecalcFinished,
+  getRecalcStatus,
 } from '../src/services/sync-state.service.js'
 
 describe('sync-state.service', () => {
@@ -49,6 +52,8 @@ describe('sync-state.service', () => {
         lastPlayerSyncAt: null,
         transfermarktSyncEnabled: false,
         lastTransfermarktSyncAt: null,
+        recalcInProgress: false,
+        lastRecalcResult: null,
       })
     })
 
@@ -209,6 +214,98 @@ describe('sync-state.service', () => {
       })
 
       expect(await hasLiveMatch()).toBe(false)
+    })
+  })
+
+  describe('markRecalcStarted', () => {
+    it('returns true when recalc and sync are both idle', async () => {
+      mockDb.update.mockReturnValueOnce({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([{ id: 'uuid-1' }]),
+          }),
+        }),
+      })
+
+      expect(await markRecalcStarted()).toBe(true)
+    })
+
+    it('returns false when sync is in progress', async () => {
+      mockDb.update.mockReturnValueOnce({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([]),
+          }),
+        }),
+      })
+
+      expect(await markRecalcStarted()).toBe(false)
+    })
+  })
+
+  describe('markRecalcFinished', () => {
+    it('clears recalc_in_progress and stores last_recalc_result', async () => {
+      mockDb.select.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue([{ id: 'uuid-1' }]),
+        }),
+      })
+      const setSpy = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue(undefined) })
+      mockDb.update.mockReturnValue({ set: setSpy })
+
+      const result = {
+        matchesRecalculated: 5,
+        predictionsUpdated: 25,
+        durationMs: 1234,
+        groupId: null,
+        finishedAt: '2026-06-15T10:00:00Z',
+      }
+
+      await markRecalcFinished(result)
+
+      expect(setSpy).toHaveBeenCalledWith(expect.objectContaining({
+        recalcInProgress: false,
+        lastRecalcResult: result,
+      }))
+    })
+  })
+
+  describe('getRecalcStatus', () => {
+    it('returns idle when no row exists', async () => {
+      mockDb.select.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue([]),
+        }),
+      })
+
+      expect(await getRecalcStatus()).toEqual({ status: 'idle', lastResult: null })
+    })
+
+    it('returns running when recalc_in_progress is true', async () => {
+      mockDb.select.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue([{ recalcInProgress: true, lastRecalcResult: null }]),
+        }),
+      })
+
+      expect(await getRecalcStatus()).toEqual({ status: 'running', lastResult: null })
+    })
+
+    it('returns idle with last result when recalc finished', async () => {
+      const lastResult = {
+        matchesRecalculated: 3,
+        predictionsUpdated: 12,
+        durationMs: 500,
+        groupId: null,
+        finishedAt: '2026-06-15T10:00:00Z',
+      }
+      mockDb.select.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue([{ recalcInProgress: false, lastRecalcResult: lastResult }]),
+        }),
+      })
+
+      expect(await getRecalcStatus()).toEqual({ status: 'idle', lastResult })
     })
   })
 })

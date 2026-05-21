@@ -1,6 +1,6 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-05-20
+> Utoljára frissítve: 2026-05-21
 
 ## Nyitott story-k
 
@@ -20,10 +20,9 @@
 | UX-013 | Értesítési rendszer (notification bell + panel) | Nice to Have | — |
 | UX-016 | Kedvenc csapat dupla pont jelzés a meccs kártyán | Should Have | — |
 | UX-019 | Onboarding frissítés – új funkciók bemutatása | Should Have | — |
-| US-1401B | Pontszámítási konfiguráció védelme és újraszámolás | Should Have | — |
 | US-1405 | Tippjeim oldal redesign – személyes statisztikai dashboard | Should Have | — |
 | SEC-002 | HMAC-aláírt meghívó URL-ek | Nice to Have | — |
 
 ---
 
-**Haladás: 111 / 128 story kész** — Must Have: 31/31, Should Have: 80/93, Nice to Have: 0/4
+**Haladás: 112 / 128 story kész** — Must Have: 31/31, Should Have: 81/93, Nice to Have: 0/4

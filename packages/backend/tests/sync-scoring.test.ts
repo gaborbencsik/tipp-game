@@ -11,6 +11,11 @@ vi.mock('../src/db/client.js', () => ({
         onConflictDoUpdate: vi.fn().mockResolvedValue(undefined),
       }),
     }),
+    update: vi.fn().mockReturnValue({
+      set: vi.fn().mockReturnValue({
+        where: vi.fn().mockResolvedValue(undefined),
+      }),
+    }),
   },
 }))
 
@@ -25,7 +30,7 @@ vi.mock('../src/services/scoring.service.js', () => ({
 vi.mock('../src/services/live-match-state.service.js', () => ({
   upsertLiveState: vi.fn().mockResolvedValue(undefined),
   deleteLiveState: vi.fn().mockResolvedValue(undefined),
-  finalizeLiveToResult: vi.fn().mockResolvedValue(undefined),
+  finalizeLiveToResult: vi.fn().mockResolvedValue({ wasInserted: true, scoreChanged: false }),
 }))
 
 import { db } from '../src/db/client.js'

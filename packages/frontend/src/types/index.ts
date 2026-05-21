@@ -361,6 +361,12 @@ export interface ScoringConfigFull {
   readonly correctDraw: number
   readonly correctOutcome: number
   readonly incorrect: number
+  readonly frozenAt?: string | null
+}
+
+export interface ScoringConfigWithImpact extends ScoringConfigFull {
+  readonly affectedMatches: number
+  readonly affectedPredictions: number
 }
 
 export interface ScoringConfigInput {
@@ -370,6 +376,27 @@ export interface ScoringConfigInput {
   readonly correctDraw: number
   readonly correctOutcome: number
   readonly incorrect: number
+}
+
+export interface ScoringOverrideInput {
+  readonly values: ScoringConfigInput
+  readonly reason: string
+  readonly comment?: string
+  readonly recalculate: boolean
+}
+
+export interface RecalcResult {
+  readonly matchesRecalculated: number
+  readonly predictionsUpdated: number
+  readonly durationMs: number
+  readonly groupId: string | null
+  readonly finishedAt: string
+  readonly error?: string
+}
+
+export interface RecalcStatus {
+  readonly status: 'idle' | 'running'
+  readonly lastResult: RecalcResult | null
 }
 
 export type WaitlistSource = 'hero' | 'footer' | 'admin'

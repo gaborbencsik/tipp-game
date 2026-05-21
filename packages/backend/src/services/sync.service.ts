@@ -333,15 +333,21 @@ export async function upsertResults(
 
     const outcomeAfterDraw = derivePenaltyOutcome(fixture.score.penalty)
 
-    await finalizeLiveToResult({
+    const finalizeResult = await finalizeLiveToResult({
       matchId: match.id,
       homeGoals,
       awayGoals,
       outcomeAfterDraw,
     })
 
-    await calculateAndSavePoints(match.id, { homeGoals, awayGoals, outcomeAfterDraw: outcomeAfterDraw ?? null })
-    await calculateAndSaveGroupPoints(match.id, { homeGoals, awayGoals, outcomeAfterDraw: outcomeAfterDraw ?? null })
+    if (finalizeResult.wasInserted || finalizeResult.scoreChanged) {
+      await calculateAndSavePoints(match.id, { homeGoals, awayGoals, outcomeAfterDraw: outcomeAfterDraw ?? null })
+      await calculateAndSaveGroupPoints(match.id, { homeGoals, awayGoals, outcomeAfterDraw: outcomeAfterDraw ?? null })
+      await db
+        .update(matchResults)
+        .set({ pointsCalculatedAt: new Date() })
+        .where(eq(matchResults.matchId, match.id))
+    }
 
     count++
   }

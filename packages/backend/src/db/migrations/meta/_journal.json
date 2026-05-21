@@ -253,6 +253,13 @@
       "when": 1779288662754,
       "tag": "0035_smart_pet_avengers",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1779354708113,
+      "tag": "0036_foamy_marvel_boy",
+      "breakpoints": true
     }
   ]
 }

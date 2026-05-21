@@ -230,6 +230,13 @@
       <div v-else class="max-w-md">
         <h3 class="text-base font-semibold text-gray-800 mb-1">{{ $t('groupDetail.scoringTitle') }}</h3>
         <p class="text-sm text-gray-500 mb-4">{{ $t('groupDetail.scoringDesc') }}</p>
+        <div
+          v-if="isGroupScoringFrozen"
+          data-testid="settings-frozen-banner"
+          class="mb-4 p-3 bg-amber-100 text-amber-800 border border-amber-300 rounded text-sm"
+        >
+          A pontrendszer zárolt — már érkeztek tippek erre a konfigurációra. Csak felülírással módosítható.
+        </div>
         <form class="space-y-3" @submit.prevent="submitScoringConfig">
           <div v-for="field in scoringFields" :key="field.key" class="flex items-center justify-between gap-4">
             <label class="text-sm font-medium text-gray-700">{{ field.label }}</label>
@@ -240,17 +247,28 @@
               min="0"
               max="10"
               required
-              class="w-20 border rounded px-2 py-1 text-center"
+              :disabled="isGroupScoringFrozen"
+              class="w-20 border rounded px-2 py-1 text-center disabled:bg-gray-100"
             />
           </div>
           <div class="flex items-center gap-4 pt-2">
             <button
+              v-if="!isGroupScoringFrozen"
               type="submit"
               data-testid="settings-submit"
               class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
               :disabled="groupsStore.groupScoringSaveStatus === 'saving'"
             >
               {{ $t('common.save') }}
+            </button>
+            <button
+              v-if="isGroupScoringFrozen && canManageSettings"
+              type="button"
+              data-testid="settings-override-btn"
+              class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+              @click="overrideScoringOpen = true"
+            >
+              Felülírás
             </button>
             <span
               v-if="groupsStore.groupScoringSaveStatus === 'saved'"
@@ -268,6 +286,15 @@
             </span>
           </div>
         </form>
+        <ScoringOverrideModal
+          v-if="overrideScoringOpen"
+          title="Csoport pontrendszer felülírása"
+          warning="A csoport pontrendszere zárolt. A felülírás új értékekkel írja felül és (opcionálisan) újraszámolja a pontokat."
+          :affected-matches="groupsStore.groupScoringConfigs[groupId]?.affectedMatches"
+          :affected-predictions="groupsStore.groupScoringConfigs[groupId]?.affectedPredictions"
+          @cancel="overrideScoringOpen = false"
+          @confirm="onScoringOverrideConfirm"
+        />
       </div>
 
       <!-- Kedvenc csapat dupla pont toggle -->
@@ -833,6 +860,7 @@ import AppLayout from '../components/AppLayout.vue'
 import { formatRelativeDeadline } from '../lib/deadline.js'
 import TeamSelectDropdown from '../components/predictions/TeamSelectDropdown.vue'
 import PlayerSelectCombobox from '../components/predictions/PlayerSelectCombobox.vue'
+import ScoringOverrideModal from '../components/admin/ScoringOverrideModal.vue'
 import { dicebearUrl } from '../lib/avatar.js'
 import { useGroupsStore } from '../stores/groups.store.js'
 import { useAuthStore } from '../stores/auth.store.js'
@@ -1031,6 +1059,19 @@ watch(
 
 async function submitScoringConfig(): Promise<void> {
   await groupsStore.setGroupScoringConfig(groupId, { ...scoringDraft })
+}
+
+const overrideScoringOpen = ref(false)
+const isGroupScoringFrozen = computed(() => Boolean(groupsStore.groupScoringConfigs[groupId]?.frozenAt))
+
+async function onScoringOverrideConfirm(payload: { reason: string; comment: string; recalculate: boolean }): Promise<void> {
+  overrideScoringOpen.value = false
+  await groupsStore.overrideGroupScoringConfig(groupId, {
+    values: { ...scoringDraft },
+    reason: payload.reason,
+    comment: payload.comment || undefined,
+    recalculate: payload.recalculate,
+  })
 }
 
 function setCopiedInvite(type: 'code' | 'url'): void {
