@@ -17,6 +17,7 @@ export interface Journal {
 
 interface AppliedRow {
   readonly hash: string
+  readonly created_at: string | number | null
 }
 
 export interface MigrationLoader {
@@ -31,6 +32,11 @@ export interface DbExecutor {
 export interface MigrationRunResult {
   readonly applied: readonly string[]
   readonly skipped: number
+}
+
+interface AppliedKeys {
+  readonly hashes: ReadonlySet<string>
+  readonly createdAts: ReadonlySet<number>
 }
 
 const DEFAULT_MIGRATIONS_FOLDER = path.join(__dirname, 'migrations')
@@ -64,9 +70,22 @@ async function ensureTrackingTable(client: DbExecutor): Promise<void> {
   `)
 }
 
-async function getAppliedHashes(client: DbExecutor): Promise<ReadonlySet<string>> {
-  const { rows } = await client.query('SELECT hash FROM drizzle.__drizzle_migrations')
-  return new Set(rows.map(r => r.hash))
+async function getAppliedKeys(client: DbExecutor): Promise<AppliedKeys> {
+  const { rows } = await client.query('SELECT hash, created_at FROM drizzle.__drizzle_migrations')
+  const hashes = new Set<string>()
+  const createdAts = new Set<number>()
+  for (const row of rows) {
+    hashes.add(row.hash)
+    if (row.created_at !== null && row.created_at !== undefined) {
+      const n = typeof row.created_at === 'string' ? Number(row.created_at) : row.created_at
+      if (Number.isFinite(n)) createdAts.add(n)
+    }
+  }
+  return { hashes, createdAts }
+}
+
+function isApplied(applied: AppliedKeys, hash: string, when: number): boolean {
+  return applied.hashes.has(hash) || applied.createdAts.has(when)
 }
 
 async function applyMigration(
@@ -98,7 +117,7 @@ export async function runMigrationsOnClient(
 ): Promise<MigrationRunResult> {
   await ensureTrackingTable(client)
   const journal = loader.loadJournal()
-  const appliedHashes = await getAppliedHashes(client)
+  const appliedKeys = await getAppliedKeys(client)
 
   const sortedEntries = [...journal.entries].sort((a, b) => a.idx - b.idx)
   const applied: string[] = []
@@ -107,7 +126,7 @@ export async function runMigrationsOnClient(
   for (const entry of sortedEntries) {
     const sql = loader.loadSql(entry.tag)
     const hash = hashSql(sql)
-    if (appliedHashes.has(hash)) {
+    if (isApplied(appliedKeys, hash, entry.when)) {
       skipped++
       continue
     }
@@ -116,11 +135,11 @@ export async function runMigrationsOnClient(
     applied.push(entry.tag)
   }
 
-  const finalHashes = await getAppliedHashes(client)
+  const finalKeys = await getAppliedKeys(client)
   const missing: string[] = []
   for (const entry of sortedEntries) {
     const hash = hashSql(loader.loadSql(entry.tag))
-    if (!finalHashes.has(hash)) {
+    if (!isApplied(finalKeys, hash, entry.when)) {
       missing.push(entry.tag)
     }
   }

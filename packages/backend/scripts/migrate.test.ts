@@ -10,32 +10,37 @@ import {
 
 interface FakeRow {
   readonly hash: string
+  readonly created_at: number | null
 }
 
-function createFakeClient(): {
+function createFakeClient(seedRows: ReadonlyArray<FakeRow> = []): {
   client: DbExecutor
   executed: string[]
   insertedHashes: string[]
+  rows: FakeRow[]
 } {
+  const rows: FakeRow[] = [...seedRows]
   const insertedHashes: string[] = []
   const executed: string[] = []
 
   const client: DbExecutor = {
     query: vi.fn(async (sql: string, params?: readonly unknown[]) => {
       executed.push(sql.trim().split('\n')[0])
-      if (sql.trim().startsWith('SELECT hash FROM drizzle.__drizzle_migrations')) {
-        const rows: FakeRow[] = insertedHashes.map(hash => ({ hash }))
-        return { rows }
+      if (sql.trim().startsWith('SELECT hash, created_at FROM drizzle.__drizzle_migrations')) {
+        return { rows: [...rows] }
       }
       if (sql.trim().startsWith('INSERT INTO drizzle.__drizzle_migrations')) {
-        insertedHashes.push(params![0] as string)
+        const hash = params![0] as string
+        const createdAt = params![1] as number
+        insertedHashes.push(hash)
+        rows.push({ hash, created_at: createdAt })
         return { rows: [] }
       }
       return { rows: [] }
     }),
   }
 
-  return { client, executed, insertedHashes }
+  return { client, executed, insertedHashes, rows }
 }
 
 function createLoader(entries: Array<{ idx: number; tag: string; when: number; sql: string }>): MigrationLoader {
@@ -83,7 +88,7 @@ describe('migrate runner', () => {
     })
 
     it('produces different hashes for different SQL', () => {
-      expect(hashSql('CREATE TABLE x;')).not.toBe(hashSql('CREATE TABLE y;'))
+      expect(hashSql('CREATE TABLE x;')).not.toBe(hashSql('CREATE TABLE x;\n'))
     })
   })
 
@@ -105,10 +110,9 @@ describe('migrate runner', () => {
     })
 
     it('skips migrations whose hash is already in the tracking table', async () => {
-      const { client, insertedHashes } = createFakeClient()
-      // Pre-populate the first migration as applied
-      insertedHashes.push(hashSql('CREATE TABLE a;'))
-
+      const { client } = createFakeClient([
+        { hash: hashSql('CREATE TABLE a;'), created_at: 100 },
+      ])
       const loader = createLoader([
         { idx: 0, tag: '0000_a', when: 100, sql: 'CREATE TABLE a;' },
         { idx: 1, tag: '0001_b', when: 200, sql: 'CREATE TABLE b;' },
@@ -121,10 +125,10 @@ describe('migrate runner', () => {
     })
 
     it('returns idempotent result when everything is already applied', async () => {
-      const { client, insertedHashes } = createFakeClient()
-      insertedHashes.push(hashSql('CREATE TABLE a;'))
-      insertedHashes.push(hashSql('CREATE TABLE b;'))
-
+      const { client } = createFakeClient([
+        { hash: hashSql('CREATE TABLE a;'), created_at: 100 },
+        { hash: hashSql('CREATE TABLE b;'), created_at: 200 },
+      ])
       const loader = createLoader([
         { idx: 0, tag: '0000_a', when: 100, sql: 'CREATE TABLE a;' },
         { idx: 1, tag: '0001_b', when: 200, sql: 'CREATE TABLE b;' },
@@ -136,13 +140,47 @@ describe('migrate runner', () => {
       expect(result.skipped).toBe(2)
     })
 
+    it('treats a journal entry as applied when only the when timestamp matches an existing row', async () => {
+      // Simulates a legacy DB where a different hash algorithm wrote rows whose
+      // hashes do not match what this runner would compute today, but the
+      // created_at values still equal the journal `when` timestamps.
+      const { client } = createFakeClient([
+        { hash: 'legacy-hash-from-old-drizzle', created_at: 100 },
+        { hash: 'another-legacy-hash', created_at: 200 },
+      ])
+      const loader = createLoader([
+        { idx: 0, tag: '0000_a', when: 100, sql: 'CREATE TABLE a;' },
+        { idx: 1, tag: '0001_b', when: 200, sql: 'CREATE TABLE b;' },
+        { idx: 2, tag: '0002_c', when: 300, sql: 'CREATE TABLE c;' }, // genuinely new
+      ])
+
+      const result = await runMigrationsOnClient(client, loader)
+
+      expect(result.applied).toEqual(['0002_c'])
+      expect(result.skipped).toBe(2)
+    })
+
+    it('skips on hash match even when created_at row does not exist', async () => {
+      // Hash is the primary key; created_at is a fallback only.
+      const { client } = createFakeClient([
+        { hash: hashSql('CREATE TABLE a;'), created_at: 999_999 }, // mismatched created_at
+      ])
+      const loader = createLoader([
+        { idx: 0, tag: '0000_a', when: 100, sql: 'CREATE TABLE a;' },
+      ])
+
+      const result = await runMigrationsOnClient(client, loader)
+
+      expect(result.applied).toEqual([])
+      expect(result.skipped).toBe(1)
+    })
+
     it('applies non-monotonic when entries in idx order', async () => {
       const { client } = createFakeClient()
-      // Order in the journal array (idx-sorted), regardless of `when` values
       const loader = createLoader([
         { idx: 0, tag: '0000_a', when: 500, sql: 'CREATE TABLE a;' },
-        { idx: 1, tag: '0001_b', when: 100, sql: 'CREATE TABLE b;' }, // older when
-        { idx: 2, tag: '0002_c', when: 200, sql: 'CREATE TABLE c;' }, // older than 0
+        { idx: 1, tag: '0001_b', when: 100, sql: 'CREATE TABLE b;' },
+        { idx: 2, tag: '0002_c', when: 200, sql: 'CREATE TABLE c;' },
       ])
 
       const result = await runMigrationsOnClient(client, loader)
@@ -182,7 +220,7 @@ describe('migrate runner', () => {
     })
 
     it('rolls back the transaction when a statement fails', async () => {
-      const insertedHashes: string[] = []
+      const rows: FakeRow[] = []
       const executed: string[] = []
       const client: DbExecutor = {
         query: vi.fn(async (sql: string, params?: readonly unknown[]) => {
@@ -190,11 +228,11 @@ describe('migrate runner', () => {
           if (sql.includes('FAIL_HERE')) {
             throw new Error('boom')
           }
-          if (sql.trim().startsWith('SELECT hash FROM drizzle.__drizzle_migrations')) {
-            return { rows: insertedHashes.map(hash => ({ hash })) }
+          if (sql.trim().startsWith('SELECT hash, created_at FROM drizzle.__drizzle_migrations')) {
+            return { rows: [...rows] }
           }
           if (sql.trim().startsWith('INSERT INTO drizzle.__drizzle_migrations')) {
-            insertedHashes.push(params![0] as string)
+            rows.push({ hash: params![0] as string, created_at: params![1] as number })
             return { rows: [] }
           }
           return { rows: [] }
@@ -206,7 +244,7 @@ describe('migrate runner', () => {
 
       await expect(runMigrationsOnClient(client, loader)).rejects.toThrow('boom')
       expect(executed).toContain('ROLLBACK')
-      expect(insertedHashes).toHaveLength(0)
+      expect(rows).toHaveLength(0)
     })
 
     it('splits statement-breakpoint SQL into separate query calls', async () => {
@@ -229,13 +267,12 @@ describe('migrate runner', () => {
     })
 
     it('verify-step throws when a journal entry is missing from tracking table', async () => {
-      // Simulate a buggy state: client silently swallows INSERT (does NOT record applied hashes)
+      // Simulate a buggy state: client silently swallows INSERT (no rows recorded)
       const executed: string[] = []
       const client: DbExecutor = {
         query: vi.fn(async (sql: string) => {
           executed.push(sql.trim().split('\n')[0])
-          // Always returns empty applied set, regardless of inserts
-          if (sql.trim().startsWith('SELECT hash FROM drizzle.__drizzle_migrations')) {
+          if (sql.trim().startsWith('SELECT hash, created_at FROM drizzle.__drizzle_migrations')) {
             return { rows: [] }
           }
           return { rows: [] }
