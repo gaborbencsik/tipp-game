@@ -15,6 +15,7 @@ const highVolumeOdds: MatchOdds = {
   source: 'polymarket',
   sourceUrl: 'https://polymarket.com/sports/fifa-world-cup/fifwc-fra-sen-2026-06-16',
   updatedAt: '2026-06-15T10:00:00Z',
+  revealed: true,
 }
 
 const lowVolumeOdds: MatchOdds = {

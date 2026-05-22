@@ -43,7 +43,6 @@ export interface MatchOddsResponse {
   readonly source: 'polymarket'
   readonly sourceUrl: string | null
   readonly updatedAt: string
-  readonly revealed: boolean
 }
 
 interface ParsedOdds {
@@ -276,6 +275,5 @@ export async function getLatestOdds(matchId: string): Promise<MatchOddsResponse 
     source: 'polymarket',
     sourceUrl,
     updatedAt: row.fetchedAt.toISOString(),
-    revealed: false,
   }
 }

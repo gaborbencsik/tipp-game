@@ -89,6 +89,10 @@ export interface MatchOdds {
   readonly source: string
   readonly sourceUrl: string | null
   readonly updatedAt: string
+}
+
+export interface MatchOddsResponse {
+  readonly odds: MatchOdds | null
   readonly revealed: boolean
 }
 

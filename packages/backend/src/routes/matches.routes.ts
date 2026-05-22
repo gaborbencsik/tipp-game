@@ -55,13 +55,9 @@ router.get('/api/matches/:matchId/odds', authMiddleware, async (ctx) => {
       getLatestOdds(ctx.params.matchId),
       isMatchRevealed(dbUser.id, ctx.params.matchId),
     ])
-    if (!odds) {
-      ctx.body = revealed ? { revealed: true } : null
-      return
-    }
-    ctx.body = { ...odds, revealed }
+    ctx.body = { odds: odds ?? null, revealed }
   } catch {
-    ctx.body = null
+    ctx.body = { odds: null, revealed: false }
   }
 })
 

@@ -174,10 +174,10 @@
         </div>
 
         <!-- Insights section -->
-        <div v-if="matchOdds" class="mt-4 relative" data-testid="insights-section">
+        <div class="mt-4 relative" data-testid="insights-section">
           <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">{{ $t('matchDetail.insightsTitle') }}</h3>
           <div :class="{ 'blur-sm select-none pointer-events-none transition-[filter] duration-300': !isRevealed }">
-            <MatchOddsBar :odds="isRevealed ? matchOdds : blurredOdds" />
+            <MatchOddsBar :odds="isRevealed && matchOdds ? matchOdds : blurredOdds" />
           </div>
           <div v-if="!isRevealed" class="absolute inset-0 top-7 flex items-center justify-center rounded-lg">
             <button
@@ -261,6 +261,7 @@ const blurredOdds = computed((): MatchOdds | null => {
     source: 'polymarket',
     sourceUrl: null,
     updatedAt: new Date().toISOString(),
+    revealed: false,
   }
 })
 let autosaveTimer: ReturnType<typeof setTimeout> | null = null
@@ -268,7 +269,6 @@ let autosaveTimer: ReturnType<typeof setTimeout> | null = null
 const KNOCKOUT_STAGES: readonly MatchStage[] = ['round_of_16', 'quarter_final', 'semi_final', 'third_place', 'final']
 
 const matchId = computed(() => route.params.id as string)
-const isRevealed = computed((): boolean => insightsRevealStore.isRevealed(matchId.value))
 
 const match = computed((): Match | undefined =>
   matchesStore.matches.find(m => m.id === matchId.value)
@@ -364,25 +364,9 @@ async function loadMatchOdds(): Promise<void> {
   try {
     const token = await getToken()
     if (!token) return
-    const response = await api.matches.odds(token, matchId.value)
-    matchOdds.value = response.odds
-    insightsRevealStore.setRevealed(matchId.value, response.revealed)
+    matchOdds.value = await api.matches.odds(token, matchId.value)
   } catch {
     // silent — odds are supplementary
-  }
-}
-
-async function onRevealClick(): Promise<void> {
-  if (isRevealing.value || isRevealed.value) return
-  isRevealing.value = true
-  try {
-    const token = await getToken()
-    if (!token) return
-    await insightsRevealStore.reveal(token, matchId.value)
-  } catch {
-    showToast(t('matchDetail.insightsRevealError'), 'error')
-  } finally {
-    isRevealing.value = false
   }
 }
 

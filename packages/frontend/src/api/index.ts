@@ -1,4 +1,4 @@
-import type { User, Match, MatchesFilters, MatchInput, MatchResultInput, MatchPrediction, Prediction, PredictionInput, Team, TeamInput, AdminUser, Group, GroupInput, GroupMember, JoinGroupInput, LeaderboardEntry, ScoringConfigFull, ScoringConfigInput, ScoringConfigWithImpact, ScoringOverrideInput, RecalcStatus, WaitlistListResult, WaitlistFilters, WaitlistEntry, WaitlistSource, SpecialPredictionType, SpecialTypeInput, SpecialPredictionWithType, SpecialPredictionInput, StatPredictionTemplate, Player, PlayerInput, GlobalTypeWithSubscription, League, LeagueInput, UserLeagueFavorite, LeagueTeam, GroupMyPredictionsResult, AdminStatsResponse, AdminStatsMatchesResponse, MatchOdds, VirtualPointEntry } from '../types/index.js'
+import type { User, Match, MatchesFilters, MatchInput, MatchResultInput, MatchPrediction, Prediction, PredictionInput, Team, TeamInput, AdminUser, Group, GroupInput, GroupMember, JoinGroupInput, LeaderboardEntry, ScoringConfigFull, ScoringConfigInput, ScoringConfigWithImpact, ScoringOverrideInput, RecalcStatus, WaitlistListResult, WaitlistFilters, WaitlistEntry, WaitlistSource, SpecialPredictionType, SpecialTypeInput, SpecialPredictionWithType, SpecialPredictionInput, StatPredictionTemplate, Player, PlayerInput, GlobalTypeWithSubscription, League, LeagueInput, UserLeagueFavorite, LeagueTeam, GroupMyPredictionsResult, AdminStatsResponse, AdminStatsMatchesResponse, MatchOddsResponse, VirtualPointEntry } from '../types/index.js'
 
 const BASE_URL = (import.meta.env.VITE_API_URL ?? '') + '/api'
 
@@ -99,7 +99,7 @@ export const api = {
       })
     },
     odds: (token: string, matchId: string) =>
-      request<MatchOdds | null>(`/matches/${matchId}/odds`, {
+      request<MatchOddsResponse>(`/matches/${matchId}/odds`, {
         headers: { Authorization: `Bearer ${token}` },
       }),
     revealInsight: (token: string, matchId: string) =>
