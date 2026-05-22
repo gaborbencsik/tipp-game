@@ -142,8 +142,14 @@ vite.config.ts.timestamp-*
 playwright-report/
 test-results/
 
-# AI
-.claude/
+# AI tooling – commit shared config, ignore personal/runtime files
+.claude/settings.local.json
+.claude/.credentials.json
+.claude/projects/
+.claude/todos/
+.claude/shell-snapshots/
+.claude/statsig/
+.claude/ide/
 result.json
 
 # local files
