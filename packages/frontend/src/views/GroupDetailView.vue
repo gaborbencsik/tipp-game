@@ -672,6 +672,7 @@
               <TeamSelectDropdown
                 :model-value="pendingAnswers[sp.typeId] ?? sp.answer ?? null"
                 :league-id="currentGroup?.league?.id ?? null"
+                :answer-label="sp.answerLabel ?? null"
                 @update:model-value="v => { if (v) pendingAnswers[sp.typeId] = v; else delete pendingAnswers[sp.typeId] }"
               />
             </div>
@@ -679,6 +680,7 @@
               <PlayerSelectCombobox
                 :model-value="pendingAnswers[sp.typeId] ?? sp.answer ?? null"
                 :league-id="currentGroup?.league?.id ?? null"
+                :answer-label="sp.answerLabel ?? null"
                 @update:model-value="v => { if (v) pendingAnswers[sp.typeId] = v; else delete pendingAnswers[sp.typeId] }"
               />
             </div>

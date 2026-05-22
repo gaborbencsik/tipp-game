@@ -5,6 +5,10 @@
     @change="$emit('update:modelValue', ($event.target as HTMLSelectElement).value || null)"
   >
     <option value="" disabled>{{ $t('teamSelect.placeholder') }}</option>
+    <option
+      v-if="modelValue && answerLabel && !teamsList.find(t => t.id === modelValue)"
+      :value="modelValue"
+    >{{ answerLabel }}</option>
     <option v-for="t in teamsList" :key="t.id" :value="t.id">{{ t.name }}</option>
   </select>
 </template>
@@ -15,7 +19,7 @@ import { supabase } from '../../lib/supabase.js'
 import { api } from '../../api/index.js'
 import type { Team, LeagueTeam } from '../../types/index.js'
 
-const props = defineProps<{ modelValue: string | null; leagueId?: string | null }>()
+const props = defineProps<{ modelValue: string | null; leagueId?: string | null; answerLabel?: string | null }>()
 defineEmits<{ 'update:modelValue': [value: string | null] }>()
 
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'

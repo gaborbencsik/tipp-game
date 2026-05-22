@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 113 story kész (Must Have: 31/31, Should Have: 82/93)
+> 116 story kész (Must Have: 31/31, Should Have: 85/96)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -119,3 +119,4 @@
 | BUG-003 | Drizzle migráció silent skip fix – saját idx-alapú runner | Should Have |
 | UX-012 | Toast notification rendszer | Should Have |
 | US-1405 | Tippjeim oldal redesign – személyes statisztikai dashboard | Should Have |
+| BUG-005 | PlayerSelectCombobox/TeamSelectDropdown UUID megjelenítés ha a liga lista üres | Should Have |

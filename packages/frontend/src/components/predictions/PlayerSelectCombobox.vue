@@ -57,7 +57,7 @@ import { supabase } from '../../lib/supabase.js'
 import { api } from '../../api/index.js'
 import type { Player } from '../../types/index.js'
 
-const props = defineProps<{ modelValue: string | null; leagueId?: string | null }>()
+const props = defineProps<{ modelValue: string | null; leagueId?: string | null; answerLabel?: string | null }>()
 const emit = defineEmits<{ 'update:modelValue': [value: string | null] }>()
 
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
@@ -91,7 +91,9 @@ async function loadPlayers(): Promise<void> {
 
 watch(() => props.leagueId, loadPlayers, { immediate: true })
 
-const freeTextMode = computed((): boolean => loaded.value && playersList.value.length === 0)
+const freeTextMode = computed((): boolean =>
+  loaded.value && playersList.value.length === 0 && !props.answerLabel,
+)
 
 const normalize = (s: string): string =>
   s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -102,7 +104,7 @@ const selectedPlayer = computed((): Player | undefined =>
 
 const displayText = computed((): string => {
   if (dropdownOpen.value) return searchText.value
-  return selectedPlayer.value?.name ?? ''
+  return selectedPlayer.value?.name ?? props.answerLabel ?? ''
 })
 
 const filteredPlayers = computed((): Player[] => {
