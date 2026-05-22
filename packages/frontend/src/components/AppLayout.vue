@@ -41,11 +41,6 @@
       >
         <nav class="flex flex-col flex-1 gap-0.5 px-2 pt-3 min-w-[14rem] md:min-w-0 overflow-y-auto">
 
-          <!-- Játék szekció -->
-          <div v-if="isExpanded" class="px-2 mb-1">
-            <span class="text-[0.68rem] font-semibold uppercase tracking-[0.1em] text-gray-400">Játék</span>
-          </div>
-
           <!-- Meccsek -->
           <router-link
             to="/app/matches"
