@@ -73,7 +73,6 @@ jobs:
         run: npm run migrate:prod --workspace=packages/backend
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          AUTO_BASELINE_UP_TO_IDX: '33'
 
       - name: Trigger Render deploy
         run: curl -f -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
