@@ -267,6 +267,13 @@
       "when": 1779390054580,
       "tag": "0037_fine_talisman",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1779454857596,
+      "tag": "0038_insight_reveals",
+      "breakpoints": true
     }
   ]
 }

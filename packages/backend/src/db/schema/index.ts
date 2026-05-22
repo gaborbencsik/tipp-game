@@ -312,6 +312,18 @@ export const predictions = pgTable('predictions', {
   matchIdx:         index('predictions_match_idx').on(t.matchId),
 }))
 
+// ─── INSIGHT REVEALS ──────────────────────────────────────────────────────────
+
+export const insightReveals = pgTable('insight_reveals', {
+  id:         uuid('id').primaryKey().defaultRandom(),
+  userId:     uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  matchId:    uuid('match_id').notNull().references(() => matches.id, { onDelete: 'cascade' }),
+  revealedAt: timestamp('revealed_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  uniqueReveal: uniqueIndex('insight_reveals_user_match_unique').on(t.userId, t.matchId),
+  matchIdx:     index('insight_reveals_match_idx').on(t.matchId),
+}))
+
 // ─── GROUP PREDICTION POINTS ──────────────────────────────────────────────────
 
 export const groupPredictionPoints = pgTable('group_prediction_points', {
