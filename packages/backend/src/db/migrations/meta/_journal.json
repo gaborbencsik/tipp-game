@@ -260,6 +260,13 @@
       "when": 1779354708113,
       "tag": "0036_foamy_marvel_boy",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1779390054580,
+      "tag": "0037_fine_talisman",
+      "breakpoints": true
     }
   ]
 }
