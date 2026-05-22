@@ -1,5 +1,6 @@
 import Router from '@koa/router'
 import { authMiddleware } from '../middleware/auth.middleware.js'
+import { createRateLimit } from '../middleware/rateLimit.middleware.js'
 import { getMatches } from '../services/matches.service.js'
 import { getLeagues } from '../services/leagues.service.js'
 import { getMatchPredictions } from '../services/predictions.service.js'
@@ -7,9 +8,16 @@ import { getTeamsForLeague } from '../services/user-league-favorites.service.js'
 import { getLatestOdds } from '../services/polymarket.service.js'
 import { getVirtualPointsForUserInGroup } from '../services/virtual-points.service.js'
 import { upsertUser } from '../services/user.service.js'
+import {
+  revealInsight,
+  isMatchRevealed,
+  MatchNotFoundError,
+} from '../services/insights/reveal.service.js'
 import type { MatchesFilters, MatchStage, MatchStatus } from '../types/index.js'
 
 const router = new Router()
+
+const revealRateLimit = createRateLimit({ windowMs: 60_000, max: 10 })
 
 router.get('/api/matches', authMiddleware, async (ctx) => {
   const { stage, status, leagueId } = ctx.query as Record<string, string | undefined>
@@ -42,10 +50,32 @@ router.get('/api/leagues/:leagueId/teams', authMiddleware, async (ctx) => {
 
 router.get('/api/matches/:matchId/odds', authMiddleware, async (ctx) => {
   try {
-    const odds = await getLatestOdds(ctx.params.matchId)
-    ctx.body = odds ?? null
+    const dbUser = await upsertUser(ctx.state.user)
+    const [odds, revealed] = await Promise.all([
+      getLatestOdds(ctx.params.matchId),
+      isMatchRevealed(dbUser.id, ctx.params.matchId),
+    ])
+    if (!odds) {
+      ctx.body = revealed ? { revealed: true } : null
+      return
+    }
+    ctx.body = { ...odds, revealed }
   } catch {
     ctx.body = null
+  }
+})
+
+router.post('/api/matches/:matchId/insights/reveal', revealRateLimit, authMiddleware, async (ctx) => {
+  const dbUser = await upsertUser(ctx.state.user)
+  try {
+    ctx.body = await revealInsight(dbUser.id, ctx.params.matchId)
+  } catch (err) {
+    if (err instanceof MatchNotFoundError) {
+      ctx.status = 404
+      ctx.body = { error: 'Match not found' }
+      return
+    }
+    throw err
   }
 })
 
