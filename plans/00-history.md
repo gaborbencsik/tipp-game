@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 117 story kész (Must Have: 31/31, Should Have: 86/96)
+> 118 story kész (Must Have: 31/31, Should Have: 87/97)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -121,3 +121,4 @@
 | US-1405 | Tippjeim oldal redesign – személyes statisztikai dashboard | Should Have |
 | BUG-005 | PlayerSelectCombobox/TeamSelectDropdown UUID megjelenítés ha a liga lista üres | Should Have |
 | BUG-006 | Csoport leaderboard "Tipp" oszlop tartalmazta a soft-delete-elt meccsekre adott tippeket | Should Have |
+| UX-021 | Statisztika liga-szűrő és ranglista scope perzisztálása localStorage-ben | Should Have |

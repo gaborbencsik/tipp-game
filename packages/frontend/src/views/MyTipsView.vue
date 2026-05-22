@@ -141,6 +141,7 @@ import { useMatchesStore } from '../stores/matches.store.js'
 import { usePredictionsStore } from '../stores/predictions.store.js'
 import { useGroupsStore } from '../stores/groups.store.js'
 import { useMyStats, type ScoringBuckets } from '../composables/useMyStats.js'
+import { useLeagueFilter } from '../composables/useLeagueFilter.js'
 import { api } from '../api/index.js'
 import { supabase } from '../lib/supabase.js'
 import type { Match, Prediction } from '../types/index.js'
@@ -166,6 +167,23 @@ async function getAccessToken(): Promise<string> {
   return data.session?.access_token ?? ''
 }
 
+interface UserLeague {
+  readonly id: string
+  readonly name: string
+  readonly shortName: string
+}
+
+const userLeagues = computed<readonly UserLeague[]>(() => {
+  const seen = new Map<string, UserLeague>()
+  for (const g of groupsStore.groups) {
+    if (g.league && !seen.has(g.league.id)) seen.set(g.league.id, g.league)
+  }
+  return [...seen.values()]
+})
+
+const userLeagueIds = computed<readonly string[]>(() => userLeagues.value.map(l => l.id))
+const { initFromStorage: initLeagueFilterFromStorage } = useLeagueFilter(userLeagueIds)
+
 onMounted(async () => {
   const tasks: Promise<unknown>[] = []
   if (matchesStore.matches.length === 0) tasks.push(matchesStore.fetchMatches())
@@ -173,6 +191,7 @@ onMounted(async () => {
   if (groupsStore.groups.length === 0) tasks.push(groupsStore.fetchMyGroups())
   tasks.push(loadScoringConfig())
   await Promise.all(tasks)
+  initLeagueFilterFromStorage()
 })
 
 async function loadScoringConfig(): Promise<void> {
@@ -198,20 +217,6 @@ const matchesRef = computed(() => {
   return matchesStore.matches.filter(m => m.league?.id === leagueId)
 })
 const predictionsRef = computed(() => predictionsStore.predictions)
-
-interface UserLeague {
-  readonly id: string
-  readonly name: string
-  readonly shortName: string
-}
-
-const userLeagues = computed<readonly UserLeague[]>(() => {
-  const seen = new Map<string, UserLeague>()
-  for (const g of groupsStore.groups) {
-    if (g.league && !seen.has(g.league.id)) seen.set(g.league.id, g.league)
-  }
-  return [...seen.values()]
-})
 
 const stats = useMyStats({
   predictions: predictionsRef,

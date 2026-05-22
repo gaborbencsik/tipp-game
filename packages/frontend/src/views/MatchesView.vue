@@ -344,7 +344,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, nextTick, computed, watch } from 'vue'
+import { onMounted, ref, nextTick, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useMatchesStore } from '../stores/matches.store.js'
 import { usePredictionsStore } from '../stores/predictions.store.js'
@@ -358,6 +358,7 @@ import DayNavigator from '../components/DayNavigator.vue'
 import SegmentedControl from '../components/SegmentedControl.vue'
 import { usePendingSpecialTips } from '../composables/usePendingSpecialTips.js'
 import { useDayNavigation } from '../composables/useDayNavigation.js'
+import { useLeagueFilter } from '../composables/useLeagueFilter.js'
 import { getDateLocale } from '../lib/dateLocale.js'
 
 const { t } = useI18n()
@@ -413,8 +414,10 @@ const showFavBanner = computed((): boolean => {
 })
 
 const LS_KEY = 'matches_finished_expanded'
-const LS_LEAGUE_KEY = 'matches_league_filter'
 const finishedSectionOpen = ref(true)
+
+const userLeagueIds = computed<readonly string[]>(() => userLeagues.value.map(l => l.id))
+const { initFromStorage: initLeagueFilterFromStorage } = useLeagueFilter(userLeagueIds)
 
 function toggleFinishedSection(): void {
   finishedSectionOpen.value = !finishedSectionOpen.value
@@ -518,32 +521,7 @@ onMounted(async () => {
     // silent — fav banner simply won't show
   }
 
-  try {
-    const storedLeague = localStorage.getItem(LS_LEAGUE_KEY)
-    if (storedLeague && userLeagueIdSet.has(storedLeague)) {
-      matchesStore.leagueFilter = storedLeague
-    } else if (userLeagueIds.length === 1) {
-      matchesStore.leagueFilter = userLeagueIds[0]!
-    } else {
-      matchesStore.leagueFilter = null
-    }
-  } catch {
-    if (userLeagueIds.length === 1) {
-      matchesStore.leagueFilter = userLeagueIds[0]!
-    }
-  }
-})
-
-watch(() => matchesStore.leagueFilter, (val) => {
-  try {
-    if (val) {
-      localStorage.setItem(LS_LEAGUE_KEY, val)
-    } else {
-      localStorage.removeItem(LS_LEAGUE_KEY)
-    }
-  } catch {
-    // ignore
-  }
+  initLeagueFilterFromStorage()
 })
 
 function initDrafts(): void {

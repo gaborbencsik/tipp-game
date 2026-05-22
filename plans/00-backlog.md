@@ -20,8 +20,9 @@
 | UX-013 | Értesítési rendszer (notification bell + panel) | Nice to Have | — |
 | UX-016 | Kedvenc csapat dupla pont jelzés a meccs kártyán | Should Have | — |
 | UX-019 | Onboarding frissítés – új funkciók bemutatása | Should Have | — |
+| UX-022 | Statisztikáim oldal KPI átdolgozás – Pontot ért tippek + Teli találat | Should Have | — |
 | SEC-002 | HMAC-aláírt meghívó URL-ek | Nice to Have | — |
 
 ---
 
-**Haladás: 116 / 131 story kész** — Must Have: 31/31, Should Have: 85/96, Nice to Have: 0/4
+**Haladás: 117 / 132 story kész** — Must Have: 31/31, Should Have: 86/97, Nice to Have: 0/4

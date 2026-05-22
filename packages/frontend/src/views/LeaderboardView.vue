@@ -66,7 +66,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppLayout from '../components/AppLayout.vue'
 import { dicebearUrl } from '../lib/avatar.js'
@@ -78,6 +78,8 @@ import { supabase } from '../lib/supabase.js'
 import type { LeaderboardEntry } from '../types/index.js'
 
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
+
+const LEADERBOARD_SCOPE_LS_KEY = 'leaderboard_scope'
 
 const { t } = useI18n()
 
@@ -126,5 +128,32 @@ onMounted(async () => {
     leaderboardStore.fetchLeaderboard(),
     groupsStore.groups.length === 0 ? groupsStore.fetchMyGroups() : Promise.resolve(),
   ])
+
+  let stored: string | null = null
+  try {
+    stored = localStorage.getItem(LEADERBOARD_SCOPE_LS_KEY)
+  } catch {
+    stored = null
+  }
+  if (stored === 'global') {
+    selectedScope.value = 'global'
+  } else if (stored && groupsStore.groups.some(g => g.id === stored)) {
+    selectedScope.value = stored
+    await loadGroupLeaderboard(stored)
+  } else if (stored) {
+    try {
+      localStorage.removeItem(LEADERBOARD_SCOPE_LS_KEY)
+    } catch {
+      // ignore
+    }
+  }
+})
+
+watch(selectedScope, (val) => {
+  try {
+    localStorage.setItem(LEADERBOARD_SCOPE_LS_KEY, val)
+  } catch {
+    // ignore
+  }
 })
 </script>
