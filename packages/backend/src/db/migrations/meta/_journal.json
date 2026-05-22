@@ -274,6 +274,13 @@
       "when": 1779454857596,
       "tag": "0038_insight_reveals",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1779541257596,
+      "tag": "0039_pre_vb_polymarket_slugs",
+      "breakpoints": true
     }
   ]
 }
