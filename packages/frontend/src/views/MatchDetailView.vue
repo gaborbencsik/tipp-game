@@ -176,13 +176,19 @@
         <!-- Insights section -->
         <div class="mt-4 relative" data-testid="insights-section">
           <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">{{ $t('matchDetail.insightsTitle') }}</h3>
-          <div :class="{ 'blur-sm select-none pointer-events-none': route.query.showInsights !== 'true' }">
-            <MatchOddsBar :odds="route.query.showInsights === 'true' && matchOdds ? matchOdds : blurredOdds" />
+          <div :class="{ 'blur-sm select-none pointer-events-none transition-[filter] duration-300': !isRevealed }">
+            <MatchOddsBar :odds="isRevealed && matchOdds ? matchOdds : blurredOdds" />
           </div>
-          <div v-if="route.query.showInsights !== 'true'" class="absolute inset-0 top-7 flex items-center justify-center rounded-lg">
-            <span class="text-sm font-medium text-gray-500 bg-white/80 px-3 py-1.5 rounded-md border border-gray-200 shadow-sm">
-              {{ $t('matchDetail.insightsComingSoon') }}
-            </span>
+          <div v-if="!isRevealed" class="absolute inset-0 top-7 flex items-center justify-center rounded-lg">
+            <button
+              type="button"
+              class="text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 px-3 py-1.5 rounded-md shadow-sm"
+              :disabled="isRevealing"
+              data-testid="insights-reveal-btn"
+              @click="onRevealClick"
+            >
+              {{ $t('matchDetail.insightsRevealCta') }}
+            </button>
           </div>
         </div>
 
@@ -204,6 +210,8 @@ import { useRoute } from 'vue-router'
 import { useMatchesStore } from '../stores/matches.store.js'
 import { usePredictionsStore } from '../stores/predictions.store.js'
 import { useAuthStore } from '../stores/auth.store.js'
+import { useInsightsRevealStore } from '../stores/insights-reveal.store.js'
+import { useToast } from '../composables/useToast.js'
 import { api } from '../api/index.js'
 import { supabase } from '../lib/supabase.js'
 import type { Match, MatchOutcome, MatchPrediction, MatchStage, MatchStatus, MatchOdds } from '../types/index.js'
@@ -227,6 +235,8 @@ const route = useRoute()
 const matchesStore = useMatchesStore()
 const predictionsStore = usePredictionsStore()
 const authStore = useAuthStore()
+const insightsRevealStore = useInsightsRevealStore()
+const { showToast } = useToast()
 
 const now = ref(new Date())
 const draftGoals = ref<{ home: number | null, away: number | null }>({ home: null, away: null })
@@ -235,6 +245,7 @@ const homeInputRef = ref<HTMLInputElement | null>(null)
 const awayInputRef = ref<HTMLInputElement | null>(null)
 const matchPredictions = ref<MatchPrediction[]>([])
 const matchOdds = ref<MatchOdds | null>(null)
+const isRevealing = ref(false)
 const blurredOdds = computed((): MatchOdds | null => {
   const m = match.value
   if (!m) return null
@@ -258,6 +269,7 @@ let autosaveTimer: ReturnType<typeof setTimeout> | null = null
 const KNOCKOUT_STAGES: readonly MatchStage[] = ['round_of_16', 'quarter_final', 'semi_final', 'third_place', 'final']
 
 const matchId = computed(() => route.params.id as string)
+const isRevealed = computed((): boolean => insightsRevealStore.isRevealed(matchId.value))
 
 const match = computed((): Match | undefined =>
   matchesStore.matches.find(m => m.id === matchId.value)
@@ -353,9 +365,27 @@ async function loadMatchOdds(): Promise<void> {
   try {
     const token = await getToken()
     if (!token) return
-    matchOdds.value = await api.matches.odds(token, matchId.value)
+    const response = await api.matches.odds(token, matchId.value)
+    matchOdds.value = response
+    if (response && typeof response.revealed === 'boolean') {
+      insightsRevealStore.setRevealed(matchId.value, response.revealed)
+    }
   } catch {
     // silent — odds are supplementary
+  }
+}
+
+async function onRevealClick(): Promise<void> {
+  if (isRevealing.value || isRevealed.value) return
+  isRevealing.value = true
+  try {
+    const token = await getToken()
+    if (!token) return
+    await insightsRevealStore.reveal(token, matchId.value)
+  } catch {
+    showToast(t('matchDetail.insightsRevealError'), 'error')
+  } finally {
+    isRevealing.value = false
   }
 }
 
