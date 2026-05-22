@@ -47,8 +47,12 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
     correctCount: number
   }>
 
+  const matchFilter = leagueId
+    ? sql`(${predictions.id} IS NULL OR (${matches.deletedAt} IS NULL AND ${matches.leagueId} = ${leagueId}::uuid))`
+    : sql`(${predictions.id} IS NULL OR ${matches.deletedAt} IS NULL)`
+
   if (useGroupPoints) {
-    const baseQuery = db
+    rows = await db
       .select({
         userId: users.id,
         displayName: users.displayName,
@@ -64,21 +68,12 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
         groupPredictionPoints,
         sql`${groupPredictionPoints.predictionId} = ${predictions.id} AND ${groupPredictionPoints.groupId} = ${groupId}::uuid`,
       )
-
-    const filtered = leagueId
-      ? baseQuery
-          .leftJoin(matches, eq(matches.id, predictions.matchId))
-          .where(and(
-            eq(groupMembers.groupId, groupId),
-            sql`(${predictions.id} IS NULL OR ${matches.leagueId} = ${leagueId}::uuid)`,
-          ))
-      : baseQuery.where(eq(groupMembers.groupId, groupId))
-
-    rows = await filtered
+      .leftJoin(matches, eq(matches.id, predictions.matchId))
+      .where(and(eq(groupMembers.groupId, groupId), matchFilter))
       .groupBy(users.id, users.displayName, users.avatarUrl)
       .orderBy(sql`coalesce(sum(${groupPredictionPoints.points}), 0) desc`)
   } else {
-    const baseQuery = db
+    rows = await db
       .select({
         userId: users.id,
         displayName: users.displayName,
@@ -90,17 +85,8 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
       .from(groupMembers)
       .innerJoin(users, eq(users.id, groupMembers.userId))
       .leftJoin(predictions, eq(predictions.userId, users.id))
-
-    const filtered = leagueId
-      ? baseQuery
-          .leftJoin(matches, eq(matches.id, predictions.matchId))
-          .where(and(
-            eq(groupMembers.groupId, groupId),
-            sql`(${predictions.id} IS NULL OR ${matches.leagueId} = ${leagueId}::uuid)`,
-          ))
-      : baseQuery.where(eq(groupMembers.groupId, groupId))
-
-    rows = await filtered
+      .leftJoin(matches, eq(matches.id, predictions.matchId))
+      .where(and(eq(groupMembers.groupId, groupId), matchFilter))
       .groupBy(users.id, users.displayName, users.avatarUrl)
       .orderBy(sql`coalesce(sum(${predictions.pointsGlobal}), 0) desc`)
   }

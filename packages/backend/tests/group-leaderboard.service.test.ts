@@ -51,7 +51,7 @@ vi.mock('../src/db/schema/index.js', () => ({
   specialPredictionTypes: { id: 'spt.id', groupId: 'spt.groupId', isGlobal: 'spt.isGlobal' },
   groupGlobalTypeSubscriptions: { globalTypeId: 'ggts.globalTypeId', groupId: 'ggts.groupId' },
   groupLeagues: { groupId: 'gl.groupId', leagueId: 'gl.leagueId' },
-  matches: { id: 'matches.id', leagueId: 'matches.leagueId' },
+  matches: { id: 'matches.id', leagueId: 'matches.leagueId', deletedAt: 'matches.deletedAt' },
   userLeagueFavorites: { userId: 'ulf.userId', leagueId: 'ulf.leagueId', teamId: 'ulf.teamId' },
   teams: { id: 'teams.id', countryCode: 'teams.countryCode', name: 'teams.name' },
 }))
@@ -116,24 +116,15 @@ function setupLeaderboardSelectChain(
   mockGroupBy.mockReturnValue({ orderBy: mockOrderBy })
   mockLeaderboardWhere.mockReturnValue({ groupBy: mockGroupBy })
 
-  const hasLeagues = leagueRows.length > 0
-
-  if (withConfig && hasLeagues) {
-    // useGroupPoints=true + leagues: from → innerJoin → leftJoin(pred) → leftJoin2(gpp) → leftJoin3(matches) → where
+  if (withConfig) {
+    // useGroupPoints=true: from → innerJoin → leftJoin(pred) → leftJoin2(gpp) → leftJoin3(matches) → where
     mockLeftJoin3.mockReturnValue({ where: mockLeaderboardWhere })
     mockLeftJoin2.mockReturnValue({ leftJoin: mockLeftJoin3 })
     mockLeftJoin.mockReturnValue({ leftJoin: mockLeftJoin2 })
-  } else if (withConfig && !hasLeagues) {
-    // useGroupPoints=true + no leagues: from → innerJoin → leftJoin(pred) → leftJoin2(gpp) → where
-    mockLeftJoin2.mockReturnValue({ where: mockLeaderboardWhere })
-    mockLeftJoin.mockReturnValue({ leftJoin: mockLeftJoin2 })
-  } else if (!withConfig && hasLeagues) {
-    // useGroupPoints=false + leagues: from → innerJoin → leftJoin(pred) → leftJoin2(matches) → where
-    mockLeftJoin2.mockReturnValue({ where: mockLeaderboardWhere })
-    mockLeftJoin.mockReturnValue({ leftJoin: mockLeftJoin2 })
   } else {
-    // useGroupPoints=false + no leagues: from → innerJoin → leftJoin(pred) → where
-    mockLeftJoin.mockReturnValue({ where: mockLeaderboardWhere })
+    // useGroupPoints=false: from → innerJoin → leftJoin(pred) → leftJoin2(matches) → where
+    mockLeftJoin2.mockReturnValue({ where: mockLeaderboardWhere })
+    mockLeftJoin.mockReturnValue({ leftJoin: mockLeftJoin2 })
   }
 
   mockInnerJoin.mockReturnValue({ leftJoin: mockLeftJoin })
@@ -306,5 +297,49 @@ describe('getGroupLeaderboard', () => {
 
     expect(result[0]?.favoriteTeam).toBeNull()
     expect(result[1]?.favoriteTeam).toBeNull()
+  })
+
+  // ─── BUG-006 regression: soft-deleted matches must be excluded ────────────
+
+  it('builds match filter that references matches.deletedAt (group-points branch)', async () => {
+    setupLeaderboardSelectChain(GROUP_ROW_WITH_CONFIG, MEMBER_ROWS, LEADERBOARD_ROWS, true, [], [{ leagueId: 'league-1' }])
+
+    const { sql } = await import('drizzle-orm')
+    const sqlMock = sql as unknown as { mock: { calls: unknown[][] } }
+    const callsBefore = sqlMock.mock.calls.length
+
+    await getGroupLeaderboard(GROUP_ID, REQUESTER_ID)
+
+    const newCalls = sqlMock.mock.calls.slice(callsBefore)
+    const interpolated = newCalls.flat(3)
+    expect(interpolated).toContain('matches.deletedAt')
+  })
+
+  it('builds match filter that references matches.deletedAt (global-points branch)', async () => {
+    setupLeaderboardSelectChain(GROUP_ROW_NO_CONFIG, MEMBER_ROWS, LEADERBOARD_ROWS, false, [], [{ leagueId: 'league-1' }])
+
+    const { sql } = await import('drizzle-orm')
+    const sqlMock = sql as unknown as { mock: { calls: unknown[][] } }
+    const callsBefore = sqlMock.mock.calls.length
+
+    await getGroupLeaderboard(GROUP_ID, REQUESTER_ID)
+
+    const newCalls = sqlMock.mock.calls.slice(callsBefore)
+    const interpolated = newCalls.flat(3)
+    expect(interpolated).toContain('matches.deletedAt')
+  })
+
+  it('joins matches even when group has no league (still must filter deleted_at)', async () => {
+    setupLeaderboardSelectChain(GROUP_ROW_NO_CONFIG, MEMBER_ROWS, LEADERBOARD_ROWS, false, [], [])
+
+    const { sql } = await import('drizzle-orm')
+    const sqlMock = sql as unknown as { mock: { calls: unknown[][] } }
+    const callsBefore = sqlMock.mock.calls.length
+
+    await getGroupLeaderboard(GROUP_ID, REQUESTER_ID)
+
+    const newCalls = sqlMock.mock.calls.slice(callsBefore)
+    const interpolated = newCalls.flat(3)
+    expect(interpolated).toContain('matches.deletedAt')
   })
 })

@@ -120,3 +120,4 @@
 | UX-012 | Toast notification rendszer | Should Have |
 | US-1405 | Tippjeim oldal redesign – személyes statisztikai dashboard | Should Have |
 | BUG-005 | PlayerSelectCombobox/TeamSelectDropdown UUID megjelenítés ha a liga lista üres | Should Have |
+| BUG-006 | Csoport leaderboard "Tipp" oszlop tartalmazta a soft-delete-elt meccsekre adott tippeket | Should Have |

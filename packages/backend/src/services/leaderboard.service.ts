@@ -1,6 +1,6 @@
-import { eq, sum, count, isNull, isNotNull, sql } from 'drizzle-orm'
+import { eq, sum, count, isNull, isNotNull, sql, and } from 'drizzle-orm'
 import { db } from '../db/client.js'
-import { users, predictions } from '../db/schema/index.js'
+import { users, predictions, matches } from '../db/schema/index.js'
 
 export interface LeaderboardEntry {
   readonly rank: number
@@ -26,7 +26,11 @@ export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
     })
     .from(users)
     .leftJoin(predictions, eq(predictions.userId, users.id))
-    .where(isNull(users.deletedAt))
+    .leftJoin(matches, eq(matches.id, predictions.matchId))
+    .where(and(
+      isNull(users.deletedAt),
+      sql`(${predictions.id} IS NULL OR ${matches.deletedAt} IS NULL)`,
+    ))
     .groupBy(users.id, users.displayName, users.avatarUrl)
     .orderBy(sql`coalesce(sum(${predictions.pointsGlobal}), 0) desc`)
 
