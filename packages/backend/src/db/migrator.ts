@@ -32,6 +32,11 @@ export interface DbExecutor {
 export interface MigrationRunResult {
   readonly applied: readonly string[]
   readonly skipped: number
+  readonly baselined: readonly string[]
+}
+
+export interface MigrationRunOptions {
+  readonly baselineUpToIdx?: number
 }
 
 interface AppliedKeys {
@@ -111,17 +116,44 @@ async function applyMigration(
   }
 }
 
+async function baselineEntry(
+  client: DbExecutor,
+  entry: JournalEntry,
+  hash: string,
+): Promise<void> {
+  await client.query(
+    'INSERT INTO drizzle.__drizzle_migrations (hash, created_at) VALUES ($1, $2)',
+    [hash, entry.when],
+  )
+}
+
 export async function runMigrationsOnClient(
   client: DbExecutor,
   loader: MigrationLoader = fileMigrationLoader(),
+  options: MigrationRunOptions = {},
 ): Promise<MigrationRunResult> {
   await ensureTrackingTable(client)
   const journal = loader.loadJournal()
-  const appliedKeys = await getAppliedKeys(client)
+  let appliedKeys = await getAppliedKeys(client)
 
   const sortedEntries = [...journal.entries].sort((a, b) => a.idx - b.idx)
   const applied: string[] = []
+  const baselined: string[] = []
   let skipped = 0
+
+  const baselineUpToIdx = options.baselineUpToIdx
+  if (typeof baselineUpToIdx === 'number') {
+    for (const entry of sortedEntries) {
+      if (entry.idx > baselineUpToIdx) break
+      const sql = loader.loadSql(entry.tag)
+      const hash = hashSql(sql)
+      if (isApplied(appliedKeys, hash, entry.when)) continue
+      console.log(`  Baselining ${entry.tag} (idx=${entry.idx}) — recording without executing SQL`)
+      await baselineEntry(client, entry, hash)
+      baselined.push(entry.tag)
+    }
+    appliedKeys = await getAppliedKeys(client)
+  }
 
   for (const entry of sortedEntries) {
     const sql = loader.loadSql(entry.tag)
@@ -149,5 +181,5 @@ export async function runMigrationsOnClient(
     )
   }
 
-  return { applied, skipped }
+  return { applied, skipped, baselined }
 }

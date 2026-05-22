@@ -287,4 +287,88 @@ describe('migrate runner', () => {
       )
     })
   })
+
+  describe('baselineUpToIdx option', () => {
+    it('records hash + when for entries idx<=N without executing their SQL', async () => {
+      const { client, executed, insertedHashes } = createFakeClient()
+      const loader = createLoader([
+        { idx: 0, tag: '0000_a', when: 100, sql: 'CREATE TABLE a;' },
+        { idx: 1, tag: '0001_b', when: 200, sql: 'CREATE TABLE b;' },
+        { idx: 2, tag: '0002_c', when: 300, sql: 'CREATE TABLE c;' },
+      ])
+
+      const result = await runMigrationsOnClient(client, loader, { baselineUpToIdx: 1 })
+
+      expect(result.baselined).toEqual(['0000_a', '0001_b'])
+      expect(result.applied).toEqual(['0002_c'])
+      expect(insertedHashes).toContain(hashSql('CREATE TABLE a;'))
+      expect(insertedHashes).toContain(hashSql('CREATE TABLE b;'))
+      expect(insertedHashes).toContain(hashSql('CREATE TABLE c;'))
+      // 0000_a / 0001_b SQL must NOT have been executed
+      expect(executed.some(s => s.startsWith('CREATE TABLE a'))).toBe(false)
+      expect(executed.some(s => s.startsWith('CREATE TABLE b'))).toBe(false)
+      // 0002_c SQL MUST have been executed
+      expect(executed.some(s => s.startsWith('CREATE TABLE c'))).toBe(true)
+    })
+
+    it('does not double-baseline entries already tracked by hash', async () => {
+      const { client, insertedHashes } = createFakeClient([
+        { hash: hashSql('CREATE TABLE a;'), created_at: 100 },
+      ])
+      const loader = createLoader([
+        { idx: 0, tag: '0000_a', when: 100, sql: 'CREATE TABLE a;' },
+        { idx: 1, tag: '0001_b', when: 200, sql: 'CREATE TABLE b;' },
+      ])
+
+      const result = await runMigrationsOnClient(client, loader, { baselineUpToIdx: 1 })
+
+      expect(result.baselined).toEqual(['0001_b'])
+      expect(result.applied).toEqual([])
+      expect(result.skipped).toBe(2)
+      // 0000_a was already there — should not be inserted again
+      expect(insertedHashes.filter(h => h === hashSql('CREATE TABLE a;'))).toHaveLength(0)
+      expect(insertedHashes).toContain(hashSql('CREATE TABLE b;'))
+    })
+
+    it('does not double-baseline entries already tracked by created_at fallback', async () => {
+      const { client, insertedHashes } = createFakeClient([
+        { hash: 'legacy-different-hash', created_at: 100 },
+      ])
+      const loader = createLoader([
+        { idx: 0, tag: '0000_a', when: 100, sql: 'CREATE TABLE a;' },
+      ])
+
+      const result = await runMigrationsOnClient(client, loader, { baselineUpToIdx: 0 })
+
+      expect(result.baselined).toEqual([])
+      expect(result.skipped).toBe(1)
+      expect(insertedHashes).toHaveLength(0)
+    })
+
+    it('does not execute BEGIN/COMMIT for baselined entries', async () => {
+      const { client, executed } = createFakeClient()
+      const loader = createLoader([
+        { idx: 0, tag: '0000_a', when: 100, sql: 'CREATE TABLE a;' },
+      ])
+
+      await runMigrationsOnClient(client, loader, { baselineUpToIdx: 0 })
+
+      expect(executed).not.toContain('BEGIN')
+      expect(executed).not.toContain('COMMIT')
+    })
+
+    it('baselines in idx order even with shuffled journal', async () => {
+      const { client, insertedHashes } = createFakeClient()
+      const loader = createLoader([
+        { idx: 2, tag: '0002_c', when: 300, sql: 'CREATE TABLE c;' },
+        { idx: 0, tag: '0000_a', when: 100, sql: 'CREATE TABLE a;' },
+        { idx: 1, tag: '0001_b', when: 200, sql: 'CREATE TABLE b;' },
+      ])
+
+      const result = await runMigrationsOnClient(client, loader, { baselineUpToIdx: 2 })
+
+      expect(result.baselined).toEqual(['0000_a', '0001_b', '0002_c'])
+      expect(insertedHashes).toHaveLength(3)
+    })
+  })
 })
