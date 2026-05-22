@@ -29,6 +29,7 @@ export interface MyStats {
   readonly bestStreak: number
   readonly currentStreak: number
   readonly distribution: PointDistribution
+  readonly exactHits: number | null
 }
 
 const AVAILABLE_STATUSES: ReadonlyArray<Match['status']> = ['scheduled', 'live', 'finished']
@@ -88,6 +89,7 @@ export function computeMyStats(
   }
 
   const distribution = computeDistribution(evaluated.map(e => e.prediction), matches, predictions, config)
+  const exactHits = config === null ? null : distribution.exact
 
   return {
     submittedCount,
@@ -99,6 +101,7 @@ export function computeMyStats(
     bestStreak,
     currentStreak,
     distribution,
+    exactHits,
   }
 }
 

@@ -208,4 +208,47 @@ describe('computeMyStats', () => {
     expect(stats.distribution.exact).toBe(1)
     expect(stats.distribution.incorrect).toBe(1)
   })
+
+  it('exactHits = 0 when no predictions and config is present', () => {
+    const stats = computeMyStats([], [], config)
+    expect(stats.exactHits).toBe(0)
+  })
+
+  it('exactHits matches the exact bucket for mixed predictions with config', () => {
+    const matches = [
+      match('m1', '2026-06-01T18:00:00Z'),
+      match('m2', '2026-06-02T18:00:00Z'),
+      match('m3', '2026-06-03T18:00:00Z'),
+      match('m4', '2026-06-04T18:00:00Z'),
+    ]
+    const predictions = [pred('m1', 5), pred('m2', 5), pred('m3', 2), pred('m4', 0)]
+    const stats = computeMyStats(predictions, matches, config)
+    expect(stats.exactHits).toBe(2)
+    expect(stats.exactHits).toBe(stats.distribution.exact)
+  })
+
+  it('exactHits = 0 when only non-evaluated predictions', () => {
+    const matches = [
+      match('m1', '2026-06-01T18:00:00Z', 'scheduled'),
+      match('m2', '2026-06-02T18:00:00Z', 'scheduled'),
+    ]
+    const predictions = [pred('m1', null), pred('m2', null)]
+    const stats = computeMyStats(predictions, matches, config)
+    expect(stats.exactHits).toBe(0)
+  })
+
+  it('exactHits = null when scoring config is null (heuristic exact bucket must not surface as headline KPI)', () => {
+    const matches = [
+      match('m1', '2026-06-01T18:00:00Z'),
+      match('m2', '2026-06-02T18:00:00Z'),
+    ]
+    const predictions = [pred('m1', 5), pred('m2', 0)]
+    const stats = computeMyStats(predictions, matches, null)
+    expect(stats.exactHits).toBeNull()
+  })
+
+  it('exactHits = null when config is null even with no predictions', () => {
+    const stats = computeMyStats([], [], null)
+    expect(stats.exactHits).toBeNull()
+  })
 })

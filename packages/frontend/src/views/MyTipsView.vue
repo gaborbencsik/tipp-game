@@ -57,18 +57,19 @@
           icon="🎯"
         />
         <KpiCard
-          :label="$t('myStats.accuracy')"
+          :label="$t('myStats.pointEarning')"
           :value="stats.evaluatedCount === 0 ? '—' : stats.accuracyPercent + '%'"
-          :hint="stats.evaluatedCount === 0 ? $t('myStats.noEvaluated') : `${stats.correctCount}/${stats.evaluatedCount}`"
+          :hint="stats.evaluatedCount === 0
+            ? $t('myStats.noEvaluated')
+            : $t('myStats.pointEarningHint', { correct: stats.correctCount, total: stats.evaluatedCount })"
           :tone="stats.accuracyPercent >= 50 ? 'positive' : 'default'"
           icon="✅"
         />
         <KpiCard
-          :label="streakLabel"
-          :value="streakValue"
-          :hint="streakHint"
-          :tone="streakTone"
-          icon="🔥"
+          :label="$t('myStats.exactHits')"
+          :value="exactHitsValue"
+          :hint="exactHitsHint"
+          icon="⭐"
         />
       </div>
 
@@ -81,12 +82,12 @@
       </div>
 
       <!-- Filters -->
-      <div class="flex items-center gap-2 overflow-x-auto pb-1 -mx-4 px-4 md:mx-0 md:px-0">
+      <div class="flex flex-wrap items-center gap-2 pb-1">
         <button
           v-for="f in filters"
           :key="f.key"
           type="button"
-          class="shrink-0 px-3 py-1.5 text-sm font-medium rounded-full border transition-colors flex items-center gap-1.5"
+          class="px-3 py-1.5 text-sm font-medium rounded-full border transition-colors flex items-center gap-1.5"
           :class="activeFilter === f.key ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'"
           :data-testid="`filter-chip-${f.key}`"
           @click="activeFilter = f.key"
@@ -233,23 +234,20 @@ const distributionLabels = computed(() => ({
   missed: t('myStats.distMissed'),
 }))
 
-const streakValue = computed(() => {
-  const v = stats.value.currentStreak
-  if (v === 0) return '—'
-  return Math.abs(v).toString()
+const exactHitsValue = computed<string | number>(() => {
+  const s = stats.value
+  if (s.exactHits === null) return '—'
+  if (s.evaluatedCount === 0) return '—'
+  if (s.exactHits === 0) return '—'
+  return s.exactHits
 })
 
-const streakLabel = computed(() => t('myStats.currentStreak'))
-
-const streakHint = computed(() => {
-  if (stats.value.currentStreak === 0) return `${t('myStats.bestStreak')}: ${stats.value.bestStreak}`
-  return stats.value.currentStreak > 0 ? t('myStats.currentStreakHint') : t('myStats.currentStreakHintNeg')
-})
-
-const streakTone = computed<'positive' | 'negative' | 'neutral'>(() => {
-  if (stats.value.currentStreak > 0) return 'positive'
-  if (stats.value.currentStreak < 0) return 'negative'
-  return 'neutral'
+const exactHitsHint = computed<string>(() => {
+  const s = stats.value
+  if (s.exactHits === null) return ''
+  if (s.evaluatedCount === 0) return ''
+  if (s.exactHits === 0) return t('myStats.exactHitsEmpty')
+  return t('myStats.exactHitsHint', { total: s.evaluatedCount })
 })
 
 interface ListItem {
