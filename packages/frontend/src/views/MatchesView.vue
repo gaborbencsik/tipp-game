@@ -397,8 +397,8 @@ const hasNoUserLeague = computed((): boolean => userLeagues.value.length === 0)
 
 const showFavBanner = computed((): boolean => {
   if (favBannerDismissed.value) return false
-  if (favStore.leagues.length === 0) return false
-  const leagueIdsWithoutFav = favStore.leagues
+  if (userLeagues.value.length === 0) return false
+  const leagueIdsWithoutFav = userLeagues.value
     .filter(l => !favStore.favoriteByLeagueId(l.id))
     .map(l => l.id)
   if (leagueIdsWithoutFav.length === 0) return false

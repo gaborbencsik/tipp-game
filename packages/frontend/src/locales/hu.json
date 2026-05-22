@@ -298,7 +298,8 @@
     "favDesc": "Ligánként választhatsz kedvenc csapatot. A liga első meccse után zárolódik.",
     "favPlaceholder": "Válassz csapatot...",
     "favSaved": "Elmentve ✓",
-    "favError": "Hiba történt"
+    "favError": "Hiba történt",
+    "favEmpty": "Még nem vagy egyetlen csoport tagja sem. Csatlakozz egy csoporthoz, hogy beállíthasd a kedvenc csapatodat."
   },
   "join": {
     "loading": "Csatlakozás folyamatban...",

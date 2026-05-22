@@ -123,3 +123,4 @@
 | BUG-006 | Csoport leaderboard "Tipp" oszlop tartalmazta a soft-delete-elt meccsekre adott tippeket | Should Have |
 | UX-021 | Statisztika liga-szűrő és ranglista scope perzisztálása localStorage-ben | Should Have |
 | UX-022 | Statisztikáim oldal KPI átdolgozás – Pontot ért tippek + Teli találat | Should Have |
+| UX-023 | Profil és mérkőzés banner – csak releváns ligák a csoporttagság alapján | Should Have |

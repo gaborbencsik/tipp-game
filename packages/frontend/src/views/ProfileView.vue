@@ -63,11 +63,11 @@
       </div>
 
       <!-- Kedvenc csapat -->
-      <div v-if="favStore.leagues.length > 0" class="bg-white rounded shadow p-6 space-y-4 mt-6">
+      <div v-if="favStore.userLeagues.length > 0" class="bg-white rounded shadow p-6 space-y-4 mt-6">
         <h2 class="text-lg font-semibold text-gray-900">{{ $t('profile.favTitle') }}</h2>
         <p class="text-sm text-gray-500">{{ $t('profile.favDesc') }}</p>
 
-        <div v-for="league in favStore.leagues" :key="league.id" class="flex items-center gap-3">
+        <div v-for="league in favStore.userLeagues" :key="league.id" class="flex items-center gap-3">
           <span class="text-sm font-medium text-gray-700 w-32 shrink-0">{{ league.shortName }}</span>
 
           <div v-if="isFavLocked(league.id)" class="flex items-center gap-2 text-sm text-gray-500">
@@ -103,6 +103,15 @@
           {{ favError }}
         </div>
       </div>
+
+      <div
+        v-else-if="groupsLoaded"
+        data-testid="fav-empty-state"
+        class="bg-white rounded shadow p-6 space-y-2 mt-6"
+      >
+        <h2 class="text-lg font-semibold text-gray-900">{{ $t('profile.favTitle') }}</h2>
+        <p class="text-sm text-gray-500">{{ $t('profile.favEmpty') }}</p>
+      </div>
   </AppLayout>
 </template>
 
@@ -111,12 +120,15 @@ import { ref, reactive, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/auth.store.js'
 import { useLeagueFavoritesStore } from '../stores/league-favorites.store.js'
+import { useGroupsStore } from '../stores/groups.store.js'
 import AppLayout from '../components/AppLayout.vue'
 import { dicebearUrl } from '../lib/avatar.js'
 
 const { t } = useI18n()
 const authStore = useAuthStore()
 const favStore = useLeagueFavoritesStore()
+const groupsStore = useGroupsStore()
+const groupsLoaded = ref(false)
 
 const avatarSrc = computed((): string => {
   const user = authStore.user
@@ -161,8 +173,13 @@ async function onFavChange(leagueId: string, teamId: string): Promise<void> {
 
 onMounted(async () => {
   displayName.value = authStore.user?.displayName ?? ''
-  await Promise.all([favStore.fetchLeagues(), favStore.fetchFavorites()])
-  await Promise.all(favStore.leagues.map(l => favStore.fetchLeagueTeams(l.id)))
+  await Promise.all([
+    favStore.fetchLeagues(),
+    favStore.fetchFavorites(),
+    groupsStore.fetchMyGroups(),
+  ])
+  groupsLoaded.value = true
+  await Promise.all(favStore.userLeagues.map(l => favStore.fetchLeagueTeams(l.id)))
 })
 
 async function save(): Promise<void> {

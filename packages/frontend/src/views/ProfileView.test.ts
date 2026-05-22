@@ -11,11 +11,12 @@ vi.mock('vue-router', async (importOriginal) => {
   return { ...actual, useRouter: () => ({ push: vi.fn() }) }
 })
 
-const { mockUpdateProfile, mockSetLeagueFavorite, mockLeaguesList, mockLeagueTeamsForLeague } = vi.hoisted(() => ({
+const { mockUpdateProfile, mockSetLeagueFavorite, mockLeaguesList, mockLeagueTeamsForLeague, mockGroupsMine } = vi.hoisted(() => ({
   mockUpdateProfile: vi.fn().mockResolvedValue(undefined),
   mockSetLeagueFavorite: vi.fn().mockResolvedValue(undefined),
   mockLeaguesList: vi.fn().mockResolvedValue([]),
   mockLeagueTeamsForLeague: vi.fn().mockResolvedValue([]),
+  mockGroupsMine: vi.fn().mockResolvedValue([]),
 }))
 
 vi.mock('@/lib/supabase', () => ({
@@ -40,6 +41,7 @@ vi.mock('@/api/index', () => ({
     leagueTeams: { forLeague: mockLeagueTeamsForLeague },
     matches: { list: vi.fn() },
     predictions: { mine: vi.fn(), upsert: vi.fn() },
+    groups: { mine: mockGroupsMine },
     admin: {
       teams: { list: vi.fn(), get: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() },
       matches: { create: vi.fn(), update: vi.fn(), delete: vi.fn(), setResult: vi.fn() },
@@ -75,8 +77,26 @@ async function mountView(user: User | null = MOCK_USER) {
 describe('ProfileView', () => {
   beforeEach(() => {
     mockUpdateProfile.mockReset().mockResolvedValue(undefined)
+    mockGroupsMine.mockReset().mockResolvedValue([])
     setActivePinia(createPinia())
   })
+
+  function groupForLeague(leagueId: string, shortName = 'NB I') {
+    return {
+      id: `g-${leagueId}`,
+      name: 'My Group',
+      description: null,
+      inviteCode: 'ABCD1234',
+      inviteActive: true,
+      createdBy: 'user-1',
+      memberCount: 1,
+      isAdmin: true,
+      userRank: null,
+      favoriteTeamDoublePoints: false,
+      league: { id: leagueId, name: shortName, shortName },
+      createdAt: '2026-01-01T00:00:00Z',
+    }
+  }
 
   it('shows user email (readonly)', async () => {
     const { wrapper } = await mountView()
@@ -139,6 +159,7 @@ describe('ProfileView', () => {
   // ─── Favorite save feedback ──────────────────────────────────────────────────
 
   it('successful favorite save → shows "Elmentve ✓"', async () => {
+    mockGroupsMine.mockResolvedValue([groupForLeague('l1')])
     mockLeaguesList.mockResolvedValue([
       { id: 'l1', name: 'NB I', shortName: 'NB I', createdAt: '', updatedAt: '' },
     ])
@@ -160,6 +181,7 @@ describe('ProfileView', () => {
   })
 
   it('failed favorite save → shows error', async () => {
+    mockGroupsMine.mockResolvedValue([groupForLeague('l1')])
     mockLeaguesList.mockResolvedValue([
       { id: 'l1', name: 'NB I', shortName: 'NB I', createdAt: '', updatedAt: '' },
     ])
@@ -179,6 +201,7 @@ describe('ProfileView', () => {
   })
 
   it('favorite select is disabled during save', async () => {
+    mockGroupsMine.mockResolvedValue([groupForLeague('l1')])
     mockLeaguesList.mockResolvedValue([
       { id: 'l1', name: 'NB I', shortName: 'NB I', createdAt: '', updatedAt: '' },
     ])
@@ -201,5 +224,38 @@ describe('ProfileView', () => {
     await flushPromises()
 
     expect((wrapper.find('[data-testid="fav-select-l1"]').element as HTMLSelectElement).disabled).toBe(false)
+  })
+
+  // ─── UX-023: filter by group membership ──────────────────────────────────────
+
+  it('renders only leagues where user has group membership', async () => {
+    mockGroupsMine.mockResolvedValue([groupForLeague('l1', 'VB')])
+    mockLeaguesList.mockResolvedValue([
+      { id: 'l1', name: 'VB', shortName: 'VB', createdAt: '', updatedAt: '' },
+      { id: 'l2', name: 'NB I', shortName: 'NB I', createdAt: '', updatedAt: '' },
+      { id: 'l3', name: 'PRE-VB-1', shortName: 'PRE-VB-1', createdAt: '', updatedAt: '' },
+    ])
+    mockLeagueTeamsForLeague.mockResolvedValue([])
+
+    const { wrapper } = await mountView()
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="fav-select-l1"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="fav-select-l2"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="fav-select-l3"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="fav-empty-state"]').exists()).toBe(false)
+  })
+
+  it('user with no groups → shows empty state, no league rows', async () => {
+    mockGroupsMine.mockResolvedValue([])
+    mockLeaguesList.mockResolvedValue([
+      { id: 'l1', name: 'VB', shortName: 'VB', createdAt: '', updatedAt: '' },
+    ])
+
+    const { wrapper } = await mountView()
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="fav-empty-state"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="fav-select-l1"]').exists()).toBe(false)
   })
 })

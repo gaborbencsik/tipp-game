@@ -449,4 +449,43 @@ describe('MatchesView', () => {
     expect(matchesStore.leagueFilter).toBeNull()
   })
 
+  // ─── UX-023: favorite banner respects group memberships ───────────────────────
+
+  it('favorite banner hidden when user is not in any group', async () => {
+    mockGroupsGroups.length = 0
+    mockLeaguesList.mockResolvedValue([
+      { id: 'l-default', name: 'Default League', shortName: 'DEF', createdAt: '', updatedAt: '' },
+      { id: 'l-extra', name: 'Other League', shortName: 'OTH', createdAt: '', updatedAt: '' },
+    ])
+    mockGetLeagueFavorites.mockResolvedValue([])
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    const wrapper = mount(MatchesView, { global: { plugins: [pinia, buildRouter()] } })
+    await flushPromises()
+    expect(wrapper.text()).not.toContain('Állítsd be kedvenc csapatodat')
+  })
+
+  it('favorite banner shown when user has a group league without a favorite', async () => {
+    mockGroupsGroups.push(DEFAULT_GROUP_WITH_LEAGUE)
+    mockLeaguesList.mockResolvedValue([
+      { id: 'l-default', name: 'Default League', shortName: 'DEF', createdAt: '', updatedAt: '' },
+    ])
+    mockGetLeagueFavorites.mockResolvedValue([])
+    const { wrapper } = await mountView([MATCH_SCHEDULED])
+    expect(wrapper.text()).toContain('Állítsd be kedvenc csapatodat')
+  })
+
+  it('favorite banner hidden when only non-group leagues lack a favorite', async () => {
+    mockGroupsGroups.push(DEFAULT_GROUP_WITH_LEAGUE)
+    mockLeaguesList.mockResolvedValue([
+      { id: 'l-default', name: 'Default League', shortName: 'DEF', createdAt: '', updatedAt: '' },
+      { id: 'l-other', name: 'Other League', shortName: 'OTH', createdAt: '', updatedAt: '' },
+    ])
+    mockGetLeagueFavorites.mockResolvedValue([
+      { id: 'fav-1', userId: 'u1', leagueId: 'l-default', teamId: 't1', setAt: '', isLocked: false },
+    ])
+    const { wrapper } = await mountView([MATCH_SCHEDULED])
+    expect(wrapper.text()).not.toContain('Állítsd be kedvenc csapatodat')
+  })
+
 })

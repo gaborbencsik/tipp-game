@@ -44,6 +44,7 @@ vi.mock('@/api/index', () => ({
 }))
 
 import { useLeagueFavoritesStore } from '@/stores/league-favorites.store'
+import { useGroupsStore } from '@/stores/groups.store'
 
 describe('league-favorites.store', () => {
   beforeEach(() => {
@@ -122,5 +123,69 @@ describe('league-favorites.store', () => {
     await store.fetchLeagueTeams('l1')
     expect(mockLeagueTeamsForLeague).toHaveBeenCalledTimes(1)
     expect(store.leagueTeamsMap['l1']).toEqual(teams)
+  })
+
+  // ─── UX-023: userLeagues getter ─────────────────────────────────────────────
+
+  function makeGroup(id: string, leagueId: string | null, shortName = 'L') {
+    return {
+      id,
+      name: 'g',
+      description: null,
+      inviteCode: 'CODE0001',
+      inviteActive: true,
+      createdBy: 'u1',
+      memberCount: 1,
+      isAdmin: false,
+      userRank: null,
+      favoriteTeamDoublePoints: false,
+      league: leagueId ? { id: leagueId, name: shortName, shortName } : null,
+      createdAt: '',
+    }
+  }
+
+  it('userLeagues filters master leagues by user group memberships', async () => {
+    mockLeaguesList.mockResolvedValue([
+      { id: 'l1', name: 'VB', shortName: 'VB', createdAt: '', updatedAt: '' },
+      { id: 'l2', name: 'NB I', shortName: 'NB I', createdAt: '', updatedAt: '' },
+      { id: 'l3', name: 'PRE', shortName: 'PRE', createdAt: '', updatedAt: '' },
+    ])
+    const groups = useGroupsStore()
+    groups.groups = [makeGroup('g1', 'l1'), makeGroup('g2', 'l3')]
+    const store = useLeagueFavoritesStore()
+    await store.fetchLeagues()
+    expect(store.userLeagues.map(l => l.id).sort()).toEqual(['l1', 'l3'])
+  })
+
+  it('userLeagues empty when user is in no groups', async () => {
+    mockLeaguesList.mockResolvedValue([
+      { id: 'l1', name: 'VB', shortName: 'VB', createdAt: '', updatedAt: '' },
+    ])
+    const store = useLeagueFavoritesStore()
+    await store.fetchLeagues()
+    expect(store.userLeagues).toEqual([])
+  })
+
+  it('userLeagues deduplicates when multiple groups share a league', async () => {
+    mockLeaguesList.mockResolvedValue([
+      { id: 'l1', name: 'VB', shortName: 'VB', createdAt: '', updatedAt: '' },
+    ])
+    const groups = useGroupsStore()
+    groups.groups = [makeGroup('g1', 'l1'), makeGroup('g2', 'l1')]
+    const store = useLeagueFavoritesStore()
+    await store.fetchLeagues()
+    expect(store.userLeagues).toHaveLength(1)
+    expect(store.userLeagues[0].id).toBe('l1')
+  })
+
+  it('userLeagues ignores groups with null league', async () => {
+    mockLeaguesList.mockResolvedValue([
+      { id: 'l1', name: 'VB', shortName: 'VB', createdAt: '', updatedAt: '' },
+    ])
+    const groups = useGroupsStore()
+    groups.groups = [makeGroup('g1', null)]
+    const store = useLeagueFavoritesStore()
+    await store.fetchLeagues()
+    expect(store.userLeagues).toEqual([])
   })
 })

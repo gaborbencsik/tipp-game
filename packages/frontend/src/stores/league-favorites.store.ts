@@ -1,7 +1,8 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { supabase } from '../lib/supabase.js'
 import { api } from '../api/index.js'
+import { useGroupsStore } from './groups.store.js'
 import type { UserLeagueFavorite, LeagueTeam, League } from '../types/index.js'
 
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
@@ -22,6 +23,15 @@ export const useLeagueFavoritesStore = defineStore('leagueFavorites', () => {
   function favoriteByLeagueId(leagueId: string): UserLeagueFavorite | undefined {
     return favorites.value.find(f => f.leagueId === leagueId)
   }
+
+  const userLeagues = computed<League[]>(() => {
+    const groupsStore = useGroupsStore()
+    const userLeagueIds = new Set<string>()
+    for (const g of groupsStore.groups) {
+      if (g.league) userLeagueIds.add(g.league.id)
+    }
+    return leagues.value.filter(l => userLeagueIds.has(l.id))
+  })
 
   async function fetchFavorites(): Promise<void> {
     isLoading.value = true
@@ -61,6 +71,7 @@ export const useLeagueFavoritesStore = defineStore('leagueFavorites', () => {
   return {
     favorites,
     leagues,
+    userLeagues,
     leagueTeamsMap,
     isLoading,
     error,
