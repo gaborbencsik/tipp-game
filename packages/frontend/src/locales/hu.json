@@ -103,7 +103,8 @@
     "oddsConfidenceMultiplier": "{n}× többen szavaztak a többi meccshez képest",
     "oddsComingSoon": "Hamarosan elérhető",
     "insightsTitle": "Elemzések",
-    "insightsComingSoon": "Hamarosan elérhető"
+    "insightsRevealCta": "Elemzés felfedése",
+    "insightsRevealError": "Nem sikerült felfedni, próbáld újra"
   },
   "myTips": {
     "title": "Tippjeim",

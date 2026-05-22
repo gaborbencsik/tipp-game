@@ -103,7 +103,8 @@
     "oddsConfidenceMultiplier": "{n}× more votes than other matches",
     "oddsComingSoon": "Coming soon",
     "insightsTitle": "Insights",
-    "insightsComingSoon": "Coming soon"
+    "insightsRevealCta": "Reveal insights",
+    "insightsRevealError": "Could not reveal, please try again"
   },
   "myTips": {
     "title": "My Predictions",
