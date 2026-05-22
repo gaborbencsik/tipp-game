@@ -102,6 +102,11 @@ export const api = {
       request<MatchOdds | null>(`/matches/${matchId}/odds`, {
         headers: { Authorization: `Bearer ${token}` },
       }),
+    revealInsight: (token: string, matchId: string) =>
+      request<{ revealed: true }>(`/matches/${matchId}/insights/reveal`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      }),
     virtualPoints: (token: string, groupId: string) =>
       request<VirtualPointEntry[]>(`/matches/virtual-points?groupId=${encodeURIComponent(groupId)}`, {
         headers: { Authorization: `Bearer ${token}` },

@@ -89,6 +89,7 @@ export interface MatchOdds {
   readonly source: string
   readonly sourceUrl: string | null
   readonly updatedAt: string
+  readonly revealed: boolean
 }
 
 export interface MatchInput {

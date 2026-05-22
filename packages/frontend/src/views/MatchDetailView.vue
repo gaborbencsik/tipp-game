@@ -250,6 +250,7 @@ const blurredOdds = computed((): MatchOdds | null => {
     source: 'polymarket',
     sourceUrl: null,
     updatedAt: new Date().toISOString(),
+    revealed: false,
   }
 })
 let autosaveTimer: ReturnType<typeof setTimeout> | null = null
