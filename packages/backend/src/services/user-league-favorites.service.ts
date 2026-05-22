@@ -1,4 +1,4 @@
-import { eq, and, min, sql } from 'drizzle-orm'
+import { eq, and, min, sql, isNull } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { userLeagueFavorites, matches, teams } from '../db/schema/index.js'
 import type { UserLeagueFavorite } from '../types/index.js'
@@ -54,7 +54,7 @@ export async function getTeamsForLeague(leagueId: string): Promise<Array<{ id: s
     })
     .from(matches)
     .innerJoin(teams, sql`${teams.id} = ${matches.homeTeamId} OR ${teams.id} = ${matches.awayTeamId}`)
-    .where(eq(matches.leagueId, leagueId))
+    .where(and(eq(matches.leagueId, leagueId), isNull(matches.deletedAt)))
     .orderBy(teams.id, teams.name)
 
   return rows
@@ -64,7 +64,7 @@ async function isLeagueLocked(leagueId: string): Promise<boolean> {
   const result = await db
     .select({ earliest: min(matches.scheduledAt) })
     .from(matches)
-    .where(eq(matches.leagueId, leagueId))
+    .where(and(eq(matches.leagueId, leagueId), isNull(matches.deletedAt)))
 
   const earliest = result[0]?.earliest
   if (!earliest) return false
@@ -80,7 +80,7 @@ async function getLeagueLockMap(leagueIds: string[]): Promise<Map<string, boolea
       earliest: min(matches.scheduledAt),
     })
     .from(matches)
-    .where(sql`${matches.leagueId} IN ${leagueIds}`)
+    .where(and(sql`${matches.leagueId} IN ${leagueIds}`, isNull(matches.deletedAt)))
     .groupBy(matches.leagueId)
 
   const now = new Date()
