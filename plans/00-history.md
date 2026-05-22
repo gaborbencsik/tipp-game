@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 119 story kész (Must Have: 31/31, Should Have: 88/97)
+> 121 story kész (Must Have: 31/31, Should Have: 90/97)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -124,3 +124,5 @@
 | UX-021 | Statisztika liga-szűrő és ranglista scope perzisztálása localStorage-ben | Should Have |
 | UX-022 | Statisztikáim oldal KPI átdolgozás – Pontot ért tippek + Teli találat | Should Have |
 | UX-023 | Profil és mérkőzés banner – csak releváns ligák a csoporttagság alapján | Should Have |
+| US-1308 | Match Pulse – adatréteg és csapat KPI-ok gyűjtése | Should Have |
+| US-1309 | Odds-sáv felfedése: insight_reveals DB + RLS + reveal endpoint | Should Have |
