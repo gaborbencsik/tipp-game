@@ -483,11 +483,11 @@ export const api = {
     },
     sync: {
       getSettings: (token: string) =>
-        request<{ mode: string; lastSuccessfulSyncAt: string | null; apiCallsToday: number; syncInProgress: boolean; polymarketSyncEnabled: boolean; lastPolymarketSyncAt: string | null; playerSyncEnabled: boolean; lastPlayerSyncAt: string | null; transfermarktSyncEnabled: boolean; lastTransfermarktSyncAt: string | null; configuredLeagues: Array<{ name: string; externalId: number; season: number }> }>('/admin/sync/settings', {
+        request<{ mode: string; lastSuccessfulSyncAt: string | null; apiCallsToday: number; syncInProgress: boolean; polymarketSyncEnabled: boolean; lastPolymarketSyncAt: string | null; playerSyncEnabled: boolean; lastPlayerSyncAt: string | null; transfermarktSyncEnabled: boolean; lastTransfermarktSyncAt: string | null; rawStatsSyncEnabled: boolean; lastRawStatsSyncAt: string | null; rawStatsSkipFresh: boolean; configuredLeagues: Array<{ name: string; externalId: number; season: number }> }>('/admin/sync/settings', {
           headers: { Authorization: `Bearer ${token}` },
         }),
-      updateSettings: (token: string, settings: { mode?: string; polymarketSyncEnabled?: boolean; playerSyncEnabled?: boolean; transfermarktSyncEnabled?: boolean }) =>
-        request<{ mode: string; polymarketSyncEnabled: boolean; playerSyncEnabled: boolean; transfermarktSyncEnabled: boolean }>('/admin/sync/settings', {
+      updateSettings: (token: string, settings: { mode?: string; polymarketSyncEnabled?: boolean; playerSyncEnabled?: boolean; transfermarktSyncEnabled?: boolean; rawStatsSyncEnabled?: boolean; rawStatsSkipFresh?: boolean }) =>
+        request<{ mode: string; polymarketSyncEnabled: boolean; playerSyncEnabled: boolean; transfermarktSyncEnabled: boolean; rawStatsSyncEnabled: boolean; rawStatsSkipFresh: boolean }>('/admin/sync/settings', {
           method: 'PUT',
           body: JSON.stringify(settings),
           headers: { Authorization: `Bearer ${token}` },
@@ -509,6 +509,11 @@ export const api = {
         }),
       runTransfermarkt: (token: string) =>
         request<{ updated: number; skipped: number; errors: string[] }>('/admin/sync/transfermarkt-run', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      runRawStats: (token: string) =>
+        request<{ processed: number; skipped: number; errors: Array<{ matchId: string; error: string }>; apiCalls: number; durationMs: number }>('/admin/sync/raw-stats-run', {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}` },
         }),

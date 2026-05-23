@@ -140,20 +140,7 @@ describe('AdminSyncView', () => {
 
   it('shows API calls counter', async () => {
     const wrapper = await mountView({ apiCallsToday: 42 })
-    expect(wrapper.text()).toContain('42 / 100')
-  })
-
-  it('highlights API calls in red when above 80%', async () => {
-    const wrapper = await mountView({ apiCallsToday: 85 })
-    const apiText = wrapper.find('.text-red-600')
-    expect(apiText.exists()).toBe(true)
-    expect(apiText.text()).toContain('85 / 100')
-  })
-
-  it('does not highlight API calls when below 80%', async () => {
-    const wrapper = await mountView({ apiCallsToday: 50 })
-    const redElements = wrapper.findAll('.text-red-600.font-semibold')
-    expect(redElements.length).toBe(0)
+    expect(wrapper.text()).toContain('API hívások ma: 42')
   })
 
   it('shows "Folyamatban..." spinner when syncInProgress is true', async () => {
@@ -191,7 +178,7 @@ describe('AdminSyncView', () => {
     it('renders match sync section first', async () => {
       const wrapper = await mountView()
       const sections = wrapper.findAll('section[data-testid$="-sync-section"]')
-      expect(sections.length).toBe(4)
+      expect(sections.length).toBe(5)
       expect(sections[0]!.attributes('data-testid')).toBe('match-sync-section')
     })
 
@@ -209,7 +196,7 @@ describe('AdminSyncView', () => {
     it('shows API calls counter inside match sync section', async () => {
       const wrapper = await mountView({ apiCallsToday: 42 })
       const matchSection = wrapper.find('[data-testid="match-sync-section"]')
-      expect(matchSection.text()).toContain('42 / 100')
+      expect(matchSection.text()).toContain('API hívások ma: 42')
     })
 
     it('shows sync mode help text matching the selected mode', async () => {

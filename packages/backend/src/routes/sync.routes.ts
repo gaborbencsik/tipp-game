@@ -1,12 +1,13 @@
 import Router from '@koa/router'
 import { authMiddleware } from '../middleware/auth.middleware.js'
 import { adminMiddleware } from '../middleware/admin.middleware.js'
-import { getSyncState, setSyncMode, setPolymarketSyncEnabled, setPlayerSyncEnabled, setTransfermarktSyncEnabled, markSyncStarted, markSyncFinished, incrementApiCalls, markPolymarketSyncFinished, markPlayerSyncFinished, markTransfermarktSyncFinished } from '../services/sync-state.service.js'
+import { getSyncState, setSyncMode, setPolymarketSyncEnabled, setPlayerSyncEnabled, setTransfermarktSyncEnabled, setRawStatsSyncEnabled, setRawStatsSkipFresh, markSyncStarted, markSyncFinished, incrementApiCalls, markPolymarketSyncFinished, markPlayerSyncFinished, markTransfermarktSyncFinished, markRawStatsSyncFinished } from '../services/sync-state.service.js'
 import { runAllLeagues, getConfiguredLeagueDescriptors } from '../services/sync-runner.js'
 import { syncAllMatchOdds } from '../services/polymarket.service.js'
 import { syncPlayers } from '../services/player-sync.service.js'
 import { syncTransfermarktValues } from '../services/transfermarkt.service.js'
 import { buildConfig, createFootballApiClient } from '../services/football-api.service.js'
+import { runRawStatsCollection } from '../services/insights/raw-stats-batch.service.js'
 import type { SyncMode } from '../types/index.js'
 
 const VALID_SYNC_MODES: readonly SyncMode[] = ['off', 'final_only', 'adaptive', 'full_live']
@@ -29,12 +30,15 @@ syncRouter.get('/settings', async (ctx) => {
     lastPlayerSyncAt: state.lastPlayerSyncAt,
     transfermarktSyncEnabled: state.transfermarktSyncEnabled,
     lastTransfermarktSyncAt: state.lastTransfermarktSyncAt,
+    rawStatsSyncEnabled: state.rawStatsSyncEnabled,
+    lastRawStatsSyncAt: state.lastRawStatsSyncAt,
+    rawStatsSkipFresh: state.rawStatsSkipFresh,
     configuredLeagues: getConfiguredLeagueDescriptors(),
   }
 })
 
 syncRouter.put('/settings', async (ctx) => {
-  const { mode, polymarketSyncEnabled, playerSyncEnabled, transfermarktSyncEnabled } = ctx.request.body as { mode?: string; polymarketSyncEnabled?: boolean; playerSyncEnabled?: boolean; transfermarktSyncEnabled?: boolean }
+  const { mode, polymarketSyncEnabled, playerSyncEnabled, transfermarktSyncEnabled, rawStatsSyncEnabled, rawStatsSkipFresh } = ctx.request.body as { mode?: string; polymarketSyncEnabled?: boolean; playerSyncEnabled?: boolean; transfermarktSyncEnabled?: boolean; rawStatsSyncEnabled?: boolean; rawStatsSkipFresh?: boolean }
 
   if (mode !== undefined) {
     if (!(VALID_SYNC_MODES as readonly string[]).includes(mode)) {
@@ -57,8 +61,23 @@ syncRouter.put('/settings', async (ctx) => {
     await setTransfermarktSyncEnabled(transfermarktSyncEnabled)
   }
 
+  if (rawStatsSyncEnabled !== undefined) {
+    await setRawStatsSyncEnabled(rawStatsSyncEnabled)
+  }
+
+  if (rawStatsSkipFresh !== undefined) {
+    await setRawStatsSkipFresh(rawStatsSkipFresh)
+  }
+
   const state = await getSyncState()
-  ctx.body = { mode: state.mode, polymarketSyncEnabled: state.polymarketSyncEnabled, playerSyncEnabled: state.playerSyncEnabled, transfermarktSyncEnabled: state.transfermarktSyncEnabled }
+  ctx.body = {
+    mode: state.mode,
+    polymarketSyncEnabled: state.polymarketSyncEnabled,
+    playerSyncEnabled: state.playerSyncEnabled,
+    transfermarktSyncEnabled: state.transfermarktSyncEnabled,
+    rawStatsSyncEnabled: state.rawStatsSyncEnabled,
+    rawStatsSkipFresh: state.rawStatsSkipFresh,
+  }
 })
 
 syncRouter.post('/run', async (ctx) => {
@@ -99,6 +118,16 @@ syncRouter.post('/players-run', async (ctx) => {
 syncRouter.post('/transfermarkt-run', async (ctx) => {
   const result = await syncTransfermarktValues()
   await markTransfermarktSyncFinished()
+  ctx.body = result
+})
+
+syncRouter.post('/raw-stats-run', async (ctx) => {
+  const state = await getSyncState()
+  const config = buildConfig()
+  const client = createFootballApiClient(config)
+  const result = await runRawStatsCollection(client, { skipFresh: state.rawStatsSkipFresh })
+  await markRawStatsSyncFinished()
+  if (result.apiCalls > 0) await incrementApiCalls(result.apiCalls)
   ctx.body = result
 })
 

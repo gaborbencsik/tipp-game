@@ -281,6 +281,13 @@
       "when": 1779541257596,
       "tag": "0039_pre_vb_polymarket_slugs",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1779469778406,
+      "tag": "0040_sudden_surge",
+      "breakpoints": true
     }
   ]
 }

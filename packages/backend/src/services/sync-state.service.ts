@@ -15,6 +15,9 @@ export interface SyncStateRow {
   readonly lastPlayerSyncAt: Date | null
   readonly transfermarktSyncEnabled: boolean
   readonly lastTransfermarktSyncAt: Date | null
+  readonly rawStatsSyncEnabled: boolean
+  readonly lastRawStatsSyncAt: Date | null
+  readonly rawStatsSkipFresh: boolean
   readonly recalcInProgress: boolean
   readonly lastRecalcResult: RecalcResult | null
 }
@@ -31,6 +34,9 @@ const DEFAULT_STATE: SyncStateRow = {
   lastPlayerSyncAt: null,
   transfermarktSyncEnabled: false,
   lastTransfermarktSyncAt: null,
+  rawStatsSyncEnabled: false,
+  lastRawStatsSyncAt: null,
+  rawStatsSkipFresh: false,
   recalcInProgress: false,
   lastRecalcResult: null,
 }
@@ -50,6 +56,9 @@ export async function getSyncState(): Promise<SyncStateRow> {
     lastPlayerSyncAt: row.lastPlayerSyncAt,
     transfermarktSyncEnabled: row.transfermarktSyncEnabled,
     lastTransfermarktSyncAt: row.lastTransfermarktSyncAt,
+    rawStatsSyncEnabled: row.rawStatsSyncEnabled,
+    lastRawStatsSyncAt: row.lastRawStatsSyncAt,
+    rawStatsSkipFresh: row.rawStatsSkipFresh,
     recalcInProgress: row.recalcInProgress,
     lastRecalcResult: (row.lastRecalcResult as RecalcResult | null) ?? null,
   }
@@ -196,6 +205,42 @@ export async function markTransfermarktSyncFinished(): Promise<void> {
   if (!existing) return
   await db.update(syncState)
     .set({ lastTransfermarktSyncAt: sql`now()`, updatedAt: sql`now()` })
+    .where(eq(syncState.id, existing.id))
+}
+
+export async function setRawStatsSyncEnabled(enabled: boolean): Promise<void> {
+  const [existing] = await db.select({ id: syncState.id }).from(syncState).limit(1)
+  if (existing) {
+    await db.update(syncState)
+      .set({ rawStatsSyncEnabled: enabled, updatedAt: sql`now()` })
+      .where(eq(syncState.id, existing.id))
+  } else {
+    await db.insert(syncState).values({
+      id: crypto.randomUUID(),
+      rawStatsSyncEnabled: enabled,
+    })
+  }
+}
+
+export async function setRawStatsSkipFresh(skipFresh: boolean): Promise<void> {
+  const [existing] = await db.select({ id: syncState.id }).from(syncState).limit(1)
+  if (existing) {
+    await db.update(syncState)
+      .set({ rawStatsSkipFresh: skipFresh, updatedAt: sql`now()` })
+      .where(eq(syncState.id, existing.id))
+  } else {
+    await db.insert(syncState).values({
+      id: crypto.randomUUID(),
+      rawStatsSkipFresh: skipFresh,
+    })
+  }
+}
+
+export async function markRawStatsSyncFinished(): Promise<void> {
+  const [existing] = await db.select({ id: syncState.id }).from(syncState).limit(1)
+  if (!existing) return
+  await db.update(syncState)
+    .set({ lastRawStatsSyncAt: sql`now()`, updatedAt: sql`now()` })
     .where(eq(syncState.id, existing.id))
 }
 

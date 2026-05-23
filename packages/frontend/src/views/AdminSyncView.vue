@@ -65,10 +65,7 @@
           <span v-else class="text-gray-400">Még nem futott</span>
         </div>
         <div>
-          API hívások:
-          <span :class="apiCallsRatio > 0.8 ? 'text-red-600 font-semibold' : ''">
-            {{ apiCallsToday }} / {{ apiDailyLimit }}
-          </span>
+          API hívások ma: {{ apiCallsToday }}
         </div>
         <div v-if="syncInProgress" class="flex items-center gap-1 text-blue-600 font-medium">
           <svg class="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -233,6 +230,68 @@
       </div>
       <p class="text-xs text-gray-400 mt-2">Lekéri a csapatok keret-összértékét a Transfermarkt API-ból.</p>
     </section>
+
+    <!-- ─── Match Pulse raw statisztikák ─────────────────────────────────── -->
+    <section class="mb-4 p-4 bg-white rounded-lg border" data-testid="raw-stats-sync-section">
+      <h2 class="text-sm font-semibold text-gray-700 mb-3">Match Pulse raw statisztikák</h2>
+      <div class="flex items-center gap-3">
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input
+            v-model="rawStatsEnabled"
+            type="checkbox"
+            class="sr-only peer"
+            @change="updateRawStatsEnabled"
+          />
+          <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+          <span class="ms-2 text-sm text-gray-600">{{ rawStatsEnabled ? 'Aktív' : 'Kikapcsolva' }}</span>
+        </label>
+        <span v-if="rawStatsSaving" class="text-xs text-gray-400">Mentés...</span>
+        <span v-if="rawStatsSaved" class="text-xs text-green-600">Mentve ✓</span>
+      </div>
+      <div class="mt-2 flex items-center gap-3">
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input
+            v-model="rawStatsSkipFresh"
+            type="checkbox"
+            class="sr-only peer"
+            @change="updateRawStatsSkipFresh"
+          />
+          <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+          <span class="ms-2 text-sm text-gray-600">24h-nál frissebbet kihagy</span>
+        </label>
+        <span v-if="rawStatsSkipFreshSaving" class="text-xs text-gray-400">Mentés...</span>
+        <span v-if="rawStatsSkipFreshSaved" class="text-xs text-green-600">Mentve ✓</span>
+      </div>
+      <div class="mt-2 text-xs text-gray-500">
+        Utolsó futás:
+        <span v-if="lastRawStatsSyncAt" :title="lastRawStatsSyncAt.toLocaleString(getDateLocale())">{{ relativeTime(lastRawStatsSyncAt) }}</span>
+        <span v-else class="text-gray-400">Még nem futott</span>
+      </div>
+      <div class="mt-3 flex items-center gap-3">
+        <button
+          class="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          :disabled="rawStatsSyncing"
+          @click="triggerRawStatsSync"
+        >
+          <span v-if="rawStatsSyncing">Lekérés...</span>
+          <span v-else>Raw stats lekérése most</span>
+        </button>
+        <span v-if="rawStatsSyncResult" class="text-xs text-green-600">{{ rawStatsSyncResult }}</span>
+        <span v-if="rawStatsSyncError" class="text-xs text-red-600">{{ rawStatsSyncError }}</span>
+      </div>
+      <div v-if="rawStatsErrors.length > 0" class="mt-2 text-xs text-red-600 space-y-0.5">
+        <div v-for="err in rawStatsErrors.slice(0, 5)" :key="err.matchId">
+          {{ err.matchId.slice(0, 8) }}…: {{ err.error }}
+        </div>
+        <div v-if="rawStatsErrors.length > 5" class="text-gray-500">
+          + további {{ rawStatsErrors.length - 5 }} hiba
+        </div>
+      </div>
+      <p class="text-xs text-gray-400 mt-2">
+        Az összes 'scheduled' meccshez lekéri a két csapat 24 hónapos statisztikáit (api-football.com).
+        Egy csapat statjai csak egyszer kérődnek le futás közben.
+      </p>
+    </section>
   </AppLayout>
 </template>
 
@@ -297,13 +356,22 @@ const transfermarktSyncResult = ref('')
 const transfermarktSyncError = ref('')
 const lastTransfermarktSyncAt = ref<Date | null>(null)
 
+const rawStatsEnabled = ref(false)
+const rawStatsSaving = ref(false)
+const rawStatsSaved = ref(false)
+const rawStatsSkipFresh = ref(false)
+const rawStatsSkipFreshSaving = ref(false)
+const rawStatsSkipFreshSaved = ref(false)
+const rawStatsSyncing = ref(false)
+const rawStatsSyncResult = ref('')
+const rawStatsSyncError = ref('')
+const rawStatsErrors = ref<Array<{ matchId: string; error: string }>>([])
+const lastRawStatsSyncAt = ref<Date | null>(null)
+
 const lastSyncAt = ref<Date | null>(null)
 const apiCallsToday = ref(0)
-const apiDailyLimit = 100
 const syncInProgress = ref(false)
 const configuredLeagues = ref<ConfiguredLeague[]>([])
-
-const apiCallsRatio = computed((): number => apiCallsToday.value / apiDailyLimit)
 
 const syncModeHelp = computed((): string => SYNC_MODE_HELP[syncMode.value] ?? '')
 
@@ -339,6 +407,9 @@ async function loadSettings(): Promise<void> {
   lastPlayerSyncAt.value = data.lastPlayerSyncAt ? new Date(data.lastPlayerSyncAt) : null
   transfermarktEnabled.value = data.transfermarktSyncEnabled ?? false
   lastTransfermarktSyncAt.value = data.lastTransfermarktSyncAt ? new Date(data.lastTransfermarktSyncAt) : null
+  rawStatsEnabled.value = data.rawStatsSyncEnabled ?? false
+  rawStatsSkipFresh.value = data.rawStatsSkipFresh ?? false
+  lastRawStatsSyncAt.value = data.lastRawStatsSyncAt ? new Date(data.lastRawStatsSyncAt) : null
   configuredLeagues.value = data.configuredLeagues ?? []
 }
 
@@ -427,6 +498,45 @@ async function triggerTransfermarktSync(): Promise<void> {
     transfermarktSyncError.value = err instanceof Error ? err.message : 'Hiba történt'
   } finally {
     transfermarktSyncing.value = false
+  }
+}
+
+async function updateRawStatsEnabled(): Promise<void> {
+  rawStatsSaving.value = true
+  rawStatsSaved.value = false
+  const token = await getToken()
+  await api.admin.sync.updateSettings(token, { rawStatsSyncEnabled: rawStatsEnabled.value })
+  rawStatsSaving.value = false
+  rawStatsSaved.value = true
+  setTimeout(() => { rawStatsSaved.value = false }, 2000)
+}
+
+async function updateRawStatsSkipFresh(): Promise<void> {
+  rawStatsSkipFreshSaving.value = true
+  rawStatsSkipFreshSaved.value = false
+  const token = await getToken()
+  await api.admin.sync.updateSettings(token, { rawStatsSkipFresh: rawStatsSkipFresh.value })
+  rawStatsSkipFreshSaving.value = false
+  rawStatsSkipFreshSaved.value = true
+  setTimeout(() => { rawStatsSkipFreshSaved.value = false }, 2000)
+}
+
+async function triggerRawStatsSync(): Promise<void> {
+  rawStatsSyncing.value = true
+  rawStatsSyncResult.value = ''
+  rawStatsSyncError.value = ''
+  rawStatsErrors.value = []
+  try {
+    const token = await getToken()
+    const data = await api.admin.sync.runRawStats(token)
+    const seconds = (data.durationMs / 1000).toFixed(1)
+    rawStatsSyncResult.value = `Kész: ${data.processed} feldolgozva, ${data.skipped} kihagyva, ${data.errors.length} hiba (${data.apiCalls} API call, ${seconds}s)`
+    rawStatsErrors.value = data.errors
+    await loadSettings()
+  } catch (err) {
+    rawStatsSyncError.value = err instanceof Error ? err.message : 'Hiba történt'
+  } finally {
+    rawStatsSyncing.value = false
   }
 }
 
