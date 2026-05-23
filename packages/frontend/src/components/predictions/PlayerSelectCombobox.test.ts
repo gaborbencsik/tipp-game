@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import PlayerSelectCombobox from './PlayerSelectCombobox.vue'
-import { buildTestI18n } from '@/test-utils/i18n'
 
 vi.mock('@/lib/supabase', () => ({
   supabase: {
@@ -26,7 +25,6 @@ const UUID = '09761da0-c6b6-456b-b753-cafc287240bc'
 function mountCombobox(props: { modelValue: string | null; leagueId?: string | null; answerLabel?: string | null }) {
   return mount(PlayerSelectCombobox, {
     props,
-    global: { plugins: [buildTestI18n()] },
   })
 }
 

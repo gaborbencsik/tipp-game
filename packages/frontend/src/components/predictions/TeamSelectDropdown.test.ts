@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import TeamSelectDropdown from './TeamSelectDropdown.vue'
-import { buildTestI18n } from '@/test-utils/i18n'
 
 vi.mock('@/lib/supabase', () => ({
   supabase: {
@@ -26,7 +25,6 @@ const TEAM_UUID = '11111111-1111-1111-1111-111111111111'
 function mountDropdown(props: { modelValue: string | null; leagueId?: string | null; answerLabel?: string | null }) {
   return mount(TeamSelectDropdown, {
     props,
-    global: { plugins: [buildTestI18n()] },
   })
 }
 
