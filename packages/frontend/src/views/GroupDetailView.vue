@@ -1,17 +1,24 @@
 <template>
   <AppLayout>
-    <div class="flex items-center gap-3 mb-6">
-      <router-link to="/app/groups" class="text-blue-600 hover:text-blue-800 text-sm">{{ $t('groupDetail.backToGroups') }}</router-link>
-      <div>
-        <h1 class="text-2xl font-bold text-gray-900">{{ groupName }}</h1>
-        <p v-if="currentGroup?.league" class="text-xs text-gray-500 mt-0.5">{{ currentGroup.league.name }}</p>
+    <div class="flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
+      <router-link
+        to="/app/groups"
+        class="text-blue-600 hover:text-blue-800 inline-flex items-center shrink-0"
+        :aria-label="$t('groupDetail.backToGroups')"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 md:w-6 md:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+        </svg>
+      </router-link>
+      <div class="min-w-0">
+        <h1 class="text-xl md:text-2xl font-bold text-gray-900 truncate">{{ groupName }}</h1>
       </div>
     </div>
 
-    <div data-testid="tab-bar" class="flex border-b border-gray-200 mb-6">
+    <div data-testid="tab-bar" class="flex flex-wrap border-b border-gray-200 mb-4 md:mb-6">
       <button
         data-testid="tab-leaderboard"
-        class="px-4 py-2 text-sm font-medium"
+        class="px-2 md:px-4 py-2 text-xs md:text-sm font-medium whitespace-nowrap"
         :class="activeTab === 'leaderboard' ? 'border-b-2 border-blue-600 text-blue-700 font-semibold' : 'text-gray-500'"
         @click="activeTab = 'leaderboard'"
       >
@@ -19,7 +26,7 @@
       </button>
       <button
         data-testid="tab-my-predictions"
-        class="px-4 py-2 text-sm font-medium"
+        class="px-2 md:px-4 py-2 text-xs md:text-sm font-medium whitespace-nowrap"
         :class="activeTab === 'my-predictions' ? 'border-b-2 border-blue-600 text-blue-700 font-semibold' : 'text-gray-500'"
         @click="switchToMyPredictionsTab"
       >
@@ -27,7 +34,7 @@
       </button>
       <button
         data-testid="tab-special"
-        class="px-4 py-2 text-sm font-medium"
+        class="px-2 md:px-4 py-2 text-xs md:text-sm font-medium whitespace-nowrap"
         :class="activeTab === 'special' ? 'border-b-2 border-blue-600 text-blue-700 font-semibold' : 'text-gray-500'"
         @click="switchToSpecialTab"
       >
@@ -36,7 +43,7 @@
       <button
         v-if="currentUserIsGroupAdmin"
         data-testid="tab-members"
-        class="px-4 py-2 text-sm font-medium"
+        class="px-2 md:px-4 py-2 text-xs md:text-sm font-medium whitespace-nowrap"
         :class="activeTab === 'members' ? 'border-b-2 border-blue-600 text-blue-700 font-semibold' : 'text-gray-500'"
         @click="activeTab = 'members'"
       >
@@ -45,7 +52,7 @@
       <button
         v-if="canManageSettings"
         data-testid="tab-settings"
-        class="px-4 py-2 text-sm font-medium"
+        class="px-2 md:px-4 py-2 text-xs md:text-sm font-medium whitespace-nowrap"
         :class="activeTab === 'settings' ? 'border-b-2 border-blue-600 text-blue-700 font-semibold' : 'text-gray-500'"
         @click="activeTab = 'settings'"
       >
@@ -60,7 +67,7 @@
       <div v-else-if="entries.length === 0" class="text-gray-500">{{ $t('leaderboard.empty') }}</div>
       <div v-else class="bg-white rounded-xl shadow-sm overflow-hidden">
         <table class="w-full text-sm">
-          <thead>
+          <thead class="hidden md:table-header-group">
             <tr class="border-b border-gray-200 text-gray-500 text-left">
               <th class="pl-4 pr-2 py-3 w-10">{{ $t('groupDetail.rank') }}</th>
               <th class="px-2 py-3">{{ $t('groupDetail.player') }}</th>
@@ -77,13 +84,13 @@
               class="border-b border-gray-100 last:border-0 transition-colors"
               :class="entry.userId === authStore.user?.id ? 'bg-blue-50' : 'hover:bg-gray-50'"
             >
-              <td class="px-4 py-3 text-gray-400 font-medium">{{ entry.rank }}</td>
-              <td class="px-4 py-3">
-                <div class="flex items-center gap-2 min-w-0">
+              <td class="pl-2 md:pl-4 pr-1 md:pr-2 py-2 md:py-3 text-gray-400 font-medium">{{ entry.rank }}</td>
+              <td class="px-1 md:px-2 py-2 md:py-3">
+                <div class="flex items-center gap-1.5 md:gap-2 min-w-0">
                   <img
                     :src="entry.avatarUrl ?? dicebearUrl(entry.displayName)"
                     :alt="entry.displayName"
-                    class="w-7 h-7 rounded-full object-cover shrink-0"
+                    class="w-6 h-6 md:w-7 md:h-7 rounded-full object-cover shrink-0"
                   />
                   <span class="font-medium text-gray-800 truncate">{{ entry.displayName }}</span>
                   <span
@@ -93,13 +100,13 @@
                     class="shrink-0"
                     style="width:1.2em;height:0.9em"
                   />
-                  <span v-if="entry.userId === authStore.user?.id" class="text-xs text-blue-600 shrink-0">{{ $t('groupDetail.you') }}</span>
+                  <span v-if="entry.userId === authStore.user?.id" class="text-[0.65rem] md:text-xs text-blue-600 shrink-0">{{ $t('groupDetail.you') }}</span>
                 </div>
               </td>
-              <td class="px-4 py-3 text-right text-gray-600">{{ entry.predictionCount }}</td>
-              <td class="px-4 py-3 text-right text-gray-600">{{ entry.correctCount }}</td>
-              <td class="px-4 py-3 text-right text-gray-500">{{ entry.specialPredictionPoints ?? 0 }}</td>
-              <td class="px-4 py-3 text-right font-bold text-blue-700">{{ entry.totalPoints }}</td>
+              <td class="px-1 md:px-4 py-2 md:py-3 text-right text-gray-600 tabular-nums">{{ entry.predictionCount }}</td>
+              <td class="px-1 md:px-4 py-2 md:py-3 text-right text-gray-600 tabular-nums">{{ entry.correctCount }}</td>
+              <td class="px-1 md:px-4 py-2 md:py-3 text-right text-gray-500 tabular-nums">{{ entry.specialPredictionPoints ?? 0 }}</td>
+              <td class="pl-1 pr-2 md:px-4 py-2 md:py-3 text-right font-bold text-blue-700 tabular-nums">{{ entry.totalPoints }}</td>
             </tr>
           </tbody>
         </table>

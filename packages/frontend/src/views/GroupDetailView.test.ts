@@ -291,9 +291,34 @@ describe('GroupDetailView', () => {
     expect(flags.length).toBe(0)
   })
 
-  it('header shows league name when group has a league', async () => {
+  it('header does not show league name (moved to Settings tab — UX-024)', async () => {
     const { wrapper } = await mountView()
-    expect(wrapper.text()).toContain('VB 2026')
+    const h1 = wrapper.find('h1')
+    expect(h1.text()).not.toContain('VB 2026')
+    const headerWrapper = h1.element.closest('div')?.parentElement
+    expect(headerWrapper?.textContent).not.toContain('VB 2026')
+  })
+
+  it('header back-to-groups link is always visible as arrow icon (UX-024)', async () => {
+    const { wrapper } = await mountView()
+    const backLinks = wrapper.findAll('a[href="/app/groups"]')
+    const headerBackLink = backLinks.find(a => a.classes().includes('text-blue-600'))
+    expect(headerBackLink).toBeDefined()
+    expect(headerBackLink!.classes()).not.toContain('hidden')
+    expect(headerBackLink!.find('svg').exists()).toBe(true)
+    expect(headerBackLink!.attributes('aria-label')).toBeTruthy()
+  })
+
+  it('leaderboard table hides only thead on mobile, all data columns visible (UX-024)', async () => {
+    const { wrapper } = await mountView([], [LEADERBOARD_ENTRY])
+    const thead = wrapper.find('table thead')
+    expect(thead.classes()).toContain('hidden')
+    expect(thead.classes()).toContain('md:table-header-group')
+    const dataCells = wrapper.findAll('table tbody tr:first-child td')
+    expect(dataCells.length).toBe(6)
+    for (const td of dataCells) {
+      expect(td.classes()).not.toContain('hidden')
+    }
   })
 
   it('header shows nothing when group has no league', async () => {
