@@ -3,17 +3,7 @@
     <div class="flex items-center justify-between mb-4">
       <h1 class="text-2xl font-bold">Pontrendszer beállítása</h1>
     </div>
-    <div class="flex gap-2 mb-6">
-      <router-link to="/admin/stats" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Statisztikák</router-link>
-      <router-link to="/admin/matches" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Mérkőzések</router-link>
-      <router-link to="/admin/teams" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Csapatok</router-link>
-      <router-link to="/admin/players" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Játékosok</router-link>
-      <router-link to="/admin/users" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Felhasználók</router-link>
-      <router-link to="/admin/scoring" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Pontrendszer</router-link>
-      <router-link to="/admin/waitlist" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Waitlist</router-link>
-      <router-link to="/admin/global-types" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Speciális tippek</router-link>
-      <router-link to="/admin/sync" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Szinkron</router-link>
-    </div>
+    <AdminNav />
 
     <div v-if="store.error" data-testid="error-banner" class="mb-4 p-3 bg-red-100 text-red-700 rounded">
       {{ store.error }}
@@ -111,6 +101,7 @@
 <script setup lang="ts">
 import { reactive, ref, watch, onMounted } from 'vue'
 import AppLayout from '../components/AppLayout.vue'
+import AdminNav from '../components/admin/AdminNav.vue'
 import ScoringOverrideModal from '../components/admin/ScoringOverrideModal.vue'
 import { useAdminScoringStore } from '../stores/admin-scoring.store.js'
 import type { ScoringConfigInput } from '../types/index.js'

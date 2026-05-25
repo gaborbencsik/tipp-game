@@ -168,4 +168,22 @@ describe('AdminUsersView', () => {
     expect(roleSelect.attributes('disabled')).toBeUndefined()
     expect(banBtn.attributes('disabled')).toBeUndefined()
   })
+
+  it('AdminNav rendered with all 9 admin links (UX-026)', async () => {
+    const { wrapper } = await mountView([])
+    const adminLinks = wrapper.findAll('nav[aria-label="Admin navigáció"] a')
+    expect(adminLinks).toHaveLength(9)
+    const hrefs = adminLinks.map(a => a.attributes('href'))
+    expect(hrefs).toEqual([
+      '/admin/stats',
+      '/admin/matches',
+      '/admin/teams',
+      '/admin/players',
+      '/admin/users',
+      '/admin/scoring',
+      '/admin/waitlist',
+      '/admin/global-types',
+      '/admin/sync',
+    ])
+  })
 })

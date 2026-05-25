@@ -3,17 +3,7 @@
     <div class="flex items-center justify-between mb-4">
       <h1 class="text-2xl font-bold">Adatszinkronizáció</h1>
     </div>
-    <div class="flex flex-wrap gap-2 mb-6">
-      <router-link to="/admin/stats" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Statisztikák</router-link>
-      <router-link to="/admin/matches" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Mérkőzések</router-link>
-      <router-link to="/admin/teams" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Csapatok</router-link>
-      <router-link to="/admin/players" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Játékosok</router-link>
-      <router-link to="/admin/users" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Felhasználók</router-link>
-      <router-link to="/admin/scoring" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Pontrendszer</router-link>
-      <router-link to="/admin/waitlist" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Waitlist</router-link>
-      <router-link to="/admin/global-types" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Speciális tippek</router-link>
-      <router-link to="/admin/sync" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Szinkron</router-link>
-    </div>
+    <AdminNav />
 
     <!-- ─── Mérkőzés szinkronizáció ─────────────────────────────────────── -->
     <section class="mb-4 p-4 bg-white rounded-lg border" data-testid="match-sync-section">
@@ -22,7 +12,7 @@
       <!-- Sync mode + help text -->
       <div class="flex flex-col gap-1 mb-3">
         <label for="match-sync-mode" class="text-xs text-gray-600">Szinkron mód</label>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 flex-wrap">
           <select
             id="match-sync-mode"
             v-model="syncMode"
@@ -77,7 +67,7 @@
       </div>
 
       <!-- Trigger -->
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-3 flex-wrap">
         <button
           class="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           :disabled="syncing || syncMode === 'off'"
@@ -123,7 +113,7 @@
     <!-- ─── Polymarket odds szinkronizáció ───────────────────────────────── -->
     <section class="mb-4 p-4 bg-white rounded-lg border" data-testid="polymarket-sync-section">
       <h2 class="text-sm font-semibold text-gray-700 mb-3">Polymarket odds szinkronizáció</h2>
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-3 flex-wrap">
         <label class="relative inline-flex items-center cursor-pointer">
           <input
             v-model="polymarketEnabled"
@@ -160,7 +150,7 @@
     <!-- ─── Játékos szinkronizáció ───────────────────────────────────────── -->
     <section class="mb-4 p-4 bg-white rounded-lg border" data-testid="player-sync-section">
       <h2 class="text-sm font-semibold text-gray-700 mb-3">Játékos szinkronizáció</h2>
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-3 flex-wrap">
         <label class="relative inline-flex items-center cursor-pointer">
           <input
             v-model="playerSyncEnabled"
@@ -197,7 +187,7 @@
     <!-- ─── Transfermarkt szinkronizáció ─────────────────────────────────── -->
     <section class="mb-4 p-4 bg-white rounded-lg border" data-testid="transfermarkt-sync-section">
       <h2 class="text-sm font-semibold text-gray-700 mb-3">Transfermarkt szinkronizáció</h2>
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-3 flex-wrap">
         <label class="relative inline-flex items-center cursor-pointer">
           <input
             v-model="transfermarktEnabled"
@@ -234,7 +224,7 @@
     <!-- ─── Match Pulse raw statisztikák ─────────────────────────────────── -->
     <section class="mb-4 p-4 bg-white rounded-lg border" data-testid="raw-stats-sync-section">
       <h2 class="text-sm font-semibold text-gray-700 mb-3">Match Pulse raw statisztikák</h2>
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-3 flex-wrap">
         <label class="relative inline-flex items-center cursor-pointer">
           <input
             v-model="rawStatsEnabled"
@@ -298,6 +288,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import AppLayout from '../components/AppLayout.vue'
+import AdminNav from '../components/admin/AdminNav.vue'
 import { supabase } from '../lib/supabase.js'
 import { api } from '../api/index.js'
 import { getDateLocale } from '../lib/dateLocale.js'

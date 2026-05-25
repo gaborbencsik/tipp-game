@@ -3,18 +3,8 @@
     <div class="flex items-center justify-between mb-4">
       <h1 class="text-2xl font-bold">Játékosok kezelése</h1>
     </div>
-    <div class="flex gap-2 mb-6 flex-wrap">
-      <router-link to="/admin/stats" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Statisztikák</router-link>
-      <router-link to="/admin/matches" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Mérkőzések</router-link>
-      <router-link to="/admin/teams" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Csapatok</router-link>
-      <router-link to="/admin/players" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Játékosok</router-link>
-      <router-link to="/admin/users" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Felhasználók</router-link>
-      <router-link to="/admin/scoring" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Pontrendszer</router-link>
-      <router-link to="/admin/waitlist" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Waitlist</router-link>
-      <router-link to="/admin/global-types" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Speciális tippek</router-link>
-      <router-link to="/admin/sync" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Szinkron</router-link>
-      {{ store.error }}
-    </div>
+    <AdminNav />
+    {{ store.error }}
 
     <!-- Filters + New button -->
     <div class="flex items-center gap-3 mb-4">
@@ -137,6 +127,7 @@ import { useAdminPlayersStore } from '../stores/admin-players.store.js'
 import { useAdminTeamsStore } from '../stores/admin-teams.store.js'
 import type { Player } from '../types/index.js'
 import AppLayout from '../components/AppLayout.vue'
+import AdminNav from '../components/admin/AdminNav.vue'
 
 const POSITIONS = [
   { value: 'GK', label: 'Kapus' },

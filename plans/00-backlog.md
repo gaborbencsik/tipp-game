@@ -6,6 +6,7 @@
 
 | Story ID | Cím | Prioritás | Függőség |
 |----------|-----|-----------|----------|
+| OBS-001 | Logolás és hibakezelés átnézése – user-szintű hibadetektálás és reprodukálhatóság | Should Have | — |
 | US-1204 | NB II liga szinkronizáció támogatás | Nice to Have | ~~US-1202~~, ~~US-1203~~ |
 | US-1302 | Match Pulse – AI insight generálás (batch job) + admin trigger | Should Have | ~~US-1308~~ |
 | US-1303 | Match Pulse – automatikus insight generálás cron jobban | Should Have | US-1302, ~~US-1203~~ |
@@ -24,4 +25,4 @@
 
 ---
 
-**Haladás: 123 / 136 story kész** — Must Have: 31/31, Should Have: 92/101, Nice to Have: 0/4
+**Haladás: 124 / 138 story kész** — Must Have: 31/31, Should Have: 93/103, Nice to Have: 0/4

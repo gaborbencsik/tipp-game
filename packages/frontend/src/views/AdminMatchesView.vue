@@ -1,6 +1,6 @@
 <template>
   <AppLayout>
-      <div class="flex items-center justify-between mb-4">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-0 mb-4">
         <h1 class="text-2xl font-bold text-gray-900">Admin – Mérkőzések</h1>
         <div class="flex items-center gap-2">
           <button
@@ -12,17 +12,7 @@
           </button>
         </div>
       </div>
-      <div class="flex gap-2 mb-6">
-        <router-link to="/admin/stats" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Statisztikák</router-link>
-        <router-link to="/admin/matches" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Mérkőzések</router-link>
-        <router-link to="/admin/teams" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Csapatok</router-link>
-        <router-link to="/admin/players" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Játékosok</router-link>
-        <router-link to="/admin/users" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Felhasználók</router-link>
-        <router-link to="/admin/scoring" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Pontrendszer</router-link>
-        <router-link to="/admin/waitlist" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Waitlist</router-link>
-        <router-link to="/admin/global-types" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Speciális tippek</router-link>
-        <router-link to="/admin/sync" class="px-3 py-1 text-sm rounded bg-gray-200 text-gray-700 hover:bg-gray-300" exact-active-class="!bg-blue-600 !text-white">Szinkron</router-link>
-      </div>
+      <AdminNav />
 
       <!-- Error banner -->
       <div v-if="store.error" class="bg-red-50 border border-red-200 text-red-700 rounded p-3 mb-4 text-sm">
@@ -275,6 +265,7 @@ import { useAdminMatchesStore } from '../stores/admin-matches.store.js'
 import { useAdminTeamsStore } from '../stores/admin-teams.store.js'
 import type { Match, MatchOutcome, MatchStage, MatchStatus } from '../types/index.js'
 import AppLayout from '../components/AppLayout.vue'
+import AdminNav from '../components/admin/AdminNav.vue'
 import { getDateLocale } from '../lib/dateLocale.js'
 
 const store = useAdminMatchesStore()
