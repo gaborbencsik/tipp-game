@@ -282,6 +282,57 @@
         Egy csapat statjai csak egyszer kérődnek le futás közben.
       </p>
     </section>
+
+    <section class="mb-4 p-4 bg-white rounded-lg border" data-testid="insights-sync-section">
+      <h2 class="text-sm font-semibold text-gray-700 mb-3">Match Pulse AI insightok</h2>
+      <div class="flex items-center gap-3 flex-wrap">
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input
+            v-model="insightsEnabled"
+            type="checkbox"
+            class="sr-only peer"
+            @change="updateInsightsEnabled"
+          />
+          <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+          <span class="ms-2 text-sm text-gray-600">{{ insightsEnabled ? 'Aktív' : 'Kikapcsolva' }}</span>
+        </label>
+        <span v-if="insightsSaving" class="text-xs text-gray-400">Mentés...</span>
+        <span v-if="insightsSaved" class="text-xs text-green-600">Mentve ✓</span>
+      </div>
+      <div class="mt-2 text-xs text-gray-500">
+        Utolsó futás:
+        <span v-if="lastInsightsSyncAt" :title="lastInsightsSyncAt.toLocaleString(getDateLocale())">{{ relativeTime(lastInsightsSyncAt) }}</span>
+        <span v-else class="text-gray-400">Még nem futott</span>
+      </div>
+      <div v-if="insightsUsage" class="mt-2 text-xs text-gray-600" data-testid="insights-usage">
+        Ma: {{ insightsUsage.requestsToday }} / {{ insightsUsage.dailyLimit }} kérés ({{ insightsUsage.remaining }} maradt)
+      </div>
+      <div class="mt-3 flex items-center gap-3 flex-wrap">
+        <button
+          class="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          :disabled="insightsSyncing"
+          data-testid="insights-run-btn"
+          @click="triggerInsightsSync"
+        >
+          <span v-if="insightsSyncing">Generálás...</span>
+          <span v-else>Generálás indítása</span>
+        </button>
+        <span v-if="insightsSyncResult" class="text-xs text-green-600">{{ insightsSyncResult }}</span>
+        <span v-if="insightsSyncError" class="text-xs text-red-600" data-testid="insights-error">{{ insightsSyncError }}</span>
+      </div>
+      <div v-if="insightsErrors.length > 0" class="mt-2 text-xs text-red-600 space-y-0.5">
+        <div v-for="err in insightsErrors.slice(0, 5)" :key="err.matchId">
+          {{ err.matchId.slice(0, 8) }}…: {{ err.error }}
+        </div>
+        <div v-if="insightsErrors.length > 5" class="text-gray-500">
+          + további {{ insightsErrors.length - 5 }} hiba
+        </div>
+      </div>
+      <p class="text-xs text-gray-400 mt-2">
+        Az összes 'scheduled' meccshez 5 AI insight-ot generál a Gemini API-val.
+        Rate limit: 15 RPM. Napi keret: {{ insightsUsage?.dailyLimit ?? 450 }}.
+      </p>
+    </section>
   </AppLayout>
 </template>
 
@@ -359,6 +410,25 @@ const rawStatsSyncError = ref('')
 const rawStatsErrors = ref<Array<{ matchId: string; error: string }>>([])
 const lastRawStatsSyncAt = ref<Date | null>(null)
 
+const insightsEnabled = ref(false)
+const insightsSaving = ref(false)
+const insightsSaved = ref(false)
+const insightsSyncing = ref(false)
+const insightsSyncResult = ref('')
+const insightsSyncError = ref('')
+const insightsErrors = ref<Array<{ matchId: string; error: string }>>([])
+const lastInsightsSyncAt = ref<Date | null>(null)
+interface InsightsUsage {
+  date: string
+  requestsToday: number
+  inputTokensToday: number
+  outputTokensToday: number
+  dailyLimit: number
+  remaining: number
+  last7Days: Array<{ date: string; requests: number; tokens: number }>
+}
+const insightsUsage = ref<InsightsUsage | null>(null)
+
 const lastSyncAt = ref<Date | null>(null)
 const apiCallsToday = ref(0)
 const syncInProgress = ref(false)
@@ -401,6 +471,8 @@ async function loadSettings(): Promise<void> {
   rawStatsEnabled.value = data.rawStatsSyncEnabled ?? false
   rawStatsSkipFresh.value = data.rawStatsSkipFresh ?? false
   lastRawStatsSyncAt.value = data.lastRawStatsSyncAt ? new Date(data.lastRawStatsSyncAt) : null
+  insightsEnabled.value = data.insightsSyncEnabled ?? false
+  lastInsightsSyncAt.value = data.lastInsightsSyncAt ? new Date(data.lastInsightsSyncAt) : null
   configuredLeagues.value = data.configuredLeagues ?? []
 }
 
@@ -548,5 +620,44 @@ async function triggerSync(): Promise<void> {
   }
 }
 
-onMounted(loadSettings)
+async function updateInsightsEnabled(): Promise<void> {
+  insightsSaving.value = true
+  insightsSaved.value = false
+  const token = await getToken()
+  await api.admin.sync.updateSettings(token, { insightsSyncEnabled: insightsEnabled.value })
+  insightsSaving.value = false
+  insightsSaved.value = true
+  setTimeout(() => { insightsSaved.value = false }, 2000)
+}
+
+async function loadInsightsUsage(): Promise<void> {
+  try {
+    const token = await getToken()
+    insightsUsage.value = await api.admin.sync.getInsightsUsage(token)
+  } catch { /* ignore */ }
+}
+
+async function triggerInsightsSync(): Promise<void> {
+  insightsSyncing.value = true
+  insightsSyncResult.value = ''
+  insightsSyncError.value = ''
+  insightsErrors.value = []
+  try {
+    const token = await getToken()
+    const data = await api.admin.sync.runInsights(token)
+    insightsSyncResult.value = `Kész: ${data.generated} generálva, ${data.skipped} kihagyva, ${data.errors.length} hiba`
+    insightsErrors.value = data.errors
+    await loadSettings()
+    await loadInsightsUsage()
+  } catch (err) {
+    insightsSyncError.value = err instanceof Error ? err.message : 'Hiba történt'
+  } finally {
+    insightsSyncing.value = false
+  }
+}
+
+onMounted(async () => {
+  await loadSettings()
+  await loadInsightsUsage()
+})
 </script>

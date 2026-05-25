@@ -14,6 +14,10 @@ Minden felhasználói kérést először a `product-orchestrator` agenten keresz
 - Rövid, egyértelmű bugfix vagy typo javítás
 - Egyértelmű implementációs feladat ahol a story és terv már ismert
 
+## Screenshotok
+
+A felhasználó által hivatkozott screenshotokat mindig a `./screenshots/` mappában keresd (a repo gyökerétől).
+
 ## A projekt
 
 Nyári labdarúgó VB tippjáték platform. Monorepo (npm workspaces):

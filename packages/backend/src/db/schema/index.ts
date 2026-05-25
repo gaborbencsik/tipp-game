@@ -561,5 +561,24 @@ export const syncState = pgTable('sync_state', {
   rawStatsSkipFresh:         boolean('raw_stats_skip_fresh').notNull().default(false),
   recalcInProgress:          boolean('recalc_in_progress').notNull().default(false),
   lastRecalcResult:          jsonb('last_recalc_result'),
+  insightsSyncEnabled:       boolean('insights_sync_enabled').notNull().default(false),
+  lastInsightsSyncAt:        timestamp('last_insights_sync_at', { withTimezone: true }),
   updatedAt:                 timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
+
+// ─── LLM USAGE LOG ───────────────────────────────────────────────────────────
+
+export const llmUsageLog = pgTable('llm_usage_log', {
+  id:           uuid('id').primaryKey().defaultRandom(),
+  provider:     varchar('provider', { length: 32 }).notNull(),
+  model:        varchar('model', { length: 64 }).notNull(),
+  matchId:      uuid('match_id').references(() => matches.id, { onDelete: 'set null' }),
+  inputTokens:  integer('input_tokens').notNull().default(0),
+  outputTokens: integer('output_tokens').notNull().default(0),
+  latencyMs:    integer('latency_ms').notNull().default(0),
+  success:      boolean('success').notNull(),
+  errorCode:    varchar('error_code', { length: 64 }),
+  createdAt:    timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  createdAtIdx: index('llm_usage_log_created_at_idx').on(t.createdAt),
+}))

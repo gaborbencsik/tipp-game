@@ -1,13 +1,14 @@
 import Router from '@koa/router'
 import { authMiddleware } from '../middleware/auth.middleware.js'
 import { adminMiddleware } from '../middleware/admin.middleware.js'
-import { getSyncState, setSyncMode, setPolymarketSyncEnabled, setPlayerSyncEnabled, setTransfermarktSyncEnabled, setRawStatsSyncEnabled, setRawStatsSkipFresh, markSyncStarted, markSyncFinished, incrementApiCalls, markPolymarketSyncFinished, markPlayerSyncFinished, markTransfermarktSyncFinished, markRawStatsSyncFinished } from '../services/sync-state.service.js'
 import { runAllLeagues, getConfiguredLeagueDescriptors } from '../services/sync-runner.js'
 import { syncAllMatchOdds } from '../services/polymarket.service.js'
 import { syncPlayers } from '../services/player-sync.service.js'
 import { syncTransfermarktValues } from '../services/transfermarkt.service.js'
 import { buildConfig, createFootballApiClient } from '../services/football-api.service.js'
 import { runRawStatsCollection } from '../services/insights/raw-stats-batch.service.js'
+import { runInsightsBatch, getInsightsUsage } from '../services/insights/batch.service.js'
+import { getSyncState, setSyncMode, setPolymarketSyncEnabled, setPlayerSyncEnabled, setTransfermarktSyncEnabled, setRawStatsSyncEnabled, setRawStatsSkipFresh, setInsightsSyncEnabled, markSyncStarted, markSyncFinished, incrementApiCalls, markPolymarketSyncFinished, markPlayerSyncFinished, markTransfermarktSyncFinished, markRawStatsSyncFinished, markInsightsSyncFinished } from '../services/sync-state.service.js'
 import type { SyncMode } from '../types/index.js'
 
 const VALID_SYNC_MODES: readonly SyncMode[] = ['off', 'final_only', 'adaptive', 'full_live']
@@ -33,12 +34,14 @@ syncRouter.get('/settings', async (ctx) => {
     rawStatsSyncEnabled: state.rawStatsSyncEnabled,
     lastRawStatsSyncAt: state.lastRawStatsSyncAt,
     rawStatsSkipFresh: state.rawStatsSkipFresh,
+    insightsSyncEnabled: state.insightsSyncEnabled,
+    lastInsightsSyncAt: state.lastInsightsSyncAt,
     configuredLeagues: getConfiguredLeagueDescriptors(),
   }
 })
 
 syncRouter.put('/settings', async (ctx) => {
-  const { mode, polymarketSyncEnabled, playerSyncEnabled, transfermarktSyncEnabled, rawStatsSyncEnabled, rawStatsSkipFresh } = ctx.request.body as { mode?: string; polymarketSyncEnabled?: boolean; playerSyncEnabled?: boolean; transfermarktSyncEnabled?: boolean; rawStatsSyncEnabled?: boolean; rawStatsSkipFresh?: boolean }
+  const { mode, polymarketSyncEnabled, playerSyncEnabled, transfermarktSyncEnabled, rawStatsSyncEnabled, rawStatsSkipFresh, insightsSyncEnabled } = ctx.request.body as { mode?: string; polymarketSyncEnabled?: boolean; playerSyncEnabled?: boolean; transfermarktSyncEnabled?: boolean; rawStatsSyncEnabled?: boolean; rawStatsSkipFresh?: boolean; insightsSyncEnabled?: boolean }
 
   if (mode !== undefined) {
     if (!(VALID_SYNC_MODES as readonly string[]).includes(mode)) {
@@ -69,6 +72,10 @@ syncRouter.put('/settings', async (ctx) => {
     await setRawStatsSkipFresh(rawStatsSkipFresh)
   }
 
+  if (insightsSyncEnabled !== undefined) {
+    await setInsightsSyncEnabled(insightsSyncEnabled)
+  }
+
   const state = await getSyncState()
   ctx.body = {
     mode: state.mode,
@@ -77,6 +84,7 @@ syncRouter.put('/settings', async (ctx) => {
     transfermarktSyncEnabled: state.transfermarktSyncEnabled,
     rawStatsSyncEnabled: state.rawStatsSyncEnabled,
     rawStatsSkipFresh: state.rawStatsSkipFresh,
+    insightsSyncEnabled: state.insightsSyncEnabled,
   }
 })
 
@@ -129,6 +137,17 @@ syncRouter.post('/raw-stats-run', async (ctx) => {
   await markRawStatsSyncFinished()
   if (result.apiCalls > 0) await incrementApiCalls(result.apiCalls)
   ctx.body = result
+})
+
+syncRouter.post('/insights-run', async (ctx) => {
+  const { matchId } = (ctx.request.body ?? {}) as { matchId?: string }
+  const result = await runInsightsBatch(matchId)
+  await markInsightsSyncFinished()
+  ctx.body = result
+})
+
+syncRouter.get('/insights-usage', async (ctx) => {
+  ctx.body = await getInsightsUsage()
 })
 
 export { syncRouter }

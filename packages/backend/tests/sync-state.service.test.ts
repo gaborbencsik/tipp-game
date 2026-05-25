@@ -57,6 +57,8 @@ describe('sync-state.service', () => {
         rawStatsSkipFresh: false,
         recalcInProgress: false,
         lastRecalcResult: null,
+        insightsSyncEnabled: false,
+        lastInsightsSyncAt: null,
       })
     })
 

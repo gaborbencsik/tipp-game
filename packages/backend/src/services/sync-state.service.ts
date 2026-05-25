@@ -20,6 +20,8 @@ export interface SyncStateRow {
   readonly rawStatsSkipFresh: boolean
   readonly recalcInProgress: boolean
   readonly lastRecalcResult: RecalcResult | null
+  readonly insightsSyncEnabled: boolean
+  readonly lastInsightsSyncAt: Date | null
 }
 
 const DEFAULT_STATE: SyncStateRow = {
@@ -39,6 +41,8 @@ const DEFAULT_STATE: SyncStateRow = {
   rawStatsSkipFresh: false,
   recalcInProgress: false,
   lastRecalcResult: null,
+  insightsSyncEnabled: false,
+  lastInsightsSyncAt: null,
 }
 
 export async function getSyncState(): Promise<SyncStateRow> {
@@ -61,6 +65,8 @@ export async function getSyncState(): Promise<SyncStateRow> {
     rawStatsSkipFresh: row.rawStatsSkipFresh,
     recalcInProgress: row.recalcInProgress,
     lastRecalcResult: (row.lastRecalcResult as RecalcResult | null) ?? null,
+    insightsSyncEnabled: row.insightsSyncEnabled,
+    lastInsightsSyncAt: row.lastInsightsSyncAt,
   }
 }
 
@@ -241,6 +247,28 @@ export async function markRawStatsSyncFinished(): Promise<void> {
   if (!existing) return
   await db.update(syncState)
     .set({ lastRawStatsSyncAt: sql`now()`, updatedAt: sql`now()` })
+    .where(eq(syncState.id, existing.id))
+}
+
+export async function setInsightsSyncEnabled(enabled: boolean): Promise<void> {
+  const [existing] = await db.select({ id: syncState.id }).from(syncState).limit(1)
+  if (existing) {
+    await db.update(syncState)
+      .set({ insightsSyncEnabled: enabled, updatedAt: sql`now()` })
+      .where(eq(syncState.id, existing.id))
+  } else {
+    await db.insert(syncState).values({
+      id: crypto.randomUUID(),
+      insightsSyncEnabled: enabled,
+    })
+  }
+}
+
+export async function markInsightsSyncFinished(): Promise<void> {
+  const [existing] = await db.select({ id: syncState.id }).from(syncState).limit(1)
+  if (!existing) return
+  await db.update(syncState)
+    .set({ lastInsightsSyncAt: sql`now()`, updatedAt: sql`now()` })
     .where(eq(syncState.id, existing.id))
 }
 

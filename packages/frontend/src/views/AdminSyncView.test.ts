@@ -17,6 +17,9 @@ const {
   mockRunPolymarket,
   mockRunPlayers,
   mockRunTransfermarkt,
+  mockRunRawStats,
+  mockRunInsights,
+  mockGetInsightsUsage,
 } = vi.hoisted(() => ({
   mockGetSession: vi.fn().mockResolvedValue({
     data: { session: { access_token: 'mock-token' } },
@@ -39,6 +42,17 @@ const {
   mockRunPolymarket: vi.fn().mockResolvedValue({ synced: 0, failed: 0 }),
   mockRunPlayers: vi.fn().mockResolvedValue({ inserted: 0, updated: 0, statsUpserted: 0 }),
   mockRunTransfermarkt: vi.fn().mockResolvedValue({ updated: 0, skipped: 0 }),
+  mockRunRawStats: vi.fn().mockResolvedValue({ processed: 0, skipped: 0, errors: [], apiCalls: 0, durationMs: 0 }),
+  mockRunInsights: vi.fn().mockResolvedValue({ generated: 0, skipped: 0, errors: [] }),
+  mockGetInsightsUsage: vi.fn().mockResolvedValue({
+    date: '2026-05-25',
+    requestsToday: 0,
+    inputTokensToday: 0,
+    outputTokensToday: 0,
+    dailyLimit: 450,
+    remaining: 450,
+    last7Days: [],
+  }),
 }))
 
 vi.mock('@/lib/supabase', () => ({
@@ -64,6 +78,9 @@ vi.mock('@/api/index', () => ({
         runPolymarket: (...args: unknown[]) => mockRunPolymarket(...args),
         runPlayers: (...args: unknown[]) => mockRunPlayers(...args),
         runTransfermarkt: (...args: unknown[]) => mockRunTransfermarkt(...args),
+        runRawStats: (...args: unknown[]) => mockRunRawStats(...args),
+        runInsights: (...args: unknown[]) => mockRunInsights(...args),
+        getInsightsUsage: (...args: unknown[]) => mockGetInsightsUsage(...args),
       },
     },
   },
@@ -178,7 +195,7 @@ describe('AdminSyncView', () => {
     it('renders match sync section first', async () => {
       const wrapper = await mountView()
       const sections = wrapper.findAll('section[data-testid$="-sync-section"]')
-      expect(sections.length).toBe(5)
+      expect(sections.length).toBe(6)
       expect(sections[0]!.attributes('data-testid')).toBe('match-sync-section')
     })
 
@@ -273,6 +290,54 @@ describe('AdminSyncView', () => {
       expect(wrapper.find('[data-testid="polymarket-sync-section"]').text()).toContain('Kikapcsolva')
       expect(wrapper.find('[data-testid="player-sync-section"]').text()).toContain('Kikapcsolva')
       expect(wrapper.find('[data-testid="transfermarkt-sync-section"]').text()).toContain('Kikapcsolva')
+    })
+  })
+
+  describe('insights sync section (US-1302)', () => {
+    it('renders insights section with title and trigger button', async () => {
+      const wrapper = await mountView()
+      const section = wrapper.find('[data-testid="insights-sync-section"]')
+      expect(section.exists()).toBe(true)
+      expect(section.text()).toContain('Match Pulse AI insightok')
+      expect(section.find('[data-testid="insights-run-btn"]').exists()).toBe(true)
+    })
+
+    it('shows daily usage from getInsightsUsage', async () => {
+      mockGetInsightsUsage.mockResolvedValue({
+        date: '2026-05-25',
+        requestsToday: 12,
+        inputTokensToday: 0,
+        outputTokensToday: 0,
+        dailyLimit: 450,
+        remaining: 438,
+        last7Days: [],
+      })
+      const wrapper = await mountView()
+      const usage = wrapper.find('[data-testid="insights-usage"]')
+      expect(usage.text()).toContain('12 / 450')
+      expect(usage.text()).toContain('438 maradt')
+    })
+
+    it('triggers insights run on button click and reloads usage', async () => {
+      mockRunInsights.mockResolvedValue({ generated: 3, skipped: 1, errors: [] })
+      const wrapper = await mountView()
+      mockGetInsightsUsage.mockClear()
+
+      await wrapper.find('[data-testid="insights-run-btn"]').trigger('click')
+      await flushPromises()
+
+      expect(mockRunInsights).toHaveBeenCalled()
+      expect(mockGetInsightsUsage).toHaveBeenCalled()
+      expect(wrapper.text()).toContain('3 generálva')
+      expect(wrapper.text()).toContain('1 kihagyva')
+    })
+
+    it('shows error when run throws', async () => {
+      mockRunInsights.mockRejectedValue(new Error('Daily LLM limit exceeded'))
+      const wrapper = await mountView()
+      await wrapper.find('[data-testid="insights-run-btn"]').trigger('click')
+      await flushPromises()
+      expect(wrapper.find('[data-testid="insights-error"]').text()).toContain('Daily LLM limit exceeded')
     })
   })
 })

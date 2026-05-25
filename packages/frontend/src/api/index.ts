@@ -483,11 +483,11 @@ export const api = {
     },
     sync: {
       getSettings: (token: string) =>
-        request<{ mode: string; lastSuccessfulSyncAt: string | null; apiCallsToday: number; syncInProgress: boolean; polymarketSyncEnabled: boolean; lastPolymarketSyncAt: string | null; playerSyncEnabled: boolean; lastPlayerSyncAt: string | null; transfermarktSyncEnabled: boolean; lastTransfermarktSyncAt: string | null; rawStatsSyncEnabled: boolean; lastRawStatsSyncAt: string | null; rawStatsSkipFresh: boolean; configuredLeagues: Array<{ name: string; externalId: number; season: number }> }>('/admin/sync/settings', {
+        request<{ mode: string; lastSuccessfulSyncAt: string | null; apiCallsToday: number; syncInProgress: boolean; polymarketSyncEnabled: boolean; lastPolymarketSyncAt: string | null; playerSyncEnabled: boolean; lastPlayerSyncAt: string | null; transfermarktSyncEnabled: boolean; lastTransfermarktSyncAt: string | null; rawStatsSyncEnabled: boolean; lastRawStatsSyncAt: string | null; rawStatsSkipFresh: boolean; insightsSyncEnabled: boolean; lastInsightsSyncAt: string | null; configuredLeagues: Array<{ name: string; externalId: number; season: number }> }>('/admin/sync/settings', {
           headers: { Authorization: `Bearer ${token}` },
         }),
-      updateSettings: (token: string, settings: { mode?: string; polymarketSyncEnabled?: boolean; playerSyncEnabled?: boolean; transfermarktSyncEnabled?: boolean; rawStatsSyncEnabled?: boolean; rawStatsSkipFresh?: boolean }) =>
-        request<{ mode: string; polymarketSyncEnabled: boolean; playerSyncEnabled: boolean; transfermarktSyncEnabled: boolean; rawStatsSyncEnabled: boolean; rawStatsSkipFresh: boolean }>('/admin/sync/settings', {
+      updateSettings: (token: string, settings: { mode?: string; polymarketSyncEnabled?: boolean; playerSyncEnabled?: boolean; transfermarktSyncEnabled?: boolean; rawStatsSyncEnabled?: boolean; rawStatsSkipFresh?: boolean; insightsSyncEnabled?: boolean }) =>
+        request<{ mode: string; polymarketSyncEnabled: boolean; playerSyncEnabled: boolean; transfermarktSyncEnabled: boolean; rawStatsSyncEnabled: boolean; rawStatsSkipFresh: boolean; insightsSyncEnabled: boolean }>('/admin/sync/settings', {
           method: 'PUT',
           body: JSON.stringify(settings),
           headers: { Authorization: `Bearer ${token}` },
@@ -515,6 +515,16 @@ export const api = {
       runRawStats: (token: string) =>
         request<{ processed: number; skipped: number; errors: Array<{ matchId: string; error: string }>; apiCalls: number; durationMs: number }>('/admin/sync/raw-stats-run', {
           method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      runInsights: (token: string, matchId?: string) =>
+        request<{ generated: number; skipped: number; errors: Array<{ matchId: string; error: string }> }>('/admin/sync/insights-run', {
+          method: 'POST',
+          body: JSON.stringify(matchId ? { matchId } : {}),
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      getInsightsUsage: (token: string) =>
+        request<{ date: string; requestsToday: number; inputTokensToday: number; outputTokensToday: number; dailyLimit: number; remaining: number; last7Days: Array<{ date: string; requests: number; tokens: number }> }>('/admin/sync/insights-usage', {
           headers: { Authorization: `Bearer ${token}` },
         }),
     },
