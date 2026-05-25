@@ -19,21 +19,14 @@
     <div v-else-if="error" class="text-red-600">{{ error }}</div>
     <div v-else-if="entries.length === 0" class="text-gray-500">{{ $t('leaderboard.empty') }}</div>
     <div v-else class="bg-white rounded-xl shadow-sm overflow-hidden">
-      <table class="w-full text-sm table-fixed">
-        <colgroup>
-          <col class="w-10" />
-          <col />
-          <col class="w-24" />
-          <col class="w-24" />
-          <col class="w-24" />
-        </colgroup>
+      <table class="w-full text-sm">
         <thead>
-          <tr class="border-b border-gray-200 text-gray-500 text-left">
-            <th class="pl-4 pr-2 py-3">{{ $t('leaderboard.rank') }}</th>
-            <th class="px-2 py-3">{{ $t('leaderboard.player') }}</th>
-            <th class="px-3 py-3 text-right">{{ $t('leaderboard.tips') }}</th>
-            <th class="px-3 py-3 text-right">{{ $t('leaderboard.correct') }}</th>
-            <th class="pr-4 pl-2 py-3 text-right font-semibold">{{ $t('leaderboard.points') }}</th>
+          <tr class="border-b border-gray-200 text-gray-500 text-left text-xs md:text-sm">
+            <th class="pl-2 md:pl-4 pr-1 md:pr-2 py-2 md:py-3 w-8 md:w-10">{{ $t('leaderboard.rank') }}</th>
+            <th class="px-1 md:px-2 py-2 md:py-3">{{ $t('leaderboard.player') }}</th>
+            <th class="px-1 md:px-2 py-2 md:py-3 text-right whitespace-nowrap">{{ $t('leaderboard.tips') }}</th>
+            <th class="px-1 md:px-2 py-2 md:py-3 text-right whitespace-nowrap">{{ $t('leaderboard.correct') }}</th>
+            <th class="pl-1 pr-2 md:pl-2 md:pr-4 py-2 md:py-3 text-right font-semibold whitespace-nowrap">{{ $t('leaderboard.points') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -43,21 +36,21 @@
             class="border-b border-gray-100 last:border-0 transition-colors"
             :class="entry.userId === authStore.user?.id ? 'bg-blue-50' : 'hover:bg-gray-50'"
           >
-            <td class="px-4 py-3 text-gray-400 font-medium">{{ entry.rank }}</td>
-            <td class="px-4 py-3">
+            <td class="pl-2 md:pl-4 pr-1 md:pr-2 py-2 md:py-3 text-gray-400 font-medium">{{ entry.rank }}</td>
+            <td class="px-1 md:px-2 py-2 md:py-3">
               <div class="flex items-center gap-2 min-w-0">
                 <img
                   :src="entry.avatarUrl ?? dicebearUrl(entry.displayName)"
                   :alt="entry.displayName"
-                  class="w-7 h-7 rounded-full object-cover shrink-0"
+                  class="w-6 h-6 md:w-7 md:h-7 rounded-full object-cover shrink-0"
                 />
                 <span class="font-medium text-gray-800 truncate">{{ entry.displayName }}</span>
-                <span v-if="entry.userId === authStore.user?.id" class="text-xs text-blue-600 shrink-0">{{ $t('leaderboard.you') }}</span>
+                <span v-if="entry.userId === authStore.user?.id" class="text-[0.65rem] md:text-xs text-blue-600 shrink-0">{{ $t('leaderboard.you') }}</span>
               </div>
             </td>
-            <td class="px-4 py-3 text-right text-gray-600">{{ entry.predictionCount }}</td>
-            <td class="px-4 py-3 text-right text-gray-600">{{ entry.correctCount }}</td>
-            <td class="px-4 py-3 text-right font-bold text-blue-700">{{ entry.totalPoints }}</td>
+            <td class="px-1 md:px-2 py-2 md:py-3 text-right text-gray-600 tabular-nums">{{ entry.predictionCount }}</td>
+            <td class="px-1 md:px-2 py-2 md:py-3 text-right text-gray-600 tabular-nums">{{ entry.correctCount }}</td>
+            <td class="pl-1 pr-2 md:pl-2 md:pr-4 py-2 md:py-3 text-right font-bold text-blue-700 tabular-nums">{{ entry.totalPoints }}</td>
           </tr>
         </tbody>
       </table>

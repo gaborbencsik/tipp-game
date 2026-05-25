@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 122 story kész (Must Have: 31/31, Should Have: 91/97)
+> 123 story kész (Must Have: 31/31, Should Have: 92/97)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -127,3 +127,4 @@
 | US-1308 | Match Pulse – adatréteg és csapat KPI-ok gyűjtése | Should Have |
 | US-1309 | Odds-sáv felfedése: insight_reveals DB + RLS + reveal endpoint | Should Have |
 | UX-024 | Group Detail mobil nézet UX javítások (header + ranglista táblázat) | Should Have |
+| UX-025 | Leaderboard + Matches mobil layout fix (név truncate, finished section header) | Should Have |

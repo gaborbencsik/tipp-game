@@ -23,7 +23,7 @@ vi.mock('@/lib/supabase', () => ({
 
 vi.mock('@/api/index', () => ({
   api: {
-    leaderboard: { list: mockLeaderboardList },
+    leaderboard: { get: mockLeaderboardList, list: mockLeaderboardList },
     groups: { mine: mockGroupsList, leaderboard: mockGroupLeaderboard },
   },
 }))
@@ -105,5 +105,26 @@ describe('LeaderboardView LS scope persistence', () => {
     await flushPromises()
 
     expect(localStorage.getItem(SCOPE_KEY)).toBe('g1')
+  })
+
+  it('table thead visible on mobile, all data columns visible (UX-025)', async () => {
+    mockLeaderboardList.mockResolvedValue([
+      { userId: 'u1', displayName: 'Me', avatarUrl: null, rank: 1, predictionCount: 4, correctCount: 1, totalPoints: 1 },
+    ])
+    const wrapper = mount(LeaderboardView)
+    await flushPromises()
+
+    const thead = wrapper.find('table thead')
+    expect(thead.exists()).toBe(true)
+    expect(thead.classes()).not.toContain('hidden')
+
+    const headerCells = wrapper.findAll('table thead th')
+    expect(headerCells.length).toBe(5)
+
+    const dataCells = wrapper.findAll('table tbody tr:first-child td')
+    expect(dataCells.length).toBe(5)
+    for (const td of dataCells) {
+      expect(td.classes()).not.toContain('hidden')
+    }
   })
 })

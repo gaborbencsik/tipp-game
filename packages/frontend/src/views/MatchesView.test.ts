@@ -289,6 +289,14 @@ describe('MatchesView', () => {
     expect(toggleText).toContain('1 nap')
   })
 
+  it('finished section header stacks on mobile, single row on desktop (UX-025)', async () => {
+    const { wrapper } = await mountView([MATCH_FINISHED])
+    const toggle = wrapper.find('[data-testid="finished-section-toggle"]')
+    const headerRow = toggle.element.parentElement!
+    expect(headerRow.className).toContain('flex-col')
+    expect(headerRow.className).toContain('md:flex-row')
+  })
+
   it('live match → date group not collapsed', async () => {
     const { wrapper } = await mountView([MATCH_LIVE])
     expect(wrapper.text()).toContain('Germany')

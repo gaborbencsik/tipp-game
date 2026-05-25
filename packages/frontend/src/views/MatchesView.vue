@@ -108,7 +108,7 @@
       <div v-else>
         <!-- Lejátszott meccsek – összecsomagolt szekció -->
         <div v-if="finishedDayGroups.length > 0" class="mb-8">
-          <div class="flex items-center justify-between border-b border-gray-200 pb-1 mb-3">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-0 border-b border-gray-200 pb-1 mb-3">
             <button
               data-testid="finished-section-toggle"
               class="flex items-center gap-1 cursor-pointer select-none hover:text-gray-900 group"
@@ -116,7 +116,7 @@
             >
               <span class="text-lg font-semibold text-gray-500 group-hover:text-gray-700">
                 {{ $t('matches.finishedMatches') }}
-                <span class="text-sm font-normal text-gray-400 ml-1">
+                <span class="text-sm font-normal text-gray-400 ml-1 whitespace-nowrap">
                   {{ $t('matches.finishedDays', { count: finishedDayGroups.length }) }}
                 </span>
               </span>
@@ -131,6 +131,7 @@
             </button>
             <DayNavigator
               v-if="finishedSectionOpen"
+              class="md:ml-auto"
               :date-label="finishedNav.dateLabel.value"
               :can-go-prev="finishedNav.canGoPrev.value"
               :can-go-next="finishedNav.canGoNext.value"
@@ -207,9 +208,10 @@
         </div>
 
         <!-- Aktuális és jövőbeli meccsnapok -->
-        <div v-if="upcomingDayGroups.length > 0" class="flex items-center justify-between border-b border-gray-200 pb-1 mb-3">
+        <div v-if="upcomingDayGroups.length > 0" class="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-0 border-b border-gray-200 pb-1 mb-3">
           <span class="text-lg font-semibold text-gray-700">{{ $t('matches.upcomingMatches') }}</span>
           <DayNavigator
+            class="md:ml-auto"
             :date-label="upcomingNav.dateLabel.value"
             :can-go-prev="upcomingNav.canGoPrev.value"
             :can-go-next="upcomingNav.canGoNext.value"

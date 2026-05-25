@@ -1,9 +1,9 @@
 <template>
-  <div class="flex items-center gap-2">
+  <div class="flex items-center gap-2 flex-nowrap">
     <button
       data-testid="day-nav-prev"
       :disabled="!canGoPrev"
-      class="w-7 h-7 flex items-center justify-center rounded transition-colors"
+      class="w-7 h-7 flex items-center justify-center rounded transition-colors shrink-0"
       :class="canGoPrev ? 'hover:bg-gray-200 text-gray-600' : 'opacity-30 cursor-not-allowed text-gray-400'"
       @click="canGoPrev && $emit('prev')"
     >
@@ -12,14 +12,14 @@
     <span
       v-if="!isShowingAll"
       data-testid="day-nav-label"
-      class="text-sm font-medium text-gray-700 min-w-[5rem] text-center"
+      class="text-sm font-medium text-gray-700 min-w-[5rem] text-center whitespace-nowrap"
     >
       {{ dateLabel }}
     </span>
     <button
       data-testid="day-nav-next"
       :disabled="!canGoNext"
-      class="w-7 h-7 flex items-center justify-center rounded transition-colors"
+      class="w-7 h-7 flex items-center justify-center rounded transition-colors shrink-0"
       :class="canGoNext ? 'hover:bg-gray-200 text-gray-600' : 'opacity-30 cursor-not-allowed text-gray-400'"
       @click="canGoNext && $emit('next')"
     >
@@ -27,7 +27,7 @@
     </button>
     <button
       data-testid="day-nav-all"
-      class="px-2 py-0.5 text-xs rounded transition-colors ml-1 inline-flex items-center gap-1"
+      class="px-2 py-0.5 text-xs rounded transition-colors ml-1 inline-flex items-center gap-1 whitespace-nowrap shrink-0"
       :class="isShowingAll ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'"
       @click="$emit('showAll')"
     >
