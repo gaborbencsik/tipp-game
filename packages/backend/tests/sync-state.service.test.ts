@@ -52,6 +52,9 @@ describe('sync-state.service', () => {
         lastPlayerSyncAt: null,
         transfermarktSyncEnabled: false,
         lastTransfermarktSyncAt: null,
+        rawStatsSyncEnabled: false,
+        lastRawStatsSyncAt: null,
+        rawStatsSkipFresh: false,
         recalcInProgress: false,
         lastRecalcResult: null,
       })
