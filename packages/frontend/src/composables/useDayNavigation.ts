@@ -6,6 +6,7 @@ export interface UseDayNavigationOptions {
   groups: ComputedRef<MatchDateGroup[]>
   storageKey: string
   defaultIndex: 'first' | 'last'
+  defaultShowAll?: boolean
 }
 
 export interface UseDayNavigationReturn {
@@ -40,7 +41,7 @@ function clampIndex(index: number, length: number): number {
 }
 
 export function useDayNavigation(options: UseDayNavigationOptions): UseDayNavigationReturn {
-  const { groups, storageKey, defaultIndex } = options
+  const { groups, storageKey, defaultIndex, defaultShowAll = false } = options
 
   const currentIndex = ref<number | null>(readStoredMode())
 
@@ -48,9 +49,10 @@ export function useDayNavigation(options: UseDayNavigationOptions): UseDayNaviga
     try {
       const raw = localStorage.getItem(storageKey)
       if (raw === 'null') return null
+      if (raw === null && defaultShowAll) return null
       return getDefaultIndex(groups.value, defaultIndex)
     } catch {
-      return getDefaultIndex(groups.value, defaultIndex)
+      return defaultShowAll ? null : getDefaultIndex(groups.value, defaultIndex)
     }
   }
 
@@ -119,6 +121,8 @@ export function useDayNavigation(options: UseDayNavigationOptions): UseDayNaviga
       initialized = true
       const stored = localStorage.getItem(storageKey)
       if (stored === 'null') {
+        currentIndex.value = null
+      } else if (stored === null && defaultShowAll) {
         currentIndex.value = null
       } else {
         currentIndex.value = getDefaultIndex(groups.value, defaultIndex)

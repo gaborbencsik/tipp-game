@@ -178,4 +178,65 @@ describe('useDayNavigation', () => {
     expect(nav.canGoNext.value).toBe(false)
     expect(nav.canGoPrev.value).toBe(false)
   })
+
+  describe('defaultShowAll option', () => {
+    it('starts in show-all mode when defaultShowAll is true and no localStorage value', () => {
+      const groups = computed(() => makeGroups(['2026-06-01', '2026-06-02', '2026-06-03']))
+      const nav = useDayNavigation({
+        groups,
+        storageKey: 'test-default-all',
+        defaultIndex: 'first',
+        defaultShowAll: true,
+      })
+
+      expect(nav.currentIndex.value).toBeNull()
+      expect(nav.isShowingAll.value).toBe(true)
+    })
+
+    it('respects stored "day" value over defaultShowAll', () => {
+      localStorage.setItem('test-stored-day', 'day')
+      const groups = computed(() => makeGroups(['2026-06-01', '2026-06-02', '2026-06-03']))
+      const nav = useDayNavigation({
+        groups,
+        storageKey: 'test-stored-day',
+        defaultIndex: 'first',
+        defaultShowAll: true,
+      })
+
+      expect(nav.currentIndex.value).toBe(0)
+      expect(nav.isShowingAll.value).toBe(false)
+    })
+
+    it('respects stored "null" value when defaultShowAll is false', () => {
+      localStorage.setItem('test-stored-null', 'null')
+      const groups = computed(() => makeGroups(['2026-06-01', '2026-06-02']))
+      const nav = useDayNavigation({
+        groups,
+        storageKey: 'test-stored-null',
+        defaultIndex: 'first',
+        defaultShowAll: false,
+      })
+
+      expect(nav.isShowingAll.value).toBe(true)
+    })
+
+    it('starts in show-all mode when groups arrive after init and defaultShowAll is true', async () => {
+      const dates = ref<string[]>([])
+      const groups = computed(() => makeGroups(dates.value))
+      const nav = useDayNavigation({
+        groups,
+        storageKey: 'test-late-groups',
+        defaultIndex: 'first',
+        defaultShowAll: true,
+      })
+
+      expect(nav.currentIndex.value).toBeNull()
+
+      dates.value = ['2026-06-01', '2026-06-02']
+      await nextTick()
+
+      expect(nav.currentIndex.value).toBeNull()
+      expect(nav.isShowingAll.value).toBe(true)
+    })
+  })
 })

@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 123 story kész (Must Have: 31/31, Should Have: 92/97)
+> 127 story kész (Must Have: 31/31, Should Have: 96/97)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -130,3 +130,4 @@
 | UX-025 | Leaderboard + Matches mobil layout fix (név truncate, finished section header) | Should Have |
 | UX-026 | Admin oldalak responsive layout (egységes nav + UX javaslatok) | Should Have |
 | US-1302 | Match Pulse – AI insight generálás (batch job) + admin trigger | Should Have |
+| UX-027 | Mérkőzések oldal szűrő állapot localStorage mentése | Should Have |

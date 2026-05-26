@@ -453,6 +453,7 @@ const upcomingNav = useDayNavigation({
   groups: upcomingDayGroups,
   storageKey: 'matches_upcoming_day_index',
   defaultIndex: 'first',
+  defaultShowAll: true,
 })
 
 const visibleFinishedGroups = computed((): MatchDateGroup[] => {
