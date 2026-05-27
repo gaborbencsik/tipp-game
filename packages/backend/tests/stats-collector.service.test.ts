@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import type { ApiFootballFixture, ApiFootballResponse } from '../src/types/index.js'
 import type { FootballApiClient } from '../src/services/football-api.service.js'
 import { FootballApiError } from '../src/services/football-api.service.js'
@@ -76,6 +76,7 @@ function fakeClient(byCall: ApiFootballResponse<ApiFootballFixture>[]): Football
     fetchSquad: vi.fn(),
     fetchPlayers: vi.fn(),
     fetchTeamFixtures,
+    fetchTeamFixturesByDateRange: vi.fn(),
   }
 }
 
@@ -86,6 +87,7 @@ function rejectingClient(err: unknown): FootballApiClient {
     fetchSquad: vi.fn(),
     fetchPlayers: vi.fn(),
     fetchTeamFixtures: vi.fn().mockRejectedValue(err),
+    fetchTeamFixturesByDateRange: vi.fn().mockRejectedValue(err),
   }
 }
 
@@ -239,6 +241,39 @@ describe('collectTeamStats', () => {
     const client = fakeClient([wrap(sameFixture), wrap(sameFixture), wrap(sameFixture)])
     const stats = await collectTeamStats(client, TEAM_ID, NOW)
     expect(stats.totalMatches).toBe(1)
+  })
+
+  describe('with INSIGHT_RAW_STATS_USE_DATE_RANGE=true', () => {
+    beforeEach(() => {
+      vi.stubEnv('INSIGHT_RAW_STATS_USE_DATE_RANGE', 'true')
+    })
+
+    afterEach(() => {
+      vi.unstubAllEnvs()
+    })
+
+    it('calls fetchTeamFixturesByDateRange once with 24-month window instead of fetchTeamFixtures per season', async () => {
+      const fx = fixture({ id: 1, date: '2026-05-01', goalsHome: 2, goalsAway: 0 })
+      const client = fakeClient([])
+      ;(client.fetchTeamFixturesByDateRange as ReturnType<typeof vi.fn>).mockResolvedValue(wrap(fx))
+
+      const stats = await collectTeamStats(client, TEAM_ID, NOW)
+
+      expect(client.fetchTeamFixtures).not.toHaveBeenCalled()
+      expect(client.fetchTeamFixturesByDateRange).toHaveBeenCalledTimes(1)
+      const call = (client.fetchTeamFixturesByDateRange as ReturnType<typeof vi.fn>).mock.calls[0][0]
+      expect(call.teamId).toBe(TEAM_ID)
+      expect(call.from).toBe('2024-05-21')
+      expect(call.to).toBe('2026-05-21')
+      expect(stats.totalMatches).toBe(1)
+      expect(stats.wins).toBe(1)
+    })
+
+    it('throws StatsCollectionError on API failure (date-range path)', async () => {
+      const client = rejectingClient(new FootballApiError(429, 'Rate limit'))
+      await expect(collectTeamStats(client, TEAM_ID, NOW)).rejects.toBeInstanceOf(StatsCollectionError)
+      expect(client.fetchTeamFixturesByDateRange).toHaveBeenCalledTimes(1)
+    })
   })
 })
 

@@ -86,7 +86,8 @@ export async function runRawStatsCollection(
     }
   }
 
-  const apiCalls = uniqueExternalIds.size * SEASONS.length
+  const useDateRange = process.env['INSIGHT_RAW_STATS_USE_DATE_RANGE'] === 'true'
+  const apiCalls = uniqueExternalIds.size * (useDateRange ? 1 : SEASONS.length)
 
   let processed = 0
   for (const match of resolved) {

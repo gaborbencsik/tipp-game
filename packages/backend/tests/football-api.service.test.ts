@@ -104,6 +104,22 @@ describe('football-api.service', () => {
     })
   })
 
+  describe('fetchTeamFixturesByDateRange', () => {
+    it('builds /fixtures URL with team, from and to params (no season)', async () => {
+      mockFetch.mockResolvedValueOnce(new Response(JSON.stringify({ results: 0, response: [] }), { status: 200 }))
+
+      const client = createFootballApiClient({ apiKey: 'key', baseUrl: 'https://api.test', timeoutMs: 5000 })
+      await client.fetchTeamFixturesByDateRange({ teamId: 33, from: '2024-05-27', to: '2026-05-27' })
+
+      const [url] = mockFetch.mock.calls[0]
+      const s = url.toString()
+      expect(s).toContain('team=33')
+      expect(s).toContain('from=2024-05-27')
+      expect(s).toContain('to=2026-05-27')
+      expect(s).not.toContain('season=')
+    })
+  })
+
   describe('error handling', () => {
     it('retries on 429 and succeeds', async () => {
       mockFetch

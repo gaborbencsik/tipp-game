@@ -46,6 +46,10 @@ function dedupeFixtures(fixtures: readonly ApiFootballFixture[]): ApiFootballFix
   return [...byId.values()]
 }
 
+function toIsoDate(d: Date): string {
+  return d.toISOString().slice(0, 10)
+}
+
 function buildRecentMatch(fixture: ApiFootballFixture, externalId: number): RecentMatch {
   const isHome = fixture.teams.home.id === externalId
   const goalsFor = isHome ? fixture.goals.home! : fixture.goals.away!
@@ -73,11 +77,22 @@ export async function collectTeamStats(
   const cutoff = new Date(now)
   cutoff.setMonth(cutoff.getMonth() - WINDOW_MONTHS)
 
+  const useDateRange = process.env['INSIGHT_RAW_STATS_USE_DATE_RANGE'] === 'true'
+
   const all: ApiFootballFixture[] = []
   try {
-    for (const season of SEASONS) {
-      const res = await client.fetchTeamFixtures({ teamId: externalId, season })
+    if (useDateRange) {
+      const res = await client.fetchTeamFixturesByDateRange({
+        teamId: externalId,
+        from: toIsoDate(cutoff),
+        to: toIsoDate(now),
+      })
       all.push(...res.response)
+    } else {
+      for (const season of SEASONS) {
+        const res = await client.fetchTeamFixtures({ teamId: externalId, season })
+        all.push(...res.response)
+      }
     }
   } catch (err) {
     if (err instanceof FootballApiError) {

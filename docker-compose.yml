@@ -41,6 +41,7 @@ services:
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-flash-latest}
       INSIGHT_AUTO_TRANSLATE: ${INSIGHT_AUTO_TRANSLATE:-true}
+      INSIGHT_RAW_STATS_USE_DATE_RANGE: ${INSIGHT_RAW_STATS_USE_DATE_RANGE:-false}
     volumes:
       - ./packages/backend/src:/app/packages/backend/src
     depends_on:
