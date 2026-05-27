@@ -16,6 +16,8 @@
 | US-1307 | Match Pulse – csapat-piaci értékek megjelenítése | Should Have | US-1304, US-1306, ~~US-1406~~ |
 | US-1310 | Match Pulse – AI insight magyar fordítás | Should Have | ~~US-1302~~ |
 | US-934 | Mások tippjeinek megjelenítése (speciális) | Should Have | — |
+| US-935 | Torna szintű statisztikai bonus tippek (5 globális típus seedelése) | Should Have | — |
+| US-936 | Upset Special – multi-csapatos, súlyozott bonus tipp típus | Should Have | — |
 | UX-004 | Focilabda kurzor ikon | Nice to Have | — |
 | UX-005 | Optimista törlés az admin listákon | Should Have | — |
 | UX-013 | Értesítési rendszer (notification bell + panel) | Nice to Have | — |
@@ -25,4 +27,4 @@
 
 ---
 
-**Haladás: 127 / 143 story kész** — Must Have: 31/32, Should Have: 96/107, Nice to Have: 0/4
+**Haladás: 127 / 145 story kész** — Must Have: 31/32, Should Have: 96/109, Nice to Have: 0/4
