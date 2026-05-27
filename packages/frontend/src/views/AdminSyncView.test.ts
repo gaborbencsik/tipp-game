@@ -20,6 +20,7 @@ const {
   mockRunRawStats,
   mockRunInsights,
   mockGetInsightsUsage,
+  mockMatchesList,
 } = vi.hoisted(() => ({
   mockGetSession: vi.fn().mockResolvedValue({
     data: { session: { access_token: 'mock-token' } },
@@ -53,6 +54,7 @@ const {
     remaining: 450,
     last7Days: [],
   }),
+  mockMatchesList: vi.fn().mockResolvedValue([]),
 }))
 
 vi.mock('@/lib/supabase', () => ({
@@ -68,7 +70,7 @@ vi.mock('@/api/index', () => ({
   api: {
     health: vi.fn(),
     auth: { me: vi.fn() },
-    matches: { list: vi.fn() },
+    matches: { list: (...args: unknown[]) => mockMatchesList(...args) },
     predictions: { mine: vi.fn(), upsert: vi.fn() },
     admin: {
       sync: {
@@ -338,6 +340,89 @@ describe('AdminSyncView', () => {
       await wrapper.find('[data-testid="insights-run-btn"]').trigger('click')
       await flushPromises()
       expect(wrapper.find('[data-testid="insights-error"]').text()).toContain('Daily LLM limit exceeded')
+    })
+
+    it('renders match selector populated from scheduled matches', async () => {
+      mockMatchesList.mockResolvedValue([
+        {
+          id: 'match-1',
+          homeTeam: { id: 't1', name: 'Magyarország', shortCode: 'HUN', flagUrl: null, teamType: 'national', countryCode: 'HU' },
+          awayTeam: { id: 't2', name: 'Németország', shortCode: 'GER', flagUrl: null, teamType: 'national', countryCode: 'DE' },
+          venue: null,
+          league: null,
+          stage: 'group',
+          groupName: 'A',
+          matchNumber: 1,
+          scheduledAt: '2026-06-15T18:00:00.000Z',
+          status: 'scheduled',
+          result: null,
+        },
+      ])
+      const wrapper = await mountView()
+      const select = wrapper.find('[data-testid="insights-match-select"]')
+      expect(select.exists()).toBe(true)
+      expect(select.text()).toContain('Magyarország')
+      expect(select.text()).toContain('Németország')
+      expect(mockMatchesList).toHaveBeenCalledWith('mock-token', { status: 'scheduled' })
+    })
+
+    it('passes selected matchId to runInsights when a match is chosen', async () => {
+      mockMatchesList.mockResolvedValue([
+        {
+          id: 'match-42',
+          homeTeam: { id: 't1', name: 'A', shortCode: 'A', flagUrl: null, teamType: 'national', countryCode: null },
+          awayTeam: { id: 't2', name: 'B', shortCode: 'B', flagUrl: null, teamType: 'national', countryCode: null },
+          venue: null,
+          league: null,
+          stage: 'group',
+          groupName: null,
+          matchNumber: null,
+          scheduledAt: '2026-06-15T18:00:00.000Z',
+          status: 'scheduled',
+          result: null,
+        },
+      ])
+      mockRunInsights.mockResolvedValue({ generated: 1, skipped: 0, errors: [] })
+      const wrapper = await mountView()
+
+      const select = wrapper.find('[data-testid="insights-match-select"]')
+      await select.setValue('match-42')
+      await wrapper.find('[data-testid="insights-run-btn"]').trigger('click')
+      await flushPromises()
+
+      expect(mockRunInsights).toHaveBeenCalledWith('mock-token', 'match-42')
+    })
+
+    it('passes undefined matchId to runInsights when no match is selected', async () => {
+      const wrapper = await mountView()
+      await wrapper.find('[data-testid="insights-run-btn"]').trigger('click')
+      await flushPromises()
+      expect(mockRunInsights).toHaveBeenCalledWith('mock-token', undefined)
+    })
+
+    it('filters out matches whose scheduledAt is in the past', async () => {
+      const past = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+      const future = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+      mockMatchesList.mockResolvedValue([
+        {
+          id: 'past-match',
+          homeTeam: { id: 't1', name: 'PastHome', shortCode: 'PH', flagUrl: null, teamType: 'national', countryCode: null },
+          awayTeam: { id: 't2', name: 'PastAway', shortCode: 'PA', flagUrl: null, teamType: 'national', countryCode: null },
+          venue: null, league: null, stage: 'group', groupName: null, matchNumber: null,
+          scheduledAt: past, status: 'scheduled', result: null,
+        },
+        {
+          id: 'future-match',
+          homeTeam: { id: 't3', name: 'FutureHome', shortCode: 'FH', flagUrl: null, teamType: 'national', countryCode: null },
+          awayTeam: { id: 't4', name: 'FutureAway', shortCode: 'FA', flagUrl: null, teamType: 'national', countryCode: null },
+          venue: null, league: null, stage: 'group', groupName: null, matchNumber: null,
+          scheduledAt: future, status: 'scheduled', result: null,
+        },
+      ])
+      const wrapper = await mountView()
+      const select = wrapper.find('[data-testid="insights-match-select"]')
+      expect(select.text()).not.toContain('PastHome')
+      expect(select.text()).toContain('FutureHome')
     })
   })
 })

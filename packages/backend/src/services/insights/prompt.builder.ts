@@ -35,6 +35,15 @@ ${summarizeTeam(input.homeTeamName, input.stats.homeTeam)}
 
 ${summarizeTeam(input.awayTeamName, input.stats.awayTeam)}
 
+TYPE DEFINITIONS (use these strictly — do NOT overlap angles between insights):
+- attack:      offensive output (goals scored, scoring rate, attacking efficiency)
+- defense:     defensive solidity (goals conceded, clean sheets, conceded rate)
+- form:        SHORT-TERM momentum — last 5 results, formString, recent trend (NOT 24-month totals)
+- historical:  long-window patterns the form lens cannot capture — head-to-head meetings between THESE two teams in recent_matches, biggest wins/losses, longest unbeaten or winless streaks, or notable opponent-quality patterns. If no past meeting between the two teams exists in the data, focus on streaks or extreme results — NEVER restate the 24-month win-rate or totals that 'form' already covers.
+- key_matchup: the pivotal tactical or stylistic clash that decides the game
+- set_pieces:  set-piece related angle (only if data supports it)
+- fatigue:     scheduling / workload angle (only if data supports it)
+
 REQUIREMENTS:
 - Output exactly ${count} insights, each with a different type from this allowed list: ${allowedTypes.join(', ')}.
 - Each insight body must be 2-4 sentences, English, contain concrete numbers from the DATA above. Do NOT invent statistics.
@@ -42,6 +51,7 @@ REQUIREMENTS:
 - Body: max 400 characters.
 - dataPoints keys MUST be english snake_case (e.g. home_goals_per_match, away_clean_sheets, win_rate). Values are numbers.
 - Pick the ${count} most informative angles. Vary the types.
+- Each insight must occupy a DIFFERENT analytical lens — no two insights may rely on the same underlying metric (e.g. do NOT use win_rate or 24-month totals in both 'form' and 'historical').
 
 OUTPUT JSON ONLY, no markdown, no commentary. Schema:
 {

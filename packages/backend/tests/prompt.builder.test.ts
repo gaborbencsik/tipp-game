@@ -93,4 +93,27 @@ describe('prompt.builder', () => {
     expect(prompt).toMatch(/JSON ONLY/)
     expect(prompt).toMatch(/no markdown/)
   })
+
+  it('includes a TYPE DEFINITIONS section that disambiguates form vs historical', () => {
+    const prompt = buildInsightPrompt({
+      homeTeamName: 'Germany',
+      awayTeamName: 'Spain',
+      stats: STATS,
+    })
+    expect(prompt).toMatch(/TYPE DEFINITIONS/)
+    expect(prompt).toMatch(/form:\s+SHORT-TERM momentum/)
+    expect(prompt).toMatch(/historical:\s+long-window patterns/)
+    expect(prompt).toMatch(/head-to-head/i)
+  })
+
+  it('forbids overlapping metrics across insights', () => {
+    const prompt = buildInsightPrompt({
+      homeTeamName: 'Germany',
+      awayTeamName: 'Spain',
+      stats: STATS,
+    })
+    expect(prompt).toMatch(/DIFFERENT analytical lens/)
+    expect(prompt).toMatch(/no two insights may rely on the same underlying metric/i)
+    expect(prompt).toMatch(/do NOT use win_rate or 24-month totals in both 'form' and 'historical'/)
+  })
 })

@@ -307,6 +307,21 @@
       <div v-if="insightsUsage" class="mt-2 text-xs text-gray-600" data-testid="insights-usage">
         Ma: {{ insightsUsage.requestsToday }} / {{ insightsUsage.dailyLimit }} kérés ({{ insightsUsage.remaining }} maradt)
       </div>
+      <div class="mt-3 flex flex-col gap-1">
+        <label for="insights-match-select" class="text-xs text-gray-600">Meccs kiválasztása</label>
+        <select
+          id="insights-match-select"
+          v-model="selectedInsightMatchId"
+          class="border rounded px-3 py-1.5 text-sm w-full sm:max-w-md"
+          data-testid="insights-match-select"
+          :disabled="insightsSyncing"
+        >
+          <option value="">Minden ütemezett meccs ({{ scheduledMatches.length }})</option>
+          <option v-for="m in scheduledMatches" :key="m.id" :value="m.id">
+            {{ formatMatchOption(m) }}
+          </option>
+        </select>
+      </div>
       <div class="mt-3 flex items-center gap-3 flex-wrap">
         <button
           class="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -315,7 +330,8 @@
           @click="triggerInsightsSync"
         >
           <span v-if="insightsSyncing">Generálás...</span>
-          <span v-else>Generálás indítása</span>
+          <span v-else-if="selectedInsightMatchId">Generálás a kiválasztott meccsre</span>
+          <span v-else>Generálás indítása (összes)</span>
         </button>
         <span v-if="insightsSyncResult" class="text-xs text-green-600">{{ insightsSyncResult }}</span>
         <span v-if="insightsSyncError" class="text-xs text-red-600" data-testid="insights-error">{{ insightsSyncError }}</span>
@@ -343,6 +359,7 @@ import AdminNav from '../components/admin/AdminNav.vue'
 import { supabase } from '../lib/supabase.js'
 import { api } from '../api/index.js'
 import { getDateLocale } from '../lib/dateLocale.js'
+import type { Match } from '../types/index.js'
 
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
 
@@ -428,6 +445,8 @@ interface InsightsUsage {
   last7Days: Array<{ date: string; requests: number; tokens: number }>
 }
 const insightsUsage = ref<InsightsUsage | null>(null)
+const scheduledMatches = ref<Match[]>([])
+const selectedInsightMatchId = ref('')
 
 const lastSyncAt = ref<Date | null>(null)
 const apiCallsToday = ref(0)
@@ -637,6 +656,28 @@ async function loadInsightsUsage(): Promise<void> {
   } catch { /* ignore */ }
 }
 
+async function loadScheduledMatches(): Promise<void> {
+  try {
+    const token = await getToken()
+    const data = await api.matches.list(token, { status: 'scheduled' })
+    const now = Date.now()
+    scheduledMatches.value = data
+      .filter(m => new Date(m.scheduledAt).getTime() > now)
+      .sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt))
+  } catch { /* ignore */ }
+}
+
+function formatMatchOption(m: Match): string {
+  const d = new Date(m.scheduledAt)
+  const date = d.toLocaleString(getDateLocale(), {
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+  return `${date} – ${m.homeTeam.name} – ${m.awayTeam.name}`
+}
+
 async function triggerInsightsSync(): Promise<void> {
   insightsSyncing.value = true
   insightsSyncResult.value = ''
@@ -644,7 +685,8 @@ async function triggerInsightsSync(): Promise<void> {
   insightsErrors.value = []
   try {
     const token = await getToken()
-    const data = await api.admin.sync.runInsights(token)
+    const matchId = selectedInsightMatchId.value || undefined
+    const data = await api.admin.sync.runInsights(token, matchId)
     insightsSyncResult.value = `Kész: ${data.generated} generálva, ${data.skipped} kihagyva, ${data.errors.length} hiba`
     insightsErrors.value = data.errors
     await loadSettings()
@@ -659,5 +701,6 @@ async function triggerInsightsSync(): Promise<void> {
 onMounted(async () => {
   await loadSettings()
   await loadInsightsUsage()
+  await loadScheduledMatches()
 })
 </script>
