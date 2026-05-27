@@ -38,6 +38,8 @@ services:
       FOOTBALL_SYNC_MODE: final_only
       FOOTBALL_INTERNAL_WC_LEAGUE_ID: bbbbbbbb-1111-2222-3333-000000000001
       FOOTBALL_INTERNAL_NBI_LEAGUE_ID: bbbbbbbb-1111-2222-3333-000000000002
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-flash-latest}
     volumes:
       - ./packages/backend/src:/app/packages/backend/src
     depends_on:
