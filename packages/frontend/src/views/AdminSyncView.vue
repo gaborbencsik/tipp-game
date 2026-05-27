@@ -687,7 +687,8 @@ async function triggerInsightsSync(): Promise<void> {
     const token = await getToken()
     const matchId = selectedInsightMatchId.value || undefined
     const data = await api.admin.sync.runInsights(token, matchId)
-    insightsSyncResult.value = `Kész: ${data.generated} generálva, ${data.skipped} kihagyva, ${data.errors.length} hiba`
+    const skippedText = data.skipped > 0 ? `${data.skipped} kihagyva (nincs raw stats)` : `${data.skipped} kihagyva`
+    insightsSyncResult.value = `Kész: ${data.generated} generálva, ${skippedText}, ${data.errors.length} hiba`
     insightsErrors.value = data.errors
     await loadSettings()
     await loadInsightsUsage()
