@@ -1,6 +1,6 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-05-26
+> Utoljára frissítve: 2026-05-27
 
 ## Nyitott story-k
 
@@ -17,6 +17,7 @@
 | US-934 | Mások tippjeinek megjelenítése (speciális) | Should Have | — |
 | US-935 | Torna szintű statisztikai bonus tippek (5 globális típus seedelése) | Should Have | — |
 | US-936 | Upset Special – multi-csapatos, súlyozott bonus tipp típus | Should Have | — |
+| US-937 | Torna progression bonus tippek – konfigurálható csapat-progression szabályrendszer | Should Have | — |
 | UX-004 | Focilabda kurzor ikon | Nice to Have | — |
 | UX-005 | Optimista törlés az admin listákon | Should Have | — |
 | UX-013 | Értesítési rendszer (notification bell + panel) | Nice to Have | — |
@@ -26,4 +27,4 @@
 
 ---
 
-**Haladás: 128 / 145 story kész** — Must Have: 31/32, Should Have: 97/109, Nice to Have: 0/4
+**Haladás: 128 / 146 story kész** — Must Have: 31/32, Should Have: 97/110, Nice to Have: 0/4
