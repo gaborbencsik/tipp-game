@@ -131,3 +131,4 @@
 | UX-026 | Admin oldalak responsive layout (egységes nav + UX javaslatok) | Should Have |
 | US-1302 | Match Pulse – AI insight generálás (batch job) + admin trigger | Should Have |
 | UX-027 | Mérkőzések oldal szűrő állapot localStorage mentése | Should Have |
+| US-1310 | Match Pulse – AI insight magyar fordítás | Should Have |

@@ -305,7 +305,8 @@
         <span v-else class="text-gray-400">Még nem futott</span>
       </div>
       <div v-if="insightsUsage" class="mt-2 text-xs text-gray-600" data-testid="insights-usage">
-        Ma: {{ insightsUsage.requestsToday }} / {{ insightsUsage.dailyLimit }} kérés ({{ insightsUsage.remaining }} maradt)
+        Ma: {{ insightsUsage.requestsToday.total }} / {{ insightsUsage.dailyLimit }} kérés ({{ insightsUsage.remaining }} maradt)
+        <span class="text-gray-400">— generálás: {{ insightsUsage.requestsToday.generate }}, fordítás: {{ insightsUsage.requestsToday.translate }}</span>
       </div>
       <div class="mt-3 flex flex-col gap-1">
         <label for="insights-match-select" class="text-xs text-gray-600">Meccs kiválasztása</label>
@@ -333,7 +334,18 @@
           <span v-else-if="selectedInsightMatchId">Generálás a kiválasztott meccsre</span>
           <span v-else>Generálás indítása (összes)</span>
         </button>
+        <button
+          class="px-3 py-1.5 bg-emerald-600 text-white text-sm font-medium rounded hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          :disabled="insightsTranslating"
+          data-testid="insights-translate-btn"
+          @click="triggerInsightsTranslate"
+        >
+          <span v-if="insightsTranslating">Fordítás...</span>
+          <span v-else-if="selectedInsightMatchId">Fordítás a kiválasztott meccsre</span>
+          <span v-else>Fordítás indítása (összes)</span>
+        </button>
         <span v-if="insightsSyncResult" class="text-xs text-green-600">{{ insightsSyncResult }}</span>
+        <span v-if="insightsTranslateResult" class="text-xs text-emerald-600" data-testid="insights-translate-result">{{ insightsTranslateResult }}</span>
         <span v-if="insightsSyncError" class="text-xs text-red-600" data-testid="insights-error">{{ insightsSyncError }}</span>
       </div>
       <div v-if="insightsErrors.length > 0" class="mt-2 text-xs text-red-600 space-y-0.5">
@@ -435,9 +447,11 @@ const insightsSyncResult = ref('')
 const insightsSyncError = ref('')
 const insightsErrors = ref<Array<{ matchId: string; error: string }>>([])
 const lastInsightsSyncAt = ref<Date | null>(null)
+const insightsTranslating = ref(false)
+const insightsTranslateResult = ref('')
 interface InsightsUsage {
   date: string
-  requestsToday: number
+  requestsToday: { generate: number; translate: number; total: number }
   inputTokensToday: number
   outputTokensToday: number
   dailyLimit: number
@@ -696,6 +710,23 @@ async function triggerInsightsSync(): Promise<void> {
     insightsSyncError.value = err instanceof Error ? err.message : 'Hiba történt'
   } finally {
     insightsSyncing.value = false
+  }
+}
+
+async function triggerInsightsTranslate(): Promise<void> {
+  insightsTranslating.value = true
+  insightsTranslateResult.value = ''
+  insightsSyncError.value = ''
+  try {
+    const token = await getToken()
+    const matchId = selectedInsightMatchId.value || undefined
+    const data = await api.admin.sync.runInsightsTranslate(token, matchId)
+    insightsTranslateResult.value = `Kész: ${data.translated} fordítva, ${data.skipped} kihagyva, ${data.errors.length} hiba`
+    await loadInsightsUsage()
+  } catch (err) {
+    insightsSyncError.value = err instanceof Error ? err.message : 'Hiba történt'
+  } finally {
+    insightsTranslating.value = false
   }
 }
 

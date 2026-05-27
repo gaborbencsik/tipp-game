@@ -7,7 +7,7 @@ import { syncPlayers } from '../services/player-sync.service.js'
 import { syncTransfermarktValues } from '../services/transfermarkt.service.js'
 import { buildConfig, createFootballApiClient } from '../services/football-api.service.js'
 import { runRawStatsCollection } from '../services/insights/raw-stats-batch.service.js'
-import { runInsightsBatch, getInsightsUsage } from '../services/insights/batch.service.js'
+import { runInsightsBatch, runTranslationsBatch, getInsightsUsage } from '../services/insights/batch.service.js'
 import { getSyncState, setSyncMode, setPolymarketSyncEnabled, setPlayerSyncEnabled, setTransfermarktSyncEnabled, setRawStatsSyncEnabled, setRawStatsSkipFresh, setInsightsSyncEnabled, markSyncStarted, markSyncFinished, incrementApiCalls, markPolymarketSyncFinished, markPlayerSyncFinished, markTransfermarktSyncFinished, markRawStatsSyncFinished, markInsightsSyncFinished } from '../services/sync-state.service.js'
 import type { SyncMode } from '../types/index.js'
 
@@ -144,6 +144,11 @@ syncRouter.post('/insights-run', async (ctx) => {
   const result = await runInsightsBatch(matchId)
   await markInsightsSyncFinished()
   ctx.body = result
+})
+
+syncRouter.post('/insights-translate', async (ctx) => {
+  const { matchId } = (ctx.request.body ?? {}) as { matchId?: string }
+  ctx.body = await runTranslationsBatch(matchId)
 })
 
 syncRouter.get('/insights-usage', async (ctx) => {

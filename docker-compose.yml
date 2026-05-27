@@ -40,6 +40,7 @@ services:
       FOOTBALL_INTERNAL_NBI_LEAGUE_ID: bbbbbbbb-1111-2222-3333-000000000002
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-flash-latest}
+      INSIGHT_AUTO_TRANSLATE: ${INSIGHT_AUTO_TRANSLATE:-true}
     volumes:
       - ./packages/backend/src:/app/packages/backend/src
     depends_on:

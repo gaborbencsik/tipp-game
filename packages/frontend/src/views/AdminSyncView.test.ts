@@ -19,6 +19,7 @@ const {
   mockRunTransfermarkt,
   mockRunRawStats,
   mockRunInsights,
+  mockRunInsightsTranslate,
   mockGetInsightsUsage,
   mockMatchesList,
 } = vi.hoisted(() => ({
@@ -45,9 +46,10 @@ const {
   mockRunTransfermarkt: vi.fn().mockResolvedValue({ updated: 0, skipped: 0 }),
   mockRunRawStats: vi.fn().mockResolvedValue({ processed: 0, skipped: 0, errors: [], apiCalls: 0, durationMs: 0 }),
   mockRunInsights: vi.fn().mockResolvedValue({ generated: 0, skipped: 0, errors: [] }),
+  mockRunInsightsTranslate: vi.fn().mockResolvedValue({ translated: 0, skipped: 0, errors: [] }),
   mockGetInsightsUsage: vi.fn().mockResolvedValue({
     date: '2026-05-25',
-    requestsToday: 0,
+    requestsToday: { generate: 0, translate: 0, total: 0 },
     inputTokensToday: 0,
     outputTokensToday: 0,
     dailyLimit: 450,
@@ -82,6 +84,7 @@ vi.mock('@/api/index', () => ({
         runTransfermarkt: (...args: unknown[]) => mockRunTransfermarkt(...args),
         runRawStats: (...args: unknown[]) => mockRunRawStats(...args),
         runInsights: (...args: unknown[]) => mockRunInsights(...args),
+        runInsightsTranslate: (...args: unknown[]) => mockRunInsightsTranslate(...args),
         getInsightsUsage: (...args: unknown[]) => mockGetInsightsUsage(...args),
       },
     },
@@ -307,7 +310,7 @@ describe('AdminSyncView', () => {
     it('shows daily usage from getInsightsUsage', async () => {
       mockGetInsightsUsage.mockResolvedValue({
         date: '2026-05-25',
-        requestsToday: 12,
+        requestsToday: { generate: 8, translate: 4, total: 12 },
         inputTokensToday: 0,
         outputTokensToday: 0,
         dailyLimit: 450,
@@ -318,6 +321,8 @@ describe('AdminSyncView', () => {
       const usage = wrapper.find('[data-testid="insights-usage"]')
       expect(usage.text()).toContain('12 / 450')
       expect(usage.text()).toContain('438 maradt')
+      expect(usage.text()).toContain('generálás: 8')
+      expect(usage.text()).toContain('fordítás: 4')
     })
 
     it('triggers insights run on button click and reloads usage', async () => {
@@ -423,6 +428,55 @@ describe('AdminSyncView', () => {
       const select = wrapper.find('[data-testid="insights-match-select"]')
       expect(select.text()).not.toContain('PastHome')
       expect(select.text()).toContain('FutureHome')
+    })
+
+    it('renders the translate button (US-1310)', async () => {
+      const wrapper = await mountView()
+      expect(wrapper.find('[data-testid="insights-translate-btn"]').exists()).toBe(true)
+    })
+
+    it('triggers translate on button click and reloads usage', async () => {
+      mockRunInsightsTranslate.mockResolvedValue({ translated: 4, skipped: 1, errors: [] })
+      const wrapper = await mountView()
+      mockGetInsightsUsage.mockClear()
+
+      await wrapper.find('[data-testid="insights-translate-btn"]').trigger('click')
+      await flushPromises()
+
+      expect(mockRunInsightsTranslate).toHaveBeenCalledWith('mock-token', undefined)
+      expect(mockGetInsightsUsage).toHaveBeenCalled()
+      const result = wrapper.find('[data-testid="insights-translate-result"]')
+      expect(result.text()).toContain('4 fordítva')
+      expect(result.text()).toContain('1 kihagyva')
+    })
+
+    it('passes selected matchId to translate when a match is chosen', async () => {
+      const future = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+      mockMatchesList.mockResolvedValue([
+        {
+          id: 'match-99',
+          homeTeam: { id: 't1', name: 'A', shortCode: 'A', flagUrl: null, teamType: 'national', countryCode: null },
+          awayTeam: { id: 't2', name: 'B', shortCode: 'B', flagUrl: null, teamType: 'national', countryCode: null },
+          venue: null, league: null, stage: 'group', groupName: null, matchNumber: null,
+          scheduledAt: future, status: 'scheduled', result: null,
+        },
+      ])
+      mockRunInsightsTranslate.mockResolvedValue({ translated: 1, skipped: 0, errors: [] })
+      const wrapper = await mountView()
+
+      await wrapper.find('[data-testid="insights-match-select"]').setValue('match-99')
+      await wrapper.find('[data-testid="insights-translate-btn"]').trigger('click')
+      await flushPromises()
+
+      expect(mockRunInsightsTranslate).toHaveBeenCalledWith('mock-token', 'match-99')
+    })
+
+    it('shows error when translate throws', async () => {
+      mockRunInsightsTranslate.mockRejectedValue(new Error('Daily LLM limit exceeded'))
+      const wrapper = await mountView()
+      await wrapper.find('[data-testid="insights-translate-btn"]').trigger('click')
+      await flushPromises()
+      expect(wrapper.find('[data-testid="insights-error"]').text()).toContain('Daily LLM limit exceeded')
     })
   })
 })

@@ -5,6 +5,7 @@ import { matchInsights, matches, teams } from '../../db/schema/index.js'
 import type { RawMatchStats } from './stats.types.js'
 import { buildInsightPrompt } from './prompt.builder.js'
 import { createLlmClient, LlmClientError, type InsightType, type LlmInsight } from './llm.client.js'
+import { translateInsightsForMatch } from './translator.service.js'
 
 export class InsightGenerationError extends Error {
   constructor(message: string, public readonly code: string) {
@@ -118,5 +119,13 @@ export async function generateInsightsForMatch(matchId: string, now: Date = new 
 
   for (const insight of insights) {
     await upsertInsight(matchId, insight)
+  }
+
+  if (process.env['INSIGHT_AUTO_TRANSLATE'] !== 'false') {
+    try {
+      await translateInsightsForMatch(matchId, now)
+    } catch {
+      // Translation failures must not break generation success — they surface via the lazy fallback.
+    }
   }
 }

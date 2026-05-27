@@ -18,6 +18,8 @@ export interface DailyStats {
   readonly requests: number
   readonly inputTokens: number
   readonly outputTokens: number
+  readonly generateRequests: number
+  readonly translateRequests: number
 }
 
 export interface DailyBreakdown {
@@ -47,14 +49,22 @@ export async function getDailyStats(date: Date): Promise<DailyStats> {
   const dateKey = toDateKey(date)
   const rows = await db
     .select({
-      requests:     sql<number>`COALESCE(COUNT(*), 0)::int`,
-      inputTokens:  sql<number>`COALESCE(SUM(${llmUsageLog.inputTokens}), 0)::int`,
-      outputTokens: sql<number>`COALESCE(SUM(${llmUsageLog.outputTokens}), 0)::int`,
+      requests:          sql<number>`COALESCE(COUNT(*), 0)::int`,
+      inputTokens:       sql<number>`COALESCE(SUM(${llmUsageLog.inputTokens}), 0)::int`,
+      outputTokens:      sql<number>`COALESCE(SUM(${llmUsageLog.outputTokens}), 0)::int`,
+      translateRequests: sql<number>`COALESCE(SUM(CASE WHEN ${llmUsageLog.provider} LIKE '%-translate' THEN 1 ELSE 0 END), 0)::int`,
     })
     .from(llmUsageLog)
     .where(sql`DATE(${llmUsageLog.createdAt} AT TIME ZONE 'UTC') = ${dateKey}`)
-  const row = rows[0] ?? { requests: 0, inputTokens: 0, outputTokens: 0 }
-  return { date: dateKey, requests: row.requests, inputTokens: row.inputTokens, outputTokens: row.outputTokens }
+  const row = rows[0] ?? { requests: 0, inputTokens: 0, outputTokens: 0, translateRequests: 0 }
+  return {
+    date: dateKey,
+    requests: row.requests,
+    inputTokens: row.inputTokens,
+    outputTokens: row.outputTokens,
+    generateRequests: row.requests - row.translateRequests,
+    translateRequests: row.translateRequests,
+  }
 }
 
 export async function getLast7Days(): Promise<readonly DailyBreakdown[]> {

@@ -10,11 +10,10 @@
 | OPS-001 | Strukturált logolás és frontend hibakezelés (MVP) | Should Have | — |
 | US-1204 | NB II liga szinkronizáció támogatás | Nice to Have | ~~US-1202~~, ~~US-1203~~ |
 | US-1303 | Match Pulse – automatikus insight generálás cron jobban | Should Have | ~~US-1302~~, ~~US-1203~~ |
-| US-1304 | Match Pulse – insight megjelenítése a meccs kártyán | Should Have | ~~US-1302~~, US-1310 |
+| US-1304 | Match Pulse – insight megjelenítése a meccs kártyán | Should Have | ~~US-1302~~, ~~US-1310~~ |
 | US-1305 | Match Pulse – in-tournament statisztikák integrálása | Should Have | US-1303, US-1304 |
 | US-1306 | Match Pulse – insight felfedése felhasználónként és admin reveal statisztika | Should Have | ~~US-1302~~, US-1304, ~~US-1309~~ |
 | US-1307 | Match Pulse – csapat-piaci értékek megjelenítése | Should Have | US-1304, US-1306, ~~US-1406~~ |
-| US-1310 | Match Pulse – AI insight magyar fordítás | Should Have | ~~US-1302~~ |
 | US-934 | Mások tippjeinek megjelenítése (speciális) | Should Have | — |
 | US-935 | Torna szintű statisztikai bonus tippek (5 globális típus seedelése) | Should Have | — |
 | US-936 | Upset Special – multi-csapatos, súlyozott bonus tipp típus | Should Have | — |
@@ -27,4 +26,4 @@
 
 ---
 
-**Haladás: 127 / 145 story kész** — Must Have: 31/32, Should Have: 96/109, Nice to Have: 0/4
+**Haladás: 128 / 145 story kész** — Must Have: 31/32, Should Have: 97/109, Nice to Have: 0/4

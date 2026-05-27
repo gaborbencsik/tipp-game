@@ -231,15 +231,18 @@ export const matchMarketData = pgTable('match_market_data', {
 // ─── MATCH INSIGHTS ──────────────────────────────────────────────────────────
 
 export const matchInsights = pgTable('match_insights', {
-  id:          uuid('id').primaryKey().defaultRandom(),
-  matchId:     uuid('match_id').notNull().references(() => matches.id, { onDelete: 'cascade' }),
-  type:        insightTypeEnum('type').notNull(),
-  data:        jsonb('data').notNull(),
-  summary:     varchar('summary', { length: 200 }),
-  generatedAt: timestamp('generated_at', { withTimezone: true }).notNull().defaultNow(),
-  version:     smallint('version').notNull().default(1),
-  createdAt:   timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt:   timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  id:           uuid('id').primaryKey().defaultRandom(),
+  matchId:      uuid('match_id').notNull().references(() => matches.id, { onDelete: 'cascade' }),
+  type:         insightTypeEnum('type').notNull(),
+  data:         jsonb('data').notNull(),
+  summary:      varchar('summary', { length: 200 }),
+  titleHu:      text('title_hu'),
+  bodyHu:       text('body_hu'),
+  translatedAt: timestamp('translated_at', { withTimezone: true }),
+  generatedAt:  timestamp('generated_at', { withTimezone: true }).notNull().defaultNow(),
+  version:      smallint('version').notNull().default(1),
+  createdAt:    timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt:    timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({
   matchTypeIdx: uniqueIndex('match_insights_match_id_type_idx').on(t.matchId, t.type),
   matchIdIdx:   index('match_insights_match_id_idx').on(t.matchId),

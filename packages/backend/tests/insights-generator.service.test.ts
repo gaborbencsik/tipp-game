@@ -1,13 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-const { mockSelect, mockInsert, mockGenerate } = vi.hoisted(() => ({
+const { mockSelect, mockInsert, mockGenerate, mockTranslateForMatch } = vi.hoisted(() => ({
   mockSelect: vi.fn(),
   mockInsert: vi.fn(),
   mockGenerate: vi.fn(),
+  mockTranslateForMatch: vi.fn().mockResolvedValue({ translated: 0, skipped: 0, errors: [] }),
 }))
 
 vi.mock('../src/db/client.js', () => ({
   db: { select: mockSelect, insert: mockInsert },
+}))
+
+vi.mock('../src/services/insights/translator.service.js', () => ({
+  translateInsightsForMatch: mockTranslateForMatch,
+  InsightTranslationError: class InsightTranslationError extends Error {},
 }))
 
 vi.mock('../src/services/insights/llm.client.js', () => ({
@@ -188,5 +194,57 @@ describe('generator.service', () => {
 
     expect(mockGenerate).toHaveBeenCalledTimes(2)
     expect(insertValues).toHaveBeenCalledTimes(5)
+  })
+
+  describe('auto-translate hook', () => {
+    beforeEach(() => {
+      mockTranslateForMatch.mockClear()
+      delete process.env['INSIGHT_AUTO_TRANSLATE']
+    })
+
+    it('calls translateInsightsForMatch after successful generation by default', async () => {
+      mockSelectChain(
+        { homeTeamName: 'Germany', awayTeamName: 'Spain' },
+        [{ type: 'raw_stats', data: RAW_STATS, generatedAt: new Date('2026-05-25T10:00:00.000Z') }],
+      )
+      const onConflictDoUpdate = vi.fn().mockResolvedValue(undefined)
+      const insertValues = vi.fn().mockReturnValue({ onConflictDoUpdate })
+      mockInsert.mockReturnValue({ values: insertValues })
+      mockGenerate.mockResolvedValue(FIVE_VALID_INSIGHTS)
+
+      await generateInsightsForMatch('match-1')
+
+      expect(mockTranslateForMatch).toHaveBeenCalledWith('match-1', expect.any(Date))
+    })
+
+    it('does NOT call translateInsightsForMatch when INSIGHT_AUTO_TRANSLATE=false', async () => {
+      process.env['INSIGHT_AUTO_TRANSLATE'] = 'false'
+      mockSelectChain(
+        { homeTeamName: 'Germany', awayTeamName: 'Spain' },
+        [{ type: 'raw_stats', data: RAW_STATS, generatedAt: new Date('2026-05-25T10:00:00.000Z') }],
+      )
+      const onConflictDoUpdate = vi.fn().mockResolvedValue(undefined)
+      const insertValues = vi.fn().mockReturnValue({ onConflictDoUpdate })
+      mockInsert.mockReturnValue({ values: insertValues })
+      mockGenerate.mockResolvedValue(FIVE_VALID_INSIGHTS)
+
+      await generateInsightsForMatch('match-1')
+
+      expect(mockTranslateForMatch).not.toHaveBeenCalled()
+    })
+
+    it('translation failure does not propagate as generation failure', async () => {
+      mockSelectChain(
+        { homeTeamName: 'Germany', awayTeamName: 'Spain' },
+        [{ type: 'raw_stats', data: RAW_STATS, generatedAt: new Date('2026-05-25T10:00:00.000Z') }],
+      )
+      const onConflictDoUpdate = vi.fn().mockResolvedValue(undefined)
+      const insertValues = vi.fn().mockReturnValue({ onConflictDoUpdate })
+      mockInsert.mockReturnValue({ values: insertValues })
+      mockGenerate.mockResolvedValue(FIVE_VALID_INSIGHTS)
+      mockTranslateForMatch.mockRejectedValueOnce(new Error('translator boom'))
+
+      await expect(generateInsightsForMatch('match-1')).resolves.toBeUndefined()
+    })
   })
 })

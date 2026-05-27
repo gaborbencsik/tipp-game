@@ -523,8 +523,14 @@ export const api = {
           body: JSON.stringify(matchId ? { matchId } : {}),
           headers: { Authorization: `Bearer ${token}` },
         }),
+      runInsightsTranslate: (token: string, matchId?: string) =>
+        request<{ translated: number; skipped: number; errors: Array<{ matchId: string; insightId?: string; error: string }> }>('/admin/sync/insights-translate', {
+          method: 'POST',
+          body: JSON.stringify(matchId ? { matchId } : {}),
+          headers: { Authorization: `Bearer ${token}` },
+        }),
       getInsightsUsage: (token: string) =>
-        request<{ date: string; requestsToday: number; inputTokensToday: number; outputTokensToday: number; dailyLimit: number; remaining: number; last7Days: Array<{ date: string; requests: number; tokens: number }> }>('/admin/sync/insights-usage', {
+        request<{ date: string; requestsToday: { generate: number; translate: number; total: number }; inputTokensToday: number; outputTokensToday: number; dailyLimit: number; remaining: number; last7Days: Array<{ date: string; requests: number; tokens: number }> }>('/admin/sync/insights-usage', {
           headers: { Authorization: `Bearer ${token}` },
         }),
     },

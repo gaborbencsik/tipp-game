@@ -75,7 +75,7 @@ describe('usage.repository', () => {
   describe('getDailyStats', () => {
     it('returns aggregated counts for given date', async () => {
       vi.setSystemTime(new Date('2026-05-25T12:00:00.000Z'))
-      const sumRow = [{ requests: 42, inputTokens: 12000, outputTokens: 8000 }]
+      const sumRow = [{ requests: 42, inputTokens: 12000, outputTokens: 8000, translateRequests: 10 }]
       const where = vi.fn().mockResolvedValue(sumRow)
       const from = vi.fn().mockReturnValue({ where })
       mockSelect.mockReturnValue({ from })
@@ -87,11 +87,13 @@ describe('usage.repository', () => {
         requests: 42,
         inputTokens: 12000,
         outputTokens: 8000,
+        generateRequests: 32,
+        translateRequests: 10,
       })
     })
 
     it('returns zeros when no rows', async () => {
-      const where = vi.fn().mockResolvedValue([{ requests: 0, inputTokens: 0, outputTokens: 0 }])
+      const where = vi.fn().mockResolvedValue([{ requests: 0, inputTokens: 0, outputTokens: 0, translateRequests: 0 }])
       const from = vi.fn().mockReturnValue({ where })
       mockSelect.mockReturnValue({ from })
 
