@@ -1,5 +1,6 @@
 import { eq } from 'drizzle-orm'
 import { db } from '../src/db/client.js'
+import { TOURNAMENT_BONUS_TYPE_SEEDS, TOURNAMENT_FIRST_KICKOFF_AT } from '../src/db/seeds/tournament-bonus-types.js'
 import {
   scoringConfigs, teams, users, venues,
   matches, matchResults, predictions,
@@ -48,7 +49,8 @@ const PLAYER_ALVAREZ_ID  = '11111111-aaaa-bbbb-cccc-000000000002'
 const PLAYER_VINICIUS_ID = '11111111-aaaa-bbbb-cccc-000000000003'
 const PLAYER_MUSIALA_ID  = '11111111-aaaa-bbbb-cccc-000000000004'
 
-const SPT_GOLKIRALY_ID      = '22222222-aaaa-bbbb-cccc-000000000001'
+const SPT_GOLKIRALY_IRODA_ID    = '22222222-aaaa-bbbb-cccc-000000000004'
+const SPT_GOLKIRALY_HAVEROK_ID  = '22222222-aaaa-bbbb-cccc-000000000005'
 const SPT_WINNER_ID         = '22222222-aaaa-bbbb-cccc-000000000002'
 const SPT_CSOPORTGYOZTES_ID = '22222222-aaaa-bbbb-cccc-000000000003'
 
@@ -325,17 +327,34 @@ async function seedLocal(): Promise<void> {
   }
 
   // ─── Special Prediction Types ──────────────────────────────────────────────
+  // Re-seed the 4 canonical global tournament bonus types (also seeded by migration
+  // 0044, but this script wipes the table above — so we restore them here).
+  await db.insert(specialPredictionTypes).values([...TOURNAMENT_BONUS_TYPE_SEEDS])
+
+  // Per-group "Gólkirály" types (created from the sablon by group admins).
   await db.insert(specialPredictionTypes).values({
-    id: SPT_GOLKIRALY_ID,
-    groupId: null,
+    id: SPT_GOLKIRALY_IRODA_ID,
+    groupId: GROUP_IRODA_ID,
     name: 'Gólkirály',
-    description: 'Ki lesz a 2026-os VB gólkirálya?',
+    description: 'Ki lesz a torna gólkirálya?',
     inputType: 'player_select',
-    deadline: day(30),
-    points: 5,
-    isGlobal: true,
+    deadline: TOURNAMENT_FIRST_KICKOFF_AT,
+    points: 8,
+    isGlobal: false,
     isActive: true,
-  })
+  }).onConflictDoNothing()
+
+  await db.insert(specialPredictionTypes).values({
+    id: SPT_GOLKIRALY_HAVEROK_ID,
+    groupId: GROUP_HAVEROK_ID,
+    name: 'Gólkirály',
+    description: 'Ki lesz a torna gólkirálya?',
+    inputType: 'player_select',
+    deadline: TOURNAMENT_FIRST_KICKOFF_AT,
+    points: 8,
+    isGlobal: false,
+    isActive: true,
+  }).onConflictDoNothing()
 
   await db.insert(specialPredictionTypes).values({
     id: SPT_WINNER_ID,
@@ -347,7 +366,7 @@ async function seedLocal(): Promise<void> {
     points: 10,
     isGlobal: false,
     isActive: true,
-  })
+  }).onConflictDoNothing()
 
   await db.insert(specialPredictionTypes).values({
     id: SPT_CSOPORTGYOZTES_ID,
@@ -359,26 +378,20 @@ async function seedLocal(): Promise<void> {
     points: 3,
     isGlobal: false,
     isActive: true,
-  })
+  }).onConflictDoNothing()
 
   // ─── Group Global Type Subscriptions ───────────────────────────────────────
-  await db.insert(groupGlobalTypeSubscriptions).values({
-    groupId: GROUP_IRODA_ID,
-    globalTypeId: SPT_GOLKIRALY_ID,
-  })
-  await db.insert(groupGlobalTypeSubscriptions).values({
-    groupId: GROUP_HAVEROK_ID,
-    globalTypeId: SPT_GOLKIRALY_ID,
-  })
+  // (Iroda + Haverok groups are not subscribed to any global type by default.
+  // Group admins can opt-in from the admin UI; gólkirály is a per-group sablon-based type.)
 
   // ─── Special Predictions (mix answered/pending) ────────────────────────────
   const specialPredData = [
-    { userId: USER_PETER_ID, typeId: SPT_GOLKIRALY_ID, groupId: GROUP_IRODA_ID, answer: PLAYER_MESSI_ID },
+    { userId: USER_PETER_ID, typeId: SPT_GOLKIRALY_IRODA_ID, groupId: GROUP_IRODA_ID, answer: PLAYER_MESSI_ID },
     { userId: USER_PETER_ID, typeId: SPT_WINNER_ID,    groupId: GROUP_IRODA_ID, answer: ARG },
-    { userId: USER_ANNA_ID,  typeId: SPT_GOLKIRALY_ID, groupId: GROUP_IRODA_ID, answer: PLAYER_VINICIUS_ID },
+    { userId: USER_ANNA_ID,  typeId: SPT_GOLKIRALY_IRODA_ID, groupId: GROUP_IRODA_ID, answer: PLAYER_VINICIUS_ID },
     { userId: USER_KATA_ID,  typeId: SPT_CSOPORTGYOZTES_ID, groupId: GROUP_HAVEROK_ID, answer: ARG },
-    { userId: USER_ANNA_ID,  typeId: SPT_GOLKIRALY_ID, groupId: GROUP_HAVEROK_ID, answer: PLAYER_VINICIUS_ID },
-    { userId: USER_MATE_ID,  typeId: SPT_GOLKIRALY_ID, groupId: GROUP_HAVEROK_ID, answer: PLAYER_MUSIALA_ID },
+    { userId: USER_ANNA_ID,  typeId: SPT_GOLKIRALY_HAVEROK_ID, groupId: GROUP_HAVEROK_ID, answer: PLAYER_VINICIUS_ID },
+    { userId: USER_MATE_ID,  typeId: SPT_GOLKIRALY_HAVEROK_ID, groupId: GROUP_HAVEROK_ID, answer: PLAYER_MUSIALA_ID },
   ]
   for (const sp of specialPredData) {
     await db.insert(specialPredictions).values(sp)

@@ -309,6 +309,13 @@
       "when": 1779968725686,
       "tag": "0043_rls_insights_stats_logs",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1780655325686,
+      "tag": "0044_seed_tournament_bonus_types",
+      "breakpoints": true
     }
   ]
 }

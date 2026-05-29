@@ -1,6 +1,6 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-05-27
+> Utoljára frissítve: 2026-05-28
 
 ## Nyitott story-k
 
@@ -15,7 +15,6 @@
 | US-1306 | Match Pulse – insight felfedése felhasználónként és admin reveal statisztika | Should Have | ~~US-1302~~, US-1304, ~~US-1309~~ |
 | US-1307 | Match Pulse – csapat-piaci értékek megjelenítése | Should Have | US-1304, US-1306, ~~US-1406~~ |
 | US-934 | Mások tippjeinek megjelenítése (speciális) | Should Have | — |
-| US-935 | Torna szintű statisztikai bonus tippek (5 globális típus seedelése) | Should Have | — |
 | US-936 | Upset Special – multi-csapatos, súlyozott bonus tipp típus | Should Have | — |
 | US-937 | Torna progression bonus tippek – konfigurálható csapat-progression szabályrendszer | Should Have | — |
 | UX-004 | Focilabda kurzor ikon | Nice to Have | — |
@@ -27,4 +26,4 @@
 
 ---
 
-**Haladás: 128 / 146 story kész** — Must Have: 31/32, Should Have: 97/110, Nice to Have: 0/4
+**Haladás: 129 / 146 story kész** — Must Have: 31/32, Should Have: 98/110, Nice to Have: 0/4

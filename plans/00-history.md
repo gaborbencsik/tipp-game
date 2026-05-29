@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 127 story kész (Must Have: 31/31, Should Have: 96/97)
+> 128 story kész (Must Have: 31/31, Should Have: 97/97)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -132,3 +132,4 @@
 | US-1302 | Match Pulse – AI insight generálás (batch job) + admin trigger | Should Have |
 | UX-027 | Mérkőzések oldal szűrő állapot localStorage mentése | Should Have |
 | US-1310 | Match Pulse – AI insight magyar fordítás | Should Have |
+| US-935 | Torna szintű statisztikai bonus tippek (4 globális típus seedelése) | Should Have |
