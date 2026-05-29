@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bracket-progresszió v2 — Tippelési mockup</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+  .flag {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 16px; border-radius: 3px; font-size: 13px;
+    background: #f3f4f6; flex-shrink: 0;
+  }
+  details[open] > summary .chevron { transform: rotate(180deg); }
+  .chevron { transition: transform 200ms ease; }
+  summary::-webkit-details-marker { display: none; }
+  summary { cursor: pointer; list-style: none; }
+  .pulse-saving { animation: pulse 1.5s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: 0.5; } }
+  .device-frame {
+    width: 390px; max-width: 100%;
+    border: 12px solid #1f2937;
+    border-radius: 40px;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+    background: white;
+    display: flex; flex-direction: column;
+    height: 844px;
+  }
+  .device-screen { flex: 1; overflow-y: auto; position: relative; }
+  .device-screen::-webkit-scrollbar { width: 4px; }
+  .device-screen::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+
+  /* Match kártya */
+  .match-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: stretch;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+  .team-slot {
+    display: flex; flex-direction: column; gap: 2px;
+    padding: 8px 10px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    background: white;
+    cursor: pointer; user-select: none;
+    transition: all 150ms ease;
+    text-align: left;
+    position: relative;
+    min-width: 0;
+  }
+  .team-slot:hover:not(.team-slot--locked):not(.team-slot--winner) { border-color: #93c5fd; background: #eff6ff; }
+  .team-slot__name {
+    font-size: 13px; font-weight: 600; color: #0f172a;
+    display: flex; align-items: center; gap: 6px;
+    line-height: 1.2;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .team-slot__slot-id {
+    font-size: 10px; color: #94a3b8; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.4px;
+  }
+  .team-slot--winner {
+    border-color: #2563eb; background: #2563eb;
+    box-shadow: 0 4px 8px -2px rgba(37,99,235,0.4);
+  }
+  .team-slot--winner .team-slot__name { color: white; }
+  .team-slot--winner .team-slot__slot-id { color: rgba(255,255,255,0.7); }
+  .team-slot--winner .flag { background: rgba(255,255,255,0.25); }
+  .team-slot--winner::after {
+    content: "✓"; position: absolute; top: -7px; right: -7px;
+    width: 18px; height: 18px; border-radius: 999px;
+    background: #16a34a; color: white;
+    font-size: 11px; display: flex; align-items: center; justify-content: center;
+    border: 2px solid white;
+    font-weight: bold;
+  }
+  .team-slot--locked {
+    border-style: dashed; background: #f8fafc; color: #94a3b8; cursor: not-allowed;
+  }
+  .team-slot--locked .team-slot__name { color: #94a3b8; font-style: italic; }
+
+  .match-vs {
+    display: flex; align-items: center; justify-content: center;
+    color: #cbd5e1; font-size: 11px; font-weight: 700;
+    padding: 0 4px;
+  }
+
+  .match-label {
+    font-size: 10px; font-weight: 700; color: #64748b;
+    text-transform: uppercase; letter-spacing: 0.6px;
+    margin-bottom: 4px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .match-label__pill {
+    background: #e0e7ff; color: #3730a3;
+    padding: 1px 7px; border-radius: 999px; font-size: 9px;
+  }
+
+  /* Stepper */
+  .stepper { display: flex; gap: 3px; align-items: center; }
+  .stepper .dot { width: 6px; height: 6px; border-radius: 999px; background: #cbd5e1; flex-shrink: 0; }
+  .stepper .dot.done { background: #16a34a; }
+  .stepper .dot.partial { background: #fbbf24; }
+  .stepper .dot.active { background: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,0.2); }
+  .stepper .bar { flex: 1; height: 2px; background: #e2e8f0; min-width: 4px; }
+  .stepper .bar.done { background: #16a34a; }
+
+  /* Eval */
+  .team-slot--correct { border-color: #16a34a !important; background: #dcfce7 !important; }
+  .team-slot--correct .team-slot__name { color: #14532d !important; }
+  .team-slot--wrong { border-color: #dc2626 !important; background: #fee2e2 !important; }
+  .team-slot--wrong .team-slot__name { color: #7f1d1d !important; }
+  .team-slot--actual { border-color: #16a34a !important; border-style: dashed; background: white !important; }
+  .team-slot--actual .team-slot__name { color: #14532d !important; }
+  .team-slot--actual::before {
+    content: "tényleges győztes"; position: absolute; top: -8px; left: 8px;
+    background: #16a34a; color: white; font-size: 9px; padding: 1px 5px;
+    border-radius: 4px; font-weight: 600;
+  }
+
+  /* Desktop bracket grid */
+  .bracket-col-title {
+    font-size: 11px; font-weight: 700; color: #475569;
+    text-transform: uppercase; letter-spacing: 0.6px;
+    margin-bottom: 8px; text-align: center;
+  }
+</style>
+</head>
+<body class="bg-slate-100 min-h-screen">
+
+<div class="max-w-[1500px] mx-auto p-6">
+  <header class="mb-8 text-center">
+    <h1 class="text-2xl font-bold text-slate-800">Bracket-progresszió v2 — UX mockup</h1>
+    <p class="text-sm text-slate-500 mt-1">
+      <b>v2 deltái:</b> pár-alapú bracket minden körben · match-szintű győztes-pick · US-938 csoport-tipp slot-resolver
+    </p>
+    <p class="text-xs text-slate-400 mt-1">
+      A Last 32 párok (W A1 vs RU B1, …) auto-derivátlódnak a user csoport-tippjéből · downstream körök az előző kör győzteseiből.
+    </p>
+    <p class="text-xs text-slate-400 mt-1">
+      Spec: <code>docs/superpowers/specs/2026-05-29-bracket-progression-prediction-design-v2.md</code>
+    </p>
+  </header>
+
+  <div class="flex flex-wrap justify-center gap-8 items-start">
+
+    <!-- ============================================= -->
+    <!-- MOBIL 1: Last 32 — match-pick                 -->
+    <!-- ============================================= -->
+    <section>
+      <h2 class="text-center text-sm font-semibold text-slate-600 mb-3">📱 Mobil — Last 32 (16 mérkőzés)</h2>
+      <div class="device-frame">
+        <div class="device-screen bg-slate-50">
+
+          <div class="px-4 pt-4 pb-3 bg-white border-b border-slate-200 sticky top-0 z-20">
+            <div class="flex items-center justify-between">
+              <button class="text-slate-600">← Vissza</button>
+              <span class="text-xs text-slate-400">Súgó ⓘ</span>
+            </div>
+            <h1 class="text-lg font-bold text-slate-900 mt-2">Bracket-progresszió</h1>
+            <p class="text-xs text-slate-500 mt-0.5">Határidő: <span class="font-medium text-slate-700">jún. 11. 18:00</span> · Mentés automatikus</p>
+          </div>
+
+          <div class="px-3 py-3 space-y-2 pb-32">
+
+            <!-- Info kártya -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2.5 flex gap-2">
+              <span class="text-blue-600">💡</span>
+              <p class="text-xs text-blue-900 leading-snug">
+                Minden mérkőzésnél válaszd ki, ki nyer. A párok a <b>csoport-tippedből</b> állnak össze.
+                A győztesek automatikusan tovább kerülnek a következő körbe.
+              </p>
+            </div>
+
+            <!-- Last 32 expanded -->
+            <details open class="bg-white rounded-lg border-2 border-blue-400 shadow-md ring-4 ring-blue-100">
+              <summary class="px-3 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="font-semibold text-slate-800">1. Last 32</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-blue-600 font-semibold bg-blue-50 px-2 py-0.5 rounded-full">3 / 16</span>
+                  <span class="chevron text-blue-500 rotate-180">▾</span>
+                </div>
+              </summary>
+              <div class="px-3 pb-3 border-t border-slate-100 pt-3 space-y-3">
+
+                <!-- Match 1: pickelt (MEX) -->
+                <div>
+                  <div class="match-label">
+                    Match 1
+                    <span class="match-label__pill">A1 vs B2</span>
+                  </div>
+                  <div class="match-row">
+                    <button class="team-slot team-slot--winner">
+                      <span class="team-slot__slot-id">W A1</span>
+                      <span class="team-slot__name"><span class="flag">🇲🇽</span>MEX</span>
+                    </button>
+                    <span class="match-vs">VS</span>
+                    <button class="team-slot">
+                      <span class="team-slot__slot-id">RU B1</span>
+                      <span class="team-slot__name"><span class="flag">🇨🇭</span>SUI</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Match 2: pickelt (CZE) -->
+                <div>
+                  <div class="match-label">
+                    Match 2
+                    <span class="match-label__pill">C1 vs 3rd D/E/F</span>
+                  </div>
+                  <div class="match-row">
+                    <button class="team-slot team-slot--winner">
+                      <span class="team-slot__slot-id">W C1</span>
+                      <span class="team-slot__name"><span class="flag">🇨🇿</span>CZE</span>
+                    </button>
+                    <span class="match-vs">VS</span>
+                    <button class="team-slot">
+                      <span class="team-slot__slot-id">3rd DEF</span>
+                      <span class="team-slot__name"><span class="flag">🇧🇦</span>BIH</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Match 3: pickelt (FRA) -->
+                <div>
+                  <div class="match-label">
+                    Match 3
+                    <span class="match-label__pill">D1 vs E2</span>
+                  </div>
+                  <div class="match-row">
+                    <button class="team-slot team-slot--winner">
+                      <span class="team-slot__slot-id">W D1</span>
+                      <span class="team-slot__name"><span class="flag">🇫🇷</span>FRA</span>
+                    </button>
+                    <span class="match-vs">VS</span>
+                    <button class="team-slot">
+                      <span class="team-slot__slot-id">RU E1</span>
+                      <span class="team-slot__name"><span class="flag">🇩🇪</span>GER</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Match 4: nincs pick még -->
+                <div>
+                  <div class="match-label">
+                    Match 4
+                    <span class="match-label__pill">F1 vs 3rd A/B/C</span>
+                  </div>
+                  <div class="match-row">
+                    <button class="team-slot">
+                      <span class="team-slot__slot-id">W F1</span>
+                      <span class="team-slot__name"><span class="flag">🇮🇹</span>ITA</span>
+                    </button>
+                    <span class="match-vs">VS</span>
+                    <button class="team-slot">
+                      <span class="team-slot__slot-id">3rd ABC</span>
+                      <span class="team-slot__name"><span class="flag">🇰🇷</span>KOR</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Match 5: nincs pick -->
+                <div>
+                  <div class="match-label">
+                    Match 5
+                    <span class="match-label__pill">G1 vs H2</span>
+                  </div>
+                  <div class="match-row">
+                    <button class="team-slot">
+                      <span class="team-slot__slot-id">W G1</span>
+                      <span class="team-slot__name"><span class="flag">🇧🇷</span>BRA</span>
+                    </button>
+                    <span class="match-vs">VS</span>
+                    <button class="team-slot">
+                      <span class="team-slot__slot-id">RU H1</span>
+                      <span class="team-slot__name"><span class="flag">🇸🇳</span>SEN</span>
+                    </button>
+                  </div>
+                </div>
+
+                <p class="text-xs text-slate-400 italic text-center pt-1">⋯ Match 6–16 lefelé ⋯</p>
+              </div>
+            </details>
+
+            <!-- Last 16: lockolt (csak 3 L32 győztes van) -->
+            <div class="bg-slate-100 border-2 border-dashed border-slate-300 rounded-lg p-3 flex items-center justify-between">
+              <div>
+                <div class="font-semibold text-slate-600 text-sm">2. Last 16 🔒</div>
+                <p class="text-xs text-slate-500 mt-0.5">Tölts ki előbb 4+ L32 mérkőzést.</p>
+              </div>
+              <span class="text-xs text-slate-400">0 / 8</span>
+            </div>
+
+            <div class="bg-white rounded-lg border border-slate-200 px-3 py-2.5 flex items-center justify-between opacity-60">
+              <div class="font-semibold text-slate-700 text-sm">3. Negyeddöntő</div>
+              <span class="text-xs text-slate-400">🔒 0 / 4</span>
+            </div>
+            <div class="bg-white rounded-lg border border-slate-200 px-3 py-2.5 flex items-center justify-between opacity-60">
+              <div class="font-semibold text-slate-700 text-sm">4. Elődöntő</div>
+              <span class="text-xs text-slate-400">🔒 0 / 2</span>
+            </div>
+            <div class="bg-white rounded-lg border border-slate-200 px-3 py-2.5 flex items-center justify-between opacity-60">
+              <div class="font-semibold text-slate-700 text-sm">5. Döntő · Bronz</div>
+              <span class="text-xs text-slate-400">🔒</span>
+            </div>
+
+          </div>
+
+          <div class="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-4 py-3">
+            <div class="stepper mb-2">
+              <span class="dot partial"></span>
+              <span class="bar"></span>
+              <span class="dot"></span>
+              <span class="bar"></span>
+              <span class="dot"></span>
+              <span class="bar"></span>
+              <span class="dot"></span>
+              <span class="bar"></span>
+              <span class="dot"></span>
+              <span class="bar"></span>
+              <span class="dot"></span>
+            </div>
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-slate-600 font-medium">Last 32: <b>3/16</b></span>
+              <span class="text-emerald-600 font-medium">✓ Mentve</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================== -->
+    <!-- MOBIL 2: Last 16 (cascading + lockolt match)        -->
+    <!-- ================================================== -->
+    <section>
+      <h2 class="text-center text-sm font-semibold text-slate-600 mb-3">📱 Mobil — Last 16 (cascading)</h2>
+      <div class="device-frame">
+        <div class="device-screen bg-slate-50">
+
+          <div class="px-4 pt-4 pb-3 bg-white border-b border-slate-200 sticky top-0 z-20">
+            <div class="flex items-center justify-between">
+              <button class="text-slate-600">← Vissza</button>
+              <span class="text-xs text-slate-400">Súgó ⓘ</span>
+            </div>
+            <h1 class="text-lg font-bold text-slate-900 mt-2">Bracket-progresszió</h1>
+            <p class="text-xs text-slate-500 mt-0.5">Határidő: <span class="font-medium text-slate-700">jún. 11. 18:00</span></p>
+          </div>
+
+          <div class="px-3 py-3 space-y-2 pb-32">
+
+            <!-- Cross-store toast -->
+            <div class="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 flex items-start gap-2 text-xs text-amber-900">
+              <span>⚠️</span>
+              <p>A <b>csoport-tipped</b> módosult — <b>2 győztes-pick</b> törlésre került (régi MEX-pick L16 Match 1-ben, régi BRA-pick QF Match 1-ben).</p>
+            </div>
+
+            <!-- Last 32 done collapsed -->
+            <details class="bg-white rounded-lg border border-emerald-300">
+              <summary class="px-3 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-2"><span class="text-emerald-500">✓</span><span class="font-semibold text-slate-800">1. Last 32</span></div>
+                <div class="flex items-center gap-2"><span class="text-xs text-emerald-600 font-semibold">16 / 16</span><span class="chevron text-slate-400">▾</span></div>
+              </summary>
+            </details>
+
+            <!-- Last 16 AKTÍV -->
+            <details open class="bg-white rounded-lg border-2 border-blue-400 shadow-md ring-4 ring-blue-100">
+              <summary class="px-3 py-3 flex items-center justify-between">
+                <span class="font-semibold text-slate-800">2. Last 16</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-blue-600 font-semibold bg-blue-50 px-2 py-0.5 rounded-full">5 / 8</span>
+                  <span class="chevron text-blue-500 rotate-180">▾</span>
+                </div>
+              </summary>
+              <div class="px-3 pb-3 border-t border-slate-100 pt-3 space-y-3">
+
+                <p class="text-xs text-slate-500">A párok a Last 32 győzteseiből állnak össze.</p>
+
+                <!-- L16 M1: pickelt -->
+                <div>
+                  <div class="match-label">L16 Match 1<span class="match-label__pill">M1 ↔ M2</span></div>
+                  <div class="match-row">
+                    <button class="team-slot team-slot--winner">
+                      <span class="team-slot__slot-id">M1 győztes</span>
+                      <span class="team-slot__name"><span class="flag">🇲🇽</span>MEX</span>
+                    </button>
+                    <span class="match-vs">VS</span>
+                    <button class="team-slot">
+                      <span class="team-slot__slot-id">M2 győztes</span>
+                      <span class="team-slot__name"><span class="flag">🇨🇿</span>CZE</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- L16 M2: pickelt -->
+                <div>
+                  <div class="match-label">L16 Match 2<span class="match-label__pill">M3 ↔ M4</span></div>
+                  <div class="match-row">
+                    <button class="team-slot team-slot--winner">
+                      <span class="team-slot__slot-id">M3 győztes</span>
+                      <span class="team-slot__name"><span class="flag">🇫🇷</span>FRA</span>
+                    </button>
+                    <span class="match-vs">VS</span>
+                    <button class="team-slot">
+                      <span class="team-slot__slot-id">M4 győztes</span>
+                      <span class="team-slot__name"><span class="flag">🇮🇹</span>ITA</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- L16 M3: nincs pick -->
+                <div>
+                  <div class="match-label">L16 Match 3<span class="match-label__pill">M5 ↔ M6</span></div>
+                  <div class="match-row">
+                    <button class="team-slot">
+                      <span class="team-slot__slot-id">M5 győztes</span>
+                      <span class="team-slot__name"><span class="flag">🇧🇷</span>BRA</span>
+                    </button>
+                    <span class="match-vs">VS</span>
+                    <button class="team-slot">
+                      <span class="team-slot__slot-id">M6 győztes</span>
+                      <span class="team-slot__name"><span class="flag">🇨🇦</span>CAN</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- L16 M4: lockolt — M7 még nem pickelt -->
+                <div>
+                  <div class="match-label">L16 Match 4<span class="match-label__pill">M7 ↔ M8</span></div>
+                  <div class="match-row">
+                    <button class="team-slot team-slot--locked">
+                      <span class="team-slot__slot-id">M7 győztes</span>
+                      <span class="team-slot__name">⏳ vár M7</span>
+                    </button>
+                    <span class="match-vs">VS</span>
+                    <button class="team-slot">
+                      <span class="team-slot__slot-id">M8 győztes</span>
+                      <span class="team-slot__name"><span class="flag">🇪🇸</span>ESP</span>
+                    </button>
+                  </div>
+                  <p class="text-[10px] text-amber-600 mt-1 ml-1">⏳ Pickeld előbb a Last 32 Match 7-et</p>
+                </div>
+
+                <p class="text-xs text-slate-400 italic text-center pt-1">⋯ L16 Match 5–8 lefelé ⋯</p>
+              </div>
+            </details>
+
+            <!-- QF -->
+            <div class="bg-slate-100 border-2 border-dashed border-slate-300 rounded-lg p-3 flex items-center justify-between">
+              <div>
+                <div class="font-semibold text-slate-600 text-sm">3. Negyeddöntő 🔒</div>
+                <p class="text-xs text-slate-500 mt-0.5">Tölts ki előbb 2+ L16 mérkőzést.</p>
+              </div>
+              <span class="text-xs text-slate-400">0 / 4</span>
+            </div>
+
+            <div class="bg-white rounded-lg border border-slate-200 px-3 py-2.5 flex items-center justify-between opacity-60">
+              <div class="font-semibold text-slate-700 text-sm">4. Elődöntő</div>
+              <span class="text-xs text-slate-400">🔒</span>
+            </div>
+            <div class="bg-white rounded-lg border border-slate-200 px-3 py-2.5 flex items-center justify-between opacity-60">
+              <div class="font-semibold text-slate-700 text-sm">5. Döntő · Bronz</div>
+              <span class="text-xs text-slate-400">🔒</span>
+            </div>
+          </div>
+
+          <div class="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-4 py-3">
+            <div class="stepper mb-2">
+              <span class="dot done"></span>
+              <span class="bar done"></span>
+              <span class="dot partial"></span>
+              <span class="bar"></span>
+              <span class="dot"></span>
+              <span class="bar"></span>
+              <span class="dot"></span>
+              <span class="bar"></span>
+              <span class="dot"></span>
+              <span class="bar"></span>
+              <span class="dot"></span>
+            </div>
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-slate-600 font-medium">Last 16: <b>5/8</b></span>
+              <span class="text-emerald-600 font-medium pulse-saving">↻ Mentés…</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================== -->
+    <!-- MOBIL 3: Final + Bronze                             -->
+    <!-- ================================================== -->
+    <section>
+      <h2 class="text-center text-sm font-semibold text-slate-600 mb-3">📱 Mobil — Döntő · Bronz</h2>
+      <div class="device-frame">
+        <div class="device-screen bg-slate-50">
+
+          <div class="px-4 pt-4 pb-3 bg-white border-b border-slate-200 sticky top-0 z-20">
+            <div class="flex items-center justify-between">
+              <button class="text-slate-600">← Vissza</button>
+              <span class="text-xs text-slate-400">Súgó ⓘ</span>
+            </div>
+            <h1 class="text-lg font-bold text-slate-900 mt-2">Bracket-progresszió</h1>
+            <p class="text-xs text-slate-500 mt-0.5">Határidő: <span class="font-medium text-slate-700">jún. 11. 18:00</span></p>
+          </div>
+
+          <div class="px-3 py-3 space-y-2 pb-32">
+
+            <details class="bg-white rounded-lg border border-emerald-300">
+              <summary class="px-3 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-2"><span class="text-emerald-500">✓</span><span class="font-semibold text-slate-800">1. Last 32</span></div>
+                <div class="flex items-center gap-2"><span class="text-xs text-emerald-600 font-semibold">16 / 16</span><span class="chevron text-slate-400">▾</span></div>
+              </summary>
+            </details>
+            <details class="bg-white rounded-lg border border-emerald-300">
+              <summary class="px-3 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-2"><span class="text-emerald-500">✓</span><span class="font-semibold text-slate-800">2. Last 16</span></div>
+                <div class="flex items-center gap-2"><span class="text-xs text-emerald-600 font-semibold">8 / 8</span><span class="chevron text-slate-400">▾</span></div>
+              </summary>
+            </details>
+            <details class="bg-white rounded-lg border border-emerald-300">
+              <summary class="px-3 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-2"><span class="text-emerald-500">✓</span><span class="font-semibold text-slate-800">3. Negyeddöntő</span></div>
+                <div class="flex items-center gap-2"><span class="text-xs text-emerald-600 font-semibold">4 / 4</span><span class="chevron text-slate-400">▾</span></div>
+              </summary>
+            </details>
+            <details class="bg-white rounded-lg border border-emerald-300">
+              <summary class="px-3 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-2"><span class="text-emerald-500">✓</span><span class="font-semibold text-slate-800">4. Elődöntő</span></div>
+                <div class="flex items-center gap-2"><span class="text-xs text-emerald-600 font-semibold">2 / 2</span><span class="chevron text-slate-400">▾</span></div>
+              </summary>
+            </details>
+
+            <!-- Final + Bronze AKTÍV -->
+            <details open class="bg-white rounded-lg border-2 border-blue-400 shadow-md ring-4 ring-blue-100">
+              <summary class="px-3 py-3 flex items-center justify-between">
+                <span class="font-semibold text-slate-800">5. Döntő · Bronz</span>
+                <span class="chevron text-blue-500 rotate-180">▾</span>
+              </summary>
+              <div class="px-3 pb-3 border-t border-slate-100 pt-3 space-y-4">
+
+                <!-- Final match -->
+                <div>
+                  <div class="match-label">🏆 Döntő (a bajnok)<span class="match-label__pill">SF1 ↔ SF2 győztesek</span></div>
+                  <div class="match-row">
+                    <button class="team-slot">
+                      <span class="team-slot__slot-id">SF1 győztes</span>
+                      <span class="team-slot__name"><span class="flag">🇧🇷</span>BRA</span>
+                    </button>
+                    <span class="match-vs">VS</span>
+                    <button class="team-slot team-slot--winner">
+                      <span class="team-slot__slot-id">SF2 győztes</span>
+                      <span class="team-slot__name"><span class="flag">🇫🇷</span>FRA</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Bronze match -->
+                <div>
+                  <div class="match-label">🥉 Bronz<span class="match-label__pill">SF1 ↔ SF2 vesztesek (auto)</span></div>
+                  <div class="match-row">
+                    <button class="team-slot team-slot--winner">
+                      <span class="team-slot__slot-id">SF1 vesztes</span>
+                      <span class="team-slot__name"><span class="flag">🇦🇷</span>ARG</span>
+                    </button>
+                    <span class="match-vs">VS</span>
+                    <button class="team-slot">
+                      <span class="team-slot__slot-id">SF2 vesztes</span>
+                      <span class="team-slot__name"><span class="flag">🇩🇪</span>GER</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Summary -->
+                <div class="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2.5 text-xs text-emerald-900">
+                  ✅ Teljes bracket kész:<br/>
+                  🥇 <b>FRA</b> · 🥈 BRA · 🥉 <b>ARG</b> · 4. GER
+                </div>
+              </div>
+            </details>
+
+          </div>
+
+          <div class="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-4 py-3">
+            <div class="stepper mb-2">
+              <span class="dot done"></span><span class="bar done"></span>
+              <span class="dot done"></span><span class="bar done"></span>
+              <span class="dot done"></span><span class="bar done"></span>
+              <span class="dot done"></span><span class="bar done"></span>
+              <span class="dot done"></span><span class="bar done"></span>
+              <span class="dot active"></span>
+            </div>
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-emerald-700 font-semibold">✓ Teljes tipp leadva</span>
+              <span class="text-emerald-600 font-medium">✓ Mentve</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================== -->
+    <!-- MOBIL 4: US-938 nincs kész — lockolt prompt         -->
+    <!-- ================================================== -->
+    <section>
+      <h2 class="text-center text-sm font-semibold text-slate-600 mb-3">📱 Mobil — Csoport-tipp dependency</h2>
+      <div class="device-frame">
+        <div class="device-screen bg-slate-50">
+
+          <div class="px-4 pt-4 pb-3 bg-white border-b border-slate-200 sticky top-0 z-20">
+            <div class="flex items-center justify-between">
+              <button class="text-slate-600">← Vissza</button>
+              <span class="text-xs text-slate-400">Súgó ⓘ</span>
+            </div>
+            <h1 class="text-lg font-bold text-slate-900 mt-2">Bracket-progresszió</h1>
+          </div>
+
+          <div class="px-4 py-6 space-y-4">
+
+            <!-- Lockolt prompt -->
+            <div class="bg-amber-50 border-2 border-amber-300 rounded-2xl p-6 text-center">
+              <div class="text-4xl mb-3">🔒</div>
+              <h2 class="text-base font-bold text-slate-800 mb-2">A bracket még nem<br/>jeleníthető meg</h2>
+              <p class="text-sm text-slate-600 mb-4 leading-relaxed">
+                Töltsd ki előbb a <b>Csoport végeredmény</b> tippet — a 12 csoport sorrendje + 4 továbbjutó 3.helyezett alapján számoljuk ki a Last 32 párosításokat.
+              </p>
+              <button class="w-full bg-blue-600 text-white font-semibold rounded-lg px-4 py-3 text-sm hover:bg-blue-700 shadow-sm">
+                Csoport tipp megnyitása →
+              </button>
+              <p class="text-[11px] text-slate-400 mt-3 italic">
+                Ha részben kitöltöd, a már meglévő csoportok matchei aktiválódnak.
+              </p>
+            </div>
+
+            <!-- Részleges állapot példa -->
+            <div class="bg-white rounded-lg border border-slate-200 px-4 py-3">
+              <p class="text-xs font-semibold text-slate-700 mb-2">⚙ Részleges állapot példa:</p>
+              <p class="text-xs text-slate-500 leading-relaxed">
+                Ha 8 csoportot kitöltesz a 12-ből, a Last 32-ből kb. <b>10–12 mérkőzés</b> aktiválódik (azok, ahol mindkét slot a kitöltött csoportokból jön). A többi mérkőzés `⏳ G csoport vár` placeholder-t mutat.
+              </p>
+            </div>
+
+            <!-- Status példa: részben kitöltött csoport-tipp -->
+            <details open class="bg-white rounded-lg border border-slate-200">
+              <summary class="px-3 py-3 flex items-center justify-between">
+                <span class="font-semibold text-slate-800 text-sm">1. Last 32 (részleges)</span>
+                <span class="text-xs text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">10 / 16 elérhető</span>
+              </summary>
+              <div class="px-3 pb-3 border-t border-slate-100 pt-3 space-y-2">
+
+                <!-- Aktív match -->
+                <div>
+                  <div class="match-label">Match 1<span class="match-label__pill">A1 vs B2</span></div>
+                  <div class="match-row">
+                    <button class="team-slot">
+                      <span class="team-slot__slot-id">W A1</span>
+                      <span class="team-slot__name"><span class="flag">🇲🇽</span>MEX</span>
+                    </button>
+                    <span class="match-vs">VS</span>
+                    <button class="team-slot">
+                      <span class="team-slot__slot-id">RU B1</span>
+                      <span class="team-slot__name"><span class="flag">🇨🇭</span>SUI</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Lockolt match — G csoport hiányzik -->
+                <div>
+                  <div class="match-label">Match 8<span class="match-label__pill">G1 vs H2</span></div>
+                  <div class="match-row">
+                    <button class="team-slot team-slot--locked">
+                      <span class="team-slot__slot-id">W G1</span>
+                      <span class="team-slot__name">⏳ G vár</span>
+                    </button>
+                    <span class="match-vs">VS</span>
+                    <button class="team-slot">
+                      <span class="team-slot__slot-id">RU H1</span>
+                      <span class="team-slot__name"><span class="flag">🇸🇳</span>SEN</span>
+                    </button>
+                  </div>
+                  <button class="text-[11px] text-blue-600 mt-1 ml-1 underline">→ G csoport tippelése</button>
+                </div>
+
+              </div>
+            </details>
+
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ============================================= -->
+  <!-- DESKTOP nézet: 6 oszlopos accordion grid       -->
+  <!-- ============================================= -->
+  <section class="mt-12">
+    <h2 class="text-center text-sm font-semibold text-slate-600 mb-4">🖥️ Desktop — 6 körös bracket áttekintés</h2>
+
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 max-w-7xl mx-auto">
+      <!-- Top progress -->
+      <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
+        <div>
+          <h1 class="text-xl font-bold text-slate-900">Bracket-progresszió</h1>
+          <p class="text-xs text-slate-500 mt-0.5">Határidő: jún. 11. 18:00 · Mentés automatikus</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="stepper" style="width: 240px;">
+            <span class="dot done"></span><span class="bar done"></span>
+            <span class="dot active"></span><span class="bar"></span>
+            <span class="dot"></span><span class="bar"></span>
+            <span class="dot"></span><span class="bar"></span>
+            <span class="dot"></span><span class="bar"></span>
+            <span class="dot"></span>
+          </div>
+          <span class="text-xs text-emerald-600 font-medium">✓ Mentve</span>
+        </div>
+      </div>
+
+      <!-- 3 oszlopos kör grid -->
+      <div class="grid grid-cols-3 gap-4">
+
+        <!-- Last 32: done -->
+        <div class="bg-emerald-50 border border-emerald-300 rounded-xl p-4">
+          <div class="bracket-col-title flex items-center justify-between">
+            <span>1. Last 32</span>
+            <span class="text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full text-[10px] font-bold">16 / 16</span>
+          </div>
+          <div class="space-y-1.5 max-h-80 overflow-y-auto">
+            <div class="bg-white rounded p-1.5 border border-emerald-200 text-[11px] flex items-center justify-between">
+              <span class="text-slate-400 w-6">M1</span>
+              <span class="font-semibold flex items-center gap-1"><span class="flag">🇲🇽</span>MEX</span>
+              <span class="text-slate-300 text-[9px]">vs</span>
+              <span class="text-slate-400 flex items-center gap-1"><span class="flag">🇨🇭</span>SUI</span>
+            </div>
+            <div class="bg-white rounded p-1.5 border border-emerald-200 text-[11px] flex items-center justify-between">
+              <span class="text-slate-400 w-6">M2</span>
+              <span class="font-semibold flex items-center gap-1"><span class="flag">🇨🇿</span>CZE</span>
+              <span class="text-slate-300 text-[9px]">vs</span>
+              <span class="text-slate-400 flex items-center gap-1"><span class="flag">🇧🇦</span>BIH</span>
+            </div>
+            <div class="bg-white rounded p-1.5 border border-emerald-200 text-[11px] flex items-center justify-between">
+              <span class="text-slate-400 w-6">M3</span>
+              <span class="font-semibold flex items-center gap-1"><span class="flag">🇫🇷</span>FRA</span>
+              <span class="text-slate-300 text-[9px]">vs</span>
+              <span class="text-slate-400 flex items-center gap-1"><span class="flag">🇩🇪</span>GER</span>
+            </div>
+            <div class="bg-white rounded p-1.5 border border-emerald-200 text-[11px] flex items-center justify-between">
+              <span class="text-slate-400 w-6">M4</span>
+              <span class="font-semibold flex items-center gap-1"><span class="flag">🇮🇹</span>ITA</span>
+              <span class="text-slate-300 text-[9px]">vs</span>
+              <span class="text-slate-400 flex items-center gap-1"><span class="flag">🇰🇷</span>KOR</span>
+            </div>
+            <div class="bg-white rounded p-1.5 border border-emerald-200 text-[11px] flex items-center justify-between">
+              <span class="text-slate-400 w-6">M5</span>
+              <span class="font-semibold flex items-center gap-1"><span class="flag">🇧🇷</span>BRA</span>
+              <span class="text-slate-300 text-[9px]">vs</span>
+              <span class="text-slate-400 flex items-center gap-1"><span class="flag">🇸🇳</span>SEN</span>
+            </div>
+            <div class="text-center text-[10px] text-slate-400 italic">⋯ +11 további match ⋯</div>
+          </div>
+        </div>
+
+        <!-- Last 16: AKTÍV -->
+        <div class="bg-blue-50 border-2 border-blue-400 rounded-xl p-4 ring-4 ring-blue-100">
+          <div class="bracket-col-title flex items-center justify-between">
+            <span>2. Last 16</span>
+            <span class="text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full text-[10px] font-bold">5 / 8</span>
+          </div>
+          <div class="space-y-2">
+            <!-- L16 M1 -->
+            <div>
+              <div class="text-[9px] text-slate-500 mb-0.5 uppercase tracking-wide">L16 M1 (M1↔M2)</div>
+              <div class="match-row">
+                <button class="team-slot team-slot--winner" style="padding:5px 8px;">
+                  <span class="team-slot__name" style="font-size:11px;"><span class="flag">🇲🇽</span>MEX</span>
+                </button>
+                <span class="match-vs" style="font-size:9px;">VS</span>
+                <button class="team-slot" style="padding:5px 8px;">
+                  <span class="team-slot__name" style="font-size:11px;"><span class="flag">🇨🇿</span>CZE</span>
+                </button>
+              </div>
+            </div>
+            <!-- L16 M2 -->
+            <div>
+              <div class="text-[9px] text-slate-500 mb-0.5 uppercase tracking-wide">L16 M2 (M3↔M4)</div>
+              <div class="match-row">
+                <button class="team-slot team-slot--winner" style="padding:5px 8px;">
+                  <span class="team-slot__name" style="font-size:11px;"><span class="flag">🇫🇷</span>FRA</span>
+                </button>
+                <span class="match-vs" style="font-size:9px;">VS</span>
+                <button class="team-slot" style="padding:5px 8px;">
+                  <span class="team-slot__name" style="font-size:11px;"><span class="flag">🇮🇹</span>ITA</span>
+                </button>
+              </div>
+            </div>
+            <!-- L16 M3 -->
+            <div>
+              <div class="text-[9px] text-slate-500 mb-0.5 uppercase tracking-wide">L16 M3 (M5↔M6)</div>
+              <div class="match-row">
+                <button class="team-slot" style="padding:5px 8px;">
+                  <span class="team-slot__name" style="font-size:11px;"><span class="flag">🇧🇷</span>BRA</span>
+                </button>
+                <span class="match-vs" style="font-size:9px;">VS</span>
+                <button class="team-slot" style="padding:5px 8px;">
+                  <span class="team-slot__name" style="font-size:11px;"><span class="flag">🇨🇦</span>CAN</span>
+                </button>
+              </div>
+            </div>
+            <!-- L16 M4 lockolt -->
+            <div>
+              <div class="text-[9px] text-slate-500 mb-0.5 uppercase tracking-wide">L16 M4 (M7↔M8)</div>
+              <div class="match-row">
+                <button class="team-slot team-slot--locked" style="padding:5px 8px;">
+                  <span class="team-slot__name" style="font-size:11px;">⏳ vár M7</span>
+                </button>
+                <span class="match-vs" style="font-size:9px;">VS</span>
+                <button class="team-slot" style="padding:5px 8px;">
+                  <span class="team-slot__name" style="font-size:11px;"><span class="flag">🇪🇸</span>ESP</span>
+                </button>
+              </div>
+            </div>
+            <div class="text-center text-[10px] text-slate-400 italic">⋯ +4 további match ⋯</div>
+          </div>
+        </div>
+
+        <!-- Negyeddöntő: lockolt -->
+        <div class="bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl p-4">
+          <div class="bracket-col-title flex items-center justify-between">
+            <span class="text-slate-500">3. Negyeddöntő 🔒</span>
+            <span class="text-slate-400 text-[10px] font-bold">0 / 4</span>
+          </div>
+          <p class="text-xs text-slate-500 mb-3">Tölts ki előbb 6+ Last 16 mérkőzést.</p>
+          <div class="space-y-2 opacity-50">
+            <div>
+              <div class="text-[9px] text-slate-500 mb-0.5 uppercase tracking-wide">QF M1 (L16 M1↔M2)</div>
+              <div class="match-row">
+                <button class="team-slot team-slot--locked" style="padding:5px 8px;"><span class="team-slot__name" style="font-size:11px;"><span class="flag">🇲🇽</span>MEX</span></button>
+                <span class="match-vs" style="font-size:9px;">VS</span>
+                <button class="team-slot team-slot--locked" style="padding:5px 8px;"><span class="team-slot__name" style="font-size:11px;"><span class="flag">🇫🇷</span>FRA</span></button>
+              </div>
+            </div>
+            <div>
+              <div class="text-[9px] text-slate-500 mb-0.5 uppercase tracking-wide">QF M2 (L16 M3↔M4)</div>
+              <div class="match-row">
+                <button class="team-slot team-slot--locked" style="padding:5px 8px;"><span class="team-slot__name" style="font-size:11px;">⏳ vár</span></button>
+                <span class="match-vs" style="font-size:9px;">VS</span>
+                <button class="team-slot team-slot--locked" style="padding:5px 8px;"><span class="team-slot__name" style="font-size:11px;">⏳ vár</span></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Elődöntő -->
+        <div class="bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl p-4">
+          <div class="bracket-col-title flex items-center justify-between">
+            <span class="text-slate-500">4. Elődöntő 🔒</span>
+            <span class="text-slate-400 text-[10px] font-bold">0 / 2</span>
+          </div>
+          <p class="text-xs text-slate-500">Tölts ki előbb 4 QF-mérkőzést.</p>
+        </div>
+
+        <!-- Döntő -->
+        <div class="bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl p-4">
+          <div class="bracket-col-title flex items-center justify-between">
+            <span class="text-slate-500">5. Döntő 🏆 🔒</span>
+            <span class="text-slate-400 text-[10px] font-bold">0 / 1</span>
+          </div>
+          <p class="text-xs text-slate-500">Az 2 SF-győztes közül a bajnok.</p>
+        </div>
+
+        <!-- Bronz -->
+        <div class="bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl p-4">
+          <div class="bracket-col-title flex items-center justify-between">
+            <span class="text-slate-500">6. Bronz 🥉 🔒</span>
+            <span class="text-slate-400 text-[10px] font-bold">0 / 1</span>
+          </div>
+          <p class="text-xs text-slate-500">A 2 SF-vesztes (auto) közül a bronzérmes.</p>
+        </div>
+
+      </div>
+
+      <!-- Cross-store warning -->
+      <div class="mt-4 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2.5 flex items-center gap-2 text-xs text-amber-900">
+        <span>⚠️</span>
+        <p>A bracket szerkezete a <b>Csoport végeredmény</b> tippedhez kötődik. Ha módosítod ott egy csoport sorrendjét, a már megpickelt győzteseid közül a már nem érvényesek automatikusan törlődnek.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================= -->
+  <!-- READ-ONLY: kiértékelt nézet                   -->
+  <!-- ============================================= -->
+  <section class="mt-12">
+    <h2 class="text-center text-sm font-semibold text-slate-600 mb-4">📱 Mobil — Deadline után, kiértékelt</h2>
+
+    <div class="flex justify-center">
+      <div class="device-frame">
+        <div class="device-screen bg-slate-50">
+
+          <div class="px-4 pt-4 pb-3 bg-white border-b border-slate-200 sticky top-0 z-20">
+            <div class="flex items-center justify-between">
+              <button class="text-slate-600">← Vissza</button>
+              <span class="text-xs text-slate-400">Súgó ⓘ</span>
+            </div>
+            <h1 class="text-lg font-bold text-slate-900 mt-2">Bracket-progresszió</h1>
+            <p class="text-xs text-amber-700 mt-0.5">🔒 Lezárva · Kiértékelve</p>
+          </div>
+
+          <div class="px-3 py-3 space-y-2 pb-8">
+
+            <details class="bg-white rounded-lg border border-slate-200">
+              <summary class="px-3 py-3 flex items-center justify-between">
+                <span class="font-semibold text-slate-800">1. Last 32</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-slate-600 font-semibold">12 / 16 helyes</span>
+                  <span class="chevron text-slate-400">▾</span>
+                </div>
+              </summary>
+            </details>
+            <details class="bg-white rounded-lg border border-slate-200">
+              <summary class="px-3 py-3 flex items-center justify-between">
+                <span class="font-semibold text-slate-800">2. Last 16</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-slate-600 font-semibold">5 / 8 helyes</span>
+                  <span class="chevron text-slate-400">▾</span>
+                </div>
+              </summary>
+            </details>
+
+            <!-- QF expanded -->
+            <details open class="bg-white rounded-lg border border-slate-200">
+              <summary class="px-3 py-3 flex items-center justify-between">
+                <span class="font-semibold text-slate-800">3. Negyeddöntő</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-slate-600 font-semibold">3 / 4 helyes</span>
+                  <span class="chevron text-slate-400 rotate-180">▾</span>
+                </div>
+              </summary>
+              <div class="px-3 pb-3 border-t border-slate-100 pt-3 space-y-3">
+
+                <!-- QF M1 helyes -->
+                <div>
+                  <div class="match-label">QF M1<span class="match-label__pill">L16 M1↔M2</span></div>
+                  <div class="match-row">
+                    <button class="team-slot team-slot--correct">
+                      <span class="team-slot__slot-id">L16 M1 győztes</span>
+                      <span class="team-slot__name"><span class="flag">🇲🇽</span>MEX ✓</span>
+                    </button>
+                    <span class="match-vs">VS</span>
+                    <button class="team-slot">
+                      <span class="team-slot__slot-id">L16 M2 győztes</span>
+                      <span class="team-slot__name"><span class="flag">🇫🇷</span>FRA</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- QF M2 helytelen -->
+                <div>
+                  <div class="match-label">QF M2<span class="match-label__pill">L16 M3↔M4</span></div>
+                  <div class="match-row">
+                    <button class="team-slot team-slot--wrong">
+                      <span class="team-slot__slot-id">L16 M3 győztes</span>
+                      <span class="team-slot__name"><span class="flag">🇧🇷</span>BRA ✗</span>
+                    </button>
+                    <span class="match-vs">VS</span>
+                    <button class="team-slot team-slot--actual">
+                      <span class="team-slot__slot-id">L16 M4 győztes</span>
+                      <span class="team-slot__name"><span class="flag">🇪🇸</span>ESP</span>
+                    </button>
+                  </div>
+                  <p class="text-[11px] text-slate-500 mt-1 ml-1 italic">A tipped: BRA · Tényleges győztes: ESP</p>
+                </div>
+
+              </div>
+            </details>
+
+            <!-- SF -->
+            <details class="bg-white rounded-lg border border-slate-200">
+              <summary class="px-3 py-3 flex items-center justify-between">
+                <span class="font-semibold text-slate-800">4. Elődöntő</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-slate-600 font-semibold">2 / 2 helyes</span>
+                  <span class="chevron text-slate-400">▾</span>
+                </div>
+              </summary>
+            </details>
+
+            <!-- Final + Bronze expanded -->
+            <details open class="bg-white rounded-lg border border-slate-200">
+              <summary class="px-3 py-3 flex items-center justify-between">
+                <span class="font-semibold text-slate-800">5. Döntő · Bronz</span>
+                <span class="chevron text-slate-400 rotate-180">▾</span>
+              </summary>
+              <div class="px-3 pb-3 border-t border-slate-100 pt-3 space-y-3">
+
+                <!-- Final helytelen -->
+                <div>
+                  <div class="match-label">🏆 Döntő (a bajnok)</div>
+                  <div class="match-row">
+                    <button class="team-slot team-slot--actual">
+                      <span class="team-slot__slot-id">SF1 győztes</span>
+                      <span class="team-slot__name"><span class="flag">🇧🇷</span>BRA</span>
+                    </button>
+                    <span class="match-vs">VS</span>
+                    <button class="team-slot team-slot--wrong">
+                      <span class="team-slot__slot-id">SF2 győztes</span>
+                      <span class="team-slot__name"><span class="flag">🇫🇷</span>FRA ✗</span>
+                    </button>
+                  </div>
+                  <p class="text-[11px] text-slate-500 mt-1 ml-1 italic">A bajnok-tipped: FRA · Tényleges bajnok: BRA</p>
+                </div>
+
+                <!-- Bronz helyes -->
+                <div>
+                  <div class="match-label">🥉 Bronz</div>
+                  <div class="match-row">
+                    <button class="team-slot team-slot--correct">
+                      <span class="team-slot__slot-id">SF1 vesztes</span>
+                      <span class="team-slot__name"><span class="flag">🇦🇷</span>ARG ✓</span>
+                    </button>
+                    <span class="match-vs">VS</span>
+                    <button class="team-slot">
+                      <span class="team-slot__slot-id">SF2 vesztes</span>
+                      <span class="team-slot__name"><span class="flag">🇩🇪</span>GER</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-600">
+                  Összesen: <b>23 / 32 mérkőzés-pick helyes</b>.
+                  <span class="block text-[11px] text-slate-400 mt-0.5 italic">A pontérték a pontozási konfigtól függ — külön story.</span>
+                </div>
+              </div>
+            </details>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+</body>
+</html>

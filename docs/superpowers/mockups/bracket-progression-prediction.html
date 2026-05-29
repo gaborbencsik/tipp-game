@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bracket-progresszió — Tippelési mockup</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+  .flag {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 16px; border-radius: 3px; font-size: 13px;
+    background: #f3f4f6;
+  }
+  details[open] > summary .chevron { transform: rotate(180deg); }
+  .chevron { transition: transform 200ms ease; }
+  summary::-webkit-details-marker { display: none; }
+  summary { cursor: pointer; list-style: none; }
+  .pulse-saving { animation: pulse 1.5s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: 0.5; } }
+  .device-frame {
+    width: 390px; max-width: 100%;
+    border: 12px solid #1f2937;
+    border-radius: 40px;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+    background: white;
+    display: flex; flex-direction: column;
+    height: 844px;
+  }
+  .device-screen { flex: 1; overflow-y: auto; position: relative; }
+  .device-screen::-webkit-scrollbar { width: 4px; }
+  .device-screen::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+
+  /* Csapat chip */
+  .team-chip {
+    display: inline-flex; flex-direction: column; align-items: center; gap: 2px;
+    padding: 6px 4px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    background: white;
+    font-size: 11px; font-weight: 600; color: #475569;
+    line-height: 1.1;
+    min-width: 56px;
+    cursor: pointer; user-select: none;
+    transition: all 150ms ease;
+  }
+  .team-chip:hover { border-color: #93c5fd; background: #eff6ff; }
+  .team-chip--active {
+    border-color: #2563eb; background: #2563eb; color: white;
+    box-shadow: 0 4px 8px -2px rgba(37,99,235,0.4);
+  }
+  .team-chip--active .flag { background: rgba(255,255,255,0.25); }
+  .team-chip--disabled {
+    opacity: 0.4; cursor: not-allowed; background: #f8fafc;
+  }
+  .team-chip .check {
+    position: absolute; top: -6px; right: -6px;
+    width: 16px; height: 16px; border-radius: 999px;
+    background: #16a34a; color: white;
+    font-size: 10px; display: flex; align-items: center; justify-content: center;
+    border: 2px solid white;
+  }
+
+  /* Round status */
+  .round-progress-track {
+    background: linear-gradient(90deg, #e2e8f0 var(--p, 0%), #e2e8f0 var(--p, 0%));
+  }
+
+  /* Stepper for sticky bar */
+  .stepper { display: flex; gap: 4px; align-items: center; }
+  .stepper .dot { width: 8px; height: 8px; border-radius: 999px; background: #cbd5e1; }
+  .stepper .dot.done { background: #16a34a; }
+  .stepper .dot.partial { background: #fbbf24; }
+  .stepper .dot.active { background: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.2); }
+  .stepper .bar { flex: 1; height: 2px; background: #e2e8f0; }
+  .stepper .bar.done { background: #16a34a; }
+
+  /* Final radio rows */
+  .radio-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 12px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    background: white;
+    cursor: pointer;
+  }
+  .radio-row--selected { border-color: #2563eb; background: #eff6ff; }
+  .radio-circle {
+    width: 18px; height: 18px; border-radius: 999px;
+    border: 2px solid #cbd5e1;
+    flex-shrink: 0;
+  }
+  .radio-row--selected .radio-circle {
+    border-color: #2563eb; background: #2563eb;
+    box-shadow: inset 0 0 0 3px white;
+  }
+
+  /* Eval badges */
+  .eval-correct { background: #dcfce7 !important; border-color: #86efac !important; color: #14532d !important; }
+  .eval-wrong { background: #fee2e2 !important; border-color: #fca5a5 !important; color: #7f1d1d !important; }
+  .eval-missed { background: #f1f5f9; border: 1px dashed #94a3b8; color: #475569; }
+</style>
+</head>
+<body class="bg-slate-100 min-h-screen">
+
+<div class="max-w-[1500px] mx-auto p-6">
+  <header class="mb-8 text-center">
+    <h1 class="text-2xl font-bold text-slate-800">Bracket-progresszió — UX mockup</h1>
+    <p class="text-sm text-slate-500 mt-1">
+      <b>6 körös cascading bracket:</b> Last 32 → Last 16 → Negyeddöntő → Elődöntő → Döntő · Bajnok · Bronz
+    </p>
+    <p class="text-xs text-slate-400 mt-1">
+      Last 32: csoport-grouped chip-pool a 48 csapatból · további körök: a user előző körös tippje a pool ·
+      auto-save · cascading szűrés ha valamelyik korábbi kör módosul.
+    </p>
+    <p class="text-xs text-slate-400 mt-1">
+      Spec: <code>docs/superpowers/specs/2026-05-29-bracket-progression-prediction-design.md</code>
+    </p>
+  </header>
+
+  <div class="flex flex-wrap justify-center gap-8 items-start">
+
+    <!-- ============================================= -->
+    <!-- MOBIL 1: Last 32 kitöltése (csoport-grouping) -->
+    <!-- ============================================= -->
+    <section>
+      <h2 class="text-center text-sm font-semibold text-slate-600 mb-3">📱 Mobil — Last 32 (csoport-grouped)</h2>
+      <div class="device-frame">
+        <div class="device-screen bg-slate-50">
+
+          <!-- Top bar -->
+          <div class="px-4 pt-4 pb-3 bg-white border-b border-slate-200 sticky top-0 z-20">
+            <div class="flex items-center justify-between">
+              <button class="text-slate-600">← Vissza</button>
+              <span class="text-xs text-slate-400">Súgó ⓘ</span>
+            </div>
+            <h1 class="text-lg font-bold text-slate-900 mt-2">Bracket-progresszió</h1>
+            <p class="text-xs text-slate-500 mt-0.5">Határidő: <span class="font-medium text-slate-700">jún. 11. 18:00</span> · Mentés automatikus</p>
+          </div>
+
+          <!-- Body -->
+          <div class="px-3 py-3 space-y-2 pb-32">
+
+            <!-- Info kártya -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2.5 flex gap-2">
+              <span class="text-blue-600">💡</span>
+              <p class="text-xs text-blue-900 leading-snug">
+                Minden kör <b>az előző körös tippedből</b> szűkít. Bármelyik körrel kezdheted, később módosíthatsz —
+                ha kiveszel egy csapatot, a későbbi körökben is automatikusan eltűnik.
+              </p>
+            </div>
+
+            <!-- Last 32: AKTÍV expanded -->
+            <details open class="bg-white rounded-lg border-2 border-blue-400 shadow-md ring-4 ring-blue-100">
+              <summary class="px-3 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="font-semibold text-slate-800">1. Last 32</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-blue-600 font-semibold bg-blue-50 px-2 py-0.5 rounded-full">24 / 32</span>
+                  <span class="chevron text-blue-500 rotate-180">▾</span>
+                </div>
+              </summary>
+              <div class="px-3 pb-3 border-t border-slate-100 pt-3 space-y-3">
+
+                <p class="text-xs text-slate-500">Válassz <b>32 csapatot</b> a 48-ból. A csoportok szerint van rendezve.</p>
+
+                <!-- Csoport A -->
+                <div>
+                  <div class="text-xs font-semibold text-slate-500 mb-1.5 flex items-center gap-2">
+                    <span>A csoport</span>
+                    <span class="text-[10px] text-slate-400">3/4</span>
+                  </div>
+                  <div class="grid grid-cols-4 gap-1.5">
+                    <button class="team-chip team-chip--active relative"><span class="flag">🇲🇽</span>MEX<span class="check">✓</span></button>
+                    <button class="team-chip team-chip--active relative"><span class="flag">🇰🇷</span>KOR<span class="check">✓</span></button>
+                    <button class="team-chip team-chip--active relative"><span class="flag">🇨🇿</span>CZE<span class="check">✓</span></button>
+                    <button class="team-chip"><span class="flag">🇿🇦</span>RSA</button>
+                  </div>
+                </div>
+
+                <!-- Csoport B -->
+                <div>
+                  <div class="text-xs font-semibold text-slate-500 mb-1.5 flex items-center gap-2">
+                    <span>B csoport</span>
+                    <span class="text-[10px] text-slate-400">2/4</span>
+                  </div>
+                  <div class="grid grid-cols-4 gap-1.5">
+                    <button class="team-chip team-chip--active relative"><span class="flag">🇨🇦</span>CAN<span class="check">✓</span></button>
+                    <button class="team-chip team-chip--active relative"><span class="flag">🇨🇭</span>SUI<span class="check">✓</span></button>
+                    <button class="team-chip"><span class="flag">🇧🇦</span>BIH</button>
+                    <button class="team-chip"><span class="flag">🇶🇦</span>QAT</button>
+                  </div>
+                </div>
+
+                <!-- Csoport C -->
+                <div>
+                  <div class="text-xs font-semibold text-slate-500 mb-1.5 flex items-center gap-2">
+                    <span>C csoport</span>
+                    <span class="text-[10px] text-slate-400">3/4</span>
+                  </div>
+                  <div class="grid grid-cols-4 gap-1.5">
+                    <button class="team-chip team-chip--active relative"><span class="flag">🇪🇸</span>ESP<span class="check">✓</span></button>
+                    <button class="team-chip team-chip--active relative"><span class="flag">🇩🇰</span>DEN<span class="check">✓</span></button>
+                    <button class="team-chip team-chip--active relative"><span class="flag">🇨🇮</span>CIV<span class="check">✓</span></button>
+                    <button class="team-chip"><span class="flag">🇰🇷</span>JOR</button>
+                  </div>
+                </div>
+
+                <!-- Csoport D (rövidített: csak címke) -->
+                <div>
+                  <div class="text-xs font-semibold text-slate-500 mb-1.5 flex items-center gap-2">
+                    <span>D csoport</span>
+                    <span class="text-[10px] text-slate-400">2/4</span>
+                  </div>
+                  <div class="grid grid-cols-4 gap-1.5">
+                    <button class="team-chip team-chip--active relative"><span class="flag">🇫🇷</span>FRA<span class="check">✓</span></button>
+                    <button class="team-chip team-chip--active relative"><span class="flag">🇩🇪</span>GER<span class="check">✓</span></button>
+                    <button class="team-chip"><span class="flag">🇨🇩</span>COD</button>
+                    <button class="team-chip"><span class="flag">🇮🇪</span>IRL</button>
+                  </div>
+                </div>
+
+                <p class="text-xs text-slate-400 italic text-center pt-1">⋯ E–L csoportok lefelé görgetve ⋯</p>
+              </div>
+            </details>
+
+            <!-- Last 16: lockolt (Last 32 még nem teljes) -->
+            <div class="bg-slate-100 border-2 border-dashed border-slate-300 rounded-lg p-3 flex items-center justify-between">
+              <div>
+                <div class="font-semibold text-slate-600 text-sm">2. Last 16 🔒</div>
+                <p class="text-xs text-slate-500 mt-0.5">Tölts ki előbb 16+ csapatot a Last 32-be.</p>
+              </div>
+              <span class="text-xs text-slate-400">0 / 16</span>
+            </div>
+
+            <!-- QF, SF, Final, Bronze szintén lockolt collapsed -->
+            <div class="bg-white rounded-lg border border-slate-200 px-3 py-2.5 flex items-center justify-between opacity-60">
+              <div class="font-semibold text-slate-700 text-sm">3. Negyeddöntő</div>
+              <span class="text-xs text-slate-400">🔒 0 / 8</span>
+            </div>
+            <div class="bg-white rounded-lg border border-slate-200 px-3 py-2.5 flex items-center justify-between opacity-60">
+              <div class="font-semibold text-slate-700 text-sm">4. Elődöntő</div>
+              <span class="text-xs text-slate-400">🔒 0 / 4</span>
+            </div>
+            <div class="bg-white rounded-lg border border-slate-200 px-3 py-2.5 flex items-center justify-between opacity-60">
+              <div class="font-semibold text-slate-700 text-sm">5. Döntő · bajnok · bronz</div>
+              <span class="text-xs text-slate-400">🔒</span>
+            </div>
+
+          </div>
+
+          <!-- Sticky bottom bar -->
+          <div class="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-4 py-3 shadow-[0_-4px_12px_-4px_rgba(0,0,0,0.08)]">
+            <div class="stepper mb-2">
+              <span class="dot partial"></span>
+              <span class="bar"></span>
+              <span class="dot"></span>
+              <span class="bar"></span>
+              <span class="dot"></span>
+              <span class="bar"></span>
+              <span class="dot"></span>
+              <span class="bar"></span>
+              <span class="dot"></span>
+              <span class="bar"></span>
+              <span class="dot"></span>
+            </div>
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-slate-600 font-medium">Last 32: <b>24/32</b></span>
+              <span class="text-emerald-600 font-medium">✓ Mentve</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================== -->
+    <!-- MOBIL 2: Last 16 — pool a user Last 32 tippjéből    -->
+    <!-- =================================================== -->
+    <section>
+      <h2 class="text-center text-sm font-semibold text-slate-600 mb-3">📱 Mobil — Last 16 (cascading pool)</h2>
+      <div class="device-frame">
+        <div class="device-screen bg-slate-50">
+
+          <div class="px-4 pt-4 pb-3 bg-white border-b border-slate-200 sticky top-0 z-20">
+            <div class="flex items-center justify-between">
+              <button class="text-slate-600">← Vissza</button>
+              <span class="text-xs text-slate-400">Súgó ⓘ</span>
+            </div>
+            <h1 class="text-lg font-bold text-slate-900 mt-2">Bracket-progresszió</h1>
+            <p class="text-xs text-slate-500 mt-0.5">Határidő: <span class="font-medium text-slate-700">jún. 11. 18:00</span></p>
+          </div>
+
+          <div class="px-3 py-3 space-y-2 pb-32">
+
+            <!-- Last 32 collapsed/done -->
+            <details class="bg-white rounded-lg border border-emerald-300 shadow-sm">
+              <summary class="px-3 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="text-emerald-500">✓</span>
+                  <span class="font-semibold text-slate-800">1. Last 32</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-emerald-600 font-semibold">32 / 32</span>
+                  <span class="chevron text-slate-400">▾</span>
+                </div>
+              </summary>
+            </details>
+
+            <!-- Last 16: AKTÍV -->
+            <details open class="bg-white rounded-lg border-2 border-blue-400 shadow-md ring-4 ring-blue-100">
+              <summary class="px-3 py-3 flex items-center justify-between">
+                <span class="font-semibold text-slate-800">2. Last 16</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-blue-600 font-semibold bg-blue-50 px-2 py-0.5 rounded-full">12 / 16</span>
+                  <span class="chevron text-blue-500 rotate-180">▾</span>
+                </div>
+              </summary>
+              <div class="px-3 pb-3 border-t border-slate-100 pt-3 space-y-3">
+                <p class="text-xs text-slate-500">Válassz <b>16-ot</b> a Last 32-es tippedből. A pool csak azokat a csapatokat tartalmazza.</p>
+
+                <div class="grid grid-cols-4 gap-1.5">
+                  <button class="team-chip team-chip--active relative"><span class="flag">🇲🇽</span>MEX<span class="check">✓</span></button>
+                  <button class="team-chip team-chip--active relative"><span class="flag">🇰🇷</span>KOR<span class="check">✓</span></button>
+                  <button class="team-chip team-chip--active relative"><span class="flag">🇨🇿</span>CZE<span class="check">✓</span></button>
+                  <button class="team-chip team-chip--active relative"><span class="flag">🇨🇦</span>CAN<span class="check">✓</span></button>
+
+                  <button class="team-chip team-chip--active relative"><span class="flag">🇨🇭</span>SUI<span class="check">✓</span></button>
+                  <button class="team-chip team-chip--active relative"><span class="flag">🇪🇸</span>ESP<span class="check">✓</span></button>
+                  <button class="team-chip team-chip--active relative"><span class="flag">🇩🇰</span>DEN<span class="check">✓</span></button>
+                  <button class="team-chip"><span class="flag">🇨🇮</span>CIV</button>
+
+                  <button class="team-chip team-chip--active relative"><span class="flag">🇫🇷</span>FRA<span class="check">✓</span></button>
+                  <button class="team-chip team-chip--active relative"><span class="flag">🇩🇪</span>GER<span class="check">✓</span></button>
+                  <button class="team-chip team-chip--active relative"><span class="flag">🇮🇹</span>ITA<span class="check">✓</span></button>
+                  <button class="team-chip team-chip--active relative"><span class="flag">🇵🇹</span>POR<span class="check">✓</span></button>
+
+                  <button class="team-chip"><span class="flag">🇧🇪</span>BEL</button>
+                  <button class="team-chip"><span class="flag">🇳🇱</span>NED</button>
+                  <button class="team-chip team-chip--active relative"><span class="flag">🇧🇷</span>BRA<span class="check">✓</span></button>
+                  <button class="team-chip team-chip--active relative"><span class="flag">🇦🇷</span>ARG<span class="check">✓</span></button>
+
+                  <button class="team-chip"><span class="flag">🇺🇾</span>URU</button>
+                  <button class="team-chip"><span class="flag">🇨🇴</span>COL</button>
+                  <button class="team-chip"><span class="flag">🇯🇵</span>JPN</button>
+                  <button class="team-chip"><span class="flag">🇰🇷</span>JOR</button>
+
+                  <button class="team-chip"><span class="flag">🇸🇳</span>SEN</button>
+                  <button class="team-chip"><span class="flag">🇲🇦</span>MAR</button>
+                  <button class="team-chip"><span class="flag">🇹🇳</span>TUN</button>
+                  <button class="team-chip"><span class="flag">🇪🇬</span>EGY</button>
+
+                  <button class="team-chip"><span class="flag">🇺🇸</span>USA</button>
+                  <button class="team-chip"><span class="flag">🇲🇽</span>HON</button>
+                  <button class="team-chip"><span class="flag">🇦🇺</span>AUS</button>
+                  <button class="team-chip"><span class="flag">🇮🇷</span>IRN</button>
+
+                  <button class="team-chip"><span class="flag">🇸🇦</span>KSA</button>
+                  <button class="team-chip"><span class="flag">🇶🇦</span>QAT</button>
+                  <button class="team-chip"><span class="flag">🇨🇲</span>CMR</button>
+                  <button class="team-chip"><span class="flag">🇬🇭</span>GHA</button>
+                </div>
+
+                <p class="text-xs text-slate-400 italic">A pool dinamikusan változik, ha módosítod a Last 32-t.</p>
+              </div>
+            </details>
+
+            <!-- Cascading toast -->
+            <div class="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 flex items-start gap-2 text-xs text-amber-900">
+              <span>⚠️</span>
+              <p>Az imént eltávolítottad <b>POL</b>-t a Last 32-ből — automatikusan kikerült a Last 16, Negyeddöntő és Elődöntő körökből is.</p>
+            </div>
+
+            <!-- QF: locked, partial pool (12 csapatból) -->
+            <div class="bg-slate-100 border-2 border-dashed border-slate-300 rounded-lg p-3 flex items-center justify-between">
+              <div>
+                <div class="font-semibold text-slate-600 text-sm">3. Negyeddöntő (8) 🔒</div>
+                <p class="text-xs text-slate-500 mt-0.5">Tölts ki előbb 8+ csapatot a Last 16-ba.</p>
+              </div>
+              <span class="text-xs text-slate-400">0 / 8</span>
+            </div>
+
+            <div class="bg-white rounded-lg border border-slate-200 px-3 py-2.5 flex items-center justify-between opacity-60">
+              <div class="font-semibold text-slate-700 text-sm">4. Elődöntő</div>
+              <span class="text-xs text-slate-400">🔒 0 / 4</span>
+            </div>
+            <div class="bg-white rounded-lg border border-slate-200 px-3 py-2.5 flex items-center justify-between opacity-60">
+              <div class="font-semibold text-slate-700 text-sm">5. Döntő · bajnok · bronz</div>
+              <span class="text-xs text-slate-400">🔒</span>
+            </div>
+
+          </div>
+
+          <div class="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-4 py-3">
+            <div class="stepper mb-2">
+              <span class="dot done"></span>
+              <span class="bar done"></span>
+              <span class="dot partial"></span>
+              <span class="bar"></span>
+              <span class="dot"></span>
+              <span class="bar"></span>
+              <span class="dot"></span>
+              <span class="bar"></span>
+              <span class="dot"></span>
+              <span class="bar"></span>
+              <span class="dot"></span>
+            </div>
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-slate-600 font-medium">Last 16: <b>12/16</b></span>
+              <span class="text-emerald-600 font-medium pulse-saving">↻ Mentés…</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================== -->
+    <!-- MOBIL 3: Final + Champion + Bronze — kombinált utolsó kártya -->
+    <!-- ========================================================== -->
+    <section>
+      <h2 class="text-center text-sm font-semibold text-slate-600 mb-3">📱 Mobil — Döntő · Bajnok · Bronz</h2>
+      <div class="device-frame">
+        <div class="device-screen bg-slate-50">
+
+          <div class="px-4 pt-4 pb-3 bg-white border-b border-slate-200 sticky top-0 z-20">
+            <div class="flex items-center justify-between">
+              <button class="text-slate-600">← Vissza</button>
+              <span class="text-xs text-slate-400">Súgó ⓘ</span>
+            </div>
+            <h1 class="text-lg font-bold text-slate-900 mt-2">Bracket-progresszió</h1>
+            <p class="text-xs text-slate-500 mt-0.5">Határidő: <span class="font-medium text-slate-700">jún. 11. 18:00</span></p>
+          </div>
+
+          <div class="px-3 py-3 space-y-2 pb-32">
+
+            <!-- Korábbi körök collapsed/done -->
+            <details class="bg-white rounded-lg border border-emerald-300">
+              <summary class="px-3 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-2"><span class="text-emerald-500">✓</span><span class="font-semibold text-slate-800">1. Last 32</span></div>
+                <div class="flex items-center gap-2"><span class="text-xs text-emerald-600 font-semibold">32 / 32</span><span class="chevron text-slate-400">▾</span></div>
+              </summary>
+            </details>
+            <details class="bg-white rounded-lg border border-emerald-300">
+              <summary class="px-3 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-2"><span class="text-emerald-500">✓</span><span class="font-semibold text-slate-800">2. Last 16</span></div>
+                <div class="flex items-center gap-2"><span class="text-xs text-emerald-600 font-semibold">16 / 16</span><span class="chevron text-slate-400">▾</span></div>
+              </summary>
+            </details>
+            <details class="bg-white rounded-lg border border-emerald-300">
+              <summary class="px-3 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-2"><span class="text-emerald-500">✓</span><span class="font-semibold text-slate-800">3. Negyeddöntő</span></div>
+                <div class="flex items-center gap-2"><span class="text-xs text-emerald-600 font-semibold">8 / 8</span><span class="chevron text-slate-400">▾</span></div>
+              </summary>
+            </details>
+            <details class="bg-white rounded-lg border border-emerald-300">
+              <summary class="px-3 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-2"><span class="text-emerald-500">✓</span><span class="font-semibold text-slate-800">4. Elődöntő</span></div>
+                <div class="flex items-center gap-2"><span class="text-xs text-emerald-600 font-semibold">4 / 4</span><span class="chevron text-slate-400">▾</span></div>
+              </summary>
+            </details>
+
+            <!-- Final + Champion + Bronze: AKTÍV expanded -->
+            <details open class="bg-white rounded-lg border-2 border-blue-400 shadow-md ring-4 ring-blue-100">
+              <summary class="px-3 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="font-semibold text-slate-800">5. Döntő · Bajnok · Bronz</span>
+                </div>
+                <span class="chevron text-blue-500 rotate-180">▾</span>
+              </summary>
+              <div class="px-3 pb-3 border-t border-slate-100 pt-3 space-y-4">
+
+                <p class="text-xs text-slate-500">Az elődöntős <b>4 csapatból</b> állítsd be: ki jut a döntőbe, ki nyer, és ki nyeri a bronzmeccset.</p>
+
+                <!-- 1. Döntősök -->
+                <div>
+                  <div class="text-xs font-semibold text-slate-600 mb-2 flex items-center gap-2">
+                    <span>🏟️ Döntősök</span>
+                    <span class="text-[10px] text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">2 / 2</span>
+                  </div>
+                  <div class="grid grid-cols-4 gap-1.5">
+                    <button class="team-chip team-chip--active relative"><span class="flag">🇧🇷</span>BRA<span class="check">✓</span></button>
+                    <button class="team-chip"><span class="flag">🇦🇷</span>ARG</button>
+                    <button class="team-chip team-chip--active relative"><span class="flag">🇫🇷</span>FRA<span class="check">✓</span></button>
+                    <button class="team-chip"><span class="flag">🇩🇪</span>GER</button>
+                  </div>
+                </div>
+
+                <!-- 2. Bajnok -->
+                <div>
+                  <div class="text-xs font-semibold text-slate-600 mb-2 flex items-center gap-2">
+                    <span>🏆 Bajnok</span>
+                    <span class="text-[10px] text-slate-400">a 2 döntősből</span>
+                  </div>
+                  <div class="space-y-2">
+                    <label class="radio-row">
+                      <div class="flex items-center gap-2">
+                        <span class="flag">🇧🇷</span>
+                        <span class="text-sm font-medium text-slate-700">Brazília</span>
+                      </div>
+                      <span class="radio-circle"></span>
+                    </label>
+                    <label class="radio-row radio-row--selected">
+                      <div class="flex items-center gap-2">
+                        <span class="flag">🇫🇷</span>
+                        <span class="text-sm font-medium text-blue-900">Franciaország</span>
+                      </div>
+                      <span class="radio-circle"></span>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- 3. Bronz -->
+                <div>
+                  <div class="text-xs font-semibold text-slate-600 mb-2 flex items-center gap-2">
+                    <span>🥉 Bronz</span>
+                    <span class="text-[10px] text-slate-400">a másik 2 elődöntősből (auto)</span>
+                  </div>
+                  <div class="space-y-2">
+                    <label class="radio-row radio-row--selected">
+                      <div class="flex items-center gap-2">
+                        <span class="flag">🇦🇷</span>
+                        <span class="text-sm font-medium text-blue-900">Argentína</span>
+                      </div>
+                      <span class="radio-circle"></span>
+                    </label>
+                    <label class="radio-row">
+                      <div class="flex items-center gap-2">
+                        <span class="flag">🇩🇪</span>
+                        <span class="text-sm font-medium text-slate-700">Németország</span>
+                      </div>
+                      <span class="radio-circle"></span>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Submit summary -->
+                <div class="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2.5 text-xs text-emerald-900">
+                  ✅ Teljes tipp kész: <b>BRA, FRA</b> döntő · <b>FRA</b> bajnok · <b>ARG</b> bronz · <b>GER</b> 4. helyezett
+                </div>
+
+              </div>
+            </details>
+
+          </div>
+
+          <div class="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-4 py-3">
+            <div class="stepper mb-2">
+              <span class="dot done"></span>
+              <span class="bar done"></span>
+              <span class="dot done"></span>
+              <span class="bar done"></span>
+              <span class="dot done"></span>
+              <span class="bar done"></span>
+              <span class="dot done"></span>
+              <span class="bar done"></span>
+              <span class="dot done"></span>
+              <span class="bar done"></span>
+              <span class="dot active"></span>
+            </div>
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-emerald-700 font-semibold">✓ Teljes tipp leadva</span>
+              <span class="text-emerald-600 font-medium">✓ Mentve</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ============================================= -->
+  <!-- DESKTOP nézet: 3×2 grid                       -->
+  <!-- ============================================= -->
+  <section class="mt-12">
+    <h2 class="text-center text-sm font-semibold text-slate-600 mb-4">🖥️ Desktop — 6 körös bracket áttekintés</h2>
+
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 max-w-6xl mx-auto">
+      <!-- Top progress -->
+      <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
+        <div>
+          <h1 class="text-xl font-bold text-slate-900">Bracket-progresszió</h1>
+          <p class="text-xs text-slate-500 mt-0.5">Határidő: jún. 11. 18:00 · Mentés automatikus</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="stepper" style="width: 240px;">
+            <span class="dot done"></span><span class="bar done"></span>
+            <span class="dot done"></span><span class="bar done"></span>
+            <span class="dot active"></span><span class="bar"></span>
+            <span class="dot"></span><span class="bar"></span>
+            <span class="dot"></span><span class="bar"></span>
+            <span class="dot"></span>
+          </div>
+          <span class="text-xs text-emerald-600 font-medium">✓ Mentve</span>
+        </div>
+      </div>
+
+      <!-- 3×2 grid -->
+      <div class="grid grid-cols-3 gap-4">
+
+        <!-- Last 32: done -->
+        <div class="bg-emerald-50 border border-emerald-300 rounded-xl p-4">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="font-semibold text-slate-800">1. Last 32</h3>
+            <span class="text-xs text-emerald-700 font-semibold bg-emerald-100 px-2 py-0.5 rounded-full">32 / 32</span>
+          </div>
+          <p class="text-xs text-slate-500 mb-3">Csoport-grouped pool · 48-ból 32</p>
+          <div class="grid grid-cols-6 gap-1">
+            <span class="text-[10px] bg-white border border-emerald-200 rounded px-1.5 py-1 text-slate-600 text-center">MEX</span>
+            <span class="text-[10px] bg-white border border-emerald-200 rounded px-1.5 py-1 text-slate-600 text-center">KOR</span>
+            <span class="text-[10px] bg-white border border-emerald-200 rounded px-1.5 py-1 text-slate-600 text-center">CZE</span>
+            <span class="text-[10px] bg-white border border-emerald-200 rounded px-1.5 py-1 text-slate-600 text-center">CAN</span>
+            <span class="text-[10px] bg-white border border-emerald-200 rounded px-1.5 py-1 text-slate-600 text-center">SUI</span>
+            <span class="text-[10px] bg-white border border-emerald-200 rounded px-1.5 py-1 text-slate-600 text-center">ESP</span>
+            <span class="text-[10px] bg-white border border-emerald-200 rounded px-1.5 py-1 text-slate-600 text-center">DEN</span>
+            <span class="text-[10px] bg-white border border-emerald-200 rounded px-1.5 py-1 text-slate-600 text-center">CIV</span>
+            <span class="text-[10px] bg-white border border-emerald-200 rounded px-1.5 py-1 text-slate-600 text-center">FRA</span>
+            <span class="text-[10px] bg-white border border-emerald-200 rounded px-1.5 py-1 text-slate-600 text-center">GER</span>
+            <span class="text-[10px] bg-white border border-emerald-200 rounded px-1.5 py-1 text-slate-600 text-center">ITA</span>
+            <span class="text-[10px] bg-white border border-emerald-200 rounded px-1.5 py-1 text-slate-600 text-center">POR</span>
+            <span class="text-[10px] bg-white border border-emerald-200 rounded px-1.5 py-1 text-slate-600 text-center">BRA</span>
+            <span class="text-[10px] bg-white border border-emerald-200 rounded px-1.5 py-1 text-slate-600 text-center">ARG</span>
+            <span class="text-[10px] bg-white border border-emerald-200 rounded px-1.5 py-1 text-slate-600 text-center">URU</span>
+            <span class="text-[10px] bg-white border border-emerald-200 rounded px-1.5 py-1 text-slate-600 text-center">COL</span>
+            <span class="text-[10px] bg-white border border-emerald-200 rounded px-1.5 py-1 text-slate-600 text-center">JPN</span>
+            <span class="text-[10px] bg-white border border-emerald-200 rounded px-1.5 py-1 text-slate-600 text-center">USA</span>
+            <span class="text-[10px] bg-white border border-emerald-200 rounded px-1.5 py-1 text-slate-600 text-center text-slate-400">+14</span>
+          </div>
+        </div>
+
+        <!-- Last 16: done -->
+        <div class="bg-emerald-50 border border-emerald-300 rounded-xl p-4">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="font-semibold text-slate-800">2. Last 16</h3>
+            <span class="text-xs text-emerald-700 font-semibold bg-emerald-100 px-2 py-0.5 rounded-full">16 / 16</span>
+          </div>
+          <p class="text-xs text-slate-500 mb-3">Pool: a Last 32-es tipped (32)</p>
+          <div class="grid grid-cols-4 gap-1">
+            <span class="text-xs bg-white border border-emerald-200 rounded px-2 py-1 text-slate-600 text-center">MEX</span>
+            <span class="text-xs bg-white border border-emerald-200 rounded px-2 py-1 text-slate-600 text-center">KOR</span>
+            <span class="text-xs bg-white border border-emerald-200 rounded px-2 py-1 text-slate-600 text-center">CAN</span>
+            <span class="text-xs bg-white border border-emerald-200 rounded px-2 py-1 text-slate-600 text-center">SUI</span>
+            <span class="text-xs bg-white border border-emerald-200 rounded px-2 py-1 text-slate-600 text-center">ESP</span>
+            <span class="text-xs bg-white border border-emerald-200 rounded px-2 py-1 text-slate-600 text-center">DEN</span>
+            <span class="text-xs bg-white border border-emerald-200 rounded px-2 py-1 text-slate-600 text-center">FRA</span>
+            <span class="text-xs bg-white border border-emerald-200 rounded px-2 py-1 text-slate-600 text-center">GER</span>
+            <span class="text-xs bg-white border border-emerald-200 rounded px-2 py-1 text-slate-600 text-center">ITA</span>
+            <span class="text-xs bg-white border border-emerald-200 rounded px-2 py-1 text-slate-600 text-center">POR</span>
+            <span class="text-xs bg-white border border-emerald-200 rounded px-2 py-1 text-slate-600 text-center">BRA</span>
+            <span class="text-xs bg-white border border-emerald-200 rounded px-2 py-1 text-slate-600 text-center">ARG</span>
+            <span class="text-xs bg-white border border-emerald-200 rounded px-2 py-1 text-slate-600 text-center">URU</span>
+            <span class="text-xs bg-white border border-emerald-200 rounded px-2 py-1 text-slate-600 text-center">JPN</span>
+            <span class="text-xs bg-white border border-emerald-200 rounded px-2 py-1 text-slate-600 text-center">USA</span>
+            <span class="text-xs bg-white border border-emerald-200 rounded px-2 py-1 text-slate-600 text-center">SEN</span>
+          </div>
+        </div>
+
+        <!-- Negyeddöntő: AKTÍV (részleges) -->
+        <div class="bg-blue-50 border-2 border-blue-400 rounded-xl p-4 ring-4 ring-blue-100">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="font-semibold text-slate-800">3. Negyeddöntő</h3>
+            <span class="text-xs text-blue-700 font-semibold bg-blue-100 px-2 py-0.5 rounded-full">5 / 8</span>
+          </div>
+          <p class="text-xs text-slate-500 mb-3">Pool: a Last 16-os tipped (16)</p>
+          <div class="grid grid-cols-4 gap-1.5">
+            <button class="team-chip team-chip--active relative"><span class="flag">🇲🇽</span>MEX<span class="check">✓</span></button>
+            <button class="team-chip team-chip--active relative"><span class="flag">🇪🇸</span>ESP<span class="check">✓</span></button>
+            <button class="team-chip team-chip--active relative"><span class="flag">🇫🇷</span>FRA<span class="check">✓</span></button>
+            <button class="team-chip team-chip--active relative"><span class="flag">🇧🇷</span>BRA<span class="check">✓</span></button>
+            <button class="team-chip team-chip--active relative"><span class="flag">🇦🇷</span>ARG<span class="check">✓</span></button>
+            <button class="team-chip"><span class="flag">🇩🇪</span>GER</button>
+            <button class="team-chip"><span class="flag">🇮🇹</span>ITA</button>
+            <button class="team-chip"><span class="flag">🇵🇹</span>POR</button>
+            <button class="team-chip"><span class="flag">🇰🇷</span>KOR</button>
+            <button class="team-chip"><span class="flag">🇨🇦</span>CAN</button>
+            <button class="team-chip"><span class="flag">🇨🇭</span>SUI</button>
+            <button class="team-chip"><span class="flag">🇩🇰</span>DEN</button>
+          </div>
+        </div>
+
+        <!-- Elődöntő: lockolt (Negyeddöntő nem teljes) -->
+        <div class="bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl p-4">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="font-semibold text-slate-500">4. Elődöntő 🔒</h3>
+            <span class="text-xs text-slate-400 font-semibold">0 / 4</span>
+          </div>
+          <p class="text-xs text-slate-500">A pool 5 csapat — tölts ki előbb 8-at a Negyeddöntőbe.</p>
+          <div class="grid grid-cols-4 gap-1.5 mt-3 opacity-50">
+            <button class="team-chip team-chip--disabled"><span class="flag">🇲🇽</span>MEX</button>
+            <button class="team-chip team-chip--disabled"><span class="flag">🇪🇸</span>ESP</button>
+            <button class="team-chip team-chip--disabled"><span class="flag">🇫🇷</span>FRA</button>
+            <button class="team-chip team-chip--disabled"><span class="flag">🇧🇷</span>BRA</button>
+            <button class="team-chip team-chip--disabled"><span class="flag">🇦🇷</span>ARG</button>
+          </div>
+        </div>
+
+        <!-- Döntő: lockolt -->
+        <div class="bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl p-4">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="font-semibold text-slate-500">5. Döntő 🔒</h3>
+            <span class="text-xs text-slate-400 font-semibold">0 / 2</span>
+          </div>
+          <p class="text-xs text-slate-500">Tölts ki előbb 4 csapatot az Elődöntőbe.</p>
+        </div>
+
+        <!-- Bajnok + Bronz: lockolt -->
+        <div class="bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl p-4">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="font-semibold text-slate-500">6. Bajnok 🏆 + Bronz 🥉 🔒</h3>
+            <span class="text-xs text-slate-400 font-semibold">0 / 2</span>
+          </div>
+          <p class="text-xs text-slate-500">Az Elődöntő 4 csapatából rádió-választás.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================= -->
+  <!-- READ-ONLY: deadline után, kiértékelt nézet    -->
+  <!-- ============================================= -->
+  <section class="mt-12">
+    <h2 class="text-center text-sm font-semibold text-slate-600 mb-4">📱 Mobil — Deadline után, kiértékelt</h2>
+
+    <div class="flex justify-center">
+      <div class="device-frame">
+        <div class="device-screen bg-slate-50">
+
+          <div class="px-4 pt-4 pb-3 bg-white border-b border-slate-200 sticky top-0 z-20">
+            <div class="flex items-center justify-between">
+              <button class="text-slate-600">← Vissza</button>
+              <span class="text-xs text-slate-400">Súgó ⓘ</span>
+            </div>
+            <h1 class="text-lg font-bold text-slate-900 mt-2">Bracket-progresszió</h1>
+            <p class="text-xs text-amber-700 mt-0.5">🔒 Lezárva · Kiértékelve</p>
+          </div>
+
+          <div class="px-3 py-3 space-y-2 pb-8">
+
+            <!-- Last 32: kiértékelt -->
+            <details open class="bg-white rounded-lg border border-slate-200">
+              <summary class="px-3 py-3 flex items-center justify-between">
+                <span class="font-semibold text-slate-800">1. Last 32</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-slate-600 font-semibold">26 / 32 helyes</span>
+                  <span class="chevron text-slate-400 rotate-180">▾</span>
+                </div>
+              </summary>
+              <div class="px-3 pb-3 border-t border-slate-100 pt-3">
+                <div class="grid grid-cols-4 gap-1.5">
+                  <button class="team-chip eval-correct relative"><span class="flag">🇲🇽</span>MEX<span class="check">✓</span></button>
+                  <button class="team-chip eval-correct relative"><span class="flag">🇰🇷</span>KOR<span class="check">✓</span></button>
+                  <button class="team-chip eval-wrong relative"><span class="flag">🇨🇿</span>CZE<span style="position:absolute;top:-6px;right:-6px;width:16px;height:16px;border-radius:999px;background:#dc2626;color:white;font-size:10px;display:flex;align-items:center;justify-content:center;border:2px solid white;">✗</span></button>
+                  <button class="team-chip eval-correct relative"><span class="flag">🇨🇦</span>CAN<span class="check">✓</span></button>
+                  <button class="team-chip eval-correct relative"><span class="flag">🇨🇭</span>SUI<span class="check">✓</span></button>
+                  <button class="team-chip eval-correct relative"><span class="flag">🇪🇸</span>ESP<span class="check">✓</span></button>
+                  <button class="team-chip eval-wrong relative"><span class="flag">🇩🇰</span>DEN<span style="position:absolute;top:-6px;right:-6px;width:16px;height:16px;border-radius:999px;background:#dc2626;color:white;font-size:10px;display:flex;align-items:center;justify-content:center;border:2px solid white;">✗</span></button>
+                  <button class="team-chip eval-correct relative"><span class="flag">🇫🇷</span>FRA<span class="check">✓</span></button>
+                </div>
+                <p class="text-[11px] text-slate-400 italic mt-2">⋯ +18 további csapat ⋯</p>
+                <div class="mt-3 pt-2 border-t border-slate-100">
+                  <p class="text-[11px] font-semibold text-slate-500 mb-1.5">Lemaradt csapatok (eljutottak, de nem tippelted):</p>
+                  <div class="flex flex-wrap gap-1.5">
+                    <span class="team-chip eval-missed">🇸🇪 SWE</span>
+                    <span class="team-chip eval-missed">🇳🇿 NZL</span>
+                    <span class="team-chip eval-missed">🇪🇨 ECU</span>
+                  </div>
+                </div>
+              </div>
+            </details>
+
+            <!-- Last 16: kiértékelt -->
+            <details class="bg-white rounded-lg border border-slate-200">
+              <summary class="px-3 py-3 flex items-center justify-between">
+                <span class="font-semibold text-slate-800">2. Last 16</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-slate-600 font-semibold">11 / 16 helyes</span>
+                  <span class="chevron text-slate-400">▾</span>
+                </div>
+              </summary>
+            </details>
+
+            <details class="bg-white rounded-lg border border-slate-200">
+              <summary class="px-3 py-3 flex items-center justify-between">
+                <span class="font-semibold text-slate-800">3. Negyeddöntő</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-slate-600 font-semibold">5 / 8 helyes</span>
+                  <span class="chevron text-slate-400">▾</span>
+                </div>
+              </summary>
+            </details>
+
+            <details class="bg-white rounded-lg border border-slate-200">
+              <summary class="px-3 py-3 flex items-center justify-between">
+                <span class="font-semibold text-slate-800">4. Elődöntő</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-slate-600 font-semibold">3 / 4 helyes</span>
+                  <span class="chevron text-slate-400">▾</span>
+                </div>
+              </summary>
+            </details>
+
+            <!-- Final/Champion/Bronze kiértékelt -->
+            <details open class="bg-white rounded-lg border border-slate-200">
+              <summary class="px-3 py-3 flex items-center justify-between">
+                <span class="font-semibold text-slate-800">5. Döntő · Bajnok · Bronz</span>
+                <span class="chevron text-slate-400 rotate-180">▾</span>
+              </summary>
+              <div class="px-3 pb-3 border-t border-slate-100 pt-3 space-y-3">
+
+                <div>
+                  <div class="text-xs font-semibold text-slate-600 mb-2">🏟️ Döntősök (2/2 helyes)</div>
+                  <div class="grid grid-cols-4 gap-1.5">
+                    <button class="team-chip eval-correct relative"><span class="flag">🇧🇷</span>BRA<span class="check">✓</span></button>
+                    <button class="team-chip eval-correct relative"><span class="flag">🇫🇷</span>FRA<span class="check">✓</span></button>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="text-xs font-semibold text-slate-600 mb-2">🏆 Bajnok</div>
+                  <div class="radio-row eval-wrong">
+                    <div class="flex items-center gap-2"><span class="flag">🇫🇷</span><span class="text-sm">Franciaország (a tipped)</span></div>
+                    <span style="font-size:11px;color:#7f1d1d;font-weight:600;">✗</span>
+                  </div>
+                  <div class="radio-row eval-correct mt-1.5">
+                    <div class="flex items-center gap-2"><span class="flag">🇧🇷</span><span class="text-sm">Brazília (valódi győztes)</span></div>
+                    <span style="font-size:11px;color:#14532d;font-weight:600;">✓ helyes</span>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="text-xs font-semibold text-slate-600 mb-2">🥉 Bronz</div>
+                  <div class="radio-row eval-correct">
+                    <div class="flex items-center gap-2"><span class="flag">🇦🇷</span><span class="text-sm">Argentína (a tipped)</span></div>
+                    <span style="font-size:11px;color:#14532d;font-weight:600;">✓</span>
+                  </div>
+                </div>
+
+                <div class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-600">
+                  Összesen: <b>26 + 11 + 5 + 3 + 2 + 0 + 1 = 48 helyes elem</b> a 63-ból.
+                  <span class="block text-[11px] text-slate-400 mt-0.5 italic">A pontérték a pontozási konfigtól függ — külön story.</span>
+                </div>
+
+              </div>
+            </details>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+</body>
+</html>

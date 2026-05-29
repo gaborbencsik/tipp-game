@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Csoport végeredmény — Tippelési mockup</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+  .flag {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 24px; height: 18px; border-radius: 3px; font-size: 14px;
+    background: #f3f4f6;
+  }
+  .scroll-shadow { box-shadow: 0 -4px 12px -4px rgba(0,0,0,0.08); }
+  details[open] > summary .chevron { transform: rotate(180deg); }
+  .chevron { transition: transform 200ms ease; }
+  summary::-webkit-details-marker { display: none; }
+  summary { cursor: pointer; list-style: none; }
+  .pulse-saving { animation: pulse 1.5s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: 0.5; } }
+  .device-frame {
+    width: 390px; max-width: 100%;
+    border: 12px solid #1f2937;
+    border-radius: 40px;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+    background: white;
+    display: flex; flex-direction: column;
+    height: 844px;
+  }
+  .device-screen { flex: 1; overflow-y: auto; position: relative; }
+  /* Custom scrollbar */
+  .device-screen::-webkit-scrollbar { width: 4px; }
+  .device-screen::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+</style>
+</head>
+<body class="bg-slate-100 min-h-screen">
+
+<div class="max-w-7xl mx-auto p-6">
+  <header class="mb-8 text-center">
+    <h1 class="text-2xl font-bold text-slate-800">Csoport végeredmény — UX mockup</h1>
+    <p class="text-sm text-slate-500 mt-1">12 csoport sorrend + 4 továbbjutó 3.helyezett · auto-save · mobile-first</p>
+  </header>
+
+  <div class="flex flex-wrap justify-center gap-8 items-start">
+
+    <!-- ====== MOBIL: kitöltési flow ====== -->
+    <section>
+      <h2 class="text-center text-sm font-semibold text-slate-600 mb-3">📱 Mobil — kitöltés közben</h2>
+      <div class="device-frame">
+        <div class="device-screen bg-slate-50">
+
+          <!-- Top bar -->
+          <div class="px-4 pt-4 pb-3 bg-white border-b border-slate-200 sticky top-0 z-20">
+            <div class="flex items-center justify-between">
+              <button class="text-slate-600">← Vissza</button>
+              <span class="text-xs text-slate-400">Súgó ⓘ</span>
+            </div>
+            <h1 class="text-lg font-bold text-slate-900 mt-2">Csoport végeredmény</h1>
+            <p class="text-xs text-slate-500 mt-0.5">Határidő: <span class="font-medium text-slate-700">jún. 11. 18:00</span> · Mentés automatikus</p>
+          </div>
+
+          <!-- Body -->
+          <div class="px-3 py-3 space-y-2 pb-32">
+
+            <!-- Info kártya -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2.5 flex gap-2">
+              <span class="text-blue-600">💡</span>
+              <p class="text-xs text-blue-900 leading-snug">
+                Tippeld meg mind a 12 csoport (A–L) sorrendjét. A <b>3.helyezettek</b> közül a végén válassz <b>4 továbbjutót</b>.
+              </p>
+            </div>
+
+            <!-- A csoport: KÉSZ, collapsed -->
+            <details class="bg-white rounded-lg border border-emerald-300 shadow-sm">
+              <summary class="px-3 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="text-emerald-500">✓</span>
+                  <span class="font-semibold text-slate-800">A csoport</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-emerald-600 font-medium">Kész</span>
+                  <span class="chevron text-slate-400">▾</span>
+                </div>
+              </summary>
+              <div class="px-3 pb-3 grid grid-cols-2 gap-x-3 gap-y-1.5 text-sm border-t border-slate-100 pt-2">
+                <div class="flex items-center gap-2"><span class="flag">🇲🇽</span><span class="text-slate-700"><b>1.</b> MEX</span></div>
+                <div class="flex items-center gap-2"><span class="flag">🇰🇷</span><span class="text-slate-700"><b>2.</b> KOR</span></div>
+                <div class="flex items-center gap-2"><span class="flag">🇨🇿</span><span class="text-slate-700"><b>3.</b> CZE</span></div>
+                <div class="flex items-center gap-2"><span class="flag">🇿🇦</span><span class="text-slate-700"><b>4.</b> RSA</span></div>
+              </div>
+            </details>
+
+            <!-- B csoport: AKTÍV, expanded -->
+            <details open class="bg-white rounded-lg border-2 border-blue-400 shadow-md ring-4 ring-blue-100">
+              <summary class="px-3 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="font-semibold text-slate-800">B csoport</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-blue-600 font-medium bg-blue-50 px-2 py-0.5 rounded-full">2 / 4</span>
+                  <span class="chevron text-blue-500 rotate-180">▾</span>
+                </div>
+              </summary>
+              <div class="px-3 pb-3 border-t border-slate-100 pt-2 space-y-2">
+
+                <!-- Csapat sor 1 -->
+                <div class="flex items-center justify-between gap-3 p-2 rounded-md bg-slate-50">
+                  <div class="flex items-center gap-2 min-w-0">
+                    <span class="flag">🇨🇦</span>
+                    <span class="text-sm text-slate-800 truncate">Canada</span>
+                  </div>
+                  <select class="text-sm font-semibold border border-slate-300 rounded-md px-2 py-1 bg-white focus:ring-2 focus:ring-blue-300 outline-none">
+                    <option selected>1.</option>
+                  </select>
+                </div>
+
+                <!-- Csapat sor 2 -->
+                <div class="flex items-center justify-between gap-3 p-2 rounded-md bg-slate-50">
+                  <div class="flex items-center gap-2 min-w-0">
+                    <span class="flag">🇨🇭</span>
+                    <span class="text-sm text-slate-800 truncate">Switzerland</span>
+                  </div>
+                  <select class="text-sm font-semibold border border-slate-300 rounded-md px-2 py-1 bg-white focus:ring-2 focus:ring-blue-300 outline-none">
+                    <option selected>2.</option>
+                  </select>
+                </div>
+
+                <!-- Csapat sor 3: nyitott dropdown -->
+                <div class="flex items-center justify-between gap-3 p-2 rounded-md bg-blue-50 border border-blue-200">
+                  <div class="flex items-center gap-2 min-w-0">
+                    <span class="flag">🇧🇦</span>
+                    <span class="text-sm text-slate-800 truncate">Bosnia-Herc.</span>
+                  </div>
+                  <div class="relative">
+                    <button class="text-sm font-semibold border-2 border-blue-400 bg-white rounded-md px-3 py-1 flex items-center gap-1 shadow-sm">
+                      Válassz <span>▾</span>
+                    </button>
+                    <!-- Dropdown opciók: 1, 2 NEM (foglaltak); 3, 4 elérhető -->
+                    <div class="absolute right-0 top-full mt-1 bg-white border border-slate-200 rounded-md shadow-xl py-1 w-20 z-10">
+                      <button class="w-full px-3 py-1.5 text-sm text-left hover:bg-blue-50">3.</button>
+                      <button class="w-full px-3 py-1.5 text-sm text-left hover:bg-blue-50">4.</button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Csapat sor 4 -->
+                <div class="flex items-center justify-between gap-3 p-2 rounded-md bg-slate-50">
+                  <div class="flex items-center gap-2 min-w-0">
+                    <span class="flag">🇶🇦</span>
+                    <span class="text-sm text-slate-800 truncate">Qatar</span>
+                  </div>
+                  <select class="text-sm font-semibold border border-slate-300 rounded-md px-2 py-1 bg-white focus:ring-2 focus:ring-blue-300 outline-none text-slate-400">
+                    <option selected>—</option>
+                  </select>
+                </div>
+
+                <button class="text-xs text-slate-500 hover:text-slate-700 mt-1">↺ Csoport ürítése</button>
+              </div>
+            </details>
+
+            <!-- C csoport: érintetlen -->
+            <details class="bg-white rounded-lg border border-slate-200 shadow-sm">
+              <summary class="px-3 py-3 flex items-center justify-between">
+                <span class="font-semibold text-slate-700">C csoport</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">0 / 4</span>
+                  <span class="chevron text-slate-400">▾</span>
+                </div>
+              </summary>
+            </details>
+            <details class="bg-white rounded-lg border border-slate-200 shadow-sm">
+              <summary class="px-3 py-3 flex items-center justify-between">
+                <span class="font-semibold text-slate-700">D csoport</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">0 / 4</span>
+                  <span class="chevron text-slate-400">▾</span>
+                </div>
+              </summary>
+            </details>
+            <details class="bg-white rounded-lg border border-slate-200 shadow-sm">
+              <summary class="px-3 py-3 flex items-center justify-between">
+                <span class="font-semibold text-slate-700">E csoport</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">0 / 4</span>
+                  <span class="chevron text-slate-400">▾</span>
+                </div>
+              </summary>
+            </details>
+            <details class="bg-white rounded-lg border border-slate-200 shadow-sm">
+              <summary class="px-3 py-3 flex items-center justify-between">
+                <span class="font-semibold text-slate-700">F csoport</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">0 / 4</span>
+                  <span class="chevron text-slate-400">▾</span>
+                </div>
+              </summary>
+            </details>
+
+            <p class="text-center text-xs text-slate-400 py-2">… további csoportok (G–L)</p>
+
+            <!-- Best 3rd: lockolt -->
+            <div class="bg-slate-100 border-2 border-dashed border-slate-300 rounded-lg p-4 text-center mt-3">
+              <div class="text-2xl mb-1">🔒</div>
+              <p class="font-semibold text-slate-600 text-sm">Legjobb 4 harmadik</p>
+              <p class="text-xs text-slate-500 mt-1">Töltsd ki előbb mind a 12 csoportot</p>
+            </div>
+          </div>
+
+          <!-- Sticky bottom bar -->
+          <div class="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 scroll-shadow px-4 py-3">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-medium text-slate-700">2 / 13 kész</span>
+              <span class="text-xs text-emerald-600 flex items-center gap-1">
+                <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
+                Mentve
+              </span>
+            </div>
+            <div class="flex gap-1">
+              <span class="h-1.5 flex-1 bg-emerald-500 rounded-sm"></span>
+              <span class="h-1.5 flex-1 bg-emerald-500 rounded-sm"></span>
+              <span class="h-1.5 flex-1 bg-blue-400 rounded-sm"></span>
+              <span class="h-1.5 flex-1 bg-slate-200 rounded-sm"></span>
+              <span class="h-1.5 flex-1 bg-slate-200 rounded-sm"></span>
+              <span class="h-1.5 flex-1 bg-slate-200 rounded-sm"></span>
+              <span class="h-1.5 flex-1 bg-slate-200 rounded-sm"></span>
+              <span class="h-1.5 flex-1 bg-slate-200 rounded-sm"></span>
+              <span class="h-1.5 flex-1 bg-slate-200 rounded-sm"></span>
+              <span class="h-1.5 flex-1 bg-slate-200 rounded-sm"></span>
+              <span class="h-1.5 flex-1 bg-slate-200 rounded-sm"></span>
+              <span class="h-1.5 flex-1 bg-slate-200 rounded-sm"></span>
+              <span class="h-1.5 flex-1 bg-slate-200 rounded-sm"></span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== MOBIL: best 3rd kiválasztás ====== -->
+    <section>
+      <h2 class="text-center text-sm font-semibold text-slate-600 mb-3">📱 Mobil — Best 3rd kiválasztás</h2>
+      <div class="device-frame">
+        <div class="device-screen bg-slate-50">
+
+          <div class="px-4 pt-4 pb-3 bg-white border-b border-slate-200 sticky top-0 z-20">
+            <div class="flex items-center justify-between">
+              <button class="text-slate-600">← Vissza</button>
+              <span class="text-xs text-slate-400">Súgó ⓘ</span>
+            </div>
+            <h1 class="text-lg font-bold text-slate-900 mt-2">Csoport végeredmény</h1>
+            <p class="text-xs text-slate-500 mt-0.5">Határidő: <span class="font-medium text-slate-700">jún. 11. 18:00</span> · Mentés automatikus</p>
+          </div>
+
+          <div class="px-3 py-3 space-y-2 pb-32">
+
+            <!-- Mind a 12 csoport: KÉSZ collapsed -->
+            <details class="bg-white rounded-lg border border-emerald-200 shadow-sm">
+              <summary class="px-3 py-2.5 flex items-center justify-between">
+                <span class="text-sm"><span class="text-emerald-500">✓</span> <b>A csoport</b> &nbsp;<span class="text-slate-500 text-xs">MEX · KOR · CZE · RSA</span></span>
+                <span class="chevron text-slate-400">▾</span>
+              </summary>
+            </details>
+            <details class="bg-white rounded-lg border border-emerald-200 shadow-sm">
+              <summary class="px-3 py-2.5 flex items-center justify-between">
+                <span class="text-sm"><span class="text-emerald-500">✓</span> <b>B csoport</b> &nbsp;<span class="text-slate-500 text-xs">CAN · SUI · BIH · QAT</span></span>
+                <span class="chevron text-slate-400">▾</span>
+              </summary>
+            </details>
+            <details class="bg-white rounded-lg border border-emerald-200 shadow-sm">
+              <summary class="px-3 py-2.5 flex items-center justify-between">
+                <span class="text-sm"><span class="text-emerald-500">✓</span> <b>C csoport</b> &nbsp;<span class="text-slate-500 text-xs">BRA · MAR · HAI · SCO</span></span>
+                <span class="chevron text-slate-400">▾</span>
+              </summary>
+            </details>
+            <details class="bg-white rounded-lg border border-emerald-200 shadow-sm">
+              <summary class="px-3 py-2.5 flex items-center justify-between">
+                <span class="text-sm"><span class="text-emerald-500">✓</span> <b>D–L csoport</b> &nbsp;<span class="text-slate-500 text-xs">mind kész</span></span>
+                <span class="chevron text-slate-400">▾</span>
+              </summary>
+            </details>
+
+            <!-- Best 3rd: AKTÍV -->
+            <details open class="bg-white rounded-lg border-2 border-blue-400 shadow-md ring-4 ring-blue-100 mt-3">
+              <summary class="px-3 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="text-xl">🏆</span>
+                  <span class="font-semibold text-slate-800">Legjobb 4 harmadik</span>
+                </div>
+                <span class="text-xs text-blue-600 font-medium bg-blue-50 px-2 py-0.5 rounded-full">2 / 4</span>
+              </summary>
+              <div class="px-3 pb-4 border-t border-slate-100 pt-3">
+                <p class="text-xs text-slate-600 mb-3">
+                  Válassz <b>4 csapatot</b> a 12 csoportodban beállított 3.helyezettek közül,
+                  akik szerinted továbbjutnak a Last 16-ba.
+                </p>
+
+                <div class="grid grid-cols-3 gap-2">
+                  <!-- Aktív (kék) -->
+                  <button class="border-2 border-blue-500 bg-blue-50 rounded-lg p-2 flex flex-col items-center gap-1 relative">
+                    <span class="absolute top-1 right-1 text-blue-600 text-xs">✓</span>
+                    <span class="text-xl">🇨🇿</span>
+                    <span class="text-xs font-bold text-blue-900">CZE</span>
+                    <span class="text-[10px] text-slate-500">A csop.</span>
+                  </button>
+                  <button class="border-2 border-blue-500 bg-blue-50 rounded-lg p-2 flex flex-col items-center gap-1 relative">
+                    <span class="absolute top-1 right-1 text-blue-600 text-xs">✓</span>
+                    <span class="text-xl">🇧🇦</span>
+                    <span class="text-xs font-bold text-blue-900">BIH</span>
+                    <span class="text-[10px] text-slate-500">B csop.</span>
+                  </button>
+                  <!-- Inaktív -->
+                  <button class="border border-slate-200 bg-white rounded-lg p-2 flex flex-col items-center gap-1 hover:border-blue-300">
+                    <span class="text-xl">🇭🇹</span>
+                    <span class="text-xs font-bold text-slate-700">HAI</span>
+                    <span class="text-[10px] text-slate-500">C csop.</span>
+                  </button>
+                  <button class="border border-slate-200 bg-white rounded-lg p-2 flex flex-col items-center gap-1 hover:border-blue-300">
+                    <span class="text-xl">🇵🇾</span>
+                    <span class="text-xs font-bold text-slate-700">PAR</span>
+                    <span class="text-[10px] text-slate-500">D csop.</span>
+                  </button>
+                  <button class="border-2 border-blue-500 bg-blue-50 rounded-lg p-2 flex flex-col items-center gap-1 relative">
+                    <span class="absolute top-1 right-1 text-blue-600 text-xs">✓</span>
+                    <span class="text-xl">🇨🇮</span>
+                    <span class="text-xs font-bold text-blue-900">CIV</span>
+                    <span class="text-[10px] text-slate-500">E csop.</span>
+                  </button>
+                  <button class="border-2 border-blue-500 bg-blue-50 rounded-lg p-2 flex flex-col items-center gap-1 relative">
+                    <span class="absolute top-1 right-1 text-blue-600 text-xs">✓</span>
+                    <span class="text-xl">🇯🇵</span>
+                    <span class="text-xs font-bold text-blue-900">JPN</span>
+                    <span class="text-[10px] text-slate-500">F csop.</span>
+                  </button>
+                  <button class="border border-slate-200 bg-white rounded-lg p-2 flex flex-col items-center gap-1 hover:border-blue-300">
+                    <span class="text-xl">🇮🇷</span>
+                    <span class="text-xs font-bold text-slate-700">IRN</span>
+                    <span class="text-[10px] text-slate-500">G csop.</span>
+                  </button>
+                  <button class="border border-slate-200 bg-white rounded-lg p-2 flex flex-col items-center gap-1 hover:border-blue-300">
+                    <span class="text-xl">🇨🇻</span>
+                    <span class="text-xs font-bold text-slate-700">CPV</span>
+                    <span class="text-[10px] text-slate-500">H csop.</span>
+                  </button>
+                  <button class="border border-slate-200 bg-white rounded-lg p-2 flex flex-col items-center gap-1 hover:border-blue-300">
+                    <span class="text-xl">🇸🇳</span>
+                    <span class="text-xs font-bold text-slate-700">SEN</span>
+                    <span class="text-[10px] text-slate-500">I csop.</span>
+                  </button>
+                  <button class="border border-slate-200 bg-white rounded-lg p-2 flex flex-col items-center gap-1 hover:border-blue-300">
+                    <span class="text-xl">🇩🇿</span>
+                    <span class="text-xs font-bold text-slate-700">ALG</span>
+                    <span class="text-[10px] text-slate-500">J csop.</span>
+                  </button>
+                  <button class="border border-slate-200 bg-white rounded-lg p-2 flex flex-col items-center gap-1 hover:border-blue-300">
+                    <span class="text-xl">🇨🇩</span>
+                    <span class="text-xs font-bold text-slate-700">COD</span>
+                    <span class="text-[10px] text-slate-500">K csop.</span>
+                  </button>
+                  <button class="border border-slate-200 bg-white rounded-lg p-2 flex flex-col items-center gap-1 hover:border-blue-300">
+                    <span class="text-xl">🇬🇭</span>
+                    <span class="text-xs font-bold text-slate-700">GHA</span>
+                    <span class="text-[10px] text-slate-500">L csop.</span>
+                  </button>
+                </div>
+
+                <div class="mt-4 bg-amber-50 border border-amber-200 rounded-lg p-2.5 text-xs text-amber-900 flex gap-2">
+                  <span>💡</span>
+                  <span>Még <b>2 csapatot</b> kell választanod.</span>
+                </div>
+              </div>
+            </details>
+          </div>
+
+          <!-- Sticky bottom bar - SAVING -->
+          <div class="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 scroll-shadow px-4 py-3">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-medium text-slate-700">14 / 16 kész</span>
+              <span class="text-xs text-blue-600 flex items-center gap-1 pulse-saving">
+                <span class="w-3 h-3 inline-block">↻</span>
+                Mentés…
+              </span>
+            </div>
+            <div class="flex gap-1">
+              <span class="h-1.5 flex-1 bg-emerald-500 rounded-sm"></span>
+              <span class="h-1.5 flex-1 bg-emerald-500 rounded-sm"></span>
+              <span class="h-1.5 flex-1 bg-emerald-500 rounded-sm"></span>
+              <span class="h-1.5 flex-1 bg-emerald-500 rounded-sm"></span>
+              <span class="h-1.5 flex-1 bg-emerald-500 rounded-sm"></span>
+              <span class="h-1.5 flex-1 bg-emerald-500 rounded-sm"></span>
+              <span class="h-1.5 flex-1 bg-emerald-500 rounded-sm"></span>
+              <span class="h-1.5 flex-1 bg-emerald-500 rounded-sm"></span>
+              <span class="h-1.5 flex-1 bg-emerald-500 rounded-sm"></span>
+              <span class="h-1.5 flex-1 bg-emerald-500 rounded-sm"></span>
+              <span class="h-1.5 flex-1 bg-emerald-500 rounded-sm"></span>
+              <span class="h-1.5 flex-1 bg-emerald-500 rounded-sm"></span>
+              <span class="h-1.5 flex-1 bg-blue-400 rounded-sm"></span>
+              <span class="h-1.5 flex-1 bg-blue-400 rounded-sm"></span>
+              <span class="h-1.5 flex-1 bg-slate-200 rounded-sm"></span>
+              <span class="h-1.5 flex-1 bg-slate-200 rounded-sm"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ====== DESKTOP NÉZET ====== -->
+    <section class="w-full max-w-6xl">
+      <h2 class="text-center text-sm font-semibold text-slate-600 mb-3 mt-6">🖥 Desktop — grid nézet</h2>
+      <div class="bg-white rounded-xl shadow-xl overflow-hidden border border-slate-200">
+
+        <!-- Top bar -->
+        <div class="bg-gradient-to-r from-slate-800 to-slate-700 text-white px-6 py-4 flex items-center justify-between">
+          <div>
+            <h1 class="text-xl font-bold">Csoport végeredmény</h1>
+            <p class="text-xs text-slate-300 mt-0.5">Tippeld meg a 12 csoport sorrendjét és válassz 4 továbbjutó 3.helyezett csapatot</p>
+          </div>
+          <div class="flex items-center gap-4">
+            <div class="text-right">
+              <p class="text-xs text-slate-400">Határidő</p>
+              <p class="text-sm font-semibold">2026.06.11. 18:00</p>
+            </div>
+            <div class="text-right">
+              <p class="text-xs text-slate-400">Haladás</p>
+              <p class="text-sm font-semibold">2 / 16 kész</p>
+            </div>
+            <div class="bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 bg-emerald-400 rounded-full"></span>
+              Mentve
+            </div>
+          </div>
+        </div>
+
+        <!-- Progress bar -->
+        <div class="bg-slate-100 px-6 py-2 flex gap-1 border-b border-slate-200">
+          <span class="h-1.5 flex-1 bg-emerald-500 rounded-sm"></span>
+          <span class="h-1.5 flex-1 bg-emerald-500 rounded-sm"></span>
+          <span class="h-1.5 flex-1 bg-blue-400 rounded-sm"></span>
+          <span class="h-1.5 flex-1 bg-slate-300 rounded-sm"></span>
+          <span class="h-1.5 flex-1 bg-slate-300 rounded-sm"></span>
+          <span class="h-1.5 flex-1 bg-slate-300 rounded-sm"></span>
+          <span class="h-1.5 flex-1 bg-slate-300 rounded-sm"></span>
+          <span class="h-1.5 flex-1 bg-slate-300 rounded-sm"></span>
+          <span class="h-1.5 flex-1 bg-slate-300 rounded-sm"></span>
+          <span class="h-1.5 flex-1 bg-slate-300 rounded-sm"></span>
+          <span class="h-1.5 flex-1 bg-slate-300 rounded-sm"></span>
+          <span class="h-1.5 flex-1 bg-slate-300 rounded-sm"></span>
+          <span class="h-1.5 flex-1 bg-slate-300 rounded-sm"></span>
+          <span class="h-1.5 flex-1 bg-slate-300 rounded-sm"></span>
+          <span class="h-1.5 flex-1 bg-slate-300 rounded-sm"></span>
+          <span class="h-1.5 flex-1 bg-slate-300 rounded-sm"></span>
+        </div>
+
+        <!-- 4×3 grid -->
+        <div class="p-6 bg-slate-50 grid grid-cols-4 gap-4">
+
+          <!-- A: kész -->
+          <div class="bg-white rounded-lg border-2 border-emerald-300 p-3 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-bold text-slate-800 flex items-center gap-1.5">
+                <span class="text-emerald-500">✓</span> A csoport
+              </h3>
+              <span class="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-medium">Kész</span>
+            </div>
+            <div class="space-y-1 text-sm">
+              <div class="flex items-center justify-between gap-1 py-0.5">
+                <span class="flex items-center gap-1.5"><span class="flag">🇲🇽</span><span class="text-slate-700">Mexico</span></span>
+                <span class="font-bold text-slate-600">1.</span>
+              </div>
+              <div class="flex items-center justify-between gap-1 py-0.5">
+                <span class="flex items-center gap-1.5"><span class="flag">🇰🇷</span><span class="text-slate-700">S. Korea</span></span>
+                <span class="font-bold text-slate-600">2.</span>
+              </div>
+              <div class="flex items-center justify-between gap-1 py-0.5">
+                <span class="flex items-center gap-1.5"><span class="flag">🇨🇿</span><span class="text-slate-700">Czech R.</span></span>
+                <span class="font-bold text-slate-600">3.</span>
+              </div>
+              <div class="flex items-center justify-between gap-1 py-0.5">
+                <span class="flex items-center gap-1.5"><span class="flag">🇿🇦</span><span class="text-slate-700">S. Africa</span></span>
+                <span class="font-bold text-slate-600">4.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- B: aktív, részleges -->
+          <div class="bg-white rounded-lg border-2 border-blue-400 p-3 shadow-md ring-4 ring-blue-100">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-bold text-slate-800">B csoport</h3>
+              <span class="text-[10px] text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full font-medium">2 / 4</span>
+            </div>
+            <div class="space-y-1.5 text-sm">
+              <div class="flex items-center justify-between gap-1">
+                <span class="flex items-center gap-1.5 min-w-0"><span class="flag">🇨🇦</span><span class="text-slate-700 truncate">Canada</span></span>
+                <select class="text-xs font-semibold border border-slate-300 rounded px-1.5 py-0.5">
+                  <option selected>1.</option>
+                </select>
+              </div>
+              <div class="flex items-center justify-between gap-1">
+                <span class="flex items-center gap-1.5 min-w-0"><span class="flag">🇨🇭</span><span class="text-slate-700 truncate">Switzerland</span></span>
+                <select class="text-xs font-semibold border border-slate-300 rounded px-1.5 py-0.5">
+                  <option selected>2.</option>
+                </select>
+              </div>
+              <div class="flex items-center justify-between gap-1">
+                <span class="flex items-center gap-1.5 min-w-0"><span class="flag">🇧🇦</span><span class="text-slate-700 truncate">Bosnia-H.</span></span>
+                <select class="text-xs font-semibold border-2 border-blue-400 bg-blue-50 rounded px-1.5 py-0.5 text-blue-700">
+                  <option>—</option>
+                  <option>3.</option>
+                  <option>4.</option>
+                </select>
+              </div>
+              <div class="flex items-center justify-between gap-1">
+                <span class="flex items-center gap-1.5 min-w-0"><span class="flag">🇶🇦</span><span class="text-slate-700 truncate">Qatar</span></span>
+                <select class="text-xs font-semibold border border-slate-300 rounded px-1.5 py-0.5 text-slate-400">
+                  <option>—</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- C–L: üres -->
+          <!-- Generated empty cards -->
+          <div class="bg-white rounded-lg border border-slate-200 p-3 shadow-sm hover:border-blue-300 cursor-pointer transition-colors">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-bold text-slate-700">C csoport</h3>
+              <span class="text-[10px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">0 / 4</span>
+            </div>
+            <div class="space-y-1.5 text-sm opacity-70">
+              <div class="flex items-center justify-between gap-1"><span class="flex items-center gap-1.5"><span class="flag">🇧🇷</span><span class="truncate">Brazil</span></span><span class="text-xs text-slate-400">—</span></div>
+              <div class="flex items-center justify-between gap-1"><span class="flex items-center gap-1.5"><span class="flag">🇭🇹</span><span class="truncate">Haiti</span></span><span class="text-xs text-slate-400">—</span></div>
+              <div class="flex items-center justify-between gap-1"><span class="flex items-center gap-1.5"><span class="flag">🇲🇦</span><span class="truncate">Marocco</span></span><span class="text-xs text-slate-400">—</span></div>
+              <div class="flex items-center justify-between gap-1"><span class="flex items-center gap-1.5"><span class="flag">🏴󠁧󠁢󠁳󠁣󠁴󠁿</span><span class="truncate">Scotland</span></span><span class="text-xs text-slate-400">—</span></div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-lg border border-slate-200 p-3 shadow-sm hover:border-blue-300 cursor-pointer">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-bold text-slate-700">D csoport</h3>
+              <span class="text-[10px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">0 / 4</span>
+            </div>
+            <div class="space-y-1.5 text-sm opacity-70">
+              <div class="flex items-center justify-between gap-1"><span class="flex items-center gap-1.5"><span class="flag">🇦🇺</span><span class="truncate">Australia</span></span><span class="text-xs text-slate-400">—</span></div>
+              <div class="flex items-center justify-between gap-1"><span class="flex items-center gap-1.5"><span class="flag">🇵🇾</span><span class="truncate">Paraguay</span></span><span class="text-xs text-slate-400">—</span></div>
+              <div class="flex items-center justify-between gap-1"><span class="flex items-center gap-1.5"><span class="flag">🇹🇷</span><span class="truncate">Turkey</span></span><span class="text-xs text-slate-400">—</span></div>
+              <div class="flex items-center justify-between gap-1"><span class="flex items-center gap-1.5"><span class="flag">🇺🇸</span><span class="truncate">USA</span></span><span class="text-xs text-slate-400">—</span></div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-lg border border-slate-200 p-3 shadow-sm hover:border-blue-300 cursor-pointer">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-bold text-slate-700">E csoport</h3>
+              <span class="text-[10px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">0 / 4</span>
+            </div>
+            <div class="space-y-1.5 text-sm opacity-70">
+              <div class="flex items-center justify-between gap-1"><span class="flex items-center gap-1.5"><span class="flag">🇨🇼</span><span class="truncate">Curacao</span></span><span class="text-xs text-slate-400">—</span></div>
+              <div class="flex items-center justify-between gap-1"><span class="flex items-center gap-1.5"><span class="flag">🇪🇨</span><span class="truncate">Ecuador</span></span><span class="text-xs text-slate-400">—</span></div>
+              <div class="flex items-center justify-between gap-1"><span class="flex items-center gap-1.5"><span class="flag">🇩🇪</span><span class="truncate">Germany</span></span><span class="text-xs text-slate-400">—</span></div>
+              <div class="flex items-center justify-between gap-1"><span class="flex items-center gap-1.5"><span class="flag">🇨🇮</span><span class="truncate">Ivory Coast</span></span><span class="text-xs text-slate-400">—</span></div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-lg border border-slate-200 p-3 shadow-sm hover:border-blue-300 cursor-pointer">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-bold text-slate-700">F csoport</h3>
+              <span class="text-[10px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">0 / 4</span>
+            </div>
+            <div class="space-y-1.5 text-sm opacity-70">
+              <div class="flex items-center justify-between gap-1"><span class="flex items-center gap-1.5"><span class="flag">🇯🇵</span><span class="truncate">Japan</span></span><span class="text-xs text-slate-400">—</span></div>
+              <div class="flex items-center justify-between gap-1"><span class="flex items-center gap-1.5"><span class="flag">🇳🇱</span><span class="truncate">Netherlands</span></span><span class="text-xs text-slate-400">—</span></div>
+              <div class="flex items-center justify-between gap-1"><span class="flex items-center gap-1.5"><span class="flag">🇸🇪</span><span class="truncate">Sweden</span></span><span class="text-xs text-slate-400">—</span></div>
+              <div class="flex items-center justify-between gap-1"><span class="flex items-center gap-1.5"><span class="flag">🇹🇳</span><span class="truncate">Tunisia</span></span><span class="text-xs text-slate-400">—</span></div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-lg border border-slate-200 p-3 shadow-sm hover:border-blue-300 cursor-pointer">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-bold text-slate-700">G csoport</h3>
+              <span class="text-[10px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">0 / 4</span>
+            </div>
+            <div class="space-y-1.5 text-sm opacity-70">
+              <div class="flex items-center justify-between gap-1"><span class="flex items-center gap-1.5"><span class="flag">🇧🇪</span><span class="truncate">Belgium</span></span><span class="text-xs text-slate-400">—</span></div>
+              <div class="flex items-center justify-between gap-1"><span class="flex items-center gap-1.5"><span class="flag">🇪🇬</span><span class="truncate">Egypt</span></span><span class="text-xs text-slate-400">—</span></div>
+              <div class="flex items-center justify-between gap-1"><span class="flex items-center gap-1.5"><span class="flag">🇮🇷</span><span class="truncate">Iran</span></span><span class="text-xs text-slate-400">—</span></div>
+              <div class="flex items-center justify-between gap-1"><span class="flex items-center gap-1.5"><span class="flag">🇳🇿</span><span class="truncate">N. Zealand</span></span><span class="text-xs text-slate-400">—</span></div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-lg border border-slate-200 p-3 shadow-sm hover:border-blue-300 cursor-pointer">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-bold text-slate-700">H csoport</h3>
+              <span class="text-[10px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">0 / 4</span>
+            </div>
+            <div class="space-y-1.5 text-sm opacity-70">
+              <div class="flex items-center justify-between gap-1"><span class="flex items-center gap-1.5"><span class="flag">🇨🇻</span><span class="truncate">Cape Verde</span></span><span class="text-xs text-slate-400">—</span></div>
+              <div class="flex items-center justify-between gap-1"><span class="flex items-center gap-1.5"><span class="flag">🇸🇦</span><span class="truncate">Saudi A.</span></span><span class="text-xs text-slate-400">—</span></div>
+              <div class="flex items-center justify-between gap-1"><span class="flex items-center gap-1.5"><span class="flag">🇪🇸</span><span class="truncate">Spain</span></span><span class="text-xs text-slate-400">—</span></div>
+              <div class="flex items-center justify-between gap-1"><span class="flex items-center gap-1.5"><span class="flag">🇺🇾</span><span class="truncate">Uruguay</span></span><span class="text-xs text-slate-400">—</span></div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-lg border border-slate-200 p-3 shadow-sm hover:border-blue-300 cursor-pointer">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-bold text-slate-700">I csoport</h3>
+              <span class="text-[10px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">0 / 4</span>
+            </div>
+            <div class="space-y-1.5 text-sm opacity-70">
+              <div class="flex items-center justify-between gap-1"><span class="flex items-center gap-1.5"><span class="flag">🇫🇷</span><span class="truncate">France</span></span><span class="text-xs text-slate-400">—</span></div>
+              <div class="flex items-center justify-between gap-1"><span class="flex items-center gap-1.5"><span class="flag">🇮🇶</span><span class="truncate">Iraq</span></span><span class="text-xs text-slate-400">—</span></div>
+              <div class="flex items-center justify-between gap-1"><span class="flex items-center gap-1.5"><span class="flag">🇳🇴</span><span class="truncate">Norway</span></span><span class="text-xs text-slate-400">—</span></div>
+              <div class="flex items-center justify-between gap-1"><span class="flex items-center gap-1.5"><span class="flag">🇸🇳</span><span class="truncate">Senegal</span></span><span class="text-xs text-slate-400">—</span></div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-lg border border-slate-200 p-3 shadow-sm hover:border-blue-300 cursor-pointer">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-bold text-slate-700">J csoport</h3>
+              <span class="text-[10px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">0 / 4</span>
+            </div>
+            <div class="space-y-1.5 text-sm opacity-70">
+              <div class="flex items-center justify-between gap-1"><span class="flex items-center gap-1.5"><span class="flag">🇩🇿</span><span class="truncate">Algeria</span></span><span class="text-xs text-slate-400">—</span></div>
+              <div class="flex items-center justify-between gap-1"><span class="flex items-center gap-1.5"><span class="flag">🇦🇷</span><span class="truncate">Argentina</span></span><span class="text-xs text-slate-400">—</span></div>
+              <div class="flex items-center justify-between gap-1"><span class="flex items-center gap-1.5"><span class="flag">🇦🇹</span><span class="truncate">Austria</span></span><span class="text-xs text-slate-400">—</span></div>
+              <div class="flex items-center justify-between gap-1"><span class="flex items-center gap-1.5"><span class="flag">🇯🇴</span><span class="truncate">Jordania</span></span><span class="text-xs text-slate-400">—</span></div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-lg border border-slate-200 p-3 shadow-sm hover:border-blue-300 cursor-pointer">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-bold text-slate-700">K csoport</h3>
+              <span class="text-[10px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">0 / 4</span>
+            </div>
+            <div class="space-y-1.5 text-sm opacity-70">
+              <div class="flex items-center justify-between gap-1"><span class="flex items-center gap-1.5"><span class="flag">🇨🇴</span><span class="truncate">Colombia</span></span><span class="text-xs text-slate-400">—</span></div>
+              <div class="flex items-center justify-between gap-1"><span class="flex items-center gap-1.5"><span class="flag">🇨🇩</span><span class="truncate">DR Congo</span></span><span class="text-xs text-slate-400">—</span></div>
+              <div class="flex items-center justify-between gap-1"><span class="flex items-center gap-1.5"><span class="flag">🇵🇹</span><span class="truncate">Portugal</span></span><span class="text-xs text-slate-400">—</span></div>
+              <div class="flex items-center justify-between gap-1"><span class="flex items-center gap-1.5"><span class="flag">🇺🇿</span><span class="truncate">Uzbekistan</span></span><span class="text-xs text-slate-400">—</span></div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-lg border border-slate-200 p-3 shadow-sm hover:border-blue-300 cursor-pointer">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-bold text-slate-700">L csoport</h3>
+              <span class="text-[10px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">0 / 4</span>
+            </div>
+            <div class="space-y-1.5 text-sm opacity-70">
+              <div class="flex items-center justify-between gap-1"><span class="flex items-center gap-1.5"><span class="flag">🇭🇷</span><span class="truncate">Croatia</span></span><span class="text-xs text-slate-400">—</span></div>
+              <div class="flex items-center justify-between gap-1"><span class="flex items-center gap-1.5"><span class="flag">🏴󠁧󠁢󠁥󠁮󠁧󠁿</span><span class="truncate">England</span></span><span class="text-xs text-slate-400">—</span></div>
+              <div class="flex items-center justify-between gap-1"><span class="flex items-center gap-1.5"><span class="flag">🇬🇭</span><span class="truncate">Ghana</span></span><span class="text-xs text-slate-400">—</span></div>
+              <div class="flex items-center justify-between gap-1"><span class="flex items-center gap-1.5"><span class="flag">🇵🇦</span><span class="truncate">Panama</span></span><span class="text-xs text-slate-400">—</span></div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Best 3rd: lockolt -->
+        <div class="border-t border-slate-200 px-6 py-4 bg-white">
+          <div class="bg-slate-100 border-2 border-dashed border-slate-300 rounded-lg p-6 text-center">
+            <div class="text-3xl mb-2">🔒</div>
+            <h3 class="font-bold text-slate-600">Legjobb 4 továbbjutó harmadik helyezett</h3>
+            <p class="text-sm text-slate-500 mt-1">Töltsd ki előbb mind a 12 csoportot — utána tudsz választani 4 csapatot a 3.helyezettek közül.</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ====== READ-ONLY (deadline után, kiértékelve) ====== -->
+    <section>
+      <h2 class="text-center text-sm font-semibold text-slate-600 mb-3 mt-6">📱 Mobil — Kiértékelve (deadline után)</h2>
+      <div class="device-frame">
+        <div class="device-screen bg-slate-50">
+
+          <div class="px-4 pt-4 pb-3 bg-white border-b border-slate-200 sticky top-0 z-20">
+            <div class="flex items-center justify-between">
+              <button class="text-slate-600">← Vissza</button>
+            </div>
+            <h1 class="text-lg font-bold text-slate-900 mt-2">Csoport végeredmény</h1>
+            <p class="text-xs text-emerald-600 font-medium mt-0.5">✓ Kiértékelve · csoportkör vége</p>
+          </div>
+
+          <div class="px-3 py-3 space-y-2">
+
+            <!-- A csoport: részben jó -->
+            <details open class="bg-white rounded-lg border border-slate-200 shadow-sm">
+              <summary class="px-3 py-3 flex items-center justify-between">
+                <span class="font-semibold text-slate-800">A csoport</span>
+                <span class="chevron text-slate-400 rotate-180">▾</span>
+              </summary>
+              <div class="px-3 pb-3 border-t border-slate-100 pt-2 space-y-1.5 text-sm">
+                <div class="flex items-center justify-between p-1.5 rounded bg-emerald-50 border border-emerald-200">
+                  <span class="flex items-center gap-2"><span class="flag">🇲🇽</span><span class="font-medium">MEX</span></span>
+                  <span class="flex items-center gap-1.5"><span class="font-bold">1.</span><span class="text-emerald-600">✓</span></span>
+                </div>
+                <div class="flex items-center justify-between p-1.5 rounded bg-rose-50 border border-rose-200">
+                  <span class="flex items-center gap-2"><span class="flag">🇰🇷</span><span class="font-medium">KOR</span></span>
+                  <span class="flex items-center gap-1.5"><span class="font-bold line-through text-slate-400">2.</span><span class="text-rose-600 text-xs">helyes: 3.</span></span>
+                </div>
+                <div class="flex items-center justify-between p-1.5 rounded bg-rose-50 border border-rose-200">
+                  <span class="flex items-center gap-2"><span class="flag">🇨🇿</span><span class="font-medium">CZE</span></span>
+                  <span class="flex items-center gap-1.5"><span class="font-bold line-through text-slate-400">3.</span><span class="text-rose-600 text-xs">helyes: 2.</span></span>
+                </div>
+                <div class="flex items-center justify-between p-1.5 rounded bg-emerald-50 border border-emerald-200">
+                  <span class="flex items-center gap-2"><span class="flag">🇿🇦</span><span class="font-medium">RSA</span></span>
+                  <span class="flex items-center gap-1.5"><span class="font-bold">4.</span><span class="text-emerald-600">✓</span></span>
+                </div>
+              </div>
+            </details>
+
+            <!-- További csoportok rövidített nézettel -->
+            <details class="bg-white rounded-lg border border-slate-200 shadow-sm">
+              <summary class="px-3 py-2.5 flex items-center justify-between text-sm">
+                <span><b>B csoport</b> <span class="text-slate-500">— 4 / 4 helyes</span></span>
+                <span class="text-emerald-600">✓✓✓✓</span>
+              </summary>
+            </details>
+            <details class="bg-white rounded-lg border border-slate-200 shadow-sm">
+              <summary class="px-3 py-2.5 flex items-center justify-between text-sm">
+                <span><b>C csoport</b> <span class="text-slate-500">— 1 / 4 helyes</span></span>
+                <span class="text-rose-500">✓✗✗✗</span>
+              </summary>
+            </details>
+            <details class="bg-white rounded-lg border border-slate-200 shadow-sm">
+              <summary class="px-3 py-2.5 flex items-center justify-between text-sm">
+                <span><b>D csoport</b> <span class="text-slate-500">— 2 / 4 helyes</span></span>
+                <span><span class="text-emerald-600">✓✓</span><span class="text-rose-500">✗✗</span></span>
+              </summary>
+            </details>
+
+            <!-- Best 3rd kiértékelve -->
+            <details open class="bg-white rounded-lg border border-slate-200 shadow-sm mt-3">
+              <summary class="px-3 py-3 flex items-center justify-between">
+                <span class="font-semibold text-slate-800">🏆 Legjobb 4 harmadik</span>
+                <span class="text-xs text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">2 / 4 helyes</span>
+              </summary>
+              <div class="px-3 pb-3 grid grid-cols-2 gap-2 border-t border-slate-100 pt-2">
+                <div class="border-2 border-emerald-400 bg-emerald-50 rounded-lg p-2 flex items-center gap-2">
+                  <span class="text-xl">🇨🇿</span>
+                  <div class="flex-1"><span class="font-bold text-sm">CZE</span></div>
+                  <span class="text-emerald-600">✓</span>
+                </div>
+                <div class="border-2 border-emerald-400 bg-emerald-50 rounded-lg p-2 flex items-center gap-2">
+                  <span class="text-xl">🇨🇮</span>
+                  <div class="flex-1"><span class="font-bold text-sm">CIV</span></div>
+                  <span class="text-emerald-600">✓</span>
+                </div>
+                <div class="border-2 border-rose-300 bg-rose-50 rounded-lg p-2 flex items-center gap-2">
+                  <span class="text-xl">🇧🇦</span>
+                  <div class="flex-1"><span class="font-bold text-sm line-through text-slate-400">BIH</span></div>
+                  <span class="text-rose-500">✗</span>
+                </div>
+                <div class="border-2 border-rose-300 bg-rose-50 rounded-lg p-2 flex items-center gap-2">
+                  <span class="text-xl">🇯🇵</span>
+                  <div class="flex-1"><span class="font-bold text-sm line-through text-slate-400">JPN</span></div>
+                  <span class="text-rose-500">✗</span>
+                </div>
+              </div>
+            </details>
+
+            <div class="h-6"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <footer class="text-center text-xs text-slate-500 mt-12">
+    Mockup · 2026-05-29 · Spec: <code>docs/superpowers/specs/2026-05-29-group-standings-prediction-design.md</code>
+  </footer>
+</div>
+
+</body>
+</html>

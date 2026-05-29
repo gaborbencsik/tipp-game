@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8" />
+<title>Bonus tippek – mockup</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: 'Inter', system-ui, sans-serif; }
+  .flag { font-size: 1.1rem; line-height: 1; }
+  details > summary { list-style: none; cursor: pointer; }
+  details > summary::-webkit-details-marker { display: none; }
+  details[open] .chev { transform: rotate(90deg); }
+  .chev { transition: transform .15s; }
+</style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+<div class="max-w-2xl mx-auto px-4 py-6">
+
+  <!-- ───── Tab fejléc ───── -->
+  <div class="border-b border-gray-200 mb-4">
+    <nav class="flex gap-4 text-sm">
+      <a class="py-3 text-gray-500">Ranglista</a>
+      <a class="py-3 text-gray-500">Tippjeim</a>
+      <a class="py-3 text-gray-500">Tagok</a>
+      <a class="py-3 border-b-2 border-blue-600 text-blue-700 font-semibold">Torna tippek</a>
+      <a class="py-3 text-gray-500">Beállítások</a>
+    </nav>
+  </div>
+
+  <!-- ───── Globális countdown banner (közös deadline = VB kezdete) ───── -->
+  <div class="rounded-xl border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-4 mb-4">
+    <div class="flex items-center gap-3">
+      <div class="shrink-0 w-10 h-10 rounded-full bg-white border border-blue-200 flex items-center justify-center text-lg">⏱</div>
+      <div class="min-w-0 flex-1">
+        <p class="text-sm font-semibold text-blue-900">VB kezdetéig <span class="tabular-nums">23 nap 6 óra 12 perc</span></p>
+        <p class="text-xs text-blue-700/80 mt-0.5">Határidő: <span class="font-medium">2026. jún. 21. 18:00</span> · ezen időpont után minden bonus tipp lezárul.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ───── Sticky kategória pill-bar ───── -->
+  <div class="sticky top-0 -mx-4 px-4 bg-gray-50/95 backdrop-blur z-10 py-2 mb-4">
+    <div class="flex gap-2 overflow-x-auto">
+      <a class="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full bg-blue-50 ring-2 ring-blue-300 text-blue-700">Statisztika 5</a>
+      <a class="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full bg-white border border-gray-200 text-gray-600">Upset 1</a>
+      <a class="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full bg-white border border-gray-200 text-gray-600">Progression 6</a>
+      <a class="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full bg-white border border-gray-200 text-gray-600">Egyedi 3</a>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- 1. STATISZTIKAI BONUS TIPPEK (US-935 + US-934 chip-bontás)  -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <details open class="mb-4">
+    <summary class="flex items-center justify-between mb-2 px-1">
+      <h3 class="text-base font-semibold text-gray-800 flex items-center gap-2">
+        <span class="chev text-gray-400">▸</span>
+        Statisztikai tippek
+      </h3>
+      <span class="text-xs text-gray-400">5 típus · max 17p</span>
+    </summary>
+
+    <div class="space-y-3">
+      <!-- Card 1 — kiértékelve, US-934 bontással -->
+      <div class="bg-white rounded-xl border border-gray-200 p-4">
+        <div class="flex items-start justify-between gap-2 mb-2">
+          <div>
+            <p class="font-medium text-gray-800 text-sm">Torna gólkirálya</p>
+            <p class="text-xs text-gray-500 mt-0.5">Ki szerzett a legtöbb gólt a teljes tornán?</p>
+          </div>
+          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-50 text-green-700 shrink-0">+5p</span>
+        </div>
+        <div class="text-sm">
+          <p class="text-gray-600">Tipped: <span class="font-medium">Mbappé</span></p>
+          <p class="text-gray-600">Helyes: <span class="font-medium">Mbappé</span></p>
+          <p class="mt-1 font-semibold text-green-600">+5 pont</p>
+        </div>
+        <!-- US-934 chip-bontás -->
+        <div class="border-t border-gray-100 mt-3 pt-3">
+          <p class="text-xs text-gray-400 mb-1.5">12 tipp a csoportból</p>
+          <div class="flex flex-wrap gap-1.5">
+            <span class="inline-flex items-center gap-1 text-xs bg-blue-50 ring-2 ring-blue-300 rounded-full px-2 py-0.5">
+              <span class="font-medium text-blue-700">Mbappé</span><span class="text-blue-400">(5)</span>
+            </span>
+            <span class="inline-flex items-center gap-1 text-xs bg-gray-100 rounded-full px-2 py-0.5">
+              <span class="font-medium text-gray-700">Vinicius Jr.</span><span class="text-gray-400">(3)</span>
+            </span>
+            <span class="inline-flex items-center gap-1 text-xs bg-gray-100 rounded-full px-2 py-0.5">
+              <span class="font-medium text-gray-700">Haaland</span><span class="text-gray-400">(2)</span>
+            </span>
+            <span class="inline-flex items-center gap-1 text-xs bg-gray-100 rounded-full px-2 py-0.5">
+              <span class="font-medium text-gray-700">Lautaro</span><span class="text-gray-400">(2)</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2 — beadás előtt -->
+      <div class="bg-white rounded-xl border border-gray-200 p-4">
+        <div class="flex items-start justify-between gap-2 mb-2">
+          <div>
+            <p class="font-medium text-gray-800 text-sm">Csoportkör – legtöbb gólt szerző csapat</p>
+            <p class="text-xs text-gray-500 mt-0.5">Melyik csapat szerzett a legtöbb gólt a csoportkörben?</p>
+          </div>
+          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 shrink-0">3p</span>
+        </div>
+        <select class="w-full border rounded px-2 py-1.5 text-sm mb-2 text-gray-700">
+          <option>Spanyolország</option>
+        </select>
+        <button class="text-sm px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700">Mentés</button>
+      </div>
+
+      <!-- Card 3 — összecsukva: csak fejléc -->
+      <div class="bg-white rounded-xl border border-gray-200 p-4 opacity-70">
+        <div class="flex items-start justify-between gap-2">
+          <p class="font-medium text-gray-800 text-sm">Csoportkör – legkevesebb gólt kapó csapat</p>
+          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 shrink-0">3p · még nincs tipp</span>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- 2. UPSET SPECIAL (US-936)                                    -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <details open class="mb-4">
+    <summary class="flex items-center justify-between mb-2 px-1">
+      <h3 class="text-base font-semibold text-gray-800 flex items-center gap-2">
+        <span class="chev text-gray-400">▸</span>
+        Upset Special
+      </h3>
+      <span class="text-xs text-gray-400">2 pick · max 36p</span>
+    </summary>
+
+    <div class="bg-white rounded-xl border border-gray-200 p-4">
+      <p class="text-sm text-gray-700 mb-1">Válassz <span class="font-semibold">2 favoritot</span>, akik szerinted KIESNEK a csoportkörből.</p>
+      <p class="text-xs text-gray-500 mb-3">Ha kiesik, a csapathoz rendelt pontérték jár neked.</p>
+
+      <!-- 24 csapat grid -->
+      <div class="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-3">
+        <!-- aktív pick -->
+        <button class="flex flex-col items-center gap-0.5 px-2 py-2 rounded-lg bg-blue-50 ring-2 ring-blue-300">
+          <span class="flag">🇪🇸</span>
+          <span class="text-xs font-semibold text-blue-700">ESP</span>
+          <span class="text-[10px] text-blue-400">18p</span>
+        </button>
+        <button class="flex flex-col items-center gap-0.5 px-2 py-2 rounded-lg bg-gray-50 hover:bg-gray-100">
+          <span class="flag">🇫🇷</span><span class="text-xs font-semibold text-gray-700">FRA</span><span class="text-[10px] text-gray-400">18p</span>
+        </button>
+        <button class="flex flex-col items-center gap-0.5 px-2 py-2 rounded-lg bg-gray-50 hover:bg-gray-100">
+          <span class="flag">🏴󠁧󠁢󠁥󠁮󠁧󠁿</span><span class="text-xs font-semibold text-gray-700">ENG</span><span class="text-[10px] text-gray-400">17p</span>
+        </button>
+        <button class="flex flex-col items-center gap-0.5 px-2 py-2 rounded-lg bg-gray-50 hover:bg-gray-100">
+          <span class="flag">🇧🇷</span><span class="text-xs font-semibold text-gray-700">BRA</span><span class="text-[10px] text-gray-400">16p</span>
+        </button>
+        <button class="flex flex-col items-center gap-0.5 px-2 py-2 rounded-lg bg-gray-50 hover:bg-gray-100">
+          <span class="flag">🇦🇷</span><span class="text-xs font-semibold text-gray-700">ARG</span><span class="text-[10px] text-gray-400">16p</span>
+        </button>
+        <button class="flex flex-col items-center gap-0.5 px-2 py-2 rounded-lg bg-gray-50 hover:bg-gray-100">
+          <span class="flag">🇩🇪</span><span class="text-xs font-semibold text-gray-700">GER</span><span class="text-[10px] text-gray-400">15p</span>
+        </button>
+        <button class="flex flex-col items-center gap-0.5 px-2 py-2 rounded-lg bg-gray-50 hover:bg-gray-100">
+          <span class="flag">🇵🇹</span><span class="text-xs font-semibold text-gray-700">POR</span><span class="text-[10px] text-gray-400">14p</span>
+        </button>
+        <button class="flex flex-col items-center gap-0.5 px-2 py-2 rounded-lg bg-gray-50 hover:bg-gray-100">
+          <span class="flag">🇳🇱</span><span class="text-xs font-semibold text-gray-700">NED</span><span class="text-[10px] text-gray-400">13p</span>
+        </button>
+        <!-- aktív pick -->
+        <button class="flex flex-col items-center gap-0.5 px-2 py-2 rounded-lg bg-blue-50 ring-2 ring-blue-300">
+          <span class="flag">🇨🇦</span><span class="text-xs font-semibold text-blue-700">CAN</span><span class="text-[10px] text-blue-400">2p</span>
+        </button>
+        <button class="flex flex-col items-center gap-0.5 px-2 py-2 rounded-lg bg-gray-50 hover:bg-gray-100">
+          <span class="flag">🇲🇽</span><span class="text-xs font-semibold text-gray-700">MEX</span><span class="text-[10px] text-gray-400">8p</span>
+        </button>
+        <button class="flex flex-col items-center gap-0.5 px-2 py-2 rounded-lg bg-gray-50 hover:bg-gray-100">
+          <span class="flag">🇺🇸</span><span class="text-xs font-semibold text-gray-700">USA</span><span class="text-[10px] text-gray-400">7p</span>
+        </button>
+        <button class="flex flex-col items-center gap-0.5 px-2 py-2 rounded-lg bg-gray-50 hover:bg-gray-100">
+          <span class="flag">🇯🇵</span><span class="text-xs font-semibold text-gray-700">JPN</span><span class="text-[10px] text-gray-400">10p</span>
+        </button>
+        <!-- + 12 további csapat ellipszisz -->
+        <div class="col-span-3 sm:col-span-4 text-center text-xs text-gray-400 py-1">… +12 további csapat</div>
+      </div>
+
+      <div class="flex items-center justify-between gap-2 pt-2 border-t border-gray-100">
+        <span class="text-xs font-medium text-blue-700">2 / 2 csapat kiválasztva</span>
+        <button class="text-sm px-4 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700">Mentés</button>
+      </div>
+    </div>
+  </details>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- 3. TORNA PROGRESSION (US-937)                                -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <details open class="mb-4">
+    <summary class="flex items-center justify-between mb-2 px-1">
+      <h3 class="text-base font-semibold text-gray-800 flex items-center gap-2">
+        <span class="chev text-gray-400">▸</span>
+        Torna progression
+      </h3>
+      <span class="text-xs text-gray-400">6 szakasz · max ~94p</span>
+    </summary>
+
+    <div class="bg-white rounded-xl border border-gray-200 p-4">
+      <!-- Stage stepper -->
+      <div class="flex gap-1 overflow-x-auto -mx-1 px-1 pb-2 mb-3 snap-x">
+        <button class="snap-start shrink-0 px-3 py-1.5 text-xs font-semibold rounded-full bg-green-50 text-green-700 ring-1 ring-green-200">
+          ✓ Csoport
+        </button>
+        <button class="snap-start shrink-0 px-3 py-1.5 text-xs font-semibold rounded-full bg-gray-100 text-gray-400 line-through">
+          L32
+        </button>
+        <button class="snap-start shrink-0 px-3 py-1.5 text-xs font-semibold rounded-full bg-blue-50 ring-2 ring-blue-300 text-blue-700">
+          ● L16
+        </button>
+        <button class="snap-start shrink-0 px-3 py-1.5 text-xs font-semibold rounded-full bg-white border border-dashed border-gray-300 text-gray-400">
+          QF
+        </button>
+        <button class="snap-start shrink-0 px-3 py-1.5 text-xs font-semibold rounded-full bg-white border border-dashed border-gray-300 text-gray-400">
+          SF
+        </button>
+        <button class="snap-start shrink-0 px-3 py-1.5 text-xs font-semibold rounded-full bg-white border border-dashed border-gray-300 text-gray-400">
+          F
+        </button>
+      </div>
+
+      <p class="text-sm text-gray-700 mb-1">
+        <span class="font-semibold">Last 16</span> – válassz <span class="font-semibold">16 csapatot</span> a 32-ből
+      </p>
+      <p class="text-xs text-gray-500 mb-3">3p / helyesen választott csapat</p>
+
+      <!-- Multi-team grid (CountryChip újrahasznosítva) -->
+      <div class="grid grid-cols-4 gap-2 mb-3">
+        <button class="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-blue-50 ring-2 ring-blue-300">
+          <span class="flag">🇪🇸</span><span class="text-xs font-semibold text-blue-700">ESP</span>
+        </button>
+        <button class="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-blue-50 ring-2 ring-blue-300">
+          <span class="flag">🇫🇷</span><span class="text-xs font-semibold text-blue-700">FRA</span>
+        </button>
+        <button class="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-gray-50">
+          <span class="flag">🏴󠁧󠁢󠁥󠁮󠁧󠁿</span><span class="text-xs font-semibold text-gray-700">ENG</span>
+        </button>
+        <button class="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-blue-50 ring-2 ring-blue-300">
+          <span class="flag">🇧🇷</span><span class="text-xs font-semibold text-blue-700">BRA</span>
+        </button>
+        <button class="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-gray-50">
+          <span class="flag">🇦🇷</span><span class="text-xs font-semibold text-gray-700">ARG</span>
+        </button>
+        <button class="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-blue-50 ring-2 ring-blue-300">
+          <span class="flag">🇩🇪</span><span class="text-xs font-semibold text-blue-700">GER</span>
+        </button>
+        <button class="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-gray-50">
+          <span class="flag">🇵🇹</span><span class="text-xs font-semibold text-gray-700">POR</span>
+        </button>
+        <button class="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-blue-50 ring-2 ring-blue-300">
+          <span class="flag">🇳🇱</span><span class="text-xs font-semibold text-blue-700">NED</span>
+        </button>
+        <div class="col-span-4 text-center text-xs text-gray-400 py-1">… +24 további csapat</div>
+      </div>
+
+      <div class="flex items-center justify-between gap-2 pt-2 border-t border-gray-100">
+        <span class="text-xs font-medium text-blue-700">8 / 16 csapat kiválasztva</span>
+        <button class="text-sm px-4 py-1.5 rounded bg-blue-600 text-white opacity-50 cursor-not-allowed" disabled>Mentés</button>
+      </div>
+    </div>
+  </details>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- 4. EGYEDI CSOPORT-TIPPEK                                     -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <details class="mb-4">
+    <summary class="flex items-center justify-between mb-2 px-1">
+      <h3 class="text-base font-semibold text-gray-800 flex items-center gap-2">
+        <span class="chev text-gray-400">▸</span>
+        Egyedi csoport-tippek
+      </h3>
+      <span class="text-xs text-gray-400">3 típus · csoport-admin által</span>
+    </summary>
+    <div class="bg-white rounded-xl border border-gray-200 p-4 text-sm text-gray-500">
+      … (összecsukva — admin saját típusok listája)
+    </div>
+  </details>
+
+  <!-- ───── Admin panel preview (Beállítások tab) ───── -->
+  <div class="mt-12 mb-4 px-1">
+    <div class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">↓ Admin oldal — Beállítások tab ↓</div>
+  </div>
+
+  <div class="bg-white rounded-xl border border-gray-200 p-4">
+    <h3 class="text-base font-semibold text-gray-800 mb-1">Bonus tippek</h3>
+    <p class="text-sm text-gray-500 mb-4">Csoportonként ki/be kapcsolható minden bonus tipp típus.</p>
+
+    <div class="space-y-2">
+      <!-- Stat batch -->
+      <div class="border rounded-lg p-3">
+        <div class="flex items-center justify-between gap-2">
+          <div class="min-w-0">
+            <p class="font-medium text-gray-800 text-sm">Statisztikai (5 típus)</p>
+            <p class="text-xs text-gray-500 mt-0.5">4 / 5 aktív · Gólkirály, csoportkör statisztikák</p>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <span class="text-xs text-gray-400">batch</span>
+            <button class="relative w-9 h-5 rounded-full bg-gradient-to-r from-green-500 to-gray-300">
+              <span class="absolute top-0.5 left-3 w-4 h-4 bg-white rounded-full shadow"></span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upset -->
+      <div class="border rounded-lg p-3">
+        <div class="flex items-center justify-between gap-2">
+          <div class="min-w-0">
+            <p class="font-medium text-gray-800 text-sm">Upset Special</p>
+            <p class="text-xs text-gray-500 mt-0.5">INAKTÍV · 24 csapat súlyozott picker</p>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <button class="relative w-9 h-5 rounded-full bg-gray-300">
+              <span class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow"></span>
+            </button>
+            <span class="text-xs font-medium text-gray-400">ki</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Progression with stages -->
+      <div class="border rounded-lg p-3">
+        <div class="flex items-center justify-between gap-2 mb-2">
+          <div class="min-w-0">
+            <p class="font-medium text-gray-800 text-sm">Torna progression (6 stage)</p>
+            <p class="text-xs text-gray-500 mt-0.5">4 / 6 aktív</p>
+          </div>
+          <span class="text-xs font-medium text-amber-600">vegyes</span>
+        </div>
+        <!-- stage-szintű -->
+        <div class="ml-2 mt-2 space-y-1.5 text-xs">
+          <div class="flex items-center justify-between"><span class="text-gray-700">Csoport végeredmény (3p/elem)</span>
+            <button class="relative w-8 h-4 rounded-full bg-green-500"><span class="absolute top-0.5 left-4 w-3 h-3 bg-white rounded-full shadow"></span></button></div>
+          <div class="flex items-center justify-between"><span class="text-gray-400">Last 32 (2p/elem)</span>
+            <button class="relative w-8 h-4 rounded-full bg-gray-300"><span class="absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full shadow"></span></button></div>
+          <div class="flex items-center justify-between"><span class="text-gray-700">Last 16 (3p/elem)</span>
+            <button class="relative w-8 h-4 rounded-full bg-green-500"><span class="absolute top-0.5 left-4 w-3 h-3 bg-white rounded-full shadow"></span></button></div>
+          <div class="flex items-center justify-between"><span class="text-gray-700">Negyeddöntő (4p/elem)</span>
+            <button class="relative w-8 h-4 rounded-full bg-green-500"><span class="absolute top-0.5 left-4 w-3 h-3 bg-white rounded-full shadow"></span></button></div>
+          <div class="flex items-center justify-between"><span class="text-gray-700">Elődöntő (6p/elem)</span>
+            <button class="relative w-8 h-4 rounded-full bg-green-500"><span class="absolute top-0.5 left-4 w-3 h-3 bg-white rounded-full shadow"></span></button></div>
+          <div class="flex items-center justify-between"><span class="text-gray-400">Döntő (8p/elem)</span>
+            <button class="relative w-8 h-4 rounded-full bg-gray-300"><span class="absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full shadow"></span></button></div>
+        </div>
+      </div>
+
+      <!-- Egyedi -->
+      <div class="border rounded-lg p-3">
+        <div class="flex items-center justify-between gap-2">
+          <div class="min-w-0">
+            <p class="font-medium text-gray-800 text-sm">Egyedi típusok (3 db)</p>
+            <p class="text-xs text-gray-500 mt-0.5">Csoport-admin által létrehozott</p>
+          </div>
+          <button class="text-xs px-2 py-1 rounded border border-blue-300 text-blue-600 hover:bg-blue-50 shrink-0">+ új</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
