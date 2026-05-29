@@ -677,25 +677,25 @@
           <div v-else-if="!isDeadlinePassed(sp.deadline)">
             <div v-if="sp.inputType === 'team_select'" class="mb-2">
               <TeamSelectDropdown
-                :model-value="pendingAnswers[sp.typeId] ?? sp.answer ?? null"
+                :model-value="sp.answer ?? null"
                 :league-id="currentGroup?.league?.id ?? null"
                 :answer-label="sp.answerLabel ?? null"
-                @update:model-value="v => { if (v) pendingAnswers[sp.typeId] = v; else delete pendingAnswers[sp.typeId] }"
+                @update:model-value="v => onSpecialAnswerChange(sp, v)"
               />
             </div>
             <div v-else-if="sp.inputType === 'player_select'" class="mb-2">
               <PlayerSelectCombobox
-                :model-value="pendingAnswers[sp.typeId] ?? sp.answer ?? null"
+                :model-value="sp.answer ?? null"
                 :league-id="currentGroup?.league?.id ?? null"
                 :answer-label="sp.answerLabel ?? null"
-                @update:model-value="v => { if (v) pendingAnswers[sp.typeId] = v; else delete pendingAnswers[sp.typeId] }"
+                @update:model-value="v => onSpecialAnswerChange(sp, v)"
               />
             </div>
             <div v-else-if="sp.inputType === 'dropdown' && sp.options?.length">
               <select
-                :value="pendingAnswers[sp.typeId] ?? sp.answer ?? ''"
+                :value="sp.answer ?? ''"
                 class="w-full border rounded px-2 py-1.5 text-sm mb-2"
-                @change="pendingAnswers[sp.typeId] = ($event.target as HTMLSelectElement).value"
+                @change="onSpecialAnswerChange(sp, ($event.target as HTMLSelectElement).value)"
               >
                 <option value="" disabled>{{ $t('groupDetail.specialPlaceholder') }}</option>
                 <option v-for="opt in sp.options" :key="opt" :value="opt">{{ opt }}</option>
@@ -703,23 +703,18 @@
             </div>
             <div v-else>
               <input
-                :value="pendingAnswers[sp.typeId] ?? sp.answer ?? ''"
+                :value="textDraft[sp.typeId] ?? sp.answer ?? ''"
                 type="text"
                 maxlength="500"
                 class="w-full border rounded px-2 py-1.5 text-sm mb-2"
                 :placeholder="$t('groupDetail.specialInputPlaceholder')"
-                @input="pendingAnswers[sp.typeId] = ($event.target as HTMLInputElement).value"
+                @input="textDraft[sp.typeId] = ($event.target as HTMLInputElement).value"
+                @blur="onSpecialAnswerChange(sp, textDraft[sp.typeId] ?? '')"
               />
             </div>
-            <div class="flex items-center gap-2">
-              <button
-                class="text-sm px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
-                :disabled="!canSubmitPrediction(sp)"
-                @click="submitPrediction(sp.typeId)"
-              >
-                {{ sp.answer ? $t('groupDetail.specialModify') : $t('groupDetail.specialSubmit') }}
-              </button>
-              <span v-if="predictionSaveStatus[sp.typeId] === 'saved'" class="text-xs text-green-600">{{ $t('groupDetail.specialSaved') }}</span>
+            <div class="flex items-center gap-2 min-h-[1.25rem]">
+              <span v-if="predictionSaveStatus[sp.typeId] === 'saving'" class="text-xs text-gray-500">{{ $t('groupDetail.specialSaving') }}</span>
+              <span v-else-if="predictionSaveStatus[sp.typeId] === 'saved'" class="text-xs text-green-600">{{ $t('groupDetail.specialSaved') }}</span>
               <span v-else-if="predictionSaveStatus[sp.typeId] === 'error'" class="text-xs text-red-600">{{ $t('groupDetail.specialError') }}</span>
             </div>
           </div>
@@ -1006,7 +1001,7 @@ const setAnswerError = ref<string | null>(null)
 
 // ─── Special predictions (member) ────────────────────────────────────────────
 const specialPredictions = computed(() => groupsStore.specialPredictionsMap[groupId] ?? [])
-const pendingAnswers = reactive<Record<string, string>>({})
+const textDraft = reactive<Record<string, string>>({})
 const predictionSaveStatus = reactive<Record<string, 'idle' | 'saving' | 'saved' | 'error'>>({})
 
 // ─── Global type subscriptions (admin) ──────────────────────────────────────
@@ -1266,24 +1261,21 @@ function predictionStatusLabel(sp: { points: number | null; answer: string | nul
   return t('groupDetail.predStatusOpen')
 }
 
-function canSubmitPrediction(sp: { typeId: string; answer: string | null }): boolean {
-  const pending = pendingAnswers[sp.typeId]
-  if (!pending) return false
-  if (!pending.trim()) return false
-  return pending.trim() !== (sp.answer ?? '')
-}
-
-async function submitPrediction(typeId: string): Promise<void> {
-  const answer = pendingAnswers[typeId]?.trim()
-  if (!answer) return
-  predictionSaveStatus[typeId] = 'saving'
+async function onSpecialAnswerChange(
+  sp: { typeId: string; answer: string | null },
+  value: string | null,
+): Promise<void> {
+  const trimmed = (value ?? '').trim()
+  if (!trimmed) return
+  if (trimmed === (sp.answer ?? '')) return
+  predictionSaveStatus[sp.typeId] = 'saving'
   try {
-    await groupsStore.upsertSpecialPrediction(groupId, { typeId, answer })
-    predictionSaveStatus[typeId] = 'saved'
-    delete pendingAnswers[typeId]
-    setTimeout(() => { predictionSaveStatus[typeId] = 'idle' }, 2000)
+    await groupsStore.upsertSpecialPrediction(groupId, { typeId: sp.typeId, answer: trimmed })
+    predictionSaveStatus[sp.typeId] = 'saved'
+    delete textDraft[sp.typeId]
+    setTimeout(() => { predictionSaveStatus[sp.typeId] = 'idle' }, 2000)
   } catch {
-    predictionSaveStatus[typeId] = 'error'
+    predictionSaveStatus[sp.typeId] = 'error'
   }
 }
 

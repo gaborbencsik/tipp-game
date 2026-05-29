@@ -256,6 +256,7 @@
     "specialInputPlaceholder": "Enter your prediction...",
     "specialSubmit": "Submit",
     "specialModify": "Edit",
+    "specialSaving": "Saving...",
     "specialSaved": "Saved!",
     "specialError": "Error",
     "specialNoTip": "No prediction submitted",

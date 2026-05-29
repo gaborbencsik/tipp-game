@@ -2,7 +2,7 @@ import { and, eq, isNull, inArray } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { groups, groupMembers, specialPredictionTypes, specialPredictions, teams, players, groupGlobalTypeSubscriptions, groupLeagues } from '../db/schema/index.js'
 import { countPlayersForLeague } from './players.service.js'
-import type { SpecialPrediction, SpecialPredictionInput, SpecialPredictionInputType, SpecialPredictionWithType } from '../types/index.js'
+import type { SpecialPredictionInput, SpecialPredictionInputType, SpecialPredictionWithType } from '../types/index.js'
 
 class AppError extends Error {
   readonly status: number
@@ -140,7 +140,7 @@ export async function upsertPrediction(
   groupId: string,
   userId: string,
   input: SpecialPredictionInput,
-): Promise<SpecialPrediction> {
+): Promise<SpecialPredictionWithType> {
   await assertGroupExists(groupId)
   await assertGroupMember(groupId, userId)
 
@@ -158,6 +158,7 @@ export async function upsertPrediction(
 
   // If not found, try global type with active subscription
   let effectiveDeadline: Date | null = null
+  let isGlobal = false
   if (!typeRows[0]) {
     const globalRows = await db
       .select({ spt: specialPredictionTypes, deadlineOverride: groupGlobalTypeSubscriptions.deadlineOverride })
@@ -173,6 +174,7 @@ export async function upsertPrediction(
     typeRows = globalRows.map(r => r.spt)
     if (globalRows[0]) {
       effectiveDeadline = globalRows[0].deadlineOverride ?? globalRows[0].spt.deadline
+      isGlobal = true
     }
   }
 
@@ -199,19 +201,22 @@ export async function upsertPrediction(
     }
   }
 
+  let resolvedAnswerLabel: string | null = null
+
   if (type.inputType === 'team_select') {
     const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
     if (!UUID_RE.test(answer)) {
       throw new AppError(400, 'Invalid team id')
     }
     const teamRows = await db
-      .select({ id: teams.id })
+      .select({ id: teams.id, name: teams.name })
       .from(teams)
       .where(eq(teams.id, answer))
       .limit(1)
     if (!teamRows[0]) {
       throw new AppError(400, 'Invalid team id')
     }
+    resolvedAnswerLabel = teamRows[0].name
   }
 
   if (type.inputType === 'player_select') {
@@ -229,17 +234,19 @@ export async function upsertPrediction(
         throw new AppError(400, 'Invalid player id')
       }
       const playerRows = await db
-        .select({ id: players.id })
+        .select({ id: players.id, name: players.name })
         .from(players)
         .where(eq(players.id, answer))
         .limit(1)
       if (!playerRows[0]) {
         throw new AppError(400, 'Invalid player id')
       }
+      resolvedAnswerLabel = playerRows[0].name
     } else {
       if (answer.length > 200) {
         throw new AppError(400, 'Player name must be at most 200 characters')
       }
+      resolvedAnswerLabel = answer
     }
   }
 
@@ -265,10 +272,19 @@ export async function upsertPrediction(
 
   return {
     id: row.id,
-    userId: row.userId,
-    typeId: row.typeId,
+    typeId: type.id,
+    typeName: type.name,
+    typeDescription: type.description ?? null,
+    inputType: type.inputType as SpecialPredictionInputType,
+    options: type.options as string[] | null,
+    deadline: deadline.toISOString(),
+    maxPoints: type.points,
     answer: row.answer,
+    answerLabel: resolvedAnswerLabel,
     points: row.points ?? null,
+    correctAnswer: null,
+    correctAnswerLabel: null,
+    isGlobal,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   }
