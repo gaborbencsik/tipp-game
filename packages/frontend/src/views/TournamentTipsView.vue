@@ -74,7 +74,14 @@
                 @update:model-value="v => onAnswerChange(sp, v)"
               />
             </div>
-            <div v-else-if="sp.inputType === 'dropdown' && sp.options?.length">
+            <div v-else-if="sp.inputType === 'multi_team_weighted' && isMultiTeamWeightedOptions(sp.options)" class="mb-2">
+              <UpsetSpecialPicker
+                :options="sp.options"
+                :answer="sp.answer ?? null"
+                @submit="v => onAnswerChange(sp, v)"
+              />
+            </div>
+            <div v-else-if="sp.inputType === 'dropdown' && Array.isArray(sp.options) && sp.options.length">
               <select
                 :value="sp.answer ?? ''"
                 class="w-full border rounded px-2 py-1.5 text-sm mb-2"
@@ -118,9 +125,10 @@ import { useI18n } from 'vue-i18n'
 import AppLayout from '../components/AppLayout.vue'
 import TeamSelectDropdown from '../components/predictions/TeamSelectDropdown.vue'
 import PlayerSelectCombobox from '../components/predictions/PlayerSelectCombobox.vue'
+import UpsetSpecialPicker from '../components/predictions/UpsetSpecialPicker.vue'
 import { useTournamentTipsStore } from '../stores/tournamentTips.store.js'
 import { formatRelativeDeadline } from '../lib/deadline.js'
-import type { SpecialPredictionWithType } from '../types/index.js'
+import type { MultiTeamWeightedOptions, SpecialPredictionOptions, SpecialPredictionWithType } from '../types/index.js'
 
 const { t } = useI18n()
 const store = useTournamentTipsStore()
@@ -141,6 +149,10 @@ onUnmounted(() => {
 
 function isDeadlinePassed(deadline: string): boolean {
   return new Date(deadline).getTime() < Date.now()
+}
+
+function isMultiTeamWeightedOptions(options: SpecialPredictionOptions): options is MultiTeamWeightedOptions {
+  return options !== null && !Array.isArray(options) && Array.isArray(options.choices)
 }
 
 function statusClass(sp: SpecialPredictionWithType): string {

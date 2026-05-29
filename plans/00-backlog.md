@@ -15,7 +15,6 @@
 | US-1306 | Match Pulse – insight felfedése felhasználónként és admin reveal statisztika | Should Have | ~~US-1302~~, US-1304, ~~US-1309~~ |
 | US-1307 | Match Pulse – csapat-piaci értékek megjelenítése | Should Have | US-1304, US-1306, ~~US-1406~~ |
 | US-934 | Mások tippjeinek megjelenítése (speciális) | Should Have | — |
-| US-936 | Upset Special – multi-csapatos, súlyozott bonus tipp típus | Should Have | — |
 | US-937 | Torna progression bonus tippek – konfigurálható csapat-progression szabályrendszer | Should Have | — |
 | US-945 | Csoport végeredmény tipp – 12 csoport sorrendje + 4 továbbjutó 3. helyezett | Should Have | — |
 | US-946 | Bracket-progresszió tipp – pár-alapú győztes-pick a kieséses ágon | Should Have | US-945 |
@@ -28,4 +27,4 @@
 
 ---
 
-**Haladás: 130 / 149 story kész** — Must Have: 31/32, Should Have: 99/113, Nice to Have: 0/4
+**Haladás: 131 / 149 story kész** — Must Have: 31/32, Should Have: 100/113, Nice to Have: 0/4

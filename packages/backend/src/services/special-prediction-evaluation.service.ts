@@ -1,7 +1,8 @@
 import { and, eq } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { groupMembers, specialPredictionTypes, specialPredictions } from '../db/schema/index.js'
-import type { SpecialPredictionType, SpecialPredictionInputType } from '../types/index.js'
+import type { SpecialPredictionType, SpecialPredictionOptions, SpecialPredictionInputType } from '../types/index.js'
+import { parseUpsetEliminated, parseUpsetPicks, scoreUpsetSpecial, validateUpsetOptions } from './upset-special.service.js'
 
 class AppError extends Error {
   readonly status: number
@@ -21,6 +22,23 @@ export function evaluateSpecialPrediction(
   maxPoints: number,
 ): number {
   return normalize(answer) === normalize(correctAnswer) ? maxPoints : 0
+}
+
+function scorePrediction(
+  inputType: SpecialPredictionInputType,
+  options: unknown,
+  answer: string,
+  correctAnswer: string,
+  maxPoints: number,
+): number {
+  if (inputType === 'multi_team_weighted') {
+    const opts = validateUpsetOptions(options)
+    if (!opts) return 0
+    const picks = parseUpsetPicks(answer) ?? []
+    const eliminated = parseUpsetEliminated(correctAnswer)
+    return scoreUpsetSpecial(picks, eliminated, opts.choices)
+  }
+  return evaluateSpecialPrediction(answer, correctAnswer, maxPoints)
 }
 
 export async function setCorrectAnswer(
@@ -62,7 +80,13 @@ export async function setCorrectAnswer(
     .where(eq(specialPredictions.typeId, typeId))
 
   for (const pred of preds) {
-    const points = evaluateSpecialPrediction(pred.answer, correctAnswer, maxPoints)
+    const points = scorePrediction(
+      type.inputType as SpecialPredictionInputType,
+      type.options,
+      pred.answer,
+      correctAnswer,
+      maxPoints,
+    )
     await db
       .update(specialPredictions)
       .set({ points, updatedAt: new Date() })
@@ -75,7 +99,7 @@ export async function setCorrectAnswer(
     name: updatedType.name,
     description: updatedType.description ?? null,
     inputType: updatedType.inputType as SpecialPredictionInputType,
-    options: updatedType.options as string[] | null,
+    options: updatedType.options as SpecialPredictionOptions,
     deadline: updatedType.deadline.toISOString(),
     points: updatedType.points,
     correctAnswer: updatedType.correctAnswer ?? null,
@@ -115,7 +139,13 @@ export async function evaluateGlobalType(
     .where(eq(specialPredictions.typeId, typeId))
 
   for (const pred of preds) {
-    const points = evaluateSpecialPrediction(pred.answer, correctAnswer, maxPoints)
+    const points = scorePrediction(
+      type.inputType as SpecialPredictionInputType,
+      type.options,
+      pred.answer,
+      correctAnswer,
+      maxPoints,
+    )
     await db
       .update(specialPredictions)
       .set({ points, updatedAt: new Date() })
@@ -128,7 +158,7 @@ export async function evaluateGlobalType(
     name: updatedType.name,
     description: updatedType.description ?? null,
     inputType: updatedType.inputType as SpecialPredictionInputType,
-    options: updatedType.options as string[] | null,
+    options: updatedType.options as SpecialPredictionOptions,
     deadline: updatedType.deadline.toISOString(),
     points: updatedType.points,
     correctAnswer: updatedType.correctAnswer ?? null,

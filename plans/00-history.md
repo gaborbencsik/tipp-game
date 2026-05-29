@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 129 story kész (Must Have: 31/31, Should Have: 98/98)
+> 130 story kész (Must Have: 31/31, Should Have: 99/99)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -134,3 +134,4 @@
 | US-1310 | Match Pulse – AI insight magyar fordítás | Should Have |
 | US-935 | Torna szintű statisztikai bonus tippek (4 globális típus seedelése) | Should Have |
 | US-947 | "Torna tippek" top-level menü item — globális oldal a torna-szintű speciális tippekhez | Should Have |
+| US-936 | Upset Special – multi-csapatos, súlyozott bonus tipp típus | Should Have |

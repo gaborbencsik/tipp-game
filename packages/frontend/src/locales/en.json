@@ -505,5 +505,9 @@
     "statusSubmitted": "Submitted",
     "statusPending": "Pending",
     "statusZero": "0"
+  },
+  "upsetSpecial": {
+    "instruction": "Pick exactly {max} teams you think will NOT advance from the group stage.",
+    "selectedCount": "Selected: {n}/{max}"
   }
 }

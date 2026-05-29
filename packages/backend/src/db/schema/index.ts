@@ -29,7 +29,7 @@ export const matchStageEnum = pgEnum('match_stage', [
 
 export const specialPredictionInputTypeEnum = pgEnum(
   'special_prediction_input_type',
-  ['text', 'dropdown', 'number', 'team_select', 'player_select']
+  ['text', 'dropdown', 'number', 'team_select', 'player_select', 'multi_team_weighted']
 )
 
 export const auditActionEnum = pgEnum('audit_action', [

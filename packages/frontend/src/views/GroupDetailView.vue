@@ -439,7 +439,7 @@
                     <span>·</span>
                     <span>{{ $t('groupDetail.deadlineFormat', { date: formatDateTime(st.deadline) }) }}</span>
                   </div>
-                  <div v-if="st.options?.length" class="mt-1 text-xs text-gray-400">
+                  <div v-if="Array.isArray(st.options) && st.options.length" class="mt-1 text-xs text-gray-400">
                     {{ $t('groupDetail.optionsFormat', { options: st.options.join(', ') }) }}
                   </div>
                   <div v-if="st.correctAnswer" class="mt-1 text-xs text-green-600 font-medium">
@@ -691,7 +691,7 @@
                 @update:model-value="v => onSpecialAnswerChange(sp, v)"
               />
             </div>
-            <div v-else-if="sp.inputType === 'dropdown' && sp.options?.length">
+            <div v-else-if="sp.inputType === 'dropdown' && Array.isArray(sp.options) && sp.options.length">
               <select
                 :value="sp.answer ?? ''"
                 class="w-full border rounded px-2 py-1.5 text-sm mb-2"
@@ -871,7 +871,7 @@ import { useAuthStore } from '../stores/auth.store.js'
 import { useLeagueFavoritesStore } from '../stores/league-favorites.store.js'
 import { api } from '../api/index.js'
 import { supabase } from '../lib/supabase.js'
-import type { GroupMember, LeaderboardEntry, ScoringConfigInput, SpecialTypeInput, StatPredictionTemplate, GlobalTypeWithSubscription, VirtualPointEntry } from '../types/index.js'
+import type { GroupMember, LeaderboardEntry, ScoringConfigInput, SpecialPredictionOptions, SpecialTypeInput, StatPredictionTemplate, GlobalTypeWithSubscription, VirtualPointEntry } from '../types/index.js'
 import { getDateLocale } from '../lib/dateLocale.js'
 
 type Tab = 'leaderboard' | 'my-predictions' | 'members' | 'settings' | 'special'
@@ -1170,12 +1170,12 @@ function openNewTypeForm(): void {
   showTypeForm.value = true
 }
 
-function openEditType(st: { id: string; name: string; description: string | null; inputType: string; options: string[] | null; points: number; deadline: string }): void {
+function openEditType(st: { id: string; name: string; description: string | null; inputType: string; options: SpecialPredictionOptions; points: number; deadline: string }): void {
   editingTypeId.value = st.id
   typeDraft.name = st.name
   typeDraft.description = st.description ?? ''
   typeDraft.inputType = st.inputType as typeof typeDraft.inputType
-  typeDraft.optionsRaw = st.options?.join(', ') ?? ''
+  typeDraft.optionsRaw = Array.isArray(st.options) ? st.options.join(', ') : ''
   typeDraft.points = st.points
   typeDraft.deadline = st.deadline.slice(0, 16)
   typeFormError.value = null

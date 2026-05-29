@@ -87,8 +87,8 @@
               <span>·</span>
               <span>Határidő: {{ formatDateTime(gt.deadline) }}</span>
             </div>
-            <div v-if="gt.options?.length" class="mt-1 text-xs text-gray-400">
-              Opciók: {{ (gt.options as string[]).join(', ') }}
+            <div v-if="Array.isArray(gt.options) && gt.options.length" class="mt-1 text-xs text-gray-400">
+              Opciók: {{ gt.options.join(', ') }}
             </div>
             <div v-if="gt.correctAnswer" class="mt-1 text-xs text-green-600 font-medium">
               Helyes válasz: {{ gt.inputType === 'team_select' ? teamName(gt.correctAnswer) : gt.correctAnswer }}
@@ -250,12 +250,13 @@ function openNewForm(): void {
 }
 
 function openEditForm(gt: SpecialPredictionType): void {
+  if (gt.inputType === 'multi_team_weighted') return
   editingId.value = gt.id
   formData.value = {
     name: gt.name,
     description: gt.description ?? '',
     inputType: gt.inputType,
-    optionsRaw: (gt.options as string[] | null)?.join(', ') ?? '',
+    optionsRaw: Array.isArray(gt.options) ? gt.options.join(', ') : '',
     points: gt.points,
     deadline: gt.deadline.slice(0, 16),
   }

@@ -282,7 +282,20 @@ export interface LeaderboardEntry {
   readonly favoriteTeam?: { readonly countryCode: string; readonly name: string } | null
 }
 
-export type SpecialPredictionInputType = 'text' | 'dropdown' | 'team_select' | 'player_select'
+export type SpecialPredictionInputType = 'text' | 'dropdown' | 'team_select' | 'player_select' | 'multi_team_weighted'
+
+export interface MultiTeamWeightedChoice {
+  readonly teamId: string
+  readonly points: number
+}
+
+export interface MultiTeamWeightedOptions {
+  readonly maxPicks: number
+  readonly minPicks: number
+  readonly choices: readonly MultiTeamWeightedChoice[]
+}
+
+export type SpecialPredictionOptions = string[] | MultiTeamWeightedOptions | null
 
 export interface SpecialPredictionType {
   readonly id: string
@@ -290,7 +303,7 @@ export interface SpecialPredictionType {
   readonly name: string
   readonly description: string | null
   readonly inputType: SpecialPredictionInputType
-  readonly options: string[] | null
+  readonly options: SpecialPredictionOptions
   readonly deadline: string
   readonly points: number
   readonly correctAnswer: string | null
@@ -315,7 +328,7 @@ export interface SpecialPredictionWithType {
   readonly typeName: string
   readonly typeDescription: string | null
   readonly inputType: SpecialPredictionInputType
-  readonly options: string[] | null
+  readonly options: SpecialPredictionOptions
   readonly deadline: string
   readonly maxPoints: number
   readonly answer: string | null
@@ -338,7 +351,7 @@ export interface GlobalTypeWithSubscription {
   readonly name: string
   readonly description: string | null
   readonly inputType: SpecialPredictionInputType
-  readonly options: string[] | null
+  readonly options: SpecialPredictionOptions
   readonly deadline: string
   readonly points: number
   readonly correctAnswer: string | null

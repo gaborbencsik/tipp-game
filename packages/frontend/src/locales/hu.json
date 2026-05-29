@@ -505,5 +505,9 @@
     "statusSubmitted": "Beadva",
     "statusPending": "Várakozás",
     "statusZero": "0"
+  },
+  "upsetSpecial": {
+    "instruction": "Válassz pontosan {max} csapatot, akik szerinted nem jutnak túl a csoportkörön.",
+    "selectedCount": "Kiválasztva: {n}/{max}"
   }
 }
