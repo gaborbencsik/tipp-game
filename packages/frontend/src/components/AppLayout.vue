@@ -61,6 +61,22 @@
             >{{ untippedTodayCount }}</span>
           </router-link>
 
+          <!-- Torna tippek -->
+          <router-link
+            to="/app/tournament-tips"
+            data-testid="nav-tournament-tips"
+            class="flex items-center gap-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+            :class="isExpanded ? 'px-3' : 'px-3 justify-center'"
+            active-class="bg-blue-50 text-blue-700 font-semibold hover:bg-blue-50"
+            @click="sidebarOpen = false"
+            @mouseenter="onSidebarMouseEnter"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-[18px] h-[18px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 4h14v3a5 5 0 01-5 5h-4a5 5 0 01-5-5V4zm0 0H3m16 0h2M9 12v3m6-3v3m-7 3h8a1 1 0 011 1v2H7v-2a1 1 0 011-1z" />
+            </svg>
+            <span v-if="isExpanded">{{ $t('nav.tournamentTips') }}</span>
+          </router-link>
+
           <!-- Tippjeim -->
           <router-link
             to="/app/my-tips"

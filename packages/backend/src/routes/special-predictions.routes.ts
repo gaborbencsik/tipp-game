@@ -5,6 +5,7 @@ import { listActiveTypes, createType, updateType, deactivateType } from '../serv
 import { getMyPredictions, upsertPrediction } from '../services/special-predictions.service.js'
 import { setCorrectAnswer } from '../services/special-prediction-evaluation.service.js'
 import { listAvailableGlobalTypes, subscribeGroup, unsubscribeGroup } from '../services/global-type-subscriptions.service.js'
+import { listGlobalTypesWithPredictions, upsertGlobalPrediction, userHasTournamentAccess } from '../services/tournament-tips.service.js'
 import { getTeams } from '../services/teams.service.js'
 import { getPlayers } from '../services/players.service.js'
 import { STAT_PREDICTION_TEMPLATES } from '../constants/stat-prediction-templates.js'
@@ -29,6 +30,31 @@ router.get('/api/players', authMiddleware, async (ctx) => {
 
 router.get('/api/stat-prediction-templates', authMiddleware, async (ctx) => {
   ctx.body = STAT_PREDICTION_TEMPLATES
+})
+
+// ─── Tournament-level (global) special predictions ──────────────────────────
+
+router.get('/api/tournament-tips/access', authMiddleware, async (ctx) => {
+  const dbUser = await upsertUser(ctx.state.user)
+  ctx.body = { hasAccess: await userHasTournamentAccess(dbUser.id) }
+})
+
+router.get('/api/tournament-tips', authMiddleware, async (ctx) => {
+  const dbUser = await upsertUser(ctx.state.user)
+  ctx.body = await listGlobalTypesWithPredictions(dbUser.id)
+})
+
+router.post('/api/tournament-tips', authMiddleware, async (ctx) => {
+  const dbUser = await upsertUser(ctx.state.user)
+  const body = ctx.request.body as Record<string, unknown>
+
+  if (typeof body.typeId !== 'string' || typeof body.answer !== 'string') {
+    ctx.status = 400
+    ctx.body = { error: 'typeId and answer are required' }
+    return
+  }
+
+  ctx.body = await upsertGlobalPrediction(dbUser.id, body.typeId, body.answer)
 })
 
 router.get('/api/groups/:groupId/special-types', authMiddleware, async (ctx) => {

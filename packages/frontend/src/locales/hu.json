@@ -21,6 +21,7 @@
   },
   "nav": {
     "matches": "Mérkőzések",
+    "tournamentTips": "Torna tippek",
     "myTips": "Statisztikáim",
     "groups": "Csoportok",
     "leaderboard": "Ranglista",
@@ -482,5 +483,27 @@
     "stickyDesc": "Ingyenes · Egy kattintásos belépés",
     "stickyLogin": "Bejelentkezés →",
     "errorGeneric": "Hiba történt. Próbáld újra később."
+  },
+  "tournamentTips": {
+    "title": "Torna tippek",
+    "description": "Globális, torna-szintű speciális tippek. A tipped a torna teljes időszakára érvényes.",
+    "noAccess": "A torna tippek csak akkor érhetők el, ha tagja vagy egy VB-s csoportnak. Csatlakozz vagy hozz létre egy ilyen csoportot.",
+    "empty": "Még nincsenek torna-szintű speciális tippek. Hamarosan elérhetővé válnak.",
+    "maxPoints": "Max {n} pont",
+    "yourTip": "Tipped: {answer}",
+    "noTip": "nincs tipp",
+    "correctAnswer": "Helyes válasz: {answer}",
+    "pointsResult": "+{n} pont",
+    "zeroPoints": "0 pont",
+    "expired": "A határidő lejárt.",
+    "placeholder": "Válassz egy lehetőséget",
+    "inputPlaceholder": "Add meg a tipped",
+    "saving": "Mentés…",
+    "saved": "✓ Mentve",
+    "errorSaving": "Hiba a mentés során",
+    "statusOpen": "Nyitott",
+    "statusSubmitted": "Beadva",
+    "statusPending": "Várakozás",
+    "statusZero": "0"
   }
 }

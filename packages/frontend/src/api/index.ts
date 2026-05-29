@@ -276,6 +276,22 @@ export const api = {
         }),
     },
   },
+  tournamentTips: {
+    access: (token: string) =>
+      request<{ hasAccess: boolean }>('/tournament-tips/access', {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+    list: (token: string) =>
+      request<SpecialPredictionWithType[]>('/tournament-tips', {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+    upsert: (token: string, input: SpecialPredictionInput) =>
+      request<SpecialPredictionWithType>('/tournament-tips', {
+        method: 'POST',
+        body: JSON.stringify(input),
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+  },
   admin: {
     teams: {
       list: (token: string) =>

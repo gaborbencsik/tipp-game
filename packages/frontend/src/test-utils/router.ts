@@ -12,6 +12,7 @@ const APP_ROUTES: RouteRecordRaw[] = [
   { path: '/auth/callback', component: Stub },
   { path: '/app/matches', component: Stub },
   { path: '/app/matches/:id', component: Stub },
+  { path: '/app/tournament-tips', component: Stub },
   { path: '/app/my-tips', component: Stub },
   { path: '/app/groups', component: Stub },
   { path: '/app/groups/:id', component: Stub },

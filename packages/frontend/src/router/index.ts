@@ -26,6 +26,12 @@ export const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/app/tournament-tips',
+      name: 'tournament-tips',
+      component: () => import('../views/TournamentTipsView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/app/groups',
       name: 'groups',
       component: () => import('../views/GroupsView.vue'),

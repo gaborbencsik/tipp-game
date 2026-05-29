@@ -21,6 +21,7 @@
   },
   "nav": {
     "matches": "Matches",
+    "tournamentTips": "Tournament Tips",
     "myTips": "My Stats",
     "groups": "Groups",
     "leaderboard": "Leaderboard",
@@ -482,5 +483,27 @@
     "stickyDesc": "Free. One-click sign in.",
     "stickyLogin": "Sign in",
     "errorGeneric": "Something went wrong. Please try again later."
+  },
+  "tournamentTips": {
+    "title": "Tournament Tips",
+    "description": "Tournament-wide special tips. Your tip counts for the entire tournament.",
+    "noAccess": "Tournament tips are only available if you're a member of a World Cup group. Join or create one to access them.",
+    "empty": "No tournament-wide tips yet. They'll show up here as soon as they're available.",
+    "maxPoints": "Max {n} pts",
+    "yourTip": "Your tip: {answer}",
+    "noTip": "no tip",
+    "correctAnswer": "Correct: {answer}",
+    "pointsResult": "+{n} pts",
+    "zeroPoints": "0 pts",
+    "expired": "The deadline has passed.",
+    "placeholder": "Pick an option",
+    "inputPlaceholder": "Enter your tip",
+    "saving": "Saving…",
+    "saved": "✓ Saved",
+    "errorSaving": "Save failed",
+    "statusOpen": "Open",
+    "statusSubmitted": "Submitted",
+    "statusPending": "Pending",
+    "statusZero": "0"
   }
 }
