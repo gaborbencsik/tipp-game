@@ -5,7 +5,6 @@ import TournamentTipsView from '@/views/TournamentTipsView.vue'
 import { useTournamentTipsStore } from '@/stores/tournamentTips.store'
 import type { SpecialPredictionWithType } from '@/types/index'
 import { buildTestRouter } from '@/test-utils/router'
-import { buildTestI18n } from '@/test-utils/i18n'
 
 vi.mock('vue-router', async (importOriginal) => {
   const actual = await importOriginal<typeof import('vue-router')>()
@@ -116,7 +115,7 @@ async function mountView() {
   const pinia = createPinia()
   setActivePinia(pinia)
   const wrapper = mount(TournamentTipsView, {
-    global: { plugins: [pinia, buildRouter(), buildTestI18n()] },
+    global: { plugins: [pinia, buildRouter()] },
   })
   await flushPromises()
   return { wrapper, store: useTournamentTipsStore() }
@@ -143,7 +142,7 @@ describe('TournamentTipsView', () => {
     const pinia = createPinia()
     setActivePinia(pinia)
     const wrapper = mount(TournamentTipsView, {
-      global: { plugins: [pinia, buildRouter(), buildTestI18n()] },
+      global: { plugins: [pinia, buildRouter()] },
     })
     await wrapper.vm.$nextTick()
     expect(wrapper.find('[data-testid="tournament-tips-loading"]').exists()).toBe(true)

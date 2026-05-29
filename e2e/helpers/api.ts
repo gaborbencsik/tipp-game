@@ -83,6 +83,39 @@ export async function createLeague(name: string): Promise<TestLeague> {
   }) as Promise<TestLeague>
 }
 
+export async function getLeagues(): Promise<TestLeague[]> {
+  return get('/api/admin/leagues') as Promise<TestLeague[]>
+}
+
+export async function getLeagueByShortName(shortName: string): Promise<TestLeague | null> {
+  const leagues = await getLeagues()
+  return leagues.find(l => l.shortName === shortName) ?? null
+}
+
+export interface TestGlobalSpecialType {
+  id: string
+  name: string
+  inputType: 'text' | 'dropdown' | 'team_select'
+  options: string[] | null
+  deadline: string
+  points: number
+}
+
+export async function createGlobalSpecialType(input: {
+  name: string
+  description?: string
+  inputType: 'text' | 'dropdown' | 'team_select'
+  options?: string[]
+  deadline: string
+  points: number
+}): Promise<TestGlobalSpecialType> {
+  return post('/api/admin/global-special-types', input) as Promise<TestGlobalSpecialType>
+}
+
+export async function deactivateGlobalSpecialType(typeId: string): Promise<void> {
+  await del(`/api/admin/global-special-types/${typeId}`)
+}
+
 export async function createTeam(name: string, shortCode: string): Promise<TestTeam> {
   return post('/api/admin/teams', {
     name,
@@ -119,6 +152,15 @@ export async function deleteAllMyGroups(): Promise<void> {
   const groups = await getMyGroups()
   for (const g of groups) {
     await del(`/api/groups/${g.id}`)
+  }
+}
+
+export async function deleteMyGroupsByLeagueShortName(shortName: string): Promise<void> {
+  const groups = await getMyGroups()
+  for (const g of groups) {
+    if (g.league?.shortName === shortName) {
+      await del(`/api/groups/${g.id}`)
+    }
   }
 }
 
