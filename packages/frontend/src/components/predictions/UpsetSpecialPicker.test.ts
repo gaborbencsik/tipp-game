@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
-import { createI18n } from 'vue-i18n'
 import UpsetSpecialPicker from './UpsetSpecialPicker.vue'
 import type { MultiTeamWeightedOptions } from '@/types/index'
 
@@ -34,24 +33,8 @@ const OPTIONS: MultiTeamWeightedOptions = {
   ],
 }
 
-const i18n = createI18n({
-  legacy: false,
-  locale: 'hu',
-  messages: {
-    hu: {
-      upsetSpecial: {
-        instruction: 'Válassz pontosan {max}.',
-        selectedCount: 'Kiválasztva: {n}/{max}',
-      },
-    },
-  },
-})
-
 function mountPicker(props: { options: MultiTeamWeightedOptions; answer: string | null }) {
-  return mount(UpsetSpecialPicker, {
-    props,
-    global: { plugins: [i18n] },
-  })
+  return mount(UpsetSpecialPicker, { props })
 }
 
 describe('UpsetSpecialPicker', () => {
