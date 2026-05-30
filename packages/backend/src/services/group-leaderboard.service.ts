@@ -1,6 +1,6 @@
-import { eq, isNull, sql, count, and, or, inArray } from 'drizzle-orm'
+import { eq, sql, and, or, inArray } from 'drizzle-orm'
 import { db } from '../db/client.js'
-import { users, predictions, groupMembers, groups, scoringConfigs, groupPredictionPoints, specialPredictions, specialPredictionTypes, groupGlobalTypeSubscriptions, groupLeagues, matches, userLeagueFavorites, teams } from '../db/schema/index.js'
+import { users, predictions, groupMembers, groups, groupPredictionPoints, specialPredictions, specialPredictionTypes, groupGlobalTypeSubscriptions, groupLeagues, matches, userLeagueFavorites, teams } from '../db/schema/index.js'
 import type { LeaderboardEntry } from './leaderboard.service.js'
 
 class AppError extends Error {
@@ -47,9 +47,12 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
     correctCount: number
   }>
 
-  const matchFilter = leagueId
-    ? sql`(${predictions.id} IS NULL OR (${matches.deletedAt} IS NULL AND ${matches.leagueId} = ${leagueId}::uuid))`
-    : sql`(${predictions.id} IS NULL OR ${matches.deletedAt} IS NULL)`
+  // League / soft-delete filter goes into the matches JOIN ON clause — keeping it
+  // in WHERE would turn the LEFT JOIN into an inner join for any member whose
+  // predictions all belong to other leagues, dropping that member entirely.
+  const matchesJoinOn = leagueId
+    ? sql`${matches.id} = ${predictions.matchId} AND ${matches.deletedAt} IS NULL AND ${matches.leagueId} = ${leagueId}::uuid`
+    : sql`${matches.id} = ${predictions.matchId} AND ${matches.deletedAt} IS NULL`
 
   if (useGroupPoints) {
     rows = await db
@@ -57,38 +60,38 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
         userId: users.id,
         displayName: users.displayName,
         avatarUrl: users.avatarUrl,
-        totalPoints: sql<number>`coalesce(sum(${groupPredictionPoints.points}), 0)`,
-        predictionCount: count(groupPredictionPoints.id),
-        correctCount: sql<number>`count(case when ${groupPredictionPoints.points} > 0 then 1 end)`,
+        totalPoints: sql<number>`coalesce(sum(case when ${matches.id} is not null then ${groupPredictionPoints.points} end), 0)`,
+        predictionCount: sql<number>`count(case when ${matches.id} is not null then ${groupPredictionPoints.id} end)`,
+        correctCount: sql<number>`count(case when ${matches.id} is not null and ${groupPredictionPoints.points} > 0 then 1 end)`,
       })
       .from(groupMembers)
       .innerJoin(users, eq(users.id, groupMembers.userId))
       .leftJoin(predictions, eq(predictions.userId, users.id))
+      .leftJoin(matches, matchesJoinOn)
       .leftJoin(
         groupPredictionPoints,
         sql`${groupPredictionPoints.predictionId} = ${predictions.id} AND ${groupPredictionPoints.groupId} = ${groupId}::uuid`,
       )
-      .leftJoin(matches, eq(matches.id, predictions.matchId))
-      .where(and(eq(groupMembers.groupId, groupId), matchFilter))
+      .where(eq(groupMembers.groupId, groupId))
       .groupBy(users.id, users.displayName, users.avatarUrl)
-      .orderBy(sql`coalesce(sum(${groupPredictionPoints.points}), 0) desc`)
+      .orderBy(sql`coalesce(sum(case when ${matches.id} is not null then ${groupPredictionPoints.points} end), 0) desc`)
   } else {
     rows = await db
       .select({
         userId: users.id,
         displayName: users.displayName,
         avatarUrl: users.avatarUrl,
-        totalPoints: sql<number>`coalesce(sum(${predictions.pointsGlobal}), 0)`,
-        predictionCount: count(predictions.id),
-        correctCount: sql<number>`count(case when ${predictions.pointsGlobal} > 0 then 1 end)`,
+        totalPoints: sql<number>`coalesce(sum(case when ${matches.id} is not null then ${predictions.pointsGlobal} end), 0)`,
+        predictionCount: sql<number>`count(case when ${matches.id} is not null then ${predictions.id} end)`,
+        correctCount: sql<number>`count(case when ${matches.id} is not null and ${predictions.pointsGlobal} > 0 then 1 end)`,
       })
       .from(groupMembers)
       .innerJoin(users, eq(users.id, groupMembers.userId))
       .leftJoin(predictions, eq(predictions.userId, users.id))
-      .leftJoin(matches, eq(matches.id, predictions.matchId))
-      .where(and(eq(groupMembers.groupId, groupId), matchFilter))
+      .leftJoin(matches, matchesJoinOn)
+      .where(eq(groupMembers.groupId, groupId))
       .groupBy(users.id, users.displayName, users.avatarUrl)
-      .orderBy(sql`coalesce(sum(${predictions.pointsGlobal}), 0) desc`)
+      .orderBy(sql`coalesce(sum(case when ${matches.id} is not null then ${predictions.pointsGlobal} end), 0) desc`)
   }
 
   // Fetch stat prediction points per user for this group
