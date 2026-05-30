@@ -59,6 +59,7 @@ test.describe('Tournament tips', () => {
     await page.goto('/app/tournament-tips')
 
     await expect(page.getByTestId('tournament-tips-list')).toBeVisible({ timeout: 5000 })
+    await page.getByTestId('tournament-tips-tab-other').click()
     await expect(page.getByTestId(`tournament-tip-${typeId}`)).toBeVisible()
   })
 
@@ -68,6 +69,7 @@ test.describe('Tournament tips', () => {
     await injectSession(page)
     await page.goto('/app/tournament-tips')
 
+    await page.getByTestId('tournament-tips-tab-other').click()
     const card = page.getByTestId(`tournament-tip-${typeId}`)
     await expect(card).toBeVisible({ timeout: 5000 })
 
@@ -75,6 +77,7 @@ test.describe('Tournament tips', () => {
     await expect(card.getByText(/Mentve|Saved/)).toBeVisible({ timeout: 5000 })
 
     await page.reload()
+    await page.getByTestId('tournament-tips-tab-other').click()
     await expect(card.locator('select')).toHaveValue('6', { timeout: 5000 })
   })
 })

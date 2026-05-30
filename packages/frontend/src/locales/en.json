@@ -505,7 +505,16 @@
     "statusSubmitted": "Submitted",
     "statusInProgress": "In progress",
     "statusPending": "Pending",
-    "statusZero": "0"
+    "statusZero": "0",
+    "tabProgression": "Groups · Knockout",
+    "tabUpset": "Sure misses",
+    "tabOther": "More",
+    "tabEmpty": "No tips in this category yet.",
+    "typeName": {
+      "all_groups_standing": "Group standings",
+      "bracket_progression": "Knockout bracket",
+      "multi_team_weighted": "Sure misses"
+    }
   },
   "upsetSpecial": {
     "instruction": "Pick exactly {max} teams you think will NOT advance from the group stage.",

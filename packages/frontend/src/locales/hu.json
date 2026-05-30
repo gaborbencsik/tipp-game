@@ -505,7 +505,16 @@
     "statusSubmitted": "Beadva",
     "statusInProgress": "Folyamatban",
     "statusPending": "Várakozás",
-    "statusZero": "0"
+    "statusZero": "0",
+    "tabProgression": "Csoport · Egyenes kiesés",
+    "tabUpset": "Biztos kiesők",
+    "tabOther": "További",
+    "tabEmpty": "Ehhez a kategóriához még nincs tipp.",
+    "typeName": {
+      "all_groups_standing": "Csoport végeredmény",
+      "bracket_progression": "Egyenes kiesés",
+      "multi_team_weighted": "Biztos kiesők"
+    }
   },
   "upsetSpecial": {
     "instruction": "Válassz pontosan {max} csapatot, akik szerinted nem jutnak túl a csoportkörön.",

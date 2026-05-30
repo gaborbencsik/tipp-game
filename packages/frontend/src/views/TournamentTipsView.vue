@@ -22,16 +22,43 @@
         {{ $t('tournamentTips.empty') }}
       </div>
 
-      <div v-else class="space-y-3" data-testid="tournament-tips-list">
+      <div v-else>
+        <div class="flex gap-2 overflow-x-auto mb-3 px-1 py-1 -mx-1" role="tablist" data-testid="tournament-tips-tabs">
+          <button
+            v-for="tab in tabs"
+            :key="tab.key"
+            type="button"
+            role="tab"
+            :aria-selected="activeTab === tab.key"
+            class="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors flex items-center gap-1.5"
+            :class="activeTab === tab.key
+              ? 'bg-blue-50 ring-2 ring-blue-300 text-blue-700'
+              : 'bg-white border border-gray-200 text-gray-600 hover:border-blue-200'"
+            :data-testid="`tournament-tips-tab-${tab.key}`"
+            @click="selectTab(tab.key)"
+          >
+            <span>{{ tab.label }}</span>
+            <span
+              class="text-[10px] font-bold px-1.5 rounded-full"
+              :class="activeTab === tab.key ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'"
+            >{{ tab.count }}</span>
+          </button>
+        </div>
+
+        <div v-if="visibleTips.length === 0" class="text-gray-500 text-sm" data-testid="tournament-tips-tab-empty">
+          {{ $t('tournamentTips.tabEmpty') }}
+        </div>
+
+        <div v-else class="space-y-3" data-testid="tournament-tips-list">
         <div
-          v-for="sp in store.tips"
+          v-for="sp in visibleTips"
           :key="sp.typeId"
           class="bg-white rounded-xl border border-gray-200 p-4"
           :data-testid="`tournament-tip-${sp.typeId}`"
         >
           <div class="flex items-start justify-between gap-2 mb-2">
             <div>
-              <p class="font-medium text-gray-800 text-sm">{{ sp.typeName }}</p>
+              <p class="font-medium text-gray-800 text-sm">{{ displayTypeName(sp) }}</p>
               <p v-if="sp.typeDescription" class="text-xs text-gray-500 mt-0.5">{{ sp.typeDescription }}</p>
             </div>
             <span class="text-xs font-semibold px-2 py-0.5 rounded-full shrink-0" :class="statusClass(sp)">
@@ -130,13 +157,14 @@
             <p class="text-xs text-gray-400 mt-1">{{ $t('tournamentTips.expired') }}</p>
           </div>
         </div>
+        </div>
       </div>
     </div>
   </AppLayout>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, reactive, computed } from 'vue'
+import { ref, onMounted, onUnmounted, reactive, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppLayout from '../components/AppLayout.vue'
 import TeamSelectDropdown from '../components/predictions/TeamSelectDropdown.vue'
@@ -150,8 +178,47 @@ import { supabase } from '../lib/supabase.js'
 import { api } from '../api/index.js'
 import type { AllGroupsStandingAnswer, AllGroupsStandingOptions, BracketProgressionOptions, MultiTeamWeightedOptions, SpecialPredictionOptions, SpecialPredictionWithType } from '../types/index.js'
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 const store = useTournamentTipsStore()
+
+function displayTypeName(sp: SpecialPredictionWithType): string {
+  const key = `tournamentTips.typeName.${sp.inputType}`
+  return te(key) ? t(key) : sp.typeName
+}
+
+type TabKey = 'progression' | 'upset' | 'other'
+const activeTab = ref<TabKey>('progression')
+
+function tabKeyForTip(sp: SpecialPredictionWithType): TabKey {
+  if (sp.inputType === 'all_groups_standing' || sp.inputType === 'bracket_progression') return 'progression'
+  if (sp.inputType === 'multi_team_weighted') return 'upset'
+  return 'other'
+}
+
+const tabs = computed<{ key: TabKey; label: string; count: number }[]>(() => {
+  const counts: Record<TabKey, number> = { progression: 0, upset: 0, other: 0 }
+  for (const sp of store.tips) counts[tabKeyForTip(sp)] += 1
+  return [
+    { key: 'progression', label: t('tournamentTips.tabProgression'), count: counts.progression },
+    { key: 'upset', label: t('tournamentTips.tabUpset'), count: counts.upset },
+    { key: 'other', label: t('tournamentTips.tabOther'), count: counts.other },
+  ]
+})
+
+const visibleTips = computed(() => store.tips.filter(sp => tabKeyForTip(sp) === activeTab.value))
+
+const userPickedTab = ref(false)
+
+watch(() => store.tips.length, () => {
+  if (userPickedTab.value) return
+  const firstNonEmpty = tabs.value.find(t => t.count > 0)
+  if (firstNonEmpty) activeTab.value = firstNonEmpty.key
+})
+
+function selectTab(key: TabKey): void {
+  userPickedTab.value = true
+  activeTab.value = key
+}
 
 const now = ref(Date.now())
 const textDraft = reactive<Record<string, string>>({})
