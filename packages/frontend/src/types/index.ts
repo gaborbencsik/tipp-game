@@ -282,7 +282,7 @@ export interface LeaderboardEntry {
   readonly favoriteTeam?: { readonly countryCode: string; readonly name: string } | null
 }
 
-export type SpecialPredictionInputType = 'text' | 'dropdown' | 'team_select' | 'player_select' | 'multi_team_weighted'
+export type SpecialPredictionInputType = 'text' | 'dropdown' | 'team_select' | 'player_select' | 'multi_team_weighted' | 'multi_team_select' | 'all_groups_standing'
 
 export interface MultiTeamWeightedChoice {
   readonly teamId: string
@@ -295,7 +295,31 @@ export interface MultiTeamWeightedOptions {
   readonly choices: readonly MultiTeamWeightedChoice[]
 }
 
-export type SpecialPredictionOptions = string[] | MultiTeamWeightedOptions | null
+export interface MultiTeamSelectOptions {
+  readonly maxPicks: number
+  readonly minPicks: number
+  readonly teamIds: readonly string[]
+}
+
+export interface AllGroupsStandingOptions {
+  readonly groups: readonly string[]
+  readonly teamsPerGroup: number
+  readonly best3rdPicks: number
+}
+
+export interface AllGroupsStandingAnswer {
+  readonly groups: Record<string, readonly (string | null)[]>
+  readonly best3rds: readonly string[]
+}
+
+export interface AllGroupsStandingCompletion {
+  readonly groupsDone: number
+  readonly best3rdsDone: number
+  readonly totalDone: number
+  readonly totalSteps: number
+}
+
+export type SpecialPredictionOptions = string[] | MultiTeamWeightedOptions | MultiTeamSelectOptions | AllGroupsStandingOptions | null
 
 export interface SpecialPredictionType {
   readonly id: string
@@ -339,6 +363,7 @@ export interface SpecialPredictionWithType {
   readonly isGlobal: boolean
   readonly createdAt: string | null
   readonly updatedAt: string | null
+  readonly completion?: AllGroupsStandingCompletion
 }
 
 export interface SpecialPredictionInput {

@@ -1,8 +1,15 @@
 import { and, eq, inArray, isNull } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { specialPredictionTypes, specialPredictions, teams, players, groupMembers, groupLeagues, leagues } from '../db/schema/index.js'
-import type { SpecialPredictionInputType, SpecialPredictionOptions, SpecialPredictionWithType } from '../types/index.js'
+import type { AllGroupsStandingCompletion, SpecialPredictionInputType, SpecialPredictionOptions, SpecialPredictionWithType } from '../types/index.js'
 import { parseUpsetPicks, resolveUpsetMaxPoints, validateUpsetOptions } from './upset-special.service.js'
+import {
+  parseAllGroupsStandingAnswer,
+  validateAllGroupsStandingAnswer,
+  validateAllGroupsStandingOptions,
+  computeCompletion,
+  type GroupTeamMembership,
+} from './group-standings.service.js'
 
 class AppError extends Error {
   readonly status: number
@@ -79,6 +86,19 @@ export async function listGlobalTypesWithPredictions(
         if (picks) for (const id of picks) teamIds.push(id)
       }
     }
+    if (t.inputType === 'all_groups_standing') {
+      if (pred?.answer) {
+        const parsed = parseAllGroupsStandingAnswer(pred.answer)
+        if (parsed) {
+          for (const positions of Object.values(parsed.groups)) {
+            for (const teamId of positions) {
+              if (teamId) teamIds.push(teamId)
+            }
+          }
+          for (const teamId of parsed.best3rds) teamIds.push(teamId)
+        }
+      }
+    }
   }
 
   const teamNameMap = new Map<string, string>()
@@ -100,9 +120,22 @@ export async function listGlobalTypesWithPredictions(
     let answerLabel: string | null = null
     let correctAnswerLabel: string | null = null
     let maxPoints = t.points
+    let completion: AllGroupsStandingCompletion | undefined
     if (t.inputType === 'multi_team_weighted') {
       const opts = validateUpsetOptions(t.options)
       if (opts) maxPoints = resolveUpsetMaxPoints(opts)
+    }
+    if (t.inputType === 'all_groups_standing') {
+      const opts = validateAllGroupsStandingOptions(t.options)
+      if (opts && pred?.answer) {
+        const parsed = parseAllGroupsStandingAnswer(pred.answer)
+        if (parsed) {
+          completion = computeCompletion(parsed.groups, parsed.best3rds, opts)
+          answerLabel = `${completion.groupsDone}/${opts.groups.length} csoport · ${completion.best3rdsDone}/${opts.best3rdPicks} továbbjutó`
+        }
+      } else if (opts) {
+        completion = { groupsDone: 0, best3rdsDone: 0, totalDone: 0, totalSteps: opts.groups.length + opts.best3rdPicks }
+      }
     }
     if (pred?.answer) {
       if (t.inputType === 'team_select') answerLabel = teamNameMap.get(pred.answer) ?? null
@@ -142,6 +175,7 @@ export async function listGlobalTypesWithPredictions(
       isGlobal: true,
       createdAt: pred?.createdAt.toISOString() ?? null,
       updatedAt: pred?.updatedAt.toISOString() ?? null,
+      ...(completion ? { completion } : {}),
     }
   })
 }
@@ -176,8 +210,9 @@ export async function upsertGlobalPrediction(
   if (!answer || answer.length === 0) {
     throw new AppError(400, 'answer is required')
   }
-  if (answer.length > 500) {
-    throw new AppError(400, 'answer must be at most 500 characters')
+  const maxLen = type.inputType === 'all_groups_standing' ? 4000 : 500
+  if (answer.length > maxLen) {
+    throw new AppError(400, `answer must be at most ${maxLen} characters`)
   }
 
   if (type.inputType === 'dropdown') {
@@ -189,6 +224,8 @@ export async function upsertGlobalPrediction(
 
   let resolvedAnswerLabel: string | null = null
   let resolvedMaxPoints = type.points
+  let resolvedCompletion: AllGroupsStandingCompletion | undefined
+  let normalizedAnswer = answer
 
   if (type.inputType === 'team_select') {
     if (!UUID_RE.test(answer)) throw new AppError(400, 'Invalid team id')
@@ -236,6 +273,35 @@ export async function upsertGlobalPrediction(
     resolvedMaxPoints = resolveUpsetMaxPoints(opts)
   }
 
+  if (type.inputType === 'all_groups_standing') {
+    const opts = validateAllGroupsStandingOptions(type.options)
+    if (!opts) throw new AppError(500, 'Special type options are misconfigured')
+    const parsed = parseAllGroupsStandingAnswer(answer)
+    if (!parsed) throw new AppError(400, 'answer must be a JSON object with groups and best3rds')
+
+    const groupTeams = await db
+      .select({ id: teams.id, group: teams.group })
+      .from(teams)
+      .where(inArray(teams.group, [...opts.groups]))
+
+    const membership: GroupTeamMembership = {
+      groups: groupTeams.reduce((map, row) => {
+        if (!row.group) return map
+        const existing = map.get(row.group) ?? new Set<string>()
+        existing.add(row.id)
+        map.set(row.group, existing)
+        return map
+      }, new Map<string, Set<string>>()),
+    }
+
+    const result = validateAllGroupsStandingAnswer(parsed, opts, membership)
+    if ('error' in result) throw new AppError(400, result.error)
+
+    normalizedAnswer = JSON.stringify(result.answer)
+    resolvedCompletion = result.completion
+    resolvedAnswerLabel = `${result.completion.groupsDone}/${opts.groups.length} csoport · ${result.completion.best3rdsDone}/${opts.best3rdPicks} továbbjutó`
+  }
+
   const existing = await db
     .select()
     .from(specialPredictions)
@@ -250,7 +316,7 @@ export async function upsertGlobalPrediction(
   if (existing[0]) {
     const updated = await db
       .update(specialPredictions)
-      .set({ answer, updatedAt: new Date() })
+      .set({ answer: normalizedAnswer, updatedAt: new Date() })
       .where(eq(specialPredictions.id, existing[0].id))
       .returning()
     row = updated[0]
@@ -261,7 +327,7 @@ export async function upsertGlobalPrediction(
         userId,
         typeId,
         groupId: null,
-        answer,
+        answer: normalizedAnswer,
       })
       .returning()
     row = inserted[0]
@@ -286,5 +352,6 @@ export async function upsertGlobalPrediction(
     isGlobal: true,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
+    ...(resolvedCompletion ? { completion: resolvedCompletion } : {}),
   }
 }

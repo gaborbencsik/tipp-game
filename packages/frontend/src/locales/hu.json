@@ -509,5 +509,20 @@
   "upsetSpecial": {
     "instruction": "Válassz pontosan {max} csapatot, akik szerinted nem jutnak túl a csoportkörön.",
     "selectedCount": "Kiválasztva: {n}/{max}"
+  },
+  "groupStandings": {
+    "intro": "Tippeld meg mind a 12 csoport végeredményét (1–4. helyek), majd válaszd ki a 4 továbbjutó 3. helyezettet.",
+    "groupTitle": "{code} csoport",
+    "done": "Kész",
+    "clearGroup": "Csoport ürítése",
+    "placeholder": "válassz csapatot",
+    "progress": "Haladás: {done}/{total}",
+    "saving": "Mentés…",
+    "saved": "Mentve",
+    "errorSaving": "Hiba",
+    "best3rdTitle": "Továbbjutó 3. helyezettek",
+    "best3rdLocked": "Először töltsd ki mind a 12 csoportot.",
+    "best3rdInstruction": "Válassz {n} csapatot a 3. helyezettek közül, akik továbbjutnak.",
+    "best3rdEmpty": "Nincs elérhető 3. helyezett — töltsd ki a csoportokat."
   }
 }

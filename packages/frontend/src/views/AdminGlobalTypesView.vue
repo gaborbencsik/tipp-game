@@ -120,7 +120,10 @@
 
     <!-- Set correct answer dialog -->
     <div v-if="setAnswerTypeId !== null" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div class="bg-white rounded-xl p-6 shadow-xl max-w-sm w-full mx-4">
+      <div
+        class="bg-white rounded-xl p-6 shadow-xl w-full mx-4"
+        :class="setAnswerInputType === 'all_groups_standing' ? 'max-w-3xl max-h-[90vh] overflow-y-auto' : 'max-w-sm'"
+      >
         <p class="text-gray-800 mb-1 font-semibold">Helyes válasz megadása</p>
         <p class="text-gray-500 text-sm mb-3">{{ setAnswerTypeName }}</p>
         <select
@@ -131,6 +134,13 @@
           <option value="" disabled>Válassz csapatot...</option>
           <option v-for="t in teams" :key="t.id" :value="t.id">{{ t.name }}</option>
         </select>
+        <div v-else-if="setAnswerInputType === 'all_groups_standing' && isAllGroupsStandingOptions(setAnswerOptions)" class="mb-3">
+          <GroupStandingsPicker
+            :options="setAnswerOptions"
+            :answer="setAnswerValue || null"
+            @submit="v => setAnswerValue = v"
+          />
+        </div>
         <input
           v-else
           v-model="setAnswerValue"
@@ -178,7 +188,8 @@ import AdminNav from '../components/admin/AdminNav.vue'
 import { useAdminGlobalTypesStore } from '../stores/admin-global-types.store.js'
 import { api } from '../api/index.js'
 import { supabase } from '../lib/supabase.js'
-import type { SpecialPredictionType, SpecialTypeInput, Team } from '../types/index.js'
+import GroupStandingsPicker from '../components/predictions/GroupStandingsPicker.vue'
+import type { AllGroupsStandingOptions, SpecialPredictionOptions, SpecialPredictionType, SpecialTypeInput, Team } from '../types/index.js'
 import { getDateLocale } from '../lib/dateLocale.js'
 
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
@@ -237,6 +248,7 @@ function formatDateTime(iso: string): string {
 const setAnswerTypeId = ref<string | null>(null)
 const setAnswerTypeName = ref('')
 const setAnswerInputType = ref<string>('text')
+const setAnswerOptions = ref<SpecialPredictionOptions>(null)
 const setAnswerValue = ref('')
 const setAnswerSaving = ref(false)
 const setAnswerError = ref<string | null>(null)
@@ -250,12 +262,12 @@ function openNewForm(): void {
 }
 
 function openEditForm(gt: SpecialPredictionType): void {
-  if (gt.inputType === 'multi_team_weighted') return
+  if (gt.inputType === 'multi_team_weighted' || gt.inputType === 'multi_team_select' || gt.inputType === 'all_groups_standing') return
   editingId.value = gt.id
   formData.value = {
     name: gt.name,
     description: gt.description ?? '',
-    inputType: gt.inputType,
+    inputType: gt.inputType as 'text' | 'dropdown' | 'team_select' | 'player_select',
     optionsRaw: Array.isArray(gt.options) ? gt.options.join(', ') : '',
     points: gt.points,
     deadline: gt.deadline.slice(0, 16),
@@ -299,9 +311,14 @@ function openSetAnswer(gt: SpecialPredictionType): void {
   setAnswerTypeId.value = gt.id
   setAnswerTypeName.value = gt.name
   setAnswerInputType.value = gt.inputType
+  setAnswerOptions.value = gt.options
   setAnswerValue.value = gt.correctAnswer ?? ''
   setAnswerError.value = null
   if (gt.inputType === 'team_select') loadTeamsIfNeeded()
+}
+
+function isAllGroupsStandingOptions(options: SpecialPredictionOptions): options is AllGroupsStandingOptions {
+  return options !== null && !Array.isArray(options) && Array.isArray((options as AllGroupsStandingOptions).groups)
 }
 
 async function submitSetAnswer(): Promise<void> {

@@ -1,0 +1,139 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { mount, flushPromises } from '@vue/test-utils'
+import GroupStandingsPicker from './GroupStandingsPicker.vue'
+import type { AllGroupsStandingOptions, Team } from '@/types/index'
+
+vi.mock('@/lib/supabase', () => ({
+  supabase: {
+    auth: {
+      getSession: vi.fn().mockResolvedValue({ data: { session: { access_token: 't' } } }),
+    },
+  },
+}))
+
+const teamsListMock = vi.fn()
+
+vi.mock('@/api/index', () => ({
+  api: {
+    teams: { list: (...args: unknown[]) => teamsListMock(...args) },
+  },
+}))
+
+function team(id: string, name: string, code: string, group: string): Team {
+  return { id, name, shortCode: code, flagUrl: null, group, teamType: 'national', countryCode: null }
+}
+
+const TEAMS: Team[] = [
+  team('a1', 'Argentina', 'ARG', 'A'),
+  team('a2', 'Brazília', 'BRA', 'A'),
+  team('a3', 'Chile', 'CHI', 'A'),
+  team('a4', 'Dánia', 'DEN', 'A'),
+  team('b1', 'Egyiptom', 'EGY', 'B'),
+  team('b2', 'Franciaország', 'FRA', 'B'),
+  team('b3', 'Ghána', 'GHA', 'B'),
+  team('b4', 'Hollandia', 'NED', 'B'),
+]
+
+const OPTIONS: AllGroupsStandingOptions = {
+  groups: ['A', 'B'],
+  teamsPerGroup: 4,
+  best3rdPicks: 1,
+}
+
+beforeEach(() => {
+  teamsListMock.mockReset()
+  teamsListMock.mockResolvedValue(TEAMS)
+  vi.useFakeTimers()
+})
+
+describe('GroupStandingsPicker', () => {
+  it('parses an existing answer and renders progress', async () => {
+    const answer = JSON.stringify({
+      groups: { A: ['a1', 'a2', 'a3', 'a4'], B: ['b1', null, null, null] },
+      best3rds: [],
+    })
+    const wrapper = mount(GroupStandingsPicker, { props: { options: OPTIONS, answer } })
+    await flushPromises()
+    expect(wrapper.text()).toContain('1/3')
+  })
+
+  it('debounces save and emits a single submit after 400ms', async () => {
+    const wrapper = mount(GroupStandingsPicker, { props: { options: OPTIONS, answer: null } })
+    await flushPromises()
+
+    const dropdown1 = wrapper.find('[data-testid="position-dropdown-A-1"]')
+    ;(dropdown1.element as HTMLSelectElement).value = 'a1'
+    await dropdown1.trigger('change')
+
+    const dropdown2 = wrapper.find('[data-testid="position-dropdown-A-2"]')
+    ;(dropdown2.element as HTMLSelectElement).value = 'a2'
+    await dropdown2.trigger('change')
+
+    expect(wrapper.emitted('submit')).toBeUndefined()
+    vi.advanceTimersByTime(400)
+    await flushPromises()
+
+    const events = wrapper.emitted('submit')!
+    expect(events).toHaveLength(1)
+    const payload = JSON.parse(events[0][0] as string)
+    expect(payload.groups.A).toEqual(['a1', 'a2', null, null])
+    expect(payload.best3rds).toEqual([])
+  })
+
+  it('clears a group on clear button click', async () => {
+    const answer = JSON.stringify({
+      groups: { A: ['a1', 'a2', 'a3', 'a4'], B: [null, null, null, null] },
+      best3rds: [],
+    })
+    const wrapper = mount(GroupStandingsPicker, { props: { options: OPTIONS, answer } })
+    await flushPromises()
+
+    const cardA = wrapper.find('[data-testid="group-standing-card-A"]')
+    await cardA.find('button').trigger('click')
+    await flushPromises()
+
+    await wrapper.find('[data-testid="group-standing-clear-A"]').trigger('click')
+    vi.advanceTimersByTime(400)
+    await flushPromises()
+
+    const events = wrapper.emitted('submit')!
+    const payload = JSON.parse(events[events.length - 1][0] as string)
+    expect(payload.groups.A).toEqual([null, null, null, null])
+  })
+
+  it('locks best3rd picker until all groups are filled', async () => {
+    const wrapper = mount(GroupStandingsPicker, { props: { options: OPTIONS, answer: null } })
+    await flushPromises()
+    expect(wrapper.find('[data-testid="best-3rd-locked"]').exists()).toBe(true)
+  })
+
+  it('unlocks best3rd picker once all groups are filled', async () => {
+    const answer = JSON.stringify({
+      groups: { A: ['a1', 'a2', 'a3', 'a4'], B: ['b1', 'b2', 'b3', 'b4'] },
+      best3rds: [],
+    })
+    const wrapper = mount(GroupStandingsPicker, { props: { options: OPTIONS, answer } })
+    await flushPromises()
+    expect(wrapper.find('[data-testid="best-3rd-locked"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="best-3rd-chip-a3"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="best-3rd-chip-b3"]').exists()).toBe(true)
+  })
+
+  it('drops orphaned best3rds when their 3rd-place team is removed', async () => {
+    const answer = JSON.stringify({
+      groups: { A: ['a1', 'a2', 'a3', 'a4'], B: ['b1', 'b2', 'b3', 'b4'] },
+      best3rds: ['a3'],
+    })
+    const wrapper = mount(GroupStandingsPicker, { props: { options: OPTIONS, answer } })
+    await flushPromises()
+
+    await wrapper.find('[data-testid="group-standing-clear-A"]').trigger('click')
+    await flushPromises()
+    vi.advanceTimersByTime(400)
+    await flushPromises()
+
+    const events = wrapper.emitted('submit')!
+    const payload = JSON.parse(events[events.length - 1][0] as string)
+    expect(payload.best3rds).toEqual([])
+  })
+})

@@ -81,6 +81,13 @@
                 @submit="v => onAnswerChange(sp, v)"
               />
             </div>
+            <div v-else-if="sp.inputType === 'all_groups_standing' && isAllGroupsStandingOptions(sp.options)" class="mb-2">
+              <GroupStandingsPicker
+                :options="sp.options"
+                :answer="sp.answer ?? null"
+                @submit="v => onAnswerChange(sp, v)"
+              />
+            </div>
             <div v-else-if="sp.inputType === 'dropdown' && Array.isArray(sp.options) && sp.options.length">
               <select
                 :value="sp.answer ?? ''"
@@ -126,9 +133,10 @@ import AppLayout from '../components/AppLayout.vue'
 import TeamSelectDropdown from '../components/predictions/TeamSelectDropdown.vue'
 import PlayerSelectCombobox from '../components/predictions/PlayerSelectCombobox.vue'
 import UpsetSpecialPicker from '../components/predictions/UpsetSpecialPicker.vue'
+import GroupStandingsPicker from '../components/predictions/GroupStandingsPicker.vue'
 import { useTournamentTipsStore } from '../stores/tournamentTips.store.js'
 import { formatRelativeDeadline } from '../lib/deadline.js'
-import type { MultiTeamWeightedOptions, SpecialPredictionOptions, SpecialPredictionWithType } from '../types/index.js'
+import type { AllGroupsStandingOptions, MultiTeamWeightedOptions, SpecialPredictionOptions, SpecialPredictionWithType } from '../types/index.js'
 
 const { t } = useI18n()
 const store = useTournamentTipsStore()
@@ -152,7 +160,11 @@ function isDeadlinePassed(deadline: string): boolean {
 }
 
 function isMultiTeamWeightedOptions(options: SpecialPredictionOptions): options is MultiTeamWeightedOptions {
-  return options !== null && !Array.isArray(options) && Array.isArray(options.choices)
+  return options !== null && !Array.isArray(options) && Array.isArray((options as MultiTeamWeightedOptions).choices)
+}
+
+function isAllGroupsStandingOptions(options: SpecialPredictionOptions): options is AllGroupsStandingOptions {
+  return options !== null && !Array.isArray(options) && Array.isArray((options as AllGroupsStandingOptions).groups)
 }
 
 function statusClass(sp: SpecialPredictionWithType): string {

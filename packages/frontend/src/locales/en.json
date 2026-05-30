@@ -509,5 +509,20 @@
   "upsetSpecial": {
     "instruction": "Pick exactly {max} teams you think will NOT advance from the group stage.",
     "selectedCount": "Selected: {n}/{max}"
+  },
+  "groupStandings": {
+    "intro": "Predict the final standings for all 12 groups (positions 1–4), then pick the 4 best 3rd-placed teams that advance.",
+    "groupTitle": "Group {code}",
+    "done": "Done",
+    "clearGroup": "Clear group",
+    "placeholder": "pick a team",
+    "progress": "Progress: {done}/{total}",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "errorSaving": "Error",
+    "best3rdTitle": "Advancing 3rd-placed teams",
+    "best3rdLocked": "Fill in all 12 groups first.",
+    "best3rdInstruction": "Pick {n} teams from the 3rd-placed teams that will advance.",
+    "best3rdEmpty": "No 3rd-placed teams available — finish the groups first."
   }
 }

@@ -46,65 +46,68 @@ async function seed(): Promise<void> {
   }
 
   // ─── Teams (FIFA VB 2026 – 48 + NB I) ───────────────────────────────────
+  // Csoportbeosztás a 2025-12-05-i hivatalos sorsolás alapján.
   const teamData = [
     // Group A
-    { name: 'USA', shortCode: 'USA', group: 'A', teamType: 'national' as const, countryCode: 'us' },
+    { name: 'Csehország', shortCode: 'CZE', group: 'A', teamType: 'national' as const, countryCode: 'cz' },
     { name: 'Mexikó', shortCode: 'MEX', group: 'A', teamType: 'national' as const, countryCode: 'mx' },
-    { name: 'Kanada', shortCode: 'CAN', group: 'A', teamType: 'national' as const, countryCode: 'ca' },
-    { name: 'Panama', shortCode: 'PAN', group: 'A', teamType: 'national' as const, countryCode: 'pa' },
+    { name: 'Dél-afrikai Köztársaság', shortCode: 'RSA', group: 'A', teamType: 'national' as const, countryCode: 'za' },
+    { name: 'Dél-Korea', shortCode: 'KOR', group: 'A', teamType: 'national' as const, countryCode: 'kr' },
     // Group B
-    { name: 'Argentína', shortCode: 'ARG', group: 'B', teamType: 'national' as const, countryCode: 'ar' },
-    { name: 'Chile', shortCode: 'CHI', group: 'B', teamType: 'national' as const, countryCode: 'cl' },
-    { name: 'Peru', shortCode: 'PER', group: 'B', teamType: 'national' as const, countryCode: 'pe' },
-    { name: 'Ausztrália', shortCode: 'AUS', group: 'B', teamType: 'national' as const, countryCode: 'au' },
+    { name: 'Bosznia-Hercegovina', shortCode: 'BIH', group: 'B', teamType: 'national' as const, countryCode: 'ba' },
+    { name: 'Kanada', shortCode: 'CAN', group: 'B', teamType: 'national' as const, countryCode: 'ca' },
+    { name: 'Katar', shortCode: 'QAT', group: 'B', teamType: 'national' as const, countryCode: 'qa' },
+    { name: 'Svájc', shortCode: 'SUI', group: 'B', teamType: 'national' as const, countryCode: 'ch' },
     // Group C
-    { name: 'Ecuador', shortCode: 'ECU', group: 'C', teamType: 'national' as const, countryCode: 'ec' },
-    { name: 'Venezuela', shortCode: 'VEN', group: 'C', teamType: 'national' as const, countryCode: 've' },
-    { name: 'Új-Zéland', shortCode: 'NZL', group: 'C', teamType: 'national' as const, countryCode: 'nz' },
+    { name: 'Brazília', shortCode: 'BRA', group: 'C', teamType: 'national' as const, countryCode: 'br' },
+    { name: 'Haiti', shortCode: 'HAI', group: 'C', teamType: 'national' as const, countryCode: 'ht' },
+    { name: 'Marokkó', shortCode: 'MAR', group: 'C', teamType: 'national' as const, countryCode: 'ma' },
+    { name: 'Skócia', shortCode: 'SCO', group: 'C', teamType: 'national' as const, countryCode: 'gb-sct' },
     // Group D
-    { name: 'Brazília', shortCode: 'BRA', group: 'D', teamType: 'national' as const, countryCode: 'br' },
-    { name: 'Kolumbia', shortCode: 'COL', group: 'D', teamType: 'national' as const, countryCode: 'co' },
+    { name: 'Ausztrália', shortCode: 'AUS', group: 'D', teamType: 'national' as const, countryCode: 'au' },
     { name: 'Paraguay', shortCode: 'PAR', group: 'D', teamType: 'national' as const, countryCode: 'py' },
-    { name: 'Kamerun', shortCode: 'CMR', group: 'D', teamType: 'national' as const, countryCode: 'cm' },
+    { name: 'Törökország', shortCode: 'TUR', group: 'D', teamType: 'national' as const, countryCode: 'tr' },
+    { name: 'USA', shortCode: 'USA', group: 'D', teamType: 'national' as const, countryCode: 'us' },
     // Group E
-    { name: 'Spanyolország', shortCode: 'ESP', group: 'E', teamType: 'national' as const, countryCode: 'es' },
-    { name: 'Portugália', shortCode: 'POR', group: 'E', teamType: 'national' as const, countryCode: 'pt' },
-    { name: 'Skócia', shortCode: 'SCO', group: 'E', teamType: 'national' as const, countryCode: 'gb-sct' },
-    { name: 'Marokkó', shortCode: 'MAR', group: 'E', teamType: 'national' as const, countryCode: 'ma' },
+    { name: 'Curaçao', shortCode: 'CUW', group: 'E', teamType: 'national' as const, countryCode: 'cw' },
+    { name: 'Ecuador', shortCode: 'ECU', group: 'E', teamType: 'national' as const, countryCode: 'ec' },
+    { name: 'Németország', shortCode: 'GER', group: 'E', teamType: 'national' as const, countryCode: 'de' },
+    { name: 'Elefántcsontpart', shortCode: 'CIV', group: 'E', teamType: 'national' as const, countryCode: 'ci' },
     // Group F
-    { name: 'Franciaország', shortCode: 'FRA', group: 'F', teamType: 'national' as const, countryCode: 'fr' },
+    { name: 'Japán', shortCode: 'JPN', group: 'F', teamType: 'national' as const, countryCode: 'jp' },
     { name: 'Hollandia', shortCode: 'NED', group: 'F', teamType: 'national' as const, countryCode: 'nl' },
-    { name: 'Szenegál', shortCode: 'SEN', group: 'F', teamType: 'national' as const, countryCode: 'sn' },
-    { name: 'Dél-Korea', shortCode: 'KOR', group: 'F', teamType: 'national' as const, countryCode: 'kr' },
+    { name: 'Svédország', shortCode: 'SWE', group: 'F', teamType: 'national' as const, countryCode: 'se' },
+    { name: 'Tunézia', shortCode: 'TUN', group: 'F', teamType: 'national' as const, countryCode: 'tn' },
     // Group G
-    { name: 'Anglia', shortCode: 'ENG', group: 'G', teamType: 'national' as const, countryCode: 'gb-eng' },
-    { name: 'Horvátország', shortCode: 'CRO', group: 'G', teamType: 'national' as const, countryCode: 'hr' },
-    { name: 'Nigéria', shortCode: 'NGA', group: 'G', teamType: 'national' as const, countryCode: 'ng' },
-    { name: 'Szerbia', shortCode: 'SRB', group: 'G', teamType: 'national' as const, countryCode: 'rs' },
+    { name: 'Belgium', shortCode: 'BEL', group: 'G', teamType: 'national' as const, countryCode: 'be' },
+    { name: 'Egyiptom', shortCode: 'EGY', group: 'G', teamType: 'national' as const, countryCode: 'eg' },
+    { name: 'Irán', shortCode: 'IRN', group: 'G', teamType: 'national' as const, countryCode: 'ir' },
+    { name: 'Új-Zéland', shortCode: 'NZL', group: 'G', teamType: 'national' as const, countryCode: 'nz' },
     // Group H
-    { name: 'Németország', shortCode: 'GER', group: 'H', teamType: 'national' as const, countryCode: 'de' },
-    { name: 'Japán', shortCode: 'JPN', group: 'H', teamType: 'national' as const, countryCode: 'jp' },
+    { name: 'Zöld-foki Köztársaság', shortCode: 'CPV', group: 'H', teamType: 'national' as const, countryCode: 'cv' },
     { name: 'Szaúd-Arábia', shortCode: 'KSA', group: 'H', teamType: 'national' as const, countryCode: 'sa' },
-    { name: 'Tunézia', shortCode: 'TUN', group: 'H', teamType: 'national' as const, countryCode: 'tn' },
+    { name: 'Spanyolország', shortCode: 'ESP', group: 'H', teamType: 'national' as const, countryCode: 'es' },
+    { name: 'Uruguay', shortCode: 'URU', group: 'H', teamType: 'national' as const, countryCode: 'uy' },
     // Group I
-    { name: 'Belgium', shortCode: 'BEL', group: 'I', teamType: 'national' as const, countryCode: 'be' },
-    { name: 'Ukrajna', shortCode: 'UKR', group: 'I', teamType: 'national' as const, countryCode: 'ua' },
-    { name: 'Mali', shortCode: 'MLI', group: 'I', teamType: 'national' as const, countryCode: 'ml' },
-    { name: 'Costa Rica', shortCode: 'CRC', group: 'I', teamType: 'national' as const, countryCode: 'cr' },
+    { name: 'Franciaország', shortCode: 'FRA', group: 'I', teamType: 'national' as const, countryCode: 'fr' },
+    { name: 'Irak', shortCode: 'IRQ', group: 'I', teamType: 'national' as const, countryCode: 'iq' },
+    { name: 'Norvégia', shortCode: 'NOR', group: 'I', teamType: 'national' as const, countryCode: 'no' },
+    { name: 'Szenegál', shortCode: 'SEN', group: 'I', teamType: 'national' as const, countryCode: 'sn' },
     // Group J
-    { name: 'Olaszország', shortCode: 'ITA', group: 'J', teamType: 'national' as const, countryCode: 'it' },
-    { name: 'Svájc', shortCode: 'SUI', group: 'J', teamType: 'national' as const, countryCode: 'ch' },
-    { name: 'Elefántcsontpart', shortCode: 'CIV', group: 'J', teamType: 'national' as const, countryCode: 'ci' },
-    { name: 'Honduras', shortCode: 'HON', group: 'J', teamType: 'national' as const, countryCode: 'hn' },
+    { name: 'Algéria', shortCode: 'ALG', group: 'J', teamType: 'national' as const, countryCode: 'dz' },
+    { name: 'Argentína', shortCode: 'ARG', group: 'J', teamType: 'national' as const, countryCode: 'ar' },
+    { name: 'Ausztria', shortCode: 'AUT', group: 'J', teamType: 'national' as const, countryCode: 'at' },
+    { name: 'Jordánia', shortCode: 'JOR', group: 'J', teamType: 'national' as const, countryCode: 'jo' },
     // Group K
-    { name: 'Lengyelország', shortCode: 'POL', group: 'K', teamType: 'national' as const, countryCode: 'pl' },
-    { name: 'Ghána', shortCode: 'GHA', group: 'K', teamType: 'national' as const, countryCode: 'gh' },
-    { name: 'Uruguay', shortCode: 'URU', group: 'K', teamType: 'national' as const, countryCode: 'uy' },
+    { name: 'Kolumbia', shortCode: 'COL', group: 'K', teamType: 'national' as const, countryCode: 'co' },
+    { name: 'Kongói DK', shortCode: 'COD', group: 'K', teamType: 'national' as const, countryCode: 'cd' },
+    { name: 'Portugália', shortCode: 'POR', group: 'K', teamType: 'national' as const, countryCode: 'pt' },
+    { name: 'Üzbegisztán', shortCode: 'UZB', group: 'K', teamType: 'national' as const, countryCode: 'uz' },
     // Group L
-    { name: 'Dánia', shortCode: 'DEN', group: 'L', teamType: 'national' as const, countryCode: 'dk' },
-    { name: 'Ausztria', shortCode: 'AUT', group: 'L', teamType: 'national' as const, countryCode: 'at' },
-    { name: 'Egyiptom', shortCode: 'EGY', group: 'L', teamType: 'national' as const, countryCode: 'eg' },
-    { name: 'Katar', shortCode: 'QAT', group: 'L', teamType: 'national' as const, countryCode: 'qa' },
+    { name: 'Horvátország', shortCode: 'CRO', group: 'L', teamType: 'national' as const, countryCode: 'hr' },
+    { name: 'Anglia', shortCode: 'ENG', group: 'L', teamType: 'national' as const, countryCode: 'gb-eng' },
+    { name: 'Ghána', shortCode: 'GHA', group: 'L', teamType: 'national' as const, countryCode: 'gh' },
+    { name: 'Panama', shortCode: 'PAN', group: 'L', teamType: 'national' as const, countryCode: 'pa' },
     // NB I 2025/26
     { name: 'Ferencváros', shortCode: 'FTC', group: 'NB I', teamType: 'club' as const, countryCode: null, flagUrl: '/logos/ftc.svg' },
     { name: 'Puskás Akadémia', shortCode: 'PAFC', group: 'NB I', teamType: 'club' as const, countryCode: null, flagUrl: '/logos/pafc.svg' },
@@ -120,8 +123,21 @@ async function seed(): Promise<void> {
     { name: 'Kolorcity Kazincbarcika SC', shortCode: 'KBSC', group: 'NB I', teamType: 'club' as const, countryCode: null, flagUrl: null },
   ]
 
+  // Pre-draw seed left teams in stale groups; null them before upsert.
+  await db.update(teams).set({ group: null }).where(eq(teams.teamType, 'national'))
+
   for (const team of teamData) {
-    await db.insert(teams).values(team).onConflictDoNothing()
+    await db.insert(teams).values(team).onConflictDoUpdate({
+      target: teams.shortCode,
+      set: {
+        name: team.name,
+        group: team.group,
+        countryCode: team.countryCode,
+        teamType: team.teamType,
+        ...('flagUrl' in team ? { flagUrl: team.flagUrl } : {}),
+        updatedAt: new Date(),
+      },
+    })
   }
 
   // ─── Leagues ────────────────────────────────────────────────────────────
