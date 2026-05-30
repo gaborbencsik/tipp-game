@@ -39,10 +39,10 @@ describe('TeamSelectDropdown', () => {
     const wrapper = mountDropdown({ modelValue: TEAM_UUID, leagueId: 'l1', answerLabel: 'Brazília' })
     await flushPromises()
 
-    const options = wrapper.findAll('option')
-    const fallback = options.find(o => (o.element as HTMLOptionElement).value === TEAM_UUID)
-    expect(fallback).toBeDefined()
-    expect(fallback!.text()).toBe('Brazília')
+    await wrapper.find('[data-testid="team-select-dropdown"]').trigger('click')
+    const fallback = wrapper.find(`[data-testid="team-select-option-${TEAM_UUID}"]`)
+    expect(fallback.exists()).toBe(true)
+    expect(fallback.text()).toBe('Brazília')
   })
 
   it('does not render fallback option when modelValue exists in teamsList', async () => {
@@ -50,7 +50,8 @@ describe('TeamSelectDropdown', () => {
     const wrapper = mountDropdown({ modelValue: TEAM_UUID, leagueId: 'l1', answerLabel: 'Brazília' })
     await flushPromises()
 
-    const matching = wrapper.findAll('option').filter(o => (o.element as HTMLOptionElement).value === TEAM_UUID)
+    await wrapper.find('[data-testid="team-select-dropdown"]').trigger('click')
+    const matching = wrapper.findAll(`[data-testid="team-select-option-${TEAM_UUID}"]`)
     expect(matching).toHaveLength(1)
   })
 
@@ -59,8 +60,30 @@ describe('TeamSelectDropdown', () => {
     const wrapper = mountDropdown({ modelValue: TEAM_UUID, leagueId: 'l1', answerLabel: null })
     await flushPromises()
 
-    const options = wrapper.findAll('option')
-    const fallback = options.find(o => (o.element as HTMLOptionElement).value === TEAM_UUID)
-    expect(fallback).toBeUndefined()
+    await wrapper.find('[data-testid="team-select-dropdown"]').trigger('click')
+    const fallback = wrapper.find(`[data-testid="team-select-option-${TEAM_UUID}"]`)
+    expect(fallback.exists()).toBe(false)
+  })
+
+  it('renders the selected team flag in the trigger when team has flagUrl', async () => {
+    leagueTeamsMock.mockResolvedValue([
+      { id: TEAM_UUID, name: 'Brazília', shortCode: 'BRA', flagUrl: 'https://flags/bra.png' },
+    ])
+    const wrapper = mountDropdown({ modelValue: TEAM_UUID, leagueId: 'l1', answerLabel: null })
+    await flushPromises()
+
+    const trigger = wrapper.find('[data-testid="team-select-dropdown"]')
+    expect(trigger.find('img').exists()).toBe(true)
+    expect(trigger.find('img').attributes('src')).toBe('https://flags/bra.png')
+  })
+
+  it('emits update:modelValue when an option is clicked', async () => {
+    leagueTeamsMock.mockResolvedValue([{ id: TEAM_UUID, name: 'Brazília', shortCode: 'BRA', flagUrl: null }])
+    const wrapper = mountDropdown({ modelValue: null, leagueId: 'l1', answerLabel: null })
+    await flushPromises()
+
+    await wrapper.find('[data-testid="team-select-dropdown"]').trigger('click')
+    await wrapper.find(`[data-testid="team-select-option-${TEAM_UUID}"]`).trigger('click')
+    expect(wrapper.emitted('update:modelValue')![0]).toEqual([TEAM_UUID])
   })
 })

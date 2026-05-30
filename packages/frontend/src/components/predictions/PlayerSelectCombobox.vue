@@ -4,18 +4,18 @@
       type="text"
       :value="modelValue ?? ''"
       maxlength="200"
-      class="w-full border rounded px-2 py-1.5 text-sm"
+      class="w-full border border-slate-300 rounded-md px-2.5 py-1.5 text-sm bg-white text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-300 outline-none"
       :placeholder="$t('playerSelect.freeTextPlaceholder')"
       @input="onFreeTextInput"
     />
   </div>
   <div v-else class="relative" ref="containerRef">
-    <div class="flex items-center border rounded overflow-hidden">
+    <div class="flex items-center border border-slate-300 rounded-md bg-white overflow-hidden focus-within:ring-2 focus-within:ring-blue-300">
       <input
         ref="inputRef"
         type="text"
         :value="displayText"
-        class="w-full px-2 py-1.5 text-sm outline-none"
+        class="w-full px-2.5 py-1.5 text-sm bg-white text-slate-800 placeholder:text-slate-400 outline-none"
         :placeholder="selectedPlayer ? '' : $t('playerSelect.placeholder')"
         @focus="onFocus"
         @input="onInput"
@@ -23,7 +23,7 @@
       <button
         v-if="modelValue"
         type="button"
-        class="px-2 text-gray-400 hover:text-gray-600"
+        class="px-2 text-slate-400 hover:text-slate-600"
         @click="clear"
       >
         &times;
@@ -31,20 +31,28 @@
     </div>
     <ul
       v-if="dropdownOpen && filteredPlayers.length > 0"
-      class="absolute z-30 mt-1 w-full max-h-48 overflow-y-auto bg-white border rounded shadow-lg"
+      class="absolute z-30 mt-1 w-full max-h-64 overflow-y-auto bg-white border border-slate-200 rounded-md shadow-lg py-1"
     >
       <li
         v-for="p in filteredPlayers"
         :key="p.id"
-        class="px-3 py-1.5 text-sm cursor-pointer hover:bg-blue-50"
+        class="px-2.5 py-2 text-sm text-slate-800 cursor-pointer hover:bg-blue-50 flex items-center gap-2"
         @mousedown.prevent="selectPlayer(p)"
       >
-        {{ p.name }}<span v-if="p.teamShortCode" class="text-gray-400 ml-1">({{ p.teamShortCode }})</span>
+        <img
+          v-if="p.teamFlagUrl"
+          :src="p.teamFlagUrl"
+          :alt="p.teamName ?? ''"
+          class="w-6 h-4 object-cover rounded-sm flex-shrink-0"
+        />
+        <span v-else class="w-6 h-4 flex-shrink-0" aria-hidden="true"></span>
+        <span class="flex-1 truncate">{{ p.name }}</span>
+        <span v-if="p.teamShortCode" class="text-xs font-semibold text-slate-400 flex-shrink-0">{{ p.teamShortCode }}</span>
       </li>
     </ul>
     <div
       v-if="dropdownOpen && searchText.length > 0 && filteredPlayers.length === 0"
-      class="absolute z-30 mt-1 w-full bg-white border rounded shadow-lg px-3 py-2 text-sm text-gray-400"
+      class="absolute z-30 mt-1 w-full bg-white border border-slate-200 rounded-md shadow-lg px-2.5 py-2 text-sm text-slate-400"
     >
       {{ $t('playerSelect.noResults') }}
     </div>

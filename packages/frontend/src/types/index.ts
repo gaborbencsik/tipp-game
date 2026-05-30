@@ -496,6 +496,7 @@ export interface Player {
   readonly teamId: string | null
   readonly teamName: string | null
   readonly teamShortCode: string | null
+  readonly teamFlagUrl: string | null
   readonly position: string | null
   readonly shirtNumber: number | null
   readonly createdAt: string

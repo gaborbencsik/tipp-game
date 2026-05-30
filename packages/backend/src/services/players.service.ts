@@ -24,6 +24,7 @@ function toApiPlayer(row: PlayerRow): Player {
     teamId: row.players.teamId ?? null,
     teamName: row.teams?.name ?? null,
     teamShortCode: row.teams?.shortCode ?? null,
+    teamFlagUrl: row.teams?.flagUrl ?? null,
     position: row.players.position ?? null,
     shirtNumber: row.players.shirtNumber ?? null,
     createdAt: row.players.createdAt.toISOString(),
