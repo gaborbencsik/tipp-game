@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 133 story kész (Must Have: 31/31, Should Have: 102/102)
+> 134 story kész (Must Have: 31/31, Should Have: 103/103)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -137,3 +137,4 @@
 | US-936 | Upset Special – multi-csapatos, súlyozott bonus tipp típus | Should Have |
 | US-945 | Csoport végeredmény tipp – 12 csoport sorrendje + 8 továbbjutó 3. helyezett | Should Have |
 | US-946 | Bracket-progresszió tipp – pár-alapú győztes-pick a kieséses ágon | Should Have |
+| UX-028 | Torna tippek mobil UX redesign — bracket + group standings polish | Should Have |

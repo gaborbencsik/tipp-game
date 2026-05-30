@@ -1,37 +1,39 @@
 <template>
-  <div
-    class="rounded-lg border bg-white p-2"
-    :class="match.isLocked ? 'border-dashed border-gray-200 opacity-70' : 'border-gray-200'"
-    :data-testid="`bracket-match-${match.id}`"
-  >
-    <div class="flex items-center gap-1.5">
+  <div :data-testid="`bracket-match-${match.id}`">
+    <div class="flex items-center gap-1.5 mb-1 ml-0.5">
+      <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">{{ matchLabel }}</span>
+      <span class="text-[9px] font-medium px-1.5 py-px rounded-full bg-indigo-50 text-indigo-700">{{ matchPill }}</span>
+    </div>
+    <div class="grid items-stretch gap-1.5" style="grid-template-columns: 1fr auto 1fr;">
       <button
         type="button"
-        class="flex-1 min-w-0 text-left rounded-lg overflow-hidden"
+        class="min-w-0 text-left rounded-lg"
         :disabled="match.isLocked || !match.teamA"
         :class="!match.isLocked && match.teamA ? 'cursor-pointer' : 'cursor-not-allowed'"
         @click="onPick(match.teamA)"
       >
         <TeamSlotChip
-          :slot-code="match.slotA"
+          :slot-code="slotLabelFor(match.slotA)"
           :team="match.teamA ? (teamMap.get(match.teamA) ?? null) : null"
           :is-picked="!!match.teamA && match.winnerId === match.teamA"
-          :is-locked="match.isLocked"
+          :is-locked="match.isLocked || !match.teamA"
         />
       </button>
-      <span class="text-[10px] font-bold text-gray-400 px-1 shrink-0">{{ $t('bracketProgression.vs') }}</span>
+      <span class="flex items-center justify-center text-[11px] font-bold text-slate-300 px-1">
+        {{ $t('bracketProgression.vs') }}
+      </span>
       <button
         type="button"
-        class="flex-1 min-w-0 text-right rounded-lg overflow-hidden"
+        class="min-w-0 text-left rounded-lg"
         :disabled="match.isLocked || !match.teamB"
         :class="!match.isLocked && match.teamB ? 'cursor-pointer' : 'cursor-not-allowed'"
         @click="onPick(match.teamB)"
       >
         <TeamSlotChip
-          :slot-code="match.slotB"
+          :slot-code="slotLabelFor(match.slotB)"
           :team="match.teamB ? (teamMap.get(match.teamB) ?? null) : null"
           :is-picked="!!match.teamB && match.winnerId === match.teamB"
-          :is-locked="match.isLocked"
+          :is-locked="match.isLocked || !match.teamB"
         />
       </button>
     </div>
@@ -39,6 +41,8 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import TeamSlotChip from './TeamSlotChip.vue'
 import type { Team } from '../../types/index.js'
 import type { DerivedMatch } from '../../lib/bracketDerive.js'
@@ -51,6 +55,41 @@ const props = defineProps<{
 const emit = defineEmits<{
   'pick': [matchId: string, teamId: string]
 }>()
+
+const { t } = useI18n()
+
+const matchLabel = computed(() => {
+  const id = props.match.id
+  const numMatch = id.match(/_m(\d+)$/i)
+  const n = numMatch ? Number(numMatch[1]) : 0
+  switch (props.match.round) {
+    case 'last_32': return t('bracketProgression.matchLabel', { n })
+    case 'last_16': return t('bracketProgression.matchLabelL16', { n })
+    case 'qf': return t('bracketProgression.matchLabelQf', { n })
+    case 'sf': return t('bracketProgression.matchLabelSf', { n })
+    case 'final': return t('bracketProgression.finalLabel')
+    case 'bronze': return t('bracketProgression.bronzeLabel')
+    default: return id
+  }
+})
+
+const matchPill = computed(() => {
+  if (props.match.round === 'final') return t('bracketProgression.finalPill')
+  if (props.match.round === 'bronze') return t('bracketProgression.bronzePill')
+  return `${slotLabelFor(props.match.slotA)} ↔ ${slotLabelFor(props.match.slotB)}`
+})
+
+function slotLabelFor(slot: string): string {
+  const ref = slot.match(/^<([a-z0-9_]+?)(_loser)?>$/i)
+  if (ref) {
+    const mNum = ref[1]!.match(/_m(\d+)$/i)
+    const tag = mNum ? `M${mNum[1]}` : ref[1]!.toUpperCase()
+    return ref[2]
+      ? t('bracketProgression.slotLoser', { tag })
+      : t('bracketProgression.slotWinner', { tag })
+  }
+  return slot.replace(/_/g, ' ')
+}
 
 function onPick(teamId: string | null): void {
   if (props.match.isLocked || !teamId) return

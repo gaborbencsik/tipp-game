@@ -9,7 +9,7 @@ const A3: Team = { id: 'a3', name: 'Chile', shortCode: 'CHI', flagUrl: null, gro
 const A4: Team = { id: 'a4', name: 'Dánia', shortCode: 'DEN', flagUrl: null, group: 'A', teamType: 'national', countryCode: null }
 
 describe('PositionTeamDropdown', () => {
-  it('renders all teams when no others assigned', () => {
+  it('renders all teams when no others assigned', async () => {
     const wrapper = mount(PositionTeamDropdown, {
       props: {
         position: 1,
@@ -19,11 +19,17 @@ describe('PositionTeamDropdown', () => {
         modelValue: null,
       },
     })
-    const options = wrapper.findAll('option')
-    expect(options).toHaveLength(5)
+    await wrapper.find('[data-testid="position-dropdown-A-1"]').trigger('click')
+    const options = wrapper.findAll('[data-testid^="position-dropdown-option-A-1-"]')
+    expect(options.map(o => o.attributes('data-testid'))).toEqual([
+      'position-dropdown-option-A-1-a1',
+      'position-dropdown-option-A-1-a2',
+      'position-dropdown-option-A-1-a3',
+      'position-dropdown-option-A-1-a4',
+    ])
   })
 
-  it('hides teams used in other positions of the same group', () => {
+  it('hides teams used in other positions of the same group', async () => {
     const wrapper = mount(PositionTeamDropdown, {
       props: {
         position: 1,
@@ -33,15 +39,15 @@ describe('PositionTeamDropdown', () => {
         modelValue: null,
       },
     })
-    const optionValues = wrapper.findAll('option').map(o => o.attributes('value'))
-    expect(optionValues).toContain('')
-    expect(optionValues).toContain(A1.id)
-    expect(optionValues).toContain(A4.id)
-    expect(optionValues).not.toContain(A2.id)
-    expect(optionValues).not.toContain(A3.id)
+    await wrapper.find('[data-testid="position-dropdown-A-1"]').trigger('click')
+    const ids = wrapper.findAll('[data-testid^="position-dropdown-option-A-1-"]').map(o => o.attributes('data-testid'))
+    expect(ids).toContain('position-dropdown-option-A-1-a1')
+    expect(ids).toContain('position-dropdown-option-A-1-a4')
+    expect(ids).not.toContain('position-dropdown-option-A-1-a2')
+    expect(ids).not.toContain('position-dropdown-option-A-1-a3')
   })
 
-  it('keeps the team currently assigned to its own position visible', () => {
+  it('keeps the team currently assigned to its own position visible', async () => {
     const wrapper = mount(PositionTeamDropdown, {
       props: {
         position: 2,
@@ -51,9 +57,10 @@ describe('PositionTeamDropdown', () => {
         modelValue: A2.id,
       },
     })
-    const optionValues = wrapper.findAll('option').map(o => o.attributes('value'))
-    expect(optionValues).toContain(A2.id)
-    expect(optionValues).not.toContain(A1.id)
+    await wrapper.find('[data-testid="position-dropdown-A-2"]').trigger('click')
+    const ids = wrapper.findAll('[data-testid^="position-dropdown-option-A-2-"]').map(o => o.attributes('data-testid'))
+    expect(ids).toContain('position-dropdown-option-A-2-a2')
+    expect(ids).not.toContain('position-dropdown-option-A-2-a1')
   })
 
   it('emits null when placeholder is selected', async () => {
@@ -66,9 +73,8 @@ describe('PositionTeamDropdown', () => {
         modelValue: A1.id,
       },
     })
-    const select = wrapper.find('select')
-    ;(select.element as HTMLSelectElement).value = ''
-    await select.trigger('change')
+    await wrapper.find('[data-testid="position-dropdown-A-1"]').trigger('click')
+    await wrapper.find('[data-testid="position-dropdown-option-A-1-clear"]').trigger('click')
     expect(wrapper.emitted('update:modelValue')![0]).toEqual([null])
   })
 
@@ -82,9 +88,8 @@ describe('PositionTeamDropdown', () => {
         modelValue: null,
       },
     })
-    const select = wrapper.find('select')
-    ;(select.element as HTMLSelectElement).value = A1.id
-    await select.trigger('change')
+    await wrapper.find('[data-testid="position-dropdown-A-1"]').trigger('click')
+    await wrapper.find('[data-testid="position-dropdown-option-A-1-a1"]').trigger('click')
     expect(wrapper.emitted('update:modelValue')![0]).toEqual([A1.id])
   })
 })

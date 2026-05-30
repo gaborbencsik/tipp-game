@@ -1,10 +1,13 @@
 <template>
   <div data-testid="bracket-progression-picker">
-    <p class="text-xs text-gray-500 mb-3">{{ $t('bracketProgression.intro') }}</p>
+    <GroupStandingsGate v-if="!groupStandingsAnswer" @open-group-standings="$emit('open-group-standings')" />
 
-    <GroupStandingsGate v-if="!groupStandingsAnswer" />
+    <div v-else class="space-y-2">
+      <div class="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2.5 flex gap-2">
+        <span class="text-blue-600" aria-hidden="true">💡</span>
+        <p class="text-xs text-blue-900 leading-snug">{{ $t('bracketProgression.infoCard') }}</p>
+      </div>
 
-    <div v-else class="space-y-2.5">
       <BracketRoundCard
         v-for="round in EARLY_ROUNDS"
         :key="round"
@@ -18,22 +21,37 @@
       />
       <FinalsAndBronzeCard
         :matches="finalsAndBronzeMatches"
+        :expanded="expandedRound === 'final'"
         :team-map="teamMap"
+        @toggle="toggleExpanded('final')"
         @pick="onPick"
       />
     </div>
 
     <div
       v-if="groupStandingsAnswer"
-      class="mt-3 sticky bottom-2 left-0 right-0 z-10 px-3 py-2 rounded-lg border bg-white shadow-sm flex items-center justify-between text-xs"
+      class="mt-3 sticky bottom-2 left-0 right-0 z-10 px-4 py-3 rounded-lg border border-slate-200 bg-white shadow-sm"
       data-testid="bracket-progression-sticky"
     >
-      <span class="font-semibold text-gray-800">
-        {{ $t('bracketProgression.progress', { done: completion.totalDone, total: completion.totalSteps }) }}
-      </span>
-      <span :class="saveStatusClass" data-testid="bracket-progression-save-status">
-        {{ saveStatusLabel }}
-      </span>
+      <div class="flex items-center gap-1 mb-2">
+        <template v-for="(seg, idx) in stepperSegments" :key="idx">
+          <span
+            class="w-1.5 h-1.5 rounded-full flex-shrink-0"
+            :class="dotClass(seg)"
+          />
+          <span
+            v-if="idx < stepperSegments.length - 1"
+            class="flex-1 h-[2px] min-w-[4px]"
+            :class="seg === 'done' ? 'bg-emerald-500' : 'bg-slate-200'"
+          />
+        </template>
+      </div>
+      <div class="flex items-center justify-between text-xs">
+        <span class="font-semibold text-slate-700">{{ progressLabel }}</span>
+        <span :class="saveStatusClass" data-testid="bracket-progression-save-status">
+          {{ saveStatusLabel }}
+        </span>
+      </div>
     </div>
   </div>
 </template>
@@ -68,6 +86,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'submit': [value: string]
+  'open-group-standings': []
 }>()
 
 const { t } = useI18n()
@@ -158,25 +177,46 @@ function toggleExpanded(round: BracketRound): void {
   expandedRound.value = expandedRound.value === round ? null : round
 }
 
-function onPick(matchId: string, teamId: string): void {
-  const oldWinner = state.winners[matchId]
-  state.winners[matchId] = teamId
+type Segment = 'done' | 'active' | 'partial' | 'empty'
 
-  // Cascading invalidation: if the new winner differs from the old one,
-  // every downstream pick that referenced the old winner must clear.
-  if (oldWinner && oldWinner !== teamId) {
-    const downstreamIds = findDownstreamMatches(matchId, props.options.bracketTemplate.matches)
-    for (const dsId of downstreamIds) {
-      if (state.winners[dsId] === oldWinner) {
-        delete state.winners[dsId]
-      }
-    }
+const ALL_ROUNDS: readonly BracketRound[] = ['last_32', 'last_16', 'qf', 'sf', 'final', 'bronze']
+
+const stepperSegments = computed<Segment[]>(() => {
+  const segs: Segment[] = []
+  for (const r of ALL_ROUNDS) {
+    const c = completionByRound.value[r]
+    if (c.total > 0 && c.done === c.total) segs.push('done')
+    else if (expandedRound.value === r || (r === 'bronze' && expandedRound.value === 'final')) segs.push('active')
+    else if (c.done > 0) segs.push('partial')
+    else segs.push('empty')
   }
-  scheduleSave()
+  return segs
+})
+
+function dotClass(seg: Segment): string {
+  if (seg === 'done') return 'bg-emerald-500'
+  if (seg === 'active') return 'bg-blue-600 ring-2 ring-blue-200'
+  if (seg === 'partial') return 'bg-amber-400'
+  return 'bg-slate-300'
 }
 
-// Cross-store reactivity: if the user edits their US-945 group standings tip, any winner pick
-// whose pair no longer contains that team must drop. Toast informs the user.
+const progressLabel = computed(() => {
+  const r = expandedRound.value
+  if (r && r !== 'bronze') {
+    const c = completionByRound.value[r]
+    return t('bracketProgression.roundProgress', {
+      round: t(`bracketProgression.round.${r}`),
+      done: c.done,
+      total: c.total,
+    })
+  }
+  return t('bracketProgression.progress', {
+    done: completion.value.totalDone,
+    total: completion.value.totalSteps,
+  })
+})
+
+// Cross-store reactivity
 watch(() => props.groupStandingsAnswer, () => {
   const derived = derivedBracket.value
   const orphaned: string[] = []
@@ -193,6 +233,21 @@ watch(() => props.groupStandingsAnswer, () => {
     scheduleSave()
   }
 }, { deep: true })
+
+function onPick(matchId: string, teamId: string): void {
+  const oldWinner = state.winners[matchId]
+  state.winners[matchId] = teamId
+
+  if (oldWinner && oldWinner !== teamId) {
+    const downstreamIds = findDownstreamMatches(matchId, props.options.bracketTemplate.matches)
+    for (const dsId of downstreamIds) {
+      if (state.winners[dsId] === oldWinner) {
+        delete state.winners[dsId]
+      }
+    }
+  }
+  scheduleSave()
+}
 
 const saveStatus = ref<'idle' | 'saving' | 'saved' | 'error'>('idle')
 let saveTimer: ReturnType<typeof setTimeout> | null = null
@@ -214,17 +269,17 @@ function setSaveStatus(value: 'idle' | 'saving' | 'saved' | 'error'): void {
 defineExpose({ flushSave, setSaveStatus })
 
 const saveStatusLabel = computed(() => {
-  if (saveStatus.value === 'saving') return t('bracketProgression.saving')
+  if (saveStatus.value === 'saving') return `↻ ${t('bracketProgression.saving')}`
   if (saveStatus.value === 'saved') return `✓ ${t('bracketProgression.saved')}`
   if (saveStatus.value === 'error') return `⚠ ${t('bracketProgression.errorSaving')}`
   return ''
 })
 
 const saveStatusClass = computed(() => {
-  if (saveStatus.value === 'saving') return 'text-gray-500'
-  if (saveStatus.value === 'saved') return 'text-green-600'
+  if (saveStatus.value === 'saving') return 'text-blue-600 animate-pulse'
+  if (saveStatus.value === 'saved') return 'text-emerald-600'
   if (saveStatus.value === 'error') return 'text-red-600'
-  return 'text-gray-400'
+  return 'text-slate-400'
 })
 
 onUnmounted(() => {

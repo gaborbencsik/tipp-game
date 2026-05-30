@@ -1,8 +1,11 @@
 <template>
   <div data-testid="group-standings-picker">
-    <p class="text-xs text-gray-500 mb-3">{{ $t('groupStandings.intro') }}</p>
+    <div class="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2.5 flex gap-2 mb-3">
+      <span class="text-blue-600" aria-hidden="true">💡</span>
+      <p class="text-xs text-blue-900 leading-snug">{{ $t('groupStandings.infoCard') }}</p>
+    </div>
 
-    <div class="space-y-2.5">
+    <div class="space-y-2">
       <GroupStandingCard
         v-for="code in options.groups"
         :key="code"
@@ -17,7 +20,7 @@
       />
     </div>
 
-    <section class="mt-4">
+    <section class="mt-3">
       <Best3rdPicker
         :unlocked="is12of12"
         :available-teams="best3rdsAvailable"
@@ -29,15 +32,27 @@
     </section>
 
     <div
-      class="mt-3 sticky bottom-2 left-0 right-0 z-10 px-3 py-2 rounded-lg border bg-white shadow-sm flex items-center justify-between text-xs"
+      class="mt-3 sticky bottom-2 left-0 right-0 z-10 px-4 py-3 rounded-lg border border-slate-200 bg-white shadow-sm"
       data-testid="group-standings-sticky"
     >
-      <span class="font-semibold text-gray-800">
-        {{ $t('groupStandings.progress', { done: completion.totalDone, total: completion.totalSteps }) }}
-      </span>
-      <span :class="saveStatusClass" data-testid="group-standings-save-status">
-        {{ saveStatusLabel }}
-      </span>
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-medium text-slate-700">
+          {{ $t('groupStandings.progress', { done: displayDone, total: displayTotal }) }}
+        </span>
+        <span
+          class="text-xs flex items-center gap-1"
+          :class="saveStatusClass"
+          data-testid="group-standings-save-status"
+        >{{ saveStatusLabel }}</span>
+      </div>
+      <div class="flex gap-1">
+        <span
+          v-for="(seg, idx) in segments"
+          :key="idx"
+          class="h-1.5 flex-1 rounded-sm"
+          :class="segmentClass(seg)"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -168,6 +183,36 @@ const completion = computed<AllGroupsStandingCompletion>(() => {
   }
 })
 
+type Segment = 'done' | 'active' | 'empty'
+
+const segments = computed<Segment[]>(() => {
+  const segs: Segment[] = []
+  for (const code of props.options.groups) {
+    const positions = state.groups[code] ?? []
+    const filled = positions.filter(p => p !== null).length
+    if (filled === props.options.teamsPerGroup) segs.push('done')
+    else if (expandedGroup.value === code && filled > 0) segs.push('active')
+    else segs.push('empty')
+  }
+  const allBest3rdsDone = state.best3rds.length === props.options.best3rdPicks
+  if (allBest3rdsDone) segs.push('done')
+  else if (state.best3rds.length > 0) segs.push('active')
+  else segs.push('empty')
+  return segs
+})
+
+function segmentClass(seg: Segment): string {
+  if (seg === 'done') return 'bg-emerald-500'
+  if (seg === 'active') return 'bg-blue-400'
+  return 'bg-slate-200'
+}
+
+const displayTotal = computed(() => props.options.groups.length + 1)
+const displayDone = computed(() => {
+  const allBest3rdsDone = state.best3rds.length === props.options.best3rdPicks
+  return completion.value.groupsDone + (allBest3rdsDone ? 1 : 0)
+})
+
 const is12of12 = computed(() => completion.value.groupsDone === props.options.groups.length)
 
 const best3rdsAvailable = computed<string[]>(() => {
@@ -259,17 +304,17 @@ function setSaveStatus(value: 'idle' | 'saving' | 'saved' | 'error'): void {
 defineExpose({ flushSave, setSaveStatus })
 
 const saveStatusLabel = computed(() => {
-  if (saveStatus.value === 'saving') return t('groupStandings.saving')
+  if (saveStatus.value === 'saving') return `↻ ${t('groupStandings.saving')}`
   if (saveStatus.value === 'saved') return `✓ ${t('groupStandings.saved')}`
   if (saveStatus.value === 'error') return `⚠ ${t('groupStandings.errorSaving')}`
   return ''
 })
 
 const saveStatusClass = computed(() => {
-  if (saveStatus.value === 'saving') return 'text-gray-500'
-  if (saveStatus.value === 'saved') return 'text-green-600'
+  if (saveStatus.value === 'saving') return 'text-blue-600 animate-pulse'
+  if (saveStatus.value === 'saved') return 'text-emerald-600'
   if (saveStatus.value === 'error') return 'text-red-600'
-  return 'text-gray-400'
+  return 'text-slate-400'
 })
 
 onUnmounted(() => {

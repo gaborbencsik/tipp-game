@@ -54,20 +54,18 @@ describe('GroupStandingsPicker', () => {
     })
     const wrapper = mount(GroupStandingsPicker, { props: { options: OPTIONS, answer } })
     await flushPromises()
-    expect(wrapper.text()).toContain('1/3')
+    expect(wrapper.text()).toContain('1 / 3')
   })
 
   it('debounces save and emits a single submit after 400ms', async () => {
     const wrapper = mount(GroupStandingsPicker, { props: { options: OPTIONS, answer: null } })
     await flushPromises()
 
-    const dropdown1 = wrapper.find('[data-testid="position-dropdown-A-1"]')
-    ;(dropdown1.element as HTMLSelectElement).value = 'a1'
-    await dropdown1.trigger('change')
+    await wrapper.find('[data-testid="position-dropdown-A-1"]').trigger('click')
+    await wrapper.find('[data-testid="position-dropdown-option-A-1-a1"]').trigger('click')
 
-    const dropdown2 = wrapper.find('[data-testid="position-dropdown-A-2"]')
-    ;(dropdown2.element as HTMLSelectElement).value = 'a2'
-    await dropdown2.trigger('change')
+    await wrapper.find('[data-testid="position-dropdown-A-2"]').trigger('click')
+    await wrapper.find('[data-testid="position-dropdown-option-A-2-a2"]').trigger('click')
 
     expect(wrapper.emitted('submit')).toBeUndefined()
     vi.advanceTimersByTime(400)

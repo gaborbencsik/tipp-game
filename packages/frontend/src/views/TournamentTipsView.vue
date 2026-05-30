@@ -94,6 +94,7 @@
                 :answer="sp.answer ?? null"
                 :group-standings-answer="parsedGroupStandingsAnswer"
                 @submit="v => onAnswerChange(sp, v)"
+                @open-group-standings="scrollToGroupStandings"
               />
             </div>
             <div v-else-if="sp.inputType === 'dropdown' && Array.isArray(sp.options) && sp.options.length">
@@ -213,6 +214,13 @@ const parsedGroupStandingsAnswer = computed<AllGroupsStandingAnswer | null>(() =
   }
   return null
 })
+
+function scrollToGroupStandings(): void {
+  const sp = store.tips.find(t => t.inputType === 'all_groups_standing')
+  if (!sp) return
+  const el = document.querySelector(`[data-testid="tournament-tip-${sp.typeId}"]`)
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
 
 function isPartiallyAnswered(sp: SpecialPredictionWithType): boolean {
   const c = sp.completion
