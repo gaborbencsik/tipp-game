@@ -11,12 +11,14 @@ import {
 const BRACKET_TYPE_ID = '44444444-aaaa-bbbb-cccc-000000000946'
 
 test.describe('Bracket progression', () => {
-  test('shows the locked gate when group standings are not filled', async ({ page }) => {
+  test.beforeAll(async () => {
     await ensureUser()
     const wc = await getLeagueByShortName('VB')
     if (!wc) throw new Error('VB league not seeded — check migrations')
     await ensureGroupInLeague(`E2E WC Group ${Date.now()}`, wc.id)
+  })
 
+  test('shows the locked gate when group standings are not filled', async ({ page }) => {
     await injectSession(page)
     await page.goto('/app/tournament-tips')
 

@@ -1,6 +1,6 @@
 import { and, eq, inArray, isNull } from 'drizzle-orm'
 import { db } from '../db/client.js'
-import { specialPredictionTypes, specialPredictions, teams, players, groupMembers, groupLeagues, leagues } from '../db/schema/index.js'
+import { specialPredictionTypes, specialPredictions, teams, players, groupMembers, groups, groupLeagues, leagues } from '../db/schema/index.js'
 import type { AllGroupsStandingCompletion, BracketProgressionCompletion, SpecialPredictionInputType, SpecialPredictionOptions, SpecialPredictionWithType } from '../types/index.js'
 import { parseUpsetPicks, resolveUpsetMaxPoints, validateUpsetOptions } from './upset-special.service.js'
 import {
@@ -33,11 +33,13 @@ export async function userHasTournamentAccess(userId: string): Promise<boolean> 
   const rows = await db
     .select({ id: groupMembers.id })
     .from(groupMembers)
+    .innerJoin(groups, eq(groups.id, groupMembers.groupId))
     .innerJoin(groupLeagues, eq(groupLeagues.groupId, groupMembers.groupId))
     .innerJoin(leagues, eq(leagues.id, groupLeagues.leagueId))
     .where(and(
       eq(groupMembers.userId, userId),
       eq(leagues.shortName, TOURNAMENT_LEAGUE_SHORT_NAME),
+      isNull(groups.deletedAt),
     ))
     .limit(1)
   return rows.length > 0
