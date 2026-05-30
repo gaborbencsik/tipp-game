@@ -3,6 +3,11 @@ import { db } from '../db/client.js'
 import { groupMembers, specialPredictionTypes, specialPredictions } from '../db/schema/index.js'
 import type { SpecialPredictionType, SpecialPredictionOptions, SpecialPredictionInputType } from '../types/index.js'
 import { parseUpsetEliminated, parseUpsetPicks, scoreUpsetSpecial, validateUpsetOptions } from './upset-special.service.js'
+import {
+  parseBracketProgressionAnswer,
+  scoreBracketProgression,
+  validateBracketProgressionOptions,
+} from './bracket-progression.service.js'
 
 class AppError extends Error {
   readonly status: number
@@ -37,6 +42,13 @@ function scorePrediction(
     const picks = parseUpsetPicks(answer) ?? []
     const eliminated = parseUpsetEliminated(correctAnswer)
     return scoreUpsetSpecial(picks, eliminated, opts.choices)
+  }
+  if (inputType === 'bracket_progression') {
+    const opts = validateBracketProgressionOptions(options)
+    if (!opts) return 0
+    const predicted = parseBracketProgressionAnswer(answer) ?? { winners: {} }
+    const correct = parseBracketProgressionAnswer(correctAnswer) ?? { winners: {} }
+    return scoreBracketProgression(predicted, correct, maxPoints)
   }
   return evaluateSpecialPrediction(answer, correctAnswer, maxPoints)
 }

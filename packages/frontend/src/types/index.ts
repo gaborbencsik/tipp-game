@@ -282,7 +282,7 @@ export interface LeaderboardEntry {
   readonly favoriteTeam?: { readonly countryCode: string; readonly name: string } | null
 }
 
-export type SpecialPredictionInputType = 'text' | 'dropdown' | 'team_select' | 'player_select' | 'multi_team_weighted' | 'multi_team_select' | 'all_groups_standing'
+export type SpecialPredictionInputType = 'text' | 'dropdown' | 'team_select' | 'player_select' | 'multi_team_weighted' | 'multi_team_select' | 'all_groups_standing' | 'bracket_progression'
 
 export interface MultiTeamWeightedChoice {
   readonly teamId: string
@@ -319,7 +319,36 @@ export interface AllGroupsStandingCompletion {
   readonly totalSteps: number
 }
 
-export type SpecialPredictionOptions = string[] | MultiTeamWeightedOptions | MultiTeamSelectOptions | AllGroupsStandingOptions | null
+export type BracketRound = 'last_32' | 'last_16' | 'qf' | 'sf' | 'final' | 'bronze'
+
+export interface BracketMatch {
+  readonly id: string
+  readonly round: BracketRound
+  readonly slotA: string
+  readonly slotB: string
+  readonly winnerTo: string | null
+}
+
+export interface BracketProgressionOptions {
+  readonly bracketTemplate: { readonly matches: readonly BracketMatch[] }
+}
+
+export interface BracketProgressionAnswer {
+  readonly winners: Readonly<Record<string, string>>
+}
+
+export interface BracketProgressionRoundCompletion {
+  readonly done: number
+  readonly total: number
+}
+
+export interface BracketProgressionCompletion {
+  readonly picksByRound: Readonly<Record<BracketRound, BracketProgressionRoundCompletion>>
+  readonly totalDone: number
+  readonly totalSteps: number
+}
+
+export type SpecialPredictionOptions = string[] | MultiTeamWeightedOptions | MultiTeamSelectOptions | AllGroupsStandingOptions | BracketProgressionOptions | null
 
 export interface SpecialPredictionType {
   readonly id: string
@@ -363,7 +392,7 @@ export interface SpecialPredictionWithType {
   readonly isGlobal: boolean
   readonly createdAt: string | null
   readonly updatedAt: string | null
-  readonly completion?: AllGroupsStandingCompletion
+  readonly completion?: AllGroupsStandingCompletion | BracketProgressionCompletion
 }
 
 export interface SpecialPredictionInput {

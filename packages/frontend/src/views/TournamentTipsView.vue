@@ -88,6 +88,14 @@
                 @submit="v => onAnswerChange(sp, v)"
               />
             </div>
+            <div v-else-if="sp.inputType === 'bracket_progression' && isBracketProgressionOptions(sp.options)" class="mb-2">
+              <BracketProgressionPicker
+                :options="sp.options"
+                :answer="sp.answer ?? null"
+                :group-standings-answer="parsedGroupStandingsAnswer"
+                @submit="v => onAnswerChange(sp, v)"
+              />
+            </div>
             <div v-else-if="sp.inputType === 'dropdown' && Array.isArray(sp.options) && sp.options.length">
               <select
                 :value="sp.answer ?? ''"
@@ -127,16 +135,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, reactive } from 'vue'
+import { ref, onMounted, onUnmounted, reactive, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppLayout from '../components/AppLayout.vue'
 import TeamSelectDropdown from '../components/predictions/TeamSelectDropdown.vue'
 import PlayerSelectCombobox from '../components/predictions/PlayerSelectCombobox.vue'
 import UpsetSpecialPicker from '../components/predictions/UpsetSpecialPicker.vue'
 import GroupStandingsPicker from '../components/predictions/GroupStandingsPicker.vue'
+import BracketProgressionPicker from '../components/predictions/BracketProgressionPicker.vue'
 import { useTournamentTipsStore } from '../stores/tournamentTips.store.js'
 import { formatRelativeDeadline } from '../lib/deadline.js'
-import type { AllGroupsStandingOptions, MultiTeamWeightedOptions, SpecialPredictionOptions, SpecialPredictionWithType } from '../types/index.js'
+import type { AllGroupsStandingAnswer, AllGroupsStandingOptions, BracketProgressionOptions, MultiTeamWeightedOptions, SpecialPredictionOptions, SpecialPredictionWithType } from '../types/index.js'
 
 const { t } = useI18n()
 const store = useTournamentTipsStore()
@@ -167,17 +176,51 @@ function isAllGroupsStandingOptions(options: SpecialPredictionOptions): options 
   return options !== null && !Array.isArray(options) && Array.isArray((options as AllGroupsStandingOptions).groups)
 }
 
+function isBracketProgressionOptions(options: SpecialPredictionOptions): options is BracketProgressionOptions {
+  return options !== null && !Array.isArray(options)
+    && typeof (options as BracketProgressionOptions).bracketTemplate === 'object'
+    && Array.isArray((options as BracketProgressionOptions).bracketTemplate?.matches)
+}
+
+const parsedGroupStandingsAnswer = computed<AllGroupsStandingAnswer | null>(() => {
+  const sp = store.tips.find(t => t.inputType === 'all_groups_standing')
+  if (!sp?.answer) return null
+  try {
+    const parsed = JSON.parse(sp.answer) as AllGroupsStandingAnswer
+    if (parsed && typeof parsed === 'object' && parsed.groups && Array.isArray(parsed.best3rds)) {
+      return parsed
+    }
+  } catch {
+    // ignore
+  }
+  return null
+})
+
+function isPartiallyAnswered(sp: SpecialPredictionWithType): boolean {
+  const c = sp.completion
+  if (!c) return false
+  return c.totalDone > 0 && c.totalDone < c.totalSteps
+}
+
+function isFullyAnswered(sp: SpecialPredictionWithType): boolean {
+  const c = sp.completion
+  if (c) return c.totalDone >= c.totalSteps && c.totalSteps > 0
+  return Boolean(sp.answer)
+}
+
 function statusClass(sp: SpecialPredictionWithType): string {
   if (sp.points !== null) return sp.points > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
   if (isDeadlinePassed(sp.deadline)) return 'bg-yellow-100 text-yellow-700'
-  if (sp.answer) return 'bg-blue-100 text-blue-700'
+  if (isFullyAnswered(sp)) return 'bg-blue-100 text-blue-700'
+  if (isPartiallyAnswered(sp)) return 'bg-amber-100 text-amber-700'
   return 'bg-gray-100 text-gray-500'
 }
 
 function statusLabel(sp: SpecialPredictionWithType): string {
   if (sp.points !== null) return sp.points > 0 ? `+${sp.points}` : t('tournamentTips.statusZero')
   if (isDeadlinePassed(sp.deadline)) return t('tournamentTips.statusPending')
-  if (sp.answer) return t('tournamentTips.statusSubmitted')
+  if (isFullyAnswered(sp)) return t('tournamentTips.statusSubmitted')
+  if (isPartiallyAnswered(sp)) return t('tournamentTips.statusInProgress')
   return t('tournamentTips.statusOpen')
 }
 

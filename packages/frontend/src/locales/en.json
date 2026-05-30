@@ -503,6 +503,7 @@
     "errorSaving": "Save failed",
     "statusOpen": "Open",
     "statusSubmitted": "Submitted",
+    "statusInProgress": "In progress",
     "statusPending": "Pending",
     "statusZero": "0"
   },
@@ -511,7 +512,7 @@
     "selectedCount": "Selected: {n}/{max}"
   },
   "groupStandings": {
-    "intro": "Predict the final standings for all 12 groups (positions 1–4), then pick the 4 best 3rd-placed teams that advance.",
+    "intro": "Predict the final standings for all 12 groups (positions 1–4), then pick the 8 best 3rd-placed teams that advance.",
     "groupTitle": "Group {code}",
     "done": "Done",
     "clearGroup": "Clear group",
@@ -524,5 +525,32 @@
     "best3rdLocked": "Fill in all 12 groups first.",
     "best3rdInstruction": "Pick {n} teams from the 3rd-placed teams that will advance.",
     "best3rdEmpty": "No 3rd-placed teams available — finish the groups first."
+  },
+  "bracketProgression": {
+    "intro": "Pick the winner of every match in the knockout bracket.",
+    "round": {
+      "last_32": "Round of 32",
+      "last_16": "Round of 16",
+      "qf": "Quarterfinals",
+      "sf": "Semifinals",
+      "final": "Final",
+      "bronze": "Bronze match"
+    },
+    "vs": "VS",
+    "lockedUpstream": "Fill in the previous round first.",
+    "lockedGroupStandings": "Fill in the Group Standings tip first.",
+    "gateTitle": "🔒 The bracket is not available yet",
+    "gateBody": "Fill in the Group Standings tip first (12 groups × 4 positions + 8 advancing 3rd-placed teams).",
+    "orphanToast": "Your group-standings tip changed — {n} winner picks were cleared.",
+    "progress": "Progress: {done}/{total}",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "errorSaving": "Error",
+    "summary": {
+      "champion": "🏆 {team} champion",
+      "silver": "{team} silver",
+      "bronze": "{team} bronze",
+      "fourth": "{team} 4th"
+    }
   }
 }

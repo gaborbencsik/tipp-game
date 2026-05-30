@@ -503,6 +503,7 @@
     "errorSaving": "Hiba a mentés során",
     "statusOpen": "Nyitott",
     "statusSubmitted": "Beadva",
+    "statusInProgress": "Folyamatban",
     "statusPending": "Várakozás",
     "statusZero": "0"
   },
@@ -511,7 +512,7 @@
     "selectedCount": "Kiválasztva: {n}/{max}"
   },
   "groupStandings": {
-    "intro": "Tippeld meg mind a 12 csoport végeredményét (1–4. helyek), majd válaszd ki a 4 továbbjutó 3. helyezettet.",
+    "intro": "Tippeld meg mind a 12 csoport végeredményét (1–4. helyek), majd válaszd ki a 8 továbbjutó 3. helyezettet.",
     "groupTitle": "{code} csoport",
     "done": "Kész",
     "clearGroup": "Csoport ürítése",
@@ -524,5 +525,32 @@
     "best3rdLocked": "Először töltsd ki mind a 12 csoportot.",
     "best3rdInstruction": "Válassz {n} csapatot a 3. helyezettek közül, akik továbbjutnak.",
     "best3rdEmpty": "Nincs elérhető 3. helyezett — töltsd ki a csoportokat."
+  },
+  "bracketProgression": {
+    "intro": "Tippeld meg minden mérkőzés győztesét a kieséses ágon.",
+    "round": {
+      "last_32": "Last 32",
+      "last_16": "Nyolcaddöntő",
+      "qf": "Negyeddöntő",
+      "sf": "Elődöntő",
+      "final": "Döntő",
+      "bronze": "Bronz"
+    },
+    "vs": "VS",
+    "lockedUpstream": "Töltsd ki előbb az előző kört.",
+    "lockedGroupStandings": "Töltsd ki előbb a Csoport végeredmény tippet.",
+    "gateTitle": "🔒 A bracket még nem jeleníthető meg",
+    "gateBody": "Töltsd ki előbb a Csoport végeredmény tippet (12 csoport × 4 helyezés + 8 továbbjutó 3. helyezett).",
+    "orphanToast": "A csoport-tipped módosult — {n} győztes-pick törlésre került.",
+    "progress": "Haladás: {done}/{total}",
+    "saving": "Mentés…",
+    "saved": "Mentve",
+    "errorSaving": "Hiba",
+    "summary": {
+      "champion": "🏆 {team} bajnok",
+      "silver": "{team} ezüst",
+      "bronze": "{team} bronz",
+      "fourth": "{team} 4."
+    }
   }
 }

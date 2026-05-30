@@ -1,7 +1,7 @@
 import { and, eq, inArray, isNull } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { specialPredictionTypes, specialPredictions, teams, players, groupMembers, groupLeagues, leagues } from '../db/schema/index.js'
-import type { AllGroupsStandingCompletion, SpecialPredictionInputType, SpecialPredictionOptions, SpecialPredictionWithType } from '../types/index.js'
+import type { AllGroupsStandingCompletion, BracketProgressionCompletion, SpecialPredictionInputType, SpecialPredictionOptions, SpecialPredictionWithType } from '../types/index.js'
 import { parseUpsetPicks, resolveUpsetMaxPoints, validateUpsetOptions } from './upset-special.service.js'
 import {
   parseAllGroupsStandingAnswer,
@@ -10,6 +10,12 @@ import {
   computeCompletion,
   type GroupTeamMembership,
 } from './group-standings.service.js'
+import {
+  parseBracketProgressionAnswer,
+  validateBracketProgressionOptions,
+  validateBracketProgressionAnswer,
+  computeBracketCompletion,
+} from './bracket-progression.service.js'
 
 class AppError extends Error {
   readonly status: number
@@ -99,6 +105,14 @@ export async function listGlobalTypesWithPredictions(
         }
       }
     }
+    if (t.inputType === 'bracket_progression') {
+      if (pred?.answer) {
+        const parsed = parseBracketProgressionAnswer(pred.answer)
+        if (parsed) {
+          for (const teamId of Object.values(parsed.winners)) teamIds.push(teamId)
+        }
+      }
+    }
   }
 
   const teamNameMap = new Map<string, string>()
@@ -120,7 +134,7 @@ export async function listGlobalTypesWithPredictions(
     let answerLabel: string | null = null
     let correctAnswerLabel: string | null = null
     let maxPoints = t.points
-    let completion: AllGroupsStandingCompletion | undefined
+    let completion: AllGroupsStandingCompletion | BracketProgressionCompletion | undefined
     if (t.inputType === 'multi_team_weighted') {
       const opts = validateUpsetOptions(t.options)
       if (opts) maxPoints = resolveUpsetMaxPoints(opts)
@@ -135,6 +149,20 @@ export async function listGlobalTypesWithPredictions(
         }
       } else if (opts) {
         completion = { groupsDone: 0, best3rdsDone: 0, totalDone: 0, totalSteps: opts.groups.length + opts.best3rdPicks }
+      }
+    }
+    if (t.inputType === 'bracket_progression') {
+      const opts = validateBracketProgressionOptions(t.options)
+      if (opts && pred?.answer) {
+        const parsed = parseBracketProgressionAnswer(pred.answer)
+        if (parsed) {
+          const c = computeBracketCompletion(parsed, opts.bracketTemplate.matches)
+          completion = c
+          answerLabel = `${c.totalDone}/${c.totalSteps} mérkőzés tippelve`
+        }
+      } else if (opts) {
+        const c = computeBracketCompletion({ winners: {} }, opts.bracketTemplate.matches)
+        completion = c
       }
     }
     if (pred?.answer) {
@@ -210,7 +238,7 @@ export async function upsertGlobalPrediction(
   if (!answer || answer.length === 0) {
     throw new AppError(400, 'answer is required')
   }
-  const maxLen = type.inputType === 'all_groups_standing' ? 4000 : 500
+  const maxLen = type.inputType === 'all_groups_standing' ? 4000 : type.inputType === 'bracket_progression' ? 8000 : 500
   if (answer.length > maxLen) {
     throw new AppError(400, `answer must be at most ${maxLen} characters`)
   }
@@ -224,7 +252,7 @@ export async function upsertGlobalPrediction(
 
   let resolvedAnswerLabel: string | null = null
   let resolvedMaxPoints = type.points
-  let resolvedCompletion: AllGroupsStandingCompletion | undefined
+  let resolvedCompletion: AllGroupsStandingCompletion | BracketProgressionCompletion | undefined
   let normalizedAnswer = answer
 
   if (type.inputType === 'team_select') {
@@ -300,6 +328,48 @@ export async function upsertGlobalPrediction(
     normalizedAnswer = JSON.stringify(result.answer)
     resolvedCompletion = result.completion
     resolvedAnswerLabel = `${result.completion.groupsDone}/${opts.groups.length} csoport · ${result.completion.best3rdsDone}/${opts.best3rdPicks} továbbjutó`
+  }
+
+  if (type.inputType === 'bracket_progression') {
+    const opts = validateBracketProgressionOptions(type.options)
+    if (!opts) throw new AppError(500, 'Special type options are misconfigured')
+    const parsed = parseBracketProgressionAnswer(answer)
+    if (!parsed) throw new AppError(400, 'answer must be a JSON object with a winners map')
+
+    // Load the user's US-945 (all_groups_standing) tip — required for slot resolver.
+    // We look up the type by inputType (single global instance per spec) and join with the
+    // user's prediction. If the user hasn't filled it yet, slot resolution returns null and
+    // any winners pointing at unresolved Last 32 slots will fail validation as team_not_in_match.
+    const standingsTypeRows = await db
+      .select({ id: specialPredictionTypes.id })
+      .from(specialPredictionTypes)
+      .where(and(
+        eq(specialPredictionTypes.inputType, 'all_groups_standing'),
+        eq(specialPredictionTypes.isGlobal, true),
+      ))
+      .limit(1)
+    let groupStandings: import('../types/index.js').AllGroupsStandingAnswer | null = null
+    if (standingsTypeRows[0]) {
+      const stRows = await db
+        .select({ answer: specialPredictions.answer })
+        .from(specialPredictions)
+        .where(and(
+          eq(specialPredictions.userId, userId),
+          eq(specialPredictions.typeId, standingsTypeRows[0].id),
+          isNull(specialPredictions.groupId),
+        ))
+        .limit(1)
+      if (stRows[0]?.answer) {
+        groupStandings = parseAllGroupsStandingAnswer(stRows[0].answer)
+      }
+    }
+
+    const result = validateBracketProgressionAnswer(parsed, opts, groupStandings)
+    if ('error' in result) throw new AppError(400, result.error)
+
+    normalizedAnswer = JSON.stringify(result.answer)
+    resolvedCompletion = result.completion
+    resolvedAnswerLabel = `${result.completion.totalDone}/${result.completion.totalSteps} mérkőzés tippelve`
   }
 
   const existing = await db

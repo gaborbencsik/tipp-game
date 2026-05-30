@@ -365,6 +365,27 @@
       "when": 1781000925688,
       "tag": "0051_fix_wc2026_groups",
       "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1782305125688,
+      "tag": "0052_fix_best3rd_picks_to_8",
+      "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1782305125689,
+      "tag": "0053_bracket_progression_enum",
+      "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1782305125690,
+      "tag": "0054_seed_bracket_progression",
+      "breakpoints": true
     }
   ]
 }

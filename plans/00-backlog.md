@@ -16,7 +16,6 @@
 | US-1307 | Match Pulse – csapat-piaci értékek megjelenítése | Should Have | US-1304, US-1306, ~~US-1406~~ |
 | US-934 | Mások tippjeinek megjelenítése (speciális) | Should Have | — |
 | US-937 | Torna progression bonus tippek – konfigurálható csapat-progression szabályrendszer | Should Have | — |
-| US-946 | Bracket-progresszió tipp – pár-alapú győztes-pick a kieséses ágon | Should Have | ~~US-945~~ |
 | UX-004 | Focilabda kurzor ikon | Nice to Have | — |
 | UX-005 | Optimista törlés az admin listákon | Should Have | — |
 | UX-013 | Értesítési rendszer (notification bell + panel) | Nice to Have | — |
@@ -26,4 +25,4 @@
 
 ---
 
-**Haladás: 132 / 149 story kész** — Must Have: 31/32, Should Have: 101/113, Nice to Have: 0/4
+**Haladás: 133 / 149 story kész** — Must Have: 31/32, Should Have: 102/113, Nice to Have: 0/4
