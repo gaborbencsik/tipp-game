@@ -80,7 +80,7 @@ test.describe('My Stats', () => {
     await expect(page.getByTestId('prediction-item').first()).toBeVisible({ timeout: 5000 })
 
     await page.getByTestId('filter-chip-correct').click()
-    await expect(page.getByTestId('filter-chip-correct')).toHaveClass(/bg-blue-600/)
+    await expect(page.getByTestId('filter-chip-correct')).toHaveAttribute('aria-selected', 'true')
 
     await page.getByTestId('filter-chip-all').click()
     await expect(page.getByTestId('prediction-item').first()).toBeVisible()
