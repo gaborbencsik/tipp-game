@@ -49,7 +49,6 @@ const PRE_VB_STATIC_GROUPS: readonly StaticGroupSpec[] = PRE_VB_GROUP_SHORT_NAME
 
 const LEAGUE_SPECS: readonly LeagueEnvSpec[] = [
   { name: 'VB', externalIdEnv: 'FOOTBALL_API_WC_LEAGUE_ID', internalIdEnv: 'FOOTBALL_INTERNAL_WC_LEAGUE_ID', season: 2026 },
-  { name: 'NB I', externalIdEnv: 'FOOTBALL_API_NBI_LEAGUE_ID', internalIdEnv: 'FOOTBALL_INTERNAL_NBI_LEAGUE_ID', season: 2025 },
   {
     name: 'Pre-VB Edzőmeccsek',
     externalIdEnv: 'FOOTBALL_API_FRIENDLY_LEAGUE_ID',
