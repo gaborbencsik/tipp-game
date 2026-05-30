@@ -61,7 +61,7 @@
             <div v-if="sp.inputType === 'team_select'" class="mb-2">
               <TeamSelectDropdown
                 :model-value="sp.answer ?? null"
-                :league-id="null"
+                :league-id="wcLeagueId"
                 :answer-label="sp.answerLabel ?? null"
                 @update:model-value="v => onAnswerChange(sp, v)"
               />
@@ -69,7 +69,7 @@
             <div v-else-if="sp.inputType === 'player_select'" class="mb-2">
               <PlayerSelectCombobox
                 :model-value="sp.answer ?? null"
-                :league-id="null"
+                :league-id="wcLeagueId"
                 :answer-label="sp.answerLabel ?? null"
                 @update:model-value="v => onAnswerChange(sp, v)"
               />
@@ -145,6 +145,8 @@ import GroupStandingsPicker from '../components/predictions/GroupStandingsPicker
 import BracketProgressionPicker from '../components/predictions/BracketProgressionPicker.vue'
 import { useTournamentTipsStore } from '../stores/tournamentTips.store.js'
 import { formatRelativeDeadline } from '../lib/deadline.js'
+import { supabase } from '../lib/supabase.js'
+import { api } from '../api/index.js'
 import type { AllGroupsStandingAnswer, AllGroupsStandingOptions, BracketProgressionOptions, MultiTeamWeightedOptions, SpecialPredictionOptions, SpecialPredictionWithType } from '../types/index.js'
 
 const { t } = useI18n()
@@ -152,11 +154,27 @@ const store = useTournamentTipsStore()
 
 const now = ref(Date.now())
 const textDraft = reactive<Record<string, string>>({})
+const wcLeagueId = ref<string | null>(null)
+
+const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
+
+async function getAccessToken(): Promise<string> {
+  if (DEV_AUTH_BYPASS) return 'dev-bypass-token'
+  const { data } = await supabase.auth.getSession()
+  return data.session?.access_token ?? ''
+}
 
 let nowTimer: ReturnType<typeof setInterval> | null = null
 
 onMounted(async () => {
   await store.fetchTips()
+  try {
+    const token = await getAccessToken()
+    const leagues = await api.leagues.list(token)
+    wcLeagueId.value = leagues.find(l => l.shortName === 'VB')?.id ?? null
+  } catch {
+    wcLeagueId.value = null
+  }
   nowTimer = setInterval(() => { now.value = Date.now() }, 60_000)
 })
 
