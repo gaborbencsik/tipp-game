@@ -350,10 +350,7 @@
   },
   "specialBanner": {
     "pending": "{count} speciális tipp vár rád",
-    "nearestDeadline": "Legközelebbi határidő: {label}",
-    "groupInfo": "{name} · {count} tipp",
-    "collapse": "Bezárás",
-    "expand": "Csoportok"
+    "nearestDeadline": "Legközelebbi határidő: {label}"
   },
   "matchPredictions": {
     "title": "Mások tippjei",

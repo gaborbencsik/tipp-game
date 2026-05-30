@@ -15,27 +15,42 @@
       </div>
     </div>
 
-    <div data-testid="tab-bar" class="flex flex-wrap border-b border-gray-200 mb-4 md:mb-6">
+    <div data-testid="tab-bar" class="flex gap-2 overflow-x-auto mb-4 md:mb-6 px-1 py-1 -mx-1" role="tablist">
       <button
         data-testid="tab-leaderboard"
-        class="px-2 md:px-4 py-2 text-xs md:text-sm font-medium whitespace-nowrap"
-        :class="activeTab === 'leaderboard' ? 'border-b-2 border-blue-600 text-blue-700 font-semibold' : 'text-gray-500'"
+        type="button"
+        role="tab"
+        :aria-selected="activeTab === 'leaderboard'"
+        class="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors whitespace-nowrap"
+        :class="activeTab === 'leaderboard'
+          ? 'bg-blue-50 ring-2 ring-blue-300 text-blue-700'
+          : 'bg-white border border-gray-200 text-gray-600 hover:border-blue-200'"
         @click="activeTab = 'leaderboard'"
       >
         {{ $t('groupDetail.tabLeaderboard') }}
       </button>
       <button
         data-testid="tab-my-predictions"
-        class="px-2 md:px-4 py-2 text-xs md:text-sm font-medium whitespace-nowrap"
-        :class="activeTab === 'my-predictions' ? 'border-b-2 border-blue-600 text-blue-700 font-semibold' : 'text-gray-500'"
+        type="button"
+        role="tab"
+        :aria-selected="activeTab === 'my-predictions'"
+        class="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors whitespace-nowrap"
+        :class="activeTab === 'my-predictions'
+          ? 'bg-blue-50 ring-2 ring-blue-300 text-blue-700'
+          : 'bg-white border border-gray-200 text-gray-600 hover:border-blue-200'"
         @click="switchToMyPredictionsTab"
       >
         {{ $t('groupDetail.tabMyTips') }}
       </button>
       <button
         data-testid="tab-special"
-        class="px-2 md:px-4 py-2 text-xs md:text-sm font-medium whitespace-nowrap"
-        :class="activeTab === 'special' ? 'border-b-2 border-blue-600 text-blue-700 font-semibold' : 'text-gray-500'"
+        type="button"
+        role="tab"
+        :aria-selected="activeTab === 'special'"
+        class="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors whitespace-nowrap"
+        :class="activeTab === 'special'
+          ? 'bg-blue-50 ring-2 ring-blue-300 text-blue-700'
+          : 'bg-white border border-gray-200 text-gray-600 hover:border-blue-200'"
         @click="switchToSpecialTab"
       >
         {{ $t('groupDetail.tabSpecial') }}
@@ -43,8 +58,13 @@
       <button
         v-if="currentUserIsGroupAdmin"
         data-testid="tab-members"
-        class="px-2 md:px-4 py-2 text-xs md:text-sm font-medium whitespace-nowrap"
-        :class="activeTab === 'members' ? 'border-b-2 border-blue-600 text-blue-700 font-semibold' : 'text-gray-500'"
+        type="button"
+        role="tab"
+        :aria-selected="activeTab === 'members'"
+        class="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors whitespace-nowrap"
+        :class="activeTab === 'members'
+          ? 'bg-blue-50 ring-2 ring-blue-300 text-blue-700'
+          : 'bg-white border border-gray-200 text-gray-600 hover:border-blue-200'"
         @click="activeTab = 'members'"
       >
         {{ $t('groupDetail.tabMembers') }}
@@ -52,8 +72,13 @@
       <button
         v-if="canManageSettings"
         data-testid="tab-settings"
-        class="px-2 md:px-4 py-2 text-xs md:text-sm font-medium whitespace-nowrap"
-        :class="activeTab === 'settings' ? 'border-b-2 border-blue-600 text-blue-700 font-semibold' : 'text-gray-500'"
+        type="button"
+        role="tab"
+        :aria-selected="activeTab === 'settings'"
+        class="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors whitespace-nowrap"
+        :class="activeTab === 'settings'
+          ? 'bg-blue-50 ring-2 ring-blue-300 text-blue-700'
+          : 'bg-white border border-gray-200 text-gray-600 hover:border-blue-200'"
         @click="activeTab = 'settings'"
       >
         {{ $t('groupDetail.tabSettings') }}

@@ -1,12 +1,15 @@
 <template>
-  <div class="inline-flex gap-0 bg-gray-100 border border-gray-200 rounded-lg p-0.5">
+  <div class="flex gap-2 overflow-x-auto px-1 py-1 -mx-1" role="tablist">
     <button
       v-for="option in options"
       :key="option.value ?? '__null__'"
-      class="px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-150 whitespace-nowrap"
+      type="button"
+      role="tab"
+      :aria-selected="modelValue === option.value"
+      class="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors whitespace-nowrap"
       :class="modelValue === option.value
-        ? 'bg-white text-gray-900 font-semibold shadow-sm'
-        : 'text-gray-500 hover:text-gray-700'"
+        ? 'bg-blue-50 ring-2 ring-blue-300 text-blue-700'
+        : 'bg-white border border-gray-200 text-gray-600 hover:border-blue-200'"
       @click="$emit('update:modelValue', option.value)"
     >
       {{ option.label }}

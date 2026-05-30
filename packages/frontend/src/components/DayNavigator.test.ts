@@ -72,13 +72,15 @@ describe('DayNavigator', () => {
   it('Összes button has active styling when isShowingAll is true', () => {
     const w = mountNav({ isShowingAll: true })
     const btn = w.find('[data-testid="day-nav-all"]')
-    expect(btn.classes()).toContain('bg-blue-600')
+    expect(btn.classes()).toContain('bg-blue-50')
+    expect(btn.classes()).toContain('ring-2')
   })
 
   it('Összes button has inactive styling when isShowingAll is false', () => {
     const w = mountNav({ isShowingAll: false })
     const btn = w.find('[data-testid="day-nav-all"]')
-    expect(btn.classes()).toContain('bg-gray-200')
+    expect(btn.classes()).toContain('bg-white')
+    expect(btn.classes()).toContain('border-gray-200')
   })
 
   it('shows checkmark icon when isShowingAll is true', () => {

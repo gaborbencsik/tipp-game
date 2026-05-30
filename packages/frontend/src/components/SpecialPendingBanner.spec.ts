@@ -12,7 +12,7 @@ function makeRouter() {
     history: createMemoryHistory(),
     routes: [
       { path: '/', component: { template: '<div />' } },
-      { path: '/app/groups/:id', component: { template: '<div />' } },
+      { path: '/app/tournament-tips', component: { template: '<div />' } },
     ],
   })
 }
@@ -48,7 +48,7 @@ describe('SpecialPendingBanner', () => {
     expect(wrapper.text()).toContain('Legközelebbi határidő:')
   })
 
-  it('navigates on click when single group', async () => {
+  it('navigates to tournament tips on click (single group)', async () => {
     const pushSpy = vi.spyOn(router, 'push')
     const wrapper = mount(SpecialPendingBanner, {
       props: { pendingGroups: [makeGroup('g1', 'A', 2)], totalPendingCount: 2, now: NOW },
@@ -57,33 +57,11 @@ describe('SpecialPendingBanner', () => {
 
     await wrapper.find('[data-testid="special-pending-banner"]').trigger('click')
 
-    expect(pushSpy).toHaveBeenCalledWith({ path: '/app/groups/g1', query: { tab: 'special' } })
+    expect(pushSpy).toHaveBeenCalledWith({ path: '/app/tournament-tips' })
   })
 
-  it('shows chevron for single group', () => {
-    const wrapper = mount(SpecialPendingBanner, {
-      props: { pendingGroups: [makeGroup('g1', 'A', 1)], totalPendingCount: 1, now: NOW },
-      global: { plugins: [router] },
-    })
-
-    expect(wrapper.text()).toContain('›')
-  })
-
-  it('shows toggle link for multiple groups', () => {
-    const wrapper = mount(SpecialPendingBanner, {
-      props: {
-        pendingGroups: [makeGroup('g1', 'A', 1), makeGroup('g2', 'B', 2)],
-        totalPendingCount: 3,
-        now: NOW,
-      },
-      global: { plugins: [router] },
-    })
-
-    expect(wrapper.text()).toContain('Csoportok')
-    expect(wrapper.text()).not.toContain('›')
-  })
-
-  it('expands group list on banner click with multiple groups', async () => {
+  it('navigates to tournament tips on click (multiple groups)', async () => {
+    const pushSpy = vi.spyOn(router, 'push')
     const wrapper = mount(SpecialPendingBanner, {
       props: {
         pendingGroups: [makeGroup('g1', 'A', 1), makeGroup('g2', 'B', 2)],
@@ -95,8 +73,15 @@ describe('SpecialPendingBanner', () => {
 
     await wrapper.find('[data-testid="special-pending-banner"]').trigger('click')
 
-    expect(wrapper.text()).toContain('A · 1 tipp')
-    expect(wrapper.text()).toContain('B · 2 tipp')
-    expect(wrapper.text()).toContain('Bezárás')
+    expect(pushSpy).toHaveBeenCalledWith({ path: '/app/tournament-tips' })
+  })
+
+  it('shows chevron', () => {
+    const wrapper = mount(SpecialPendingBanner, {
+      props: { pendingGroups: [makeGroup('g1', 'A', 1)], totalPendingCount: 1, now: NOW },
+      global: { plugins: [router] },
+    })
+
+    expect(wrapper.text()).toContain('›')
   })
 })

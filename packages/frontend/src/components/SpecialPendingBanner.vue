@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { formatRelativeDeadline } from '../lib/deadline.js'
@@ -13,9 +13,6 @@ const props = defineProps<{
 
 const router = useRouter()
 const { t } = useI18n()
-const expanded = ref(false)
-
-const singleGroup = computed(() => props.pendingGroups.length === 1)
 
 const globalNearestDeadline = computed<string | null>(() => {
   let nearest: string | null = null
@@ -33,15 +30,7 @@ const deadlineInfo = computed(() => {
 })
 
 function handleBannerClick(): void {
-  if (singleGroup.value) {
-    navigateToGroup(props.pendingGroups[0]!.groupId)
-  } else {
-    expanded.value = !expanded.value
-  }
-}
-
-function navigateToGroup(groupId: string): void {
-  router.push({ path: `/app/groups/${groupId}`, query: { tab: 'special' } })
+  router.push({ path: '/app/tournament-tips' })
 }
 </script>
 
@@ -63,31 +52,10 @@ function navigateToGroup(groupId: string): void {
         <p v-if="deadlineInfo" class="text-xs" :class="deadlineInfo.cssClass">
           {{ $t('specialBanner.nearestDeadline', { label: deadlineInfo.label }) }}
         </p>
-
-        <div v-if="expanded && !singleGroup" class="mt-2 space-y-1">
-          <div
-            v-for="group in pendingGroups"
-            :key="group.groupId"
-            class="text-sm text-amber-800 py-1 cursor-pointer hover:underline truncate"
-            @click.stop="navigateToGroup(group.groupId)"
-          >
-            {{ $t('specialBanner.groupInfo', { name: group.groupName, count: group.pendingCount }) }}
-            <template v-if="group.nearestDeadline">
-              · {{ formatRelativeDeadline(group.nearestDeadline, now, t)?.label }}
-            </template>
-          </div>
-        </div>
       </div>
 
       <div class="flex items-center shrink-0">
-        <span v-if="singleGroup" class="w-4 h-4 text-amber-500 text-lg leading-none">›</span>
-        <span
-          v-else
-          class="text-xs text-amber-700 underline cursor-pointer"
-          @click.stop="expanded = !expanded"
-        >
-          {{ expanded ? $t('specialBanner.collapse') : $t('specialBanner.expand') }}
-        </span>
+        <span class="w-4 h-4 text-amber-500 text-lg leading-none">›</span>
       </div>
     </div>
   </div>

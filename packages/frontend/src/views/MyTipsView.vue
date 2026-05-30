@@ -82,20 +82,24 @@
       </div>
 
       <!-- Filters -->
-      <div class="flex flex-wrap items-center gap-2 pb-1">
+      <div class="flex gap-2 overflow-x-auto pb-1 px-1 py-1 -mx-1" role="tablist">
         <button
           v-for="f in filters"
           :key="f.key"
           type="button"
-          class="px-3 py-1.5 text-sm font-medium rounded-full border transition-colors flex items-center gap-1.5"
-          :class="activeFilter === f.key ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'"
+          role="tab"
+          :aria-selected="activeFilter === f.key"
+          class="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors flex items-center gap-1.5"
+          :class="activeFilter === f.key
+            ? 'bg-blue-50 ring-2 ring-blue-300 text-blue-700'
+            : 'bg-white border border-gray-200 text-gray-600 hover:border-blue-200'"
           :data-testid="`filter-chip-${f.key}`"
           @click="activeFilter = f.key"
         >
-          {{ f.label }}
+          <span>{{ f.label }}</span>
           <span
-            class="text-xs font-normal px-1.5 py-0.5 rounded-full"
-            :class="activeFilter === f.key ? 'bg-blue-700 text-white' : 'bg-gray-100 text-gray-500'"
+            class="text-[10px] font-bold px-1.5 rounded-full"
+            :class="activeFilter === f.key ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'"
           >{{ f.count }}</span>
         </button>
       </div>

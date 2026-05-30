@@ -27,8 +27,10 @@
     </button>
     <button
       data-testid="day-nav-all"
-      class="px-2 py-0.5 text-xs rounded transition-colors ml-1 inline-flex items-center gap-1 whitespace-nowrap shrink-0"
-      :class="isShowingAll ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'"
+      class="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors ml-1 inline-flex items-center gap-1 whitespace-nowrap"
+      :class="isShowingAll
+        ? 'bg-blue-50 ring-2 ring-blue-300 text-blue-700'
+        : 'bg-white border border-gray-200 text-gray-600 hover:border-blue-200'"
       @click="$emit('showAll')"
     >
       <svg v-if="isShowingAll" class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">

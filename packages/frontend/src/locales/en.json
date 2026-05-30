@@ -350,10 +350,7 @@
   },
   "specialBanner": {
     "pending": "{count} special predictions awaiting you",
-    "nearestDeadline": "Next deadline: {label}",
-    "groupInfo": "{name} · {count} predictions",
-    "collapse": "Collapse",
-    "expand": "Groups"
+    "nearestDeadline": "Next deadline: {label}"
   },
   "matchPredictions": {
     "title": "Others' predictions",
