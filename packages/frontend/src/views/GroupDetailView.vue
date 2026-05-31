@@ -43,6 +43,7 @@
         {{ $t('groupDetail.tabMyTips') }}
       </button>
       <button
+        v-if="SHOW_SPECIAL_TIPS"
         data-testid="tab-special"
         type="button"
         role="tab"
@@ -98,7 +99,7 @@
               <th class="px-2 py-3">{{ $t('groupDetail.player') }}</th>
               <th class="py-3 text-right" style="min-width:6rem;padding-left:0.5rem;padding-right:0.75rem">{{ $t('groupDetail.tips') }}</th>
               <th class="py-3 text-right" style="min-width:5rem;padding-left:0.5rem;padding-right:0.75rem">{{ $t('groupDetail.correct') }}</th>
-              <th class="py-3 text-right" style="min-width:4.5rem;padding-left:0.5rem;padding-right:0.75rem" :title="$t('groupDetail.specialPointsTitle')">{{ $t('groupDetail.specialPoints') }}</th>
+              <th v-if="SHOW_SPECIAL_TIPS" class="py-3 text-right" style="min-width:4.5rem;padding-left:0.5rem;padding-right:0.75rem" :title="$t('groupDetail.specialPointsTitle')">{{ $t('groupDetail.specialPoints') }}</th>
               <th class="py-3 text-right font-semibold" style="min-width:4rem;padding-left:0.5rem;padding-right:1rem">{{ $t('groupDetail.totalPoints') }}</th>
             </tr>
           </thead>
@@ -130,7 +131,7 @@
               </td>
               <td class="px-1 md:px-4 py-2 md:py-3 text-right text-gray-600 tabular-nums">{{ entry.predictionCount }}</td>
               <td class="px-1 md:px-4 py-2 md:py-3 text-right text-gray-600 tabular-nums">{{ entry.correctCount }}</td>
-              <td class="px-1 md:px-4 py-2 md:py-3 text-right text-gray-500 tabular-nums">{{ entry.specialPredictionPoints ?? 0 }}</td>
+              <td v-if="SHOW_SPECIAL_TIPS" class="px-1 md:px-4 py-2 md:py-3 text-right text-gray-500 tabular-nums">{{ entry.specialPredictionPoints ?? 0 }}</td>
               <td class="pl-1 pr-2 md:px-4 py-2 md:py-3 text-right font-bold text-blue-700 tabular-nums">{{ entry.totalPoints }}</td>
             </tr>
           </tbody>
@@ -394,7 +395,7 @@
       </div>
 
       <!-- Hivatalos speciális tippek kezelése (admin) -->
-      <div class="mt-8 max-w-lg">
+      <div v-if="SHOW_SPECIAL_TIPS" class="mt-8 max-w-lg">
         <h3 class="text-base font-semibold text-gray-800 mb-1">{{ $t('groupDetail.globalTypesTitle') }}</h3>
         <p class="text-sm text-gray-500 mb-4">{{ $t('groupDetail.globalTypesDesc') }}</p>
 
@@ -439,7 +440,7 @@
       </div>
 
       <!-- Egyedi speciális tipp típusok kezelése (admin) -->
-      <div class="mt-8 max-w-lg">
+      <div v-if="SHOW_SPECIAL_TIPS" class="mt-8 max-w-lg">
         <h3 class="text-base font-semibold text-gray-800 mb-1">{{ $t('groupDetail.customTypesTitle') }}</h3>
         <p class="text-sm text-gray-500 mb-4">{{ $t('groupDetail.customTypesDesc') }}</p>
 
@@ -659,7 +660,7 @@
     </div>
 
     <!-- Speciális tippek tab (member) -->
-    <div v-if="activeTab === 'special'" data-testid="special-tab">
+    <div v-if="SHOW_SPECIAL_TIPS && activeTab === 'special'" data-testid="special-tab">
       <div v-if="groupsStore.specialPredictionsLoading" class="text-gray-500">{{ $t('common.loading') }}</div>
       <div v-else-if="groupsStore.specialPredictionsError" class="text-red-600">{{ groupsStore.specialPredictionsError }}</div>
       <div v-else-if="specialPredictions.length === 0" class="text-gray-500 text-sm">{{ $t('groupDetail.specialTabEmpty') }}</div>
@@ -900,6 +901,8 @@ import type { GroupMember, LeaderboardEntry, ScoringConfigInput, SpecialPredicti
 import { getDateLocale } from '../lib/dateLocale.js'
 
 type Tab = 'leaderboard' | 'my-predictions' | 'members' | 'settings' | 'special'
+
+const SHOW_SPECIAL_TIPS = false
 
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
 
@@ -1381,7 +1384,7 @@ onMounted(async () => {
     isLoading.value = false
   }
 
-  if (route.query.tab === 'special') {
+  if (route.query.tab === 'special' && SHOW_SPECIAL_TIPS) {
     await switchToSpecialTab()
   }
   if (route.query.tab === 'my-predictions') {
