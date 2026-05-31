@@ -13,6 +13,7 @@ import type {
   MatchOutcome,
 } from '../types/index.js'
 import type { FootballApiClient } from './football-api.service.js'
+import { lookupVenueImage, normalizeVenueName } from './venue-images.js'
 
 // ─── PURE HELPERS ────────────────────────────────────────────────────────────
 
@@ -232,10 +233,11 @@ export async function upsertFixtures(
     const venueName = fixture.fixture.venue.name
     const venueCity = fixture.fixture.venue.city ?? ''
     if (venueName) {
+      const normalizedName = normalizeVenueName(venueName)
       const [existingVenue] = await db
         .select({ id: venues.id })
         .from(venues)
-        .where(eq(venues.name, venueName))
+        .where(sql`TRIM(REGEXP_REPLACE(REGEXP_REPLACE(LOWER(${venues.name}), '[''‘’]', '', 'g'), '\\s+', ' ', 'g')) = ${normalizedName}`)
         .limit(1)
 
       if (existingVenue) {
@@ -246,6 +248,7 @@ export async function upsertFixtures(
           name: venueName,
           city: venueCity,
           country: '',
+          imageUrl: lookupVenueImage(venueName),
         }).returning({ id: venues.id })
         venueId = newVenue?.id ?? null
       }

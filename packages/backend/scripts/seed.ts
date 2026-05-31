@@ -19,7 +19,7 @@ async function seed(): Promise<void> {
   // ─── Venues (FIFA 2026) ──────────────────────────────────────────────────
   const venueData = [
     { name: 'MetLife Stadium', city: 'East Rutherford', country: 'USA', capacity: 82500, imageUrl: '/venues/metlife-stadium.webp' },
-    { name: 'Estadio Azteca', city: 'Mexico City', country: 'Mexico', capacity: 87523, imageUrl: '/venues/estadio-azteca.webp' },
+    { name: 'Estadio Banorte', city: 'Mexico City', country: 'Mexico', capacity: 87523, imageUrl: '/venues/estadio-azteca.webp' },
     { name: 'AT&T Stadium', city: 'Arlington', country: 'USA', capacity: 80000, imageUrl: '/venues/att-stadium.webp' },
     { name: 'SoFi Stadium', city: 'Inglewood', country: 'USA', capacity: 70240, imageUrl: '/venues/sofi-stadium.webp' },
     { name: 'Estadio AKRON', city: 'Guadalajara', country: 'Mexico', capacity: 49850, imageUrl: '/venues/estadio-akron.webp' },

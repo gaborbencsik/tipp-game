@@ -112,7 +112,7 @@ async function seedLocal(): Promise<void> {
   // ─── Venues ────────────────────────────────────────────────────────────────
   const venueData = [
     { id: VENUE_METLIFE_ID, name: 'MetLife Stadium', city: 'East Rutherford', country: 'USA', capacity: 82500 },
-    { id: VENUE_AZTECA_ID, name: 'Estadio Azteca', city: 'Mexico City', country: 'Mexico', capacity: 87523 },
+    { id: VENUE_AZTECA_ID, name: 'Estadio Banorte', city: 'Mexico City', country: 'Mexico', capacity: 87523, imageUrl: '/venues/estadio-azteca.webp' },
     { id: VENUE_ATT_ID, name: 'AT&T Stadium', city: 'Arlington', country: 'USA', capacity: 80000 },
     { name: 'SoFi Stadium', city: 'Inglewood', country: 'USA', capacity: 70240 },
     { name: 'Estadio AKRON', city: 'Guadalajara', country: 'Mexico', capacity: 49850 },

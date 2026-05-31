@@ -59,11 +59,11 @@ describe('VenueBanner', () => {
 
   it('has correct aria-label for accessibility', () => {
     const wrapper = mount(VenueBanner, {
-      props: { venue: { name: 'Estadio Azteca', city: 'Mexico City', imageUrl: null } },
+      props: { venue: { name: 'Estadio Banorte', city: 'Mexico City', imageUrl: null } },
     })
     const banner = wrapper.find('[data-testid="venue-banner"]')
     expect(banner.attributes('role')).toBe('img')
-    expect(banner.attributes('aria-label')).toBe('Estadio Azteca, Mexico City')
+    expect(banner.attributes('aria-label')).toBe('Estadio Banorte, Mexico City')
   })
 
   it('expand icon is visible when venue exists', () => {
