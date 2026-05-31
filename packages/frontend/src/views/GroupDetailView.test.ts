@@ -315,7 +315,7 @@ describe('GroupDetailView', () => {
     expect(thead.classes()).toContain('hidden')
     expect(thead.classes()).toContain('md:table-header-group')
     const dataCells = wrapper.findAll('table tbody tr:first-child td')
-    expect(dataCells.length).toBe(6)
+    expect(dataCells.length).toBe(5)
     for (const td of dataCells) {
       expect(td.classes()).not.toContain('hidden')
     }
