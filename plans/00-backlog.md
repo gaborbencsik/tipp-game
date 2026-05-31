@@ -1,6 +1,6 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-05-30
+> Utoljára frissítve: 2026-05-31
 
 ## Nyitott story-k
 
@@ -19,9 +19,11 @@
 | UX-005 | Optimista törlés az admin listákon | Should Have | — |
 | UX-013 | Értesítési rendszer (notification bell + panel) | Nice to Have | — |
 | UX-016 | Kedvenc csapat dupla pont jelzés a meccs kártyán | Should Have | — |
-| UX-019 | Onboarding frissítés – új funkciók bemutatása | Should Have | — |
+| UX-020 | Onboarding overlay átalakítása mockup alapján – 5 lépés | Should Have | — |
 | SEC-002 | HMAC-aláírt meghívó URL-ek | Nice to Have | — |
+
+> UX-019 felülírva — UX-020 implementálja a frissített, mockup-alapú 5 lépéses onboardingot.
 
 ---
 
-**Haladás: 134 / 149 story kész** — Must Have: 31/32, Should Have: 103/113, Nice to Have: 0/4 (US-937 won't do)
+**Haladás: 134 / 150 story kész** — Must Have: 31/32, Should Have: 103/114, Nice to Have: 0/4 (US-937 won't do)

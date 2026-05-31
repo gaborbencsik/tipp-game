@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8" />
+<title>Onboarding redesign – mockup</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: 'Inter', system-ui, sans-serif; }
+  .flag { font-size: 1.1rem; line-height: 1; }
+  /* Stagger érzet a hero ikonoknak (statikus bemutatás) */
+  .stagger-1 { animation: pop .35s ease-out; }
+  .stagger-2 { animation: pop .35s ease-out .1s both; }
+  .stagger-3 { animation: pop .35s ease-out .2s both; }
+  @keyframes pop { from { transform: scale(.6); opacity:0 } to { transform: scale(1); opacity:1 } }
+  /* Odds bar fill */
+  .bar-fill { height: 8px; border-radius: 9999px; }
+</style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+<div class="max-w-6xl mx-auto px-4 py-8">
+
+  <!-- ───── Mockup fejléc ───── -->
+  <header class="mb-8">
+    <h1 class="text-2xl font-bold text-gray-900 mb-1">Onboarding redesign – mockup</h1>
+    <p class="text-sm text-gray-500">5 lépés · csak továbbléptető CTA-k · mobil-first sheet, desktop modal · az alábbi kártyák a tényleges overlay tartalmát mutatják (mobile breakpoint).</p>
+    <div class="mt-3 inline-flex items-center gap-2 rounded-full bg-blue-50 ring-1 ring-blue-200 px-3 py-1 text-xs text-blue-700">
+      <span>Forrás:</span>
+      <a class="underline" href="../../../plans/onboarding-redesign-plan.md">plans/onboarding-redesign-plan.md</a>
+    </div>
+  </header>
+
+  <!-- ═══════════════ STEP 1 — Üdvözlés ═══════════════ -->
+  <section class="mb-10">
+    <p class="text-xs uppercase tracking-wide font-semibold text-gray-400 mb-2">Lépés 1 / 5 — Üdvözlés</p>
+    <div class="mx-auto w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
+      <!-- Sticky header -->
+      <div class="flex items-center justify-between px-5 pt-4">
+        <div class="flex gap-1.5" aria-hidden="true">
+          <span class="h-2 w-2 rounded-full bg-blue-600"></span>
+          <span class="h-2 w-2 rounded-full bg-gray-300"></span>
+          <span class="h-2 w-2 rounded-full bg-gray-300"></span>
+          <span class="h-2 w-2 rounded-full bg-gray-300"></span>
+          <span class="h-2.5 w-2.5 rounded-full bg-gray-300 ring-2 ring-gray-200"></span>
+        </div>
+        <div class="flex items-center gap-3 text-xs">
+          <span class="text-gray-400 tabular-nums">1/5</span>
+          <button class="text-gray-400 hover:text-gray-600 underline-offset-2 hover:underline">Kihagyom</button>
+        </div>
+      </div>
+
+      <!-- Tartalom -->
+      <div class="px-6 pt-6 pb-4 text-center">
+        <!-- Hero illusztráció: trófea + 3 tippkártya -->
+        <div class="mx-auto mb-6 flex flex-col items-center">
+          <div class="text-5xl mb-2 stagger-1">🏆</div>
+          <div class="flex items-end gap-2">
+            <div class="stagger-1 h-10 w-9 rounded-md border-2 border-blue-400 bg-white flex items-center justify-center text-base font-bold text-blue-700 shadow-sm">2</div>
+            <div class="stagger-2 h-10 w-9 rounded-md border-2 border-blue-400 bg-white flex items-center justify-center text-base font-bold text-blue-700 shadow-sm">1</div>
+            <div class="stagger-3 h-10 w-9 rounded-md border-2 border-blue-400 bg-white flex items-center justify-center text-base font-bold text-blue-700 shadow-sm">X</div>
+          </div>
+        </div>
+
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">Üdvözlünk a VB Tippjátékban!</h2>
+        <p class="text-sm text-gray-600 leading-relaxed mb-5">
+          Tippeld meg a 2026-os VB meccseit, gyűjts pontot, versenyezz csoportodban.
+        </p>
+
+        <ul class="text-sm text-gray-600 space-y-1.5 mb-2 text-left max-w-xs mx-auto">
+          <li class="flex gap-2"><span class="text-green-500 font-bold">✓</span><span>Meccsenként és tornaszinten is tippelhetsz</span></li>
+          <li class="flex gap-2"><span class="text-green-500 font-bold">✓</span><span>Élő ranglista és élő pontszámítás</span></li>
+        </ul>
+      </div>
+
+      <!-- Sticky footer -->
+      <div class="flex items-center justify-end gap-3 px-5 py-4 border-t border-gray-100 bg-gray-50/50">
+        <button class="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+          Mehet →
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ STEP 2 — Hogyan tippelsz ═══════════════ -->
+  <section class="mb-10">
+    <p class="text-xs uppercase tracking-wide font-semibold text-gray-400 mb-2">Lépés 2 / 5 — Hogyan tippelsz (alappontok)</p>
+    <div class="mx-auto w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
+      <div class="flex items-center justify-between px-5 pt-4">
+        <div class="flex gap-1.5" aria-hidden="true">
+          <span class="h-2 w-2 rounded-full bg-blue-600"></span>
+          <span class="h-2 w-2 rounded-full bg-blue-600"></span>
+          <span class="h-2 w-2 rounded-full bg-gray-300"></span>
+          <span class="h-2 w-2 rounded-full bg-gray-300"></span>
+          <span class="h-2.5 w-2.5 rounded-full bg-gray-300 ring-2 ring-gray-200"></span>
+        </div>
+        <div class="flex items-center gap-3 text-xs">
+          <span class="text-gray-400 tabular-nums">2/5</span>
+          <button class="text-gray-400 hover:text-gray-600 underline-offset-2 hover:underline">Kihagyom</button>
+        </div>
+      </div>
+
+      <div class="px-6 pt-6 pb-4 text-center">
+        <!-- Mini meccskártya odds-szal -->
+        <div class="mx-auto mb-5 max-w-[18rem] rounded-xl border border-gray-200 bg-gray-50 p-3 text-left">
+          <div class="flex items-center justify-between gap-2 mb-2">
+            <div class="flex items-center gap-2">
+              <span class="flag">🇭🇺</span>
+              <span class="text-sm font-medium text-gray-800">Magyarország</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <div class="h-7 w-8 rounded-md border-2 border-blue-400 bg-white flex items-center justify-center text-sm font-bold text-blue-700">2</div>
+              <span class="text-gray-400 font-bold text-sm">:</span>
+              <div class="h-7 w-8 rounded-md border-2 border-blue-400 bg-white flex items-center justify-center text-sm font-bold text-blue-700">1</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="flag">🇩🇪</span>
+            <span class="text-sm font-medium text-gray-800">Németország</span>
+          </div>
+          <div class="mt-3 pt-3 border-t border-gray-200">
+            <p class="text-[11px] uppercase tracking-wide text-gray-400 mb-1.5">Piaci esélyek</p>
+            <div class="grid grid-cols-3 gap-2 text-xs">
+              <div>
+                <div class="bar-fill bg-green-400" style="width: 62%"></div>
+                <p class="mt-1 text-gray-600">H · 62%</p>
+              </div>
+              <div>
+                <div class="bar-fill bg-yellow-400" style="width: 18%"></div>
+                <p class="mt-1 text-gray-600">D · 18%</p>
+              </div>
+              <div>
+                <div class="bar-fill bg-red-400" style="width: 20%"></div>
+                <p class="mt-1 text-gray-600">V · 20%</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Idővonal: zöld → sárga → piros -->
+        <div class="mx-auto mb-5 max-w-xs">
+          <div class="relative flex items-center justify-between">
+            <div class="absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-gradient-to-r from-green-400 via-yellow-400 to-red-400"></div>
+            <div class="relative z-10 flex flex-col items-center gap-1">
+              <div class="h-6 w-6 rounded-full bg-green-500 border-2 border-white shadow flex items-center justify-center">
+                <svg class="h-3 w-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+              </div>
+              <span class="text-[11px] font-medium text-green-700">Nyitva</span>
+            </div>
+            <div class="relative z-10 flex flex-col items-center gap-1">
+              <div class="h-6 w-6 rounded-full bg-yellow-500 border-2 border-white shadow flex items-center justify-center">
+                <svg class="h-3 w-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>
+              </div>
+              <span class="text-[11px] font-medium text-yellow-700">Kezdés</span>
+            </div>
+            <div class="relative z-10 flex flex-col items-center gap-1">
+              <div class="h-6 w-6 rounded-full bg-red-500 border-2 border-white shadow flex items-center justify-center">
+                <svg class="h-3 w-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg>
+              </div>
+              <span class="text-[11px] font-medium text-red-700">Zárva</span>
+            </div>
+          </div>
+        </div>
+
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">Tippelj minden meccsre</h2>
+        <p class="text-sm text-gray-600 leading-relaxed mb-4">
+          Kezdés előtt bármikor leadhatod és módosíthatod. Több módon is pontot szerezhetsz.
+        </p>
+
+        <ul class="text-sm text-gray-600 space-y-1.5 mb-2 text-left max-w-xs mx-auto">
+          <li class="flex gap-2"><span class="text-blue-500 font-bold">•</span><span><b>Helyes végeredmény</b> (1 / X / 2)</span></li>
+          <li class="flex gap-2"><span class="text-blue-500 font-bold">•</span><span><b>Pontos eredmény</b> — extra pont</span></li>
+          <li class="flex gap-2"><span class="text-blue-500 font-bold">•</span><span><b>Helyes gólarány</b> — részleges pont</span></li>
+        </ul>
+      </div>
+
+      <div class="flex items-center justify-between gap-3 px-5 py-4 border-t border-gray-100 bg-gray-50/50">
+        <button class="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 transition">← Vissza</button>
+        <button class="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Tovább →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ STEP 3 — Speciális tippek ═══════════════ -->
+  <section class="mb-10">
+    <p class="text-xs uppercase tracking-wide font-semibold text-gray-400 mb-2">Lépés 3 / 5 — Speciális tippek</p>
+    <div class="mx-auto w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
+      <div class="flex items-center justify-between px-5 pt-4">
+        <div class="flex gap-1.5" aria-hidden="true">
+          <span class="h-2 w-2 rounded-full bg-blue-600"></span>
+          <span class="h-2 w-2 rounded-full bg-blue-600"></span>
+          <span class="h-2 w-2 rounded-full bg-blue-600"></span>
+          <span class="h-2 w-2 rounded-full bg-gray-300"></span>
+          <span class="h-2.5 w-2.5 rounded-full bg-gray-300 ring-2 ring-gray-200"></span>
+        </div>
+        <div class="flex items-center gap-3 text-xs">
+          <span class="text-gray-400 tabular-nums">3/5</span>
+          <button class="text-gray-400 hover:text-gray-600 underline-offset-2 hover:underline">Kihagyom</button>
+        </div>
+      </div>
+
+      <div class="px-6 pt-6 pb-4 text-center">
+        <!-- 3 chip illusztráció -->
+        <div class="flex flex-wrap justify-center gap-2 mb-5">
+          <div class="rounded-xl border border-yellow-200 bg-yellow-50 px-3 py-2 text-left">
+            <div class="text-lg">⚽</div>
+            <p class="text-xs font-semibold text-yellow-900">Gólkirály</p>
+            <p class="text-[11px] font-bold text-yellow-700 tabular-nums">+50 pont</p>
+          </div>
+          <div class="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-left">
+            <div class="text-lg">🥇</div>
+            <p class="text-xs font-semibold text-blue-900">Csoportgyőztes</p>
+            <p class="text-[11px] font-bold text-blue-700 tabular-nums">+30 pont</p>
+          </div>
+          <div class="rounded-xl border border-purple-200 bg-purple-50 px-3 py-2 text-left">
+            <div class="text-lg">🏁</div>
+            <p class="text-xs font-semibold text-purple-900">Döntős csapatok</p>
+            <p class="text-[11px] font-bold text-purple-700 tabular-nums">+40 pont</p>
+          </div>
+        </div>
+
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">Speciális (torna) tippek</h2>
+        <p class="text-sm text-gray-600 leading-relaxed mb-4">
+          Egy egész tornán át jó döntés — egyszer választasz, hetekig fizet.
+        </p>
+
+        <ul class="text-sm text-gray-600 space-y-1.5 mb-3 text-left max-w-xs mx-auto">
+          <li class="flex gap-2"><span class="text-blue-500 font-bold">•</span><span>Csapatok, játékosok, eseménytípusok</span></li>
+          <li class="flex gap-2"><span class="text-blue-500 font-bold">•</span><span>Saját határidők (általában VB kezdés)</span></li>
+          <li class="flex gap-2"><span class="text-blue-500 font-bold">•</span><span>Ha lemaradnál, a Mérkőzések fölött <b>banner</b> figyelmeztet</span></li>
+        </ul>
+
+        <!-- Pending banner mini-replika -->
+        <div class="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-left flex items-center gap-2">
+          <span class="text-base">⚠️</span>
+          <p class="text-xs text-amber-900">3 speciális tippre nem adtál még tippet · határidő: jún. 21.</p>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between gap-3 px-5 py-4 border-t border-gray-100 bg-gray-50/50">
+        <button class="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 transition">← Vissza</button>
+        <button class="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Tovább →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ STEP 4 — Kedvenc csapat × dupla pont ═══════════════ -->
+  <section class="mb-10">
+    <p class="text-xs uppercase tracking-wide font-semibold text-gray-400 mb-2">Lépés 4 / 5 — Kedvenc csapat × dupla pont</p>
+    <div class="mx-auto w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
+      <div class="flex items-center justify-between px-5 pt-4">
+        <div class="flex gap-1.5" aria-hidden="true">
+          <span class="h-2 w-2 rounded-full bg-blue-600"></span>
+          <span class="h-2 w-2 rounded-full bg-blue-600"></span>
+          <span class="h-2 w-2 rounded-full bg-blue-600"></span>
+          <span class="h-2 w-2 rounded-full bg-blue-600"></span>
+          <span class="h-2.5 w-2.5 rounded-full bg-gray-300 ring-2 ring-gray-200"></span>
+        </div>
+        <div class="flex items-center gap-3 text-xs">
+          <span class="text-gray-400 tabular-nums">4/5</span>
+          <button class="text-gray-400 hover:text-gray-600 underline-offset-2 hover:underline">Kihagyom</button>
+        </div>
+      </div>
+
+      <div class="px-6 pt-6 pb-4 text-center">
+        <!-- Két csapatcímer + ×2 badge -->
+        <div class="mx-auto mb-5 flex items-end justify-center gap-4">
+          <!-- Sima csapat -->
+          <div class="flex flex-col items-center gap-1 opacity-60">
+            <div class="h-14 w-14 rounded-full bg-gray-100 border-2 border-gray-200 flex items-center justify-center text-2xl">🇩🇪</div>
+            <span class="text-xs text-gray-400">Németország</span>
+          </div>
+          <!-- Kedvenc csapat -->
+          <div class="relative flex flex-col items-center gap-1">
+            <div class="h-16 w-16 rounded-full bg-red-50 border-2 border-red-400 flex items-center justify-center text-3xl shadow-md">🇭🇺</div>
+            <span class="text-xs font-semibold text-red-700">Magyarország ❤️</span>
+            <span class="absolute -top-2 -right-2 h-9 w-9 rounded-full bg-red-500 text-white font-bold text-sm flex items-center justify-center shadow-lg ring-4 ring-white tabular-nums">×2</span>
+          </div>
+        </div>
+
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">Dupla pont a kedvencednek</h2>
+        <p class="text-sm text-gray-600 leading-relaxed mb-4">
+          Ligánként választhatsz egy kedvenc csapatot a <b>profilodban</b>. Az ő meccseiken <b>dupla pontot</b> kapsz a csoport ranglistán.
+        </p>
+
+        <!-- Példa kalkuláció -->
+        <div class="rounded-xl border border-blue-200 bg-blue-50 p-3 text-left text-sm">
+          <p class="text-xs uppercase tracking-wide text-blue-700 font-semibold mb-1">Példa</p>
+          <div class="flex items-center justify-between text-gray-700">
+            <span>1 jó tipp a kedvenced meccsén</span>
+            <span class="font-bold text-blue-900 tabular-nums">3 → 6 pont</span>
+          </div>
+        </div>
+
+        <p class="text-xs text-gray-500 mt-3 italic">A liga első meccse után a választás <b>zárolódik</b> — érdemes előre beállítani.</p>
+      </div>
+
+      <div class="flex items-center justify-between gap-3 px-5 py-4 border-t border-gray-100 bg-gray-50/50">
+        <button class="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 transition">← Vissza</button>
+        <button class="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Tovább →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ STEP 5 — Hub + indítás ═══════════════ -->
+  <section class="mb-10">
+    <p class="text-xs uppercase tracking-wide font-semibold text-gray-400 mb-2">Lépés 5 / 5 — Fedezz fel többet (HUB) + indítás</p>
+    <div class="mx-auto w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
+      <div class="flex items-center justify-between px-5 pt-4">
+        <div class="flex gap-1.5" aria-hidden="true">
+          <span class="h-2 w-2 rounded-full bg-blue-600"></span>
+          <span class="h-2 w-2 rounded-full bg-blue-600"></span>
+          <span class="h-2 w-2 rounded-full bg-blue-600"></span>
+          <span class="h-2 w-2 rounded-full bg-blue-600"></span>
+          <span class="h-2.5 w-2.5 rounded-full bg-blue-600 ring-2 ring-blue-300"></span>
+        </div>
+        <div class="flex items-center gap-3 text-xs">
+          <span class="text-gray-400 tabular-nums">5/5</span>
+          <button class="text-gray-400 hover:text-gray-600 underline-offset-2 hover:underline">Kihagyom</button>
+        </div>
+      </div>
+
+      <div class="px-6 pt-6 pb-4">
+        <h2 class="text-2xl font-bold text-gray-900 mb-1 text-center">Fedezz fel többet</h2>
+        <p class="text-sm text-gray-600 leading-relaxed mb-5 text-center">
+          Ezekre is rátalálsz a menüből. Bármikor visszanézheted a bemutatót.
+        </p>
+
+        <!-- 2×3 hub grid -->
+        <div class="grid grid-cols-2 gap-2.5 mb-2">
+          <div class="rounded-xl border border-gray-200 bg-white p-3 hover:border-blue-400 hover:shadow-sm transition cursor-pointer">
+            <div class="text-xl mb-1">📅</div>
+            <p class="text-sm font-semibold text-gray-900">Mérkőzések</p>
+            <p class="text-[11px] text-gray-500 mt-0.5 leading-snug">Nap, liga és csapat szerint szűrhetsz.</p>
+          </div>
+          <div class="rounded-xl border border-gray-200 bg-white p-3 hover:border-blue-400 hover:shadow-sm transition cursor-pointer">
+            <div class="text-xl mb-1">🏆</div>
+            <p class="text-sm font-semibold text-gray-900">Torna tippek</p>
+            <p class="text-[11px] text-gray-500 mt-0.5 leading-snug">Csapat, játékos és egyéb kategória.</p>
+          </div>
+          <div class="rounded-xl border border-gray-200 bg-white p-3 hover:border-blue-400 hover:shadow-sm transition cursor-pointer">
+            <div class="text-xl mb-1">📊</div>
+            <p class="text-sm font-semibold text-gray-900">Statisztikáim</p>
+            <p class="text-[11px] text-gray-500 mt-0.5 leading-snug">Saját tippjeid + élő szekció <span class="inline-block px-1 rounded bg-red-100 text-red-700 text-[9px] font-bold align-middle">ÉLŐ</span></p>
+          </div>
+          <div class="rounded-xl border border-gray-200 bg-white p-3 hover:border-blue-400 hover:shadow-sm transition cursor-pointer">
+            <div class="text-xl mb-1">👥</div>
+            <p class="text-sm font-semibold text-gray-900">Csoportok</p>
+            <p class="text-[11px] text-gray-500 mt-0.5 leading-snug">Hozz létre vagy csatlakozz meghívó kóddal.</p>
+          </div>
+          <div class="rounded-xl border border-gray-200 bg-white p-3 hover:border-blue-400 hover:shadow-sm transition cursor-pointer">
+            <div class="text-xl mb-1">⚙️</div>
+            <p class="text-sm font-semibold text-gray-900">Profil</p>
+            <p class="text-[11px] text-gray-500 mt-0.5 leading-snug">Kedvenc csapat, név, nyelv.</p>
+          </div>
+          <div class="rounded-xl border border-gray-200 bg-white p-3 hover:border-blue-400 hover:shadow-sm transition cursor-pointer">
+            <div class="text-xl mb-1">☕</div>
+            <p class="text-sm font-semibold text-gray-900">Adományozás</p>
+            <p class="text-[11px] text-gray-500 mt-0.5 leading-snug">A játék ingyenes — vegyél egy kávét.</p>
+          </div>
+        </div>
+
+        <p class="text-[11px] text-gray-400 text-center mt-3">🔁 A bemutatót bármikor újranézheted a menüből.</p>
+      </div>
+
+      <div class="flex items-center justify-between gap-3 px-5 py-4 border-t border-gray-100 bg-gray-50/50">
+        <button class="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 transition">← Vissza</button>
+        <button class="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Mehet a játék →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ Desktop variáns előnézet ═══════════════ -->
+  <section class="mb-10">
+    <p class="text-xs uppercase tracking-wide font-semibold text-gray-400 mb-2">Desktop / Tablet variáns (max-w-2xl) — példa: lépés 4</p>
+    <div class="mx-auto w-full max-w-2xl bg-white rounded-2xl shadow-xl overflow-hidden">
+      <div class="flex items-center justify-between px-6 pt-5">
+        <div class="flex gap-1.5" aria-hidden="true">
+          <span class="h-2 w-2 rounded-full bg-blue-600"></span>
+          <span class="h-2 w-2 rounded-full bg-blue-600"></span>
+          <span class="h-2 w-2 rounded-full bg-blue-600"></span>
+          <span class="h-2 w-2 rounded-full bg-blue-600"></span>
+          <span class="h-2.5 w-2.5 rounded-full bg-gray-300 ring-2 ring-gray-200"></span>
+        </div>
+        <div class="flex items-center gap-3 text-xs">
+          <span class="text-gray-400 tabular-nums">4/5</span>
+          <button class="text-gray-400 hover:text-gray-600 underline-offset-2 hover:underline">Kihagyom</button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-6 px-8 pt-6 pb-4 items-center">
+        <!-- Bal: illusztráció -->
+        <div class="flex flex-col items-center">
+          <div class="flex items-end justify-center gap-4 mb-2">
+            <div class="flex flex-col items-center gap-1 opacity-60">
+              <div class="h-16 w-16 rounded-full bg-gray-100 border-2 border-gray-200 flex items-center justify-center text-3xl">🇩🇪</div>
+              <span class="text-xs text-gray-400">Németország</span>
+            </div>
+            <div class="relative flex flex-col items-center gap-1">
+              <div class="h-20 w-20 rounded-full bg-red-50 border-2 border-red-400 flex items-center justify-center text-4xl shadow-md">🇭🇺</div>
+              <span class="text-xs font-semibold text-red-700">Magyarország ❤️</span>
+              <span class="absolute -top-2 -right-2 h-11 w-11 rounded-full bg-red-500 text-white font-bold text-base flex items-center justify-center shadow-lg ring-4 ring-white tabular-nums">×2</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Jobb: szöveg -->
+        <div>
+          <h2 class="text-2xl font-bold text-gray-900 mb-2">Dupla pont a kedvencednek</h2>
+          <p class="text-sm text-gray-600 leading-relaxed mb-4">
+            Ligánként választhatsz egy kedvenc csapatot a <b>profilodban</b>. Az ő meccseiken <b>dupla pontot</b> kapsz a csoport ranglistán.
+          </p>
+
+          <div class="rounded-xl border border-blue-200 bg-blue-50 p-3 text-sm mb-3">
+            <p class="text-xs uppercase tracking-wide text-blue-700 font-semibold mb-1">Példa</p>
+            <div class="flex items-center justify-between text-gray-700">
+              <span>1 jó tipp a kedvenced meccsén</span>
+              <span class="font-bold text-blue-900 tabular-nums">3 → 6 pont</span>
+            </div>
+          </div>
+
+          <p class="text-xs text-gray-500 italic">A liga első meccse után a választás zárolódik — érdemes előre beállítani.</p>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50/50">
+        <button class="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 transition">← Vissza</button>
+        <button class="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Tovább →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───── Lábjegyzet / design notes ───── -->
+  <footer class="mt-12 rounded-xl border border-gray-200 bg-white p-5 text-sm text-gray-600">
+    <h3 class="text-base font-semibold text-gray-900 mb-2">Design jegyzetek</h3>
+    <ul class="space-y-1.5 list-disc pl-5">
+      <li>Színek a meglévő palettából: <code class="bg-gray-100 px-1 rounded">blue-600</code> primary, <code class="bg-gray-100 px-1 rounded">gray-300/200</code> secondary border, <code class="bg-gray-100 px-1 rounded">red/yellow/green-50</code> accent háttér.</li>
+      <li>Modal kártya: <code class="bg-gray-100 px-1 rounded">rounded-2xl shadow-xl</code> — ugyanaz mint a jelenlegi <code>OnboardingOverlay.vue</code>.</li>
+      <li>Mobile-on a kártya helyén <code class="bg-gray-100 px-1 rounded">inset-0</code> full-screen sheet (sticky header + footer). Tablet: <code class="bg-gray-100 px-1 rounded">max-w-lg</code>, desktop: <code class="bg-gray-100 px-1 rounded">max-w-2xl</code>.</li>
+      <li>Csak továbbléptető CTA-k — minden középső gomb előrevisz, hogy a user végignézze az összes lépést.</li>
+      <li>Progress: 5 dot + "n/5" számozás. Az utolsó dot kicsit nagyobb (ring-2) — jelzi a hub/záró lépést.</li>
+      <li>Animáció (a mockupban statikus): hero ikonok stagger 80–100ms, odds bar width 0→target 600ms, ×2 badge scale-pop.</li>
+      <li>Reduced-motion: minden transition ≤100ms opacity fade, nincs konfetti.</li>
+    </ul>
+  </footer>
+
+</div>
+
+</body>
+</html>

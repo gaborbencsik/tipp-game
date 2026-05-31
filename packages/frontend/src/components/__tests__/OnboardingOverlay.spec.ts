@@ -23,35 +23,55 @@ function mountOverlay() {
   })
 }
 
+async function clickNext(wrapper: ReturnType<typeof mountOverlay>): Promise<void> {
+  await wrapper.find('[data-testid="next-button"]').trigger('click')
+}
+
 describe('OnboardingOverlay', () => {
   beforeEach(() => {
     mockPush.mockClear()
   })
 
-  it('renders step 0 initially', () => {
+  it('renders step 0 (welcome) initially', () => {
     const wrapper = mountOverlay()
     expect(wrapper.find('[data-testid="step-0"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="step-1"]').exists()).toBe(false)
-    expect(wrapper.find('[data-testid="step-2"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="step-4"]').exists()).toBe(false)
   })
 
-  it('shows 3 progress dots', () => {
+  it('shows 5 progress dots', () => {
     const wrapper = mountOverlay()
-    expect(wrapper.findAll('[data-testid="progress-dot"]')).toHaveLength(3)
+    expect(wrapper.findAll('[data-testid="progress-dot"]')).toHaveLength(5)
   })
 
-  it('next button advances from step 0 to step 1', async () => {
+  it('shows step counter "1/5" on first step', () => {
     const wrapper = mountOverlay()
-    await wrapper.find('[data-testid="next-button"]').trigger('click')
+    expect(wrapper.find('[data-testid="step-counter"]').text()).toBe('1/5')
+  })
+
+  it('next button advances step by step from 0 to 4', async () => {
+    const wrapper = mountOverlay()
+    await clickNext(wrapper)
     expect(wrapper.find('[data-testid="step-1"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="step-0"]').exists()).toBe(false)
+    await clickNext(wrapper)
+    expect(wrapper.find('[data-testid="step-2"]').exists()).toBe(true)
+    await clickNext(wrapper)
+    expect(wrapper.find('[data-testid="step-3"]').exists()).toBe(true)
+    await clickNext(wrapper)
+    expect(wrapper.find('[data-testid="step-4"]').exists()).toBe(true)
   })
 
-  it('next button advances from step 1 to step 2', async () => {
+  it('back button is hidden on step 0', () => {
     const wrapper = mountOverlay()
-    await wrapper.find('[data-testid="next-button"]').trigger('click')
-    await wrapper.find('[data-testid="next-button"]').trigger('click')
-    expect(wrapper.find('[data-testid="step-2"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="back-button"]').exists()).toBe(false)
+  })
+
+  it('back button is visible on step 1+ and goes back', async () => {
+    const wrapper = mountOverlay()
+    await clickNext(wrapper)
+    expect(wrapper.find('[data-testid="back-button"]').exists()).toBe(true)
+    await wrapper.find('[data-testid="back-button"]').trigger('click')
+    expect(wrapper.find('[data-testid="step-0"]').exists()).toBe(true)
   })
 
   it('skip button emits complete event on step 0', async () => {
@@ -60,48 +80,52 @@ describe('OnboardingOverlay', () => {
     expect(wrapper.emitted('complete')).toHaveLength(1)
   })
 
-  it('skip button emits complete event on step 1', async () => {
+  it('skip button emits complete event on later steps', async () => {
     const wrapper = mountOverlay()
-    await wrapper.find('[data-testid="next-button"]').trigger('click')
+    await clickNext(wrapper)
+    await clickNext(wrapper)
     await wrapper.find('[data-testid="skip-button"]').trigger('click')
     expect(wrapper.emitted('complete')).toHaveLength(1)
   })
 
   it('Escape key emits complete event', async () => {
     const wrapper = mountOverlay()
-    await wrapper.find('[data-testid="onboarding-overlay"]').trigger('keydown.escape')
-    // The keydown listener is on document, so we trigger it there
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
     expect(wrapper.emitted('complete')).toHaveLength(1)
   })
 
-  it('step 2: create group button emits complete and navigates', async () => {
+  it('step 4 (hub): primary CTA emits complete and navigates to /app/matches', async () => {
     const wrapper = mountOverlay()
-    // Go to step 2
+    await clickNext(wrapper)
+    await clickNext(wrapper)
+    await clickNext(wrapper)
+    await clickNext(wrapper)
+    expect(wrapper.find('[data-testid="step-4"]').exists()).toBe(true)
     await wrapper.find('[data-testid="next-button"]').trigger('click')
-    await wrapper.find('[data-testid="next-button"]').trigger('click')
-    // Click create group
-    await wrapper.find('[data-testid="create-group-button"]').trigger('click')
-    expect(wrapper.emitted('complete')).toHaveLength(1)
-    expect(mockPush).toHaveBeenCalledWith('/app/groups?action=create')
-  })
-
-  it('step 2: join group button emits complete and navigates', async () => {
-    const wrapper = mountOverlay()
-    await wrapper.find('[data-testid="next-button"]').trigger('click')
-    await wrapper.find('[data-testid="next-button"]').trigger('click')
-    await wrapper.find('[data-testid="join-group-button"]').trigger('click')
-    expect(wrapper.emitted('complete')).toHaveLength(1)
-    expect(mockPush).toHaveBeenCalledWith('/app/groups?action=join')
-  })
-
-  it('step 2: later button emits complete and navigates to matches', async () => {
-    const wrapper = mountOverlay()
-    await wrapper.find('[data-testid="next-button"]').trigger('click')
-    await wrapper.find('[data-testid="next-button"]').trigger('click')
-    await wrapper.find('[data-testid="later-button"]').trigger('click')
     expect(wrapper.emitted('complete')).toHaveLength(1)
     expect(mockPush).toHaveBeenCalledWith('/app/matches')
+  })
+
+  it('step 4 (hub): card click emits complete and navigates to its route', async () => {
+    const wrapper = mountOverlay()
+    await clickNext(wrapper)
+    await clickNext(wrapper)
+    await clickNext(wrapper)
+    await clickNext(wrapper)
+    await wrapper.find('[data-testid="hub-card-profile"]').trigger('click')
+    expect(wrapper.emitted('complete')).toHaveLength(1)
+    expect(mockPush).toHaveBeenCalledWith('/app/profile')
+  })
+
+  it('step 4 (hub): groups card navigates to /app/groups', async () => {
+    const wrapper = mountOverlay()
+    await clickNext(wrapper)
+    await clickNext(wrapper)
+    await clickNext(wrapper)
+    await clickNext(wrapper)
+    await wrapper.find('[data-testid="hub-card-groups"]').trigger('click')
+    expect(wrapper.emitted('complete')).toHaveLength(1)
+    expect(mockPush).toHaveBeenCalledWith('/app/groups')
   })
 
   it('has aria-modal and role dialog', () => {
@@ -109,5 +133,23 @@ describe('OnboardingOverlay', () => {
     const overlay = wrapper.find('[data-testid="onboarding-overlay"]')
     expect(overlay.attributes('role')).toBe('dialog')
     expect(overlay.attributes('aria-modal')).toBe('true')
+  })
+
+  it('exposes aria-live region with current step label', async () => {
+    const wrapper = mountOverlay()
+    const live = wrapper.find('[data-testid="step-aria-live"]')
+    expect(live.exists()).toBe(true)
+    expect(live.attributes('aria-live')).toBe('polite')
+  })
+
+  it('does not expose any deprecated step-2 group action buttons', async () => {
+    const wrapper = mountOverlay()
+    // Walk through all 5 steps; none should have action CTAs
+    for (let i = 0; i < 5; i++) {
+      expect(wrapper.find('[data-testid="create-group-button"]').exists()).toBe(false)
+      expect(wrapper.find('[data-testid="join-group-button"]').exists()).toBe(false)
+      expect(wrapper.find('[data-testid="later-button"]').exists()).toBe(false)
+      if (i < 4) await clickNext(wrapper)
+    }
   })
 })
