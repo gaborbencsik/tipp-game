@@ -51,19 +51,6 @@
         </button>
       </form>
 
-      <div class="my-4 flex items-center gap-3">
-        <hr class="flex-1 border-gray-300" />
-        <span class="text-sm text-gray-400">{{ $t('login.or') }}</span>
-        <hr class="flex-1 border-gray-300" />
-      </div>
-
-      <button
-        disabled
-        class="w-full px-6 py-3 border border-gray-300 rounded-lg opacity-50 cursor-not-allowed"
-      >
-        {{ $t('login.googleLogin') }}
-      </button>
-
       <p class="mt-6 text-center text-sm text-gray-500">
         <span v-if="mode === 'login'">
           {{ $t('login.noAccount') }}

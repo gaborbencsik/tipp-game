@@ -17,7 +17,6 @@ vi.mock('vue-router', async (importOriginal) => {
 vi.mock('@/lib/supabase', () => ({
   supabase: {
     auth: {
-      signInWithOAuth: vi.fn().mockResolvedValue({ error: null }),
       signOut: vi.fn().mockResolvedValue({ error: null }),
       getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
       onAuthStateChange: vi.fn().mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),

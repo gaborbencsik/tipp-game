@@ -19,7 +19,6 @@ vi.mock('vue-router', async (importOriginal) => {
 vi.mock('@/lib/supabase', () => ({
   supabase: {
     auth: {
-      signInWithOAuth: vi.fn().mockResolvedValue({ error: null }),
       signOut: vi.fn().mockResolvedValue({ error: null }),
       getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
       onAuthStateChange: vi.fn().mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),
@@ -121,19 +120,11 @@ describe('LoginView', () => {
     expect(wrapper.text()).toContain('Invalid credentials')
   })
 
-  it('renders the Google sign-in button', () => {
+  it('does not render a Google sign-in option', () => {
     const wrapper = mount(LoginView, {
       global: { plugins: [createPinia(), buildRouter()] },
     })
-    expect(wrapper.text()).toContain('Google')
-  })
-
-  it('Google button is disabled', () => {
-    const wrapper = mount(LoginView, {
-      global: { plugins: [createPinia(), buildRouter()] },
-    })
-    const googleBtn = wrapper.findAll('button').find(b => b.text().includes('Google'))
-    expect(googleBtn!.attributes('disabled')).toBeDefined()
+    expect(wrapper.text()).not.toContain('Google')
   })
 
   it('after successful login the store user is set', async () => {

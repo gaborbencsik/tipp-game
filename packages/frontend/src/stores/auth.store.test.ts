@@ -9,14 +9,12 @@ vi.mock('vue-router', () => ({
 }))
 
 const {
-  mockSignInWithOAuth,
   mockSignOut,
   mockGetSession,
   mockOnAuthStateChange,
   mockSignInWithPassword,
   mockSignUp,
 } = vi.hoisted(() => ({
-  mockSignInWithOAuth: vi.fn().mockResolvedValue({ error: null }),
   mockSignOut: vi.fn().mockResolvedValue({ error: null }),
   mockGetSession: vi.fn().mockResolvedValue({ data: { session: null } }),
   mockOnAuthStateChange: vi.fn().mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),
@@ -27,7 +25,6 @@ const {
 vi.mock('@/lib/supabase', () => ({
   supabase: {
     auth: {
-      signInWithOAuth: mockSignInWithOAuth,
       signOut: mockSignOut,
       getSession: mockGetSession,
       onAuthStateChange: mockOnAuthStateChange,
@@ -71,7 +68,6 @@ describe('auth.store', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     mockPush.mockClear()
-    mockSignInWithOAuth.mockClear()
     mockSignOut.mockClear()
     mockGetSession.mockClear()
     mockOnAuthStateChange.mockClear()
@@ -154,45 +150,6 @@ describe('auth.store', () => {
     store.user = MOCK_USER
     await store.logout()
     expect(store.isAuthenticated()).toBe(false)
-  })
-
-  // ─── login bypass tested via spy ──────────────────────────────────────────
-
-  it('login() sets user and navigates (via spy)', async () => {
-    const store = useAuthStore()
-    vi.spyOn(store, 'login').mockImplementation(async () => {
-      store.user = MOCK_USER
-      await mockPush({ name: 'home' })
-    })
-    await store.login()
-    expect(store.user).toEqual(MOCK_USER)
-    expect(mockPush).toHaveBeenCalledWith({ name: 'home' })
-  })
-
-  it('isAuthenticated() returns true after login() (via spy)', async () => {
-    const store = useAuthStore()
-    vi.spyOn(store, 'login').mockImplementation(async () => {
-      store.user = MOCK_USER
-    })
-    await store.login()
-    expect(store.isAuthenticated()).toBe(true)
-  })
-
-  // ─── login() real OAuth ────────────────────────────────────────────────────
-
-  it('login() real → signInWithOAuth called with correct params', async () => {
-    const store = useAuthStore()
-    vi.spyOn(store, 'login').mockImplementation(async () => {
-      await mockSignInWithOAuth({
-        provider: 'google',
-        options: { redirectTo: window.location.origin + '/auth/callback' },
-      })
-    })
-    await store.login()
-    expect(mockSignInWithOAuth).toHaveBeenCalledWith({
-      provider: 'google',
-      options: { redirectTo: window.location.origin + '/auth/callback' },
-    })
   })
 
   // ─── logout() real ────────────────────────────────────────────────────────
@@ -502,27 +459,6 @@ describe('auth.store', () => {
 
       await store.restoreSession()
       expect(store.user).toBeNull()
-    })
-
-    it('login() bypass → sessionStorage written with user and expiresAt', async () => {
-      const store = useAuthStore()
-      vi.spyOn(store, 'login').mockImplementation(async () => {
-        sessionStorage.setItem(DEV_SESSION_KEY, JSON.stringify({
-          user: MOCK_USER,
-          expiresAt: Date.now() + 90 * 24 * 60 * 60 * 1000,
-        }))
-        store.user = MOCK_USER
-        await mockPush({ name: 'home' })
-      })
-
-      await store.login()
-
-      expect(store.user).toEqual(MOCK_USER)
-      const raw = fakeStorage.getItem(DEV_SESSION_KEY)
-      expect(raw).not.toBeNull()
-      const parsed = JSON.parse(raw!) as { user: User; expiresAt: number }
-      expect(parsed.user).toEqual(MOCK_USER)
-      expect(parsed.expiresAt).toBeGreaterThan(Date.now())
     })
 
     it('logout() bypass → sessionStorage cleared', async () => {

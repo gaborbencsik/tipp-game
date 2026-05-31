@@ -121,23 +121,6 @@ export const useAuthStore = defineStore('auth', () => {
     })
   }
 
-  async function login(): Promise<void> {
-    if (DEV_AUTH_BYPASS) {
-      const dbUser = await api.auth.me('dev-bypass-token', localStorage.getItem('locale') ?? undefined)
-      sessionStorage.setItem(DEV_SESSION_KEY, JSON.stringify({
-        user: dbUser,
-        expiresAt: Date.now() + DEV_SESSION_TTL_MS,
-      }))
-      user.value = dbUser
-      await router.push({ name: 'home' })
-      return
-    }
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.origin + '/auth/callback' },
-    })
-  }
-
   async function logout(): Promise<void> {
     if (DEV_AUTH_BYPASS) {
       sessionStorage.removeItem(DEV_SESSION_KEY)
@@ -259,6 +242,6 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  return { user, ready, pendingInviteCode, isAuthenticated, isAdmin, savePendingInviteCode, clearPendingInviteCode, handleSession, restoreSession, login, logout, loginWithEmail, registerWithEmail, updateProfile, completeOnboarding, resetOnboarding }
+  return { user, ready, pendingInviteCode, isAuthenticated, isAdmin, savePendingInviteCode, clearPendingInviteCode, handleSession, restoreSession, logout, loginWithEmail, registerWithEmail, updateProfile, completeOnboarding, resetOnboarding }
 })
 
