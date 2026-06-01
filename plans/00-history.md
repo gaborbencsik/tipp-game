@@ -138,3 +138,4 @@
 | US-945 | Csoport végeredmény tipp – 12 csoport sorrendje + 8 továbbjutó 3. helyezett | Should Have |
 | US-946 | Bracket-progresszió tipp – pár-alapú győztes-pick a kieséses ágon | Should Have |
 | UX-028 | Torna tippek mobil UX redesign — bracket + group standings polish | Should Have |
+| UX-028 | Pontozási szabályzat modal MVP | Should Have |
