@@ -14,6 +14,15 @@ import type {
   ScoringExplainerSpecialType,
 } from '../types/index.js'
 
+class AppError extends Error {
+  readonly status: number
+  constructor(status: number, message: string) {
+    super(message)
+    this.status = status
+    this.name = 'AppError'
+  }
+}
+
 function toApiConfig(row: typeof scoringConfigs.$inferSelect): ScoringConfigFull {
   return {
     id: row.id,
@@ -34,7 +43,7 @@ async function loadDefaultConfig(): Promise<typeof scoringConfigs.$inferSelect> 
     .from(scoringConfigs)
     .where(eq(scoringConfigs.isGlobalDefault, true))
     .limit(1)
-  if (!rows[0]) throw new Error('Global scoring config not found')
+  if (!rows[0]) throw new AppError(404, 'Global scoring config not found')
   return rows[0]
 }
 
