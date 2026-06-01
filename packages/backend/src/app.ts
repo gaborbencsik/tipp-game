@@ -16,6 +16,7 @@ import { specialPredictionsRouter } from './routes/special-predictions.routes.js
 import { syncRouter } from './routes/sync.routes.js'
 import { internalSyncRouter } from './routes/internal-sync.routes.js'
 import { scoringConfigRouter } from './routes/scoring-config.routes.js'
+import { scoringRouter } from './routes/scoring.routes.js'
 
 const allowedOrigins = (process.env.CORS_ORIGIN ?? 'http://localhost:5173').split(',').map(o => o.trim())
 
@@ -56,6 +57,8 @@ app.use(internalSyncRouter.routes())
 app.use(internalSyncRouter.allowedMethods())
 app.use(scoringConfigRouter.routes())
 app.use(scoringConfigRouter.allowedMethods())
+app.use(scoringRouter.routes())
+app.use(scoringRouter.allowedMethods())
 
 app.on('error', (err: Error, ctx: Koa.Context) => {
   const entry: Record<string, unknown> = {
@@ -71,3 +74,4 @@ app.on('error', (err: Error, ctx: Koa.Context) => {
 })
 
 export { app }
+export default app
