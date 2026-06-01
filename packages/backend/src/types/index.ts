@@ -637,3 +637,26 @@ export interface TransfermarktSyncResult {
   readonly skipped: number
   readonly errors: readonly string[]
 }
+
+export interface ScoringExplainerSpecialType {
+  readonly id: string
+  readonly name: string
+  readonly description: string | null
+  readonly points: number
+  readonly source: 'group-owned' | 'subscribed-global'
+}
+
+export interface ScoringExplainerGroup {
+  readonly id: string
+  readonly name: string
+  readonly config: ScoringConfigFull
+  readonly configFrozenAt: string | null
+  readonly favoriteTeamDoublePoints: boolean
+  readonly specialTypes: ReadonlyArray<ScoringExplainerSpecialType>
+}
+
+export interface ScoringExplainerResponse {
+  readonly default: ScoringConfigFull
+  readonly defaultFrozenAt: string | null
+  readonly groups: ReadonlyArray<ScoringExplainerGroup>
+}
