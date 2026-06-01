@@ -125,6 +125,20 @@
             <span v-if="isExpanded">{{ $t('nav.leaderboard') }}</span>
           </router-link>
 
+          <button
+            type="button"
+            data-testid="nav-scoring-explainer"
+            class="flex items-center gap-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors text-left"
+            :class="isExpanded ? 'px-3' : 'px-3 justify-center'"
+            @click="openScoringExplainer"
+            @mouseenter="onSidebarMouseEnter"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-[18px] h-[18px] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span v-if="isExpanded">{{ $t('scoringExplainer.trigger.menu') }}</span>
+          </button>
+
           <DonationButton :sidebar-open="isExpanded" />
         </nav>
       </aside>
@@ -154,10 +168,12 @@ import DonationButton from './DonationButton.vue'
 import { useAuthStore } from '../stores/auth.store.js'
 import { useMatchesStore } from '../stores/matches.store.js'
 import { usePredictionsStore } from '../stores/predictions.store.js'
+import { useScoringExplainerStore } from '../stores/scoring-explainer.store.js'
 
 const authStore = useAuthStore()
 const matchesStore = useMatchesStore()
 const predictionsStore = usePredictionsStore()
+const scoringExplainerStore = useScoringExplainerStore()
 const sidebarOpen = ref(false)
 const sidebarHover = ref(false)
 let hoverTimeout: ReturnType<typeof setTimeout> | null = null
@@ -192,5 +208,10 @@ const untippedTodayCount = computed((): number => {
 
 async function onOnboardingComplete(): Promise<void> {
   await authStore.completeOnboarding()
+}
+
+async function openScoringExplainer(): Promise<void> {
+  sidebarOpen.value = false
+  await scoringExplainerStore.open('menu')
 }
 </script>
