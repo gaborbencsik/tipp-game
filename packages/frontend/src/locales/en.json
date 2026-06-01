@@ -633,5 +633,55 @@
       "bronze": "{team} bronze",
       "fourth": "{team} 4th"
     }
+  },
+  "scoringExplainer": {
+    "title": "Scoring rules",
+    "groupTitle": "{groupName} scoring",
+    "subtitleSingle": "Rules in effect for this group",
+    "subtitleMulti": "Rules in effect for your groups",
+    "frozenTooltip": "These rules are locked and won't change during the tournament.",
+    "matchScoring": "Match scoring",
+    "rules": {
+      "exactScore": "Exact score",
+      "correctWinnerAndDiff": "Correct winner + goal difference",
+      "correctWinner": "Correct winner",
+      "correctDraw": "Correct draw",
+      "correctOutcome": "Correct outcome (after penalties)",
+      "incorrect": "Wrong"
+    },
+    "examples": {
+      "you": "You",
+      "result": "Result",
+      "exactScore": "You: 2-1, Result: 2-1",
+      "correctWinnerAndDiff": "You: 3-1, Result: 2-0",
+      "correctWinner": "You: 2-0, Result: 3-1",
+      "correctDraw": "You: 1-1, Result: 2-2",
+      "correctOutcome": "You: home win, actual: home on penalties",
+      "incorrect": "You: 1-0, Result: 0-2"
+    },
+    "columns": {
+      "case": "Case",
+      "points": "Points",
+      "example": "Example"
+    },
+    "diffBadge": "Differs in {groupName}",
+    "bonus": {
+      "heading": "Bonuses",
+      "favoriteTeamTitle": "Favorite team: double points",
+      "favoriteTeamDesc": "When you tip your favorite team's match, points earned there ×2.",
+      "active": "Active in: {groups}"
+    },
+    "special": {
+      "heading": "Special predictions"
+    },
+    "footnote": "Points are awarded automatically after the final whistle. If the rules change during the tournament, already-awarded points are not affected.",
+    "close": "Close",
+    "ack": "Got it",
+    "fetchError": "Could not load scoring rules",
+    "trigger": {
+      "menu": "Scoring",
+      "leaderboard": "How do I earn points?",
+      "iconAria": "Open scoring rules"
+    }
   }
 }

@@ -633,5 +633,55 @@
       "bronze": "{team} bronz",
       "fourth": "{team} 4."
     }
+  },
+  "scoringExplainer": {
+    "title": "Pontozási szabályzat",
+    "groupTitle": "{groupName} pontozása",
+    "subtitleSingle": "Az ebben a csoportban érvényes szabályok",
+    "subtitleMulti": "A te csoportjaidban érvényes szabályok",
+    "frozenTooltip": "Ez a szabályzat véglegesítve, a torna alatt nem változik.",
+    "matchScoring": "Meccs-pontozás",
+    "rules": {
+      "exactScore": "Pontos eredmény",
+      "correctWinnerAndDiff": "Helyes győztes + gólkülönbség",
+      "correctWinner": "Helyes győztes",
+      "correctDraw": "Helyes döntetlen",
+      "correctOutcome": "Helyes kimenetel (11-esek után)",
+      "incorrect": "Hibás"
+    },
+    "examples": {
+      "you": "Te",
+      "result": "Eredmény",
+      "exactScore": "Te: 2-1, Eredmény: 2-1",
+      "correctWinnerAndDiff": "Te: 3-1, Eredmény: 2-0",
+      "correctWinner": "Te: 2-0, Eredmény: 3-1",
+      "correctDraw": "Te: 1-1, Eredmény: 2-2",
+      "correctOutcome": "Te: hazai továbbjutás, valódi: hazai 11-esekkel",
+      "incorrect": "Te: 1-0, Eredmény: 0-2"
+    },
+    "columns": {
+      "case": "Eset",
+      "points": "Pontok",
+      "example": "Példa"
+    },
+    "diffBadge": "Eltérés a {groupName}-ben",
+    "bonus": {
+      "heading": "Bónuszok",
+      "favoriteTeamTitle": "Kedvenc csapat: dupla pont",
+      "favoriteTeamDesc": "Ha a kedvenc csapatod meccsét tippeled, az ott szerzett pont ×2.",
+      "active": "Aktív: {groups}"
+    },
+    "special": {
+      "heading": "Speciális tippek"
+    },
+    "footnote": "A pontok a meccs lefújása után automatikusan kerülnek jóváírásra. Ha a szabályzat változik a torna közben, a már kiosztott pontokat nem érinti.",
+    "close": "Bezárás",
+    "ack": "Értem",
+    "fetchError": "Nem sikerült betölteni a szabályokat",
+    "trigger": {
+      "menu": "Pontozás",
+      "leaderboard": "Hogyan kapok pontot?",
+      "iconAria": "Pontozás megnyitása"
+    }
   }
 }
