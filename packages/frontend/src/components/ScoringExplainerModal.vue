@@ -59,7 +59,7 @@ const showBonus = computed(() => bonusGroups.value.length > 0)
 const specialGroupOwned = computed(() => {
   const out: Array<{ groupName: string; types: typeof groups.value[0]['specialTypes'] }> = []
   for (const g of groups.value) {
-    const owned = g.specialTypes.filter(s => s.source === 'group')
+    const owned = g.specialTypes.filter(s => s.source === 'group-owned')
     if (owned.length > 0) out.push({ groupName: g.name, types: owned })
   }
   return out
@@ -69,7 +69,7 @@ const specialSubscribed = computed(() => {
   const seen = new Map<string, typeof groups.value[0]['specialTypes'][number]>()
   for (const g of groups.value) {
     for (const s of g.specialTypes) {
-      if (s.source === 'global' && !seen.has(s.id)) seen.set(s.id, s)
+      if (s.source === 'subscribed-global' && !seen.has(s.id)) seen.set(s.id, s)
     }
   }
   return Array.from(seen.values())
@@ -202,7 +202,7 @@ onUnmounted(() => {
             <h4 class="mb-1 text-sm font-medium text-gray-700 dark:text-gray-300">{{ entry.groupName }}</h4>
             <ul class="space-y-1 text-sm">
               <li v-for="s in entry.types" :key="s.id" class="flex items-center justify-between">
-                <span class="text-gray-900 dark:text-gray-100">{{ s.label }}</span>
+                <span class="text-gray-900 dark:text-gray-100">{{ s.name }}</span>
                 <span
                   class="inline-block rounded-full px-2 py-0.5 text-xs font-semibold"
                   :class="pointsPillClass(s.points)"
@@ -212,7 +212,7 @@ onUnmounted(() => {
           </div>
           <ul v-if="specialSubscribed.length > 0" class="space-y-1 text-sm">
             <li v-for="s in specialSubscribed" :key="s.id" class="flex items-center justify-between">
-              <span class="text-gray-900 dark:text-gray-100">{{ s.label }}</span>
+              <span class="text-gray-900 dark:text-gray-100">{{ s.name }}</span>
               <span
                 class="inline-block rounded-full px-2 py-0.5 text-xs font-semibold"
                 :class="pointsPillClass(s.points)"
