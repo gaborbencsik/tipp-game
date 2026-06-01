@@ -1,10 +1,18 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { supabase } from '../lib/supabase.js'
 import { api } from '../api/index.js'
-import { useAuthStore } from './auth.store.js'
 import { useToastStore } from './toast.store.js'
 import type { ScoringExplainerResponse } from '../types/index.js'
+
+const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
+
+async function getAccessToken(): Promise<string> {
+  if (DEV_AUTH_BYPASS) return 'dev-bypass-token'
+  const { data } = await supabase.auth.getSession()
+  return data.session?.access_token ?? ''
+}
 
 export type ScoringExplainerSource = 'menu' | 'leaderboard' | 'group' | 'match-tip' | 'special-tip'
 
@@ -23,12 +31,12 @@ export const useScoringExplainerStore = defineStore('scoringExplainer', () => {
       isOpen.value = true
       return
     }
-    const auth = useAuthStore()
-    if (!auth.token) return
+    const token = await getAccessToken()
+    if (!token) return
     loading.value = true
     error.value = null
     try {
-      data.value = await api.scoring.explainer(auth.token)
+      data.value = await api.scoring.explainer(token)
       isOpen.value = true
     } catch (e) {
       error.value = e instanceof Error ? e.message : 'Unknown error'

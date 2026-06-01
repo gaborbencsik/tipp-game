@@ -7,8 +7,12 @@ vi.mock('../api/index.js', () => ({
   api: { scoring: { explainer: mockExplainer } },
 }))
 
-vi.mock('./auth.store.js', () => ({
-  useAuthStore: () => ({ token: 'tok' }),
+vi.mock('../lib/supabase.js', () => ({
+  supabase: {
+    auth: {
+      getSession: () => Promise.resolve({ data: { session: { access_token: 'tok' } } }),
+    },
+  },
 }))
 
 vi.mock('./toast.store.js', () => ({
