@@ -106,6 +106,7 @@ onUnmounted(() => {
     v-if="store.isOpen && data"
     role="dialog"
     aria-modal="true"
+    data-testid="scoring-explainer-modal"
     class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
     @click.self="close"
   >
@@ -122,6 +123,7 @@ onUnmounted(() => {
           </div>
           <button
             type="button"
+            data-testid="scoring-explainer-close"
             class="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
             :aria-label="t('scoringExplainer.close')"
             @click="close"
