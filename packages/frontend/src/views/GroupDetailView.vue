@@ -10,8 +10,9 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
         </svg>
       </router-link>
-      <div class="min-w-0">
+      <div class="min-w-0 flex items-center gap-2">
         <h1 class="text-xl md:text-2xl font-bold text-gray-900 truncate">{{ groupName }}</h1>
+        <ScoringExplainerTrigger source="group" variant="icon" />
       </div>
     </div>
 
@@ -887,6 +888,7 @@ import { ref, computed, onMounted, onUnmounted, reactive, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import AppLayout from '../components/AppLayout.vue'
+import ScoringExplainerTrigger from '../components/ScoringExplainerTrigger.vue'
 import { formatRelativeDeadline } from '../lib/deadline.js'
 import TeamSelectDropdown from '../components/predictions/TeamSelectDropdown.vue'
 import PlayerSelectCombobox from '../components/predictions/PlayerSelectCombobox.vue'
