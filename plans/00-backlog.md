@@ -27,11 +27,12 @@
 | UX-020 | Onboarding overlay átalakítása mockup alapján – 5 lépés | Should Have | — |
 | UX-021 | Döntés a speciális tippek tab sorsáról (törlés vagy újra-aktiválás) | Should Have | — |
 | UX-022 | Torna tippek kitöltöttsége az admin statisztikákban | Should Have | UX-021 |
-| UX-029 | Pontozási szabályzat modal – polished error state | Nice to Have | (Pontozási szabályzat MVP) |
+| UX-028 | Pontozási szabályzat modal MVP | Should Have | — |
+| UX-029 | Pontozási szabályzat modal – polished error state | Nice to Have | UX-028 |
 | SEC-002 | HMAC-aláírt meghívó URL-ek | Nice to Have | — |
 
 > UX-019 felülírva — UX-020 implementálja a frissített, mockup-alapú 5 lépéses onboardingot.
 
 ---
 
-**Haladás: 134 / 160 story kész** — Must Have: 31/32, Should Have: 103/123, Nice to Have: 0/5 (US-937 won't do)
+**Haladás: 134 / 161 story kész** — Must Have: 31/32, Should Have: 103/124, Nice to Have: 0/5 (US-937 won't do)
