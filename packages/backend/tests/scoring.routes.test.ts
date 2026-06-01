@@ -10,9 +10,9 @@ vi.mock('../src/services/scoring-explainer.service.js', () => ({
 }))
 
 vi.mock('../src/middleware/auth.middleware.js', () => ({
-  authMiddleware: async (ctx: any, next: any) => {
+  authMiddleware: async (ctx: any, next: () => Promise<void>) => {
     if (ctx.headers.authorization === 'Bearer valid') {
-      ctx.state.user = { id: 'user-1' }
+      ctx.state.user = { supabaseId: 'user-1' }
       await next()
     } else {
       ctx.status = 401
@@ -21,7 +21,7 @@ vi.mock('../src/middleware/auth.middleware.js', () => ({
   },
 }))
 
-import app from '../src/app.js'
+import { app } from '../src/app.js'
 
 describe('GET /api/scoring/explainer', () => {
   beforeEach(() => vi.clearAllMocks())

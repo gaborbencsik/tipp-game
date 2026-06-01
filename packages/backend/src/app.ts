@@ -74,4 +74,3 @@ app.on('error', (err: Error, ctx: Koa.Context) => {
 })
 
 export { app }
-export default app
