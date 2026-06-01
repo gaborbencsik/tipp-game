@@ -421,6 +421,13 @@
       "when": 1788000000003,
       "tag": "0059_set_friendly_match_venues",
       "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "7",
+      "when": 1788000000004,
+      "tag": "0060_update_upset_special_choices",
+      "breakpoints": true
     }
   ]
 }
