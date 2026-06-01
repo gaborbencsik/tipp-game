@@ -1,6 +1,6 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-05-31
+> Utoljára frissítve: 2026-06-01
 
 ## Nyitott story-k
 
@@ -8,6 +8,11 @@
 |----------|-----|-----------|----------|
 | OPS-002 | Render cron service konfigurálása az adaptive sync-hez | Must Have | — |
 | OPS-001 | Strukturált logolás és frontend hibakezelés (MVP) | Should Have | — |
+| PUSH-001 | Webpush infrastruktúra és admin trigger UI | Should Have | — |
+| PUSH-002 | Push: meccs előtt 30 perccel, ha nincs tipp | Should Have | PUSH-001 |
+| PUSH-003 | Push: torna tipp deadline előtt 1 nappal | Should Have | PUSH-001 |
+| PUSH-004 | Push: napi első meccs előtt 1 órával (Europe/Budapest) | Should Have | PUSH-001 |
+| PUSH-005 | Frequency cap és csendes órák a webpush küldéshez | Should Have | PUSH-001 |
 | US-1204 | NB II liga szinkronizáció támogatás | Nice to Have | ~~US-1202~~, ~~US-1203~~ |
 | US-1303 | Match Pulse – automatikus insight generálás cron jobban | Should Have | ~~US-1302~~, ~~US-1203~~ |
 | US-1304 | Match Pulse – insight megjelenítése a meccs kártyán | Should Have | ~~US-1302~~, ~~US-1310~~ |
@@ -21,10 +26,12 @@
 | UX-016 | Kedvenc csapat dupla pont jelzés a meccs kártyán | Should Have | — |
 | UX-020 | Onboarding overlay átalakítása mockup alapján – 5 lépés | Should Have | — |
 | UX-021 | Döntés a speciális tippek tab sorsáról (törlés vagy újra-aktiválás) | Should Have | — |
+| UX-022 | Torna tippek kitöltöttsége az admin statisztikákban | Should Have | UX-021 |
+| UX-029 | Pontozási szabályzat modal – polished error state | Nice to Have | (Pontozási szabályzat MVP) |
 | SEC-002 | HMAC-aláírt meghívó URL-ek | Nice to Have | — |
 
 > UX-019 felülírva — UX-020 implementálja a frissített, mockup-alapú 5 lépéses onboardingot.
 
 ---
 
-**Haladás: 134 / 150 story kész** — Must Have: 31/32, Should Have: 103/114, Nice to Have: 0/4 (US-937 won't do)
+**Haladás: 134 / 160 story kész** — Must Have: 31/32, Should Have: 103/123, Nice to Have: 0/5 (US-937 won't do)

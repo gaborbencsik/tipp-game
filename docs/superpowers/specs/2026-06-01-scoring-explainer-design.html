@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pontozási szabályzat modal — Design Spec</title>
+<style>
+  :root {
+    --bg: #fafaf9;
+    --surface: #ffffff;
+    --border: #e7e5e4;
+    --text: #1c1917;
+    --muted: #57534e;
+    --accent: #0f766e;
+    --accent-soft: #ccfbf1;
+    --warning: #b45309;
+    --warning-soft: #fef3c7;
+    --code-bg: #f5f5f4;
+    --code-border: #e7e5e4;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.65;
+    margin: 0;
+    padding: 0;
+  }
+  .container {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 48px 32px 96px;
+  }
+  header.spec-header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 24px;
+    margin-bottom: 40px;
+  }
+  header.spec-header h1 {
+    margin: 0 0 8px;
+    font-size: 2.2rem;
+    letter-spacing: -0.02em;
+  }
+  .meta {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+  .meta span { display: inline-flex; align-items: center; gap: 6px; }
+  .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: var(--warning-soft);
+    color: var(--warning);
+    font-weight: 600;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  h2 {
+    margin-top: 56px;
+    margin-bottom: 16px;
+    font-size: 1.55rem;
+    letter-spacing: -0.01em;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+  }
+  h3 {
+    margin-top: 32px;
+    margin-bottom: 12px;
+    font-size: 1.18rem;
+    color: var(--accent);
+  }
+  h4 {
+    margin-top: 24px;
+    margin-bottom: 8px;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+  }
+  p { margin: 12px 0; }
+  ul, ol { padding-left: 22px; }
+  li { margin: 4px 0; }
+  blockquote {
+    margin: 16px 0;
+    padding: 12px 18px;
+    background: var(--accent-soft);
+    border-left: 4px solid var(--accent);
+    border-radius: 4px;
+    color: #064e3b;
+  }
+  blockquote em { color: var(--muted); font-style: normal; font-size: 0.92rem; }
+  code {
+    font-family: "SF Mono", "Menlo", "Consolas", monospace;
+    background: var(--code-bg);
+    border: 1px solid var(--code-border);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 0.9em;
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--code-border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    overflow-x: auto;
+    font-size: 0.88rem;
+    line-height: 1.55;
+  }
+  pre code {
+    background: transparent;
+    border: none;
+    padding: 0;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  th, td {
+    text-align: left;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  th {
+    background: #f5f5f4;
+    font-weight: 600;
+    font-size: 0.92rem;
+  }
+  tr:last-child td { border-bottom: none; }
+  td code { font-size: 0.85em; }
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px 24px;
+    margin-bottom: 40px;
+  }
+  .toc h4 { margin-top: 0; }
+  .toc ol { margin: 0; padding-left: 22px; }
+  .toc a { color: var(--accent); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  .callout {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    border-radius: 6px;
+    padding: 14px 18px;
+    margin: 16px 0;
+  }
+  .callout-warn {
+    border-left-color: var(--warning);
+    background: var(--warning-soft);
+  }
+  .points-pill {
+    display: inline-block;
+    min-width: 32px;
+    padding: 2px 10px;
+    background: var(--accent);
+    color: white;
+    border-radius: 999px;
+    font-weight: 700;
+    text-align: center;
+    font-size: 0.92rem;
+  }
+  footer.spec-footer {
+    margin-top: 64px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 0.88rem;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header class="spec-header">
+  <h1>Pontozási szabályzat modal</h1>
+  <p style="margin: 4px 0 16px; color: var(--muted); font-size: 1.05rem;">Design specification — VB Tippjáték</p>
+  <div class="meta">
+    <span><strong>Dátum:</strong> 2026-06-01</span>
+    <span><strong>Státusz:</strong> <span class="badge">Draft</span></span>
+    <span><strong>Owner:</strong> Product + UX</span>
+  </div>
+</header>
+
+<div class="toc">
+  <h4>Tartalomjegyzék</h4>
+  <ol>
+    <li><a href="#s1">Probléma és cél</a></li>
+    <li><a href="#s2">Megjelenés (UX)</a></li>
+    <li><a href="#s3">Tartalom</a></li>
+    <li><a href="#s4">Backend</a></li>
+    <li><a href="#s5">Frontend</a></li>
+    <li><a href="#s6">Tesztelés</a></li>
+    <li><a href="#s7">Telemetria</a></li>
+    <li><a href="#s8">Most NEM csináljuk (YAGNI)</a></li>
+    <li><a href="#s9">Érintett fájlok</a></li>
+  </ol>
+</div>
+
+<h2 id="s1">1. Probléma és cél</h2>
+<p>A pontozási szabályok ma csak a backend kódjában (<code>scoring.service.ts</code>) és az admin felületen érhetők el. A játékosok nem értik, miért kaptak X pontot egy meccsre, és nem tudnak tudatosan stratégiázni (pl. érdemes-e kockáztatni a pontos eredményt). Csoportonként eltérhet a pontozás, ezt sehol nem látják.</p>
+<div class="callout">
+  <strong>Cél:</strong> bárhonnan a tippjáték oldaláról 1 kattintással elérhető, csoport-specifikus, példákkal magyarázott pontozási szabályzat.
+</div>
+<div class="callout">
+  <strong>Sikerkritérium:</strong> a felhasználó saját szavaival el tudja mondani a 6 alap-pontozást, és tudja, hogy a csoportja eltér-e a globális defaulttól.
+</div>
+
+<h2 id="s2">2. Megjelenés (UX)</h2>
+<p><strong>Komponens:</strong> egyetlen <code>ScoringExplainerModal.vue</code>, mind a 4 belépési pontról ugyanaz nyílik.</p>
+
+<h4>Belépési pontok</h4>
+<ul>
+  <li><strong>Főmenü:</strong> "Pontozás" menüpont (asztal: nav, mobil: hamburger menü)</li>
+  <li><strong>Ranglista oldal:</strong> a fejlécben "Hogyan kapok pontot?" link (ikon + szöveg)</li>
+  <li><strong>Csoport oldal:</strong> a csoport neve mellett <code>(i)</code> ikon — kontextuálisan az adott csoport pontozása</li>
+  <li><strong>Tipp képernyő (Match + Special):</strong> a tipp form fejlécében <code>(i)</code> ikon</li>
+</ul>
+
+<h4>Modal layout</h4>
+<ul>
+  <li><strong>Asztal:</strong> középre igazított dialog, max szélesség ~640px, scrollozható törzs</li>
+  <li><strong>Mobil:</strong> teljes képernyős sheet, alulról csúszik fel, sticky fejléc + bezáró</li>
+  <li><strong>Fejléc:</strong> cím + bezáró X, frozen állapotnál lakat-ikon + tooltip</li>
+  <li><strong>Törzs:</strong> 3 fő szekció (lásd 3. pont)</li>
+  <li><strong>Lábléc:</strong> "Értem" CTA gomb</li>
+</ul>
+
+<h4>Hozzáférhetőség (a11y)</h4>
+<p>Focus trap, ESC zár, trigger gombokon <code>aria-label</code>, modal <code>role="dialog"</code> + <code>aria-labelledby</code>, <code>aria-describedby</code>.</p>
+
+<h4>Állapotkezelés</h4>
+<p>Pinia store (<code>useScoringExplainerStore</code>) — <code>isOpen</code>, <code>data</code>, <code>loading</code>, <code>error</code>, <code>lastSource</code>, <code>open(source)</code>, <code>close()</code>. Bárhonnan ugyanúgy nyitható.</p>
+
+<h2 id="s3">3. Tartalom</h2>
+
+<h3>3.1 Csoport-kontextus logika</h3>
+<p>A modal csak bejelentkezett user számára érhető el (a 4 belépési pont mind authentikációt igényel). Ezért a logika:</p>
+<table>
+  <thead><tr><th>Eset</th><th>Mit lát</th></tr></thead>
+  <tbody>
+    <tr><td>1 csoport</td><td>annak a csoportnak az effektív configja egyetlen táblaként; fejléc: "[Csoportnév] pontozása"</td></tr>
+    <tr><td>2+ csoport</td><td>default config a fő nézet; minden eltérő csoport sora kap egy "Eltérés a [Csoportnév]-ben" badge-et az érintett mező mellett</td></tr>
+  </tbody>
+</table>
+<p>A "0 csoport" eset (bejelentkezett, de csoport-tagság nélkül) gyakorlatilag nem fordul elő, mert új userek a regisztráció után automatikusan kapnak csoport-tagságot vagy oda kell csatlakozniuk; ha mégis előfordul, a modal a globális defaultot mutatja "Általános szabályzat" fejléccel.</p>
+
+<h3>3.2 Meccs-pontozás (mindig látszik)</h3>
+<p>Táblázat 3 oszloppal: <strong>Eset / Pontok / Példa</strong>. A 6 szabály a <code>scoring.service.ts:18–67</code> szerint:</p>
+<table>
+  <thead><tr><th>Eset</th><th style="width:80px;">Default</th><th>Példa</th></tr></thead>
+  <tbody>
+    <tr><td>Pontos eredmény</td><td><span class="points-pill">3</span></td><td>Te: 2-1, Eredmény: 2-1</td></tr>
+    <tr><td>Helyes győztes + gólkülönbség</td><td><span class="points-pill">2</span></td><td>Te: 3-1, Eredmény: 2-0</td></tr>
+    <tr><td>Helyes győztes</td><td><span class="points-pill">1</span></td><td>Te: 2-0, Eredmény: 3-1</td></tr>
+    <tr><td>Helyes döntetlen</td><td><span class="points-pill">2</span></td><td>Te: 1-1, Eredmény: 2-2</td></tr>
+    <tr><td>Helyes kimenetel (11-esek után)</td><td><span class="points-pill">1</span></td><td>Te: hazai továbbjutás, valódi: hazai 11-esekkel</td></tr>
+    <tr><td>Hibás</td><td><span class="points-pill" style="background: #57534e;">0</span></td><td>Te: 1-0, Eredmény: 0-2</td></tr>
+  </tbody>
+</table>
+
+<h3>3.3 Bónuszok</h3>
+<p>Csak akkor jelenik meg, ha a felhasználó legalább egy csoportjában <code>favoriteTeamDoublePoints = true</code>:</p>
+<blockquote>
+  <strong>Kedvenc csapat: dupla pont</strong> — Ha a kedvenc csapatod meccsét tippeled, az ott szerzett pont ×2.<br>
+  <em>Aktív: [Csoportnév1, Csoportnév2]</em>
+</blockquote>
+
+<h3>3.4 Speciális tippek</h3>
+<p>Az adott kontextusú special tipp típusok listája (<code>specialPredictionTypes</code> + feliratkozott globálisok). Oszlopok: <strong>Tipp neve / Leírás / Pontok</strong>. Ha 2+ csoport és eltérnek, csoportonként alszekció.</p>
+<p>A backend <code>source</code> mezővel jelöli az eredetet (<code>group-owned</code> | <code>subscribed-global</code>); a UI-ban most ezt nem mutatjuk vizuálisan, csak debug célból elérhető.</p>
+
+<h3>3.5 Lábjegyzet</h3>
+<blockquote>A pontok a meccs lefújása után automatikusan kerülnek jóváírásra. Ha a szabályzat változik a torna közben, a már kiosztott pontokat nem érinti.</blockquote>
+
+<h2 id="s4">4. Backend</h2>
+
+<h3>4.1 Új endpoint</h3>
+<p><code>GET /api/scoring/explainer</code> — bejelentkezett userek számára (a meglévő <code>authMiddleware</code> használatával).</p>
+<p><strong>Response shape:</strong></p>
+<pre><code>{
+  default: ScoringConfig,
+  defaultFrozenAt: string | null,
+  groups: Array&lt;{
+    id: string,
+    name: string,
+    config: ScoringConfig,
+    configFrozenAt: string | null,
+    favoriteTeamDoublePoints: boolean,
+    specialTypes: Array&lt;SpecialType &amp; {
+      source: 'group-owned' | 'subscribed-global'
+    }&gt;
+  }&gt;
+}</code></pre>
+<p><code>groups[].specialTypes</code> mind a csoport-saját (<code>group_id = X</code>), mind a <code>groupGlobalTypeSubscriptions</code>-ön keresztül feliratkozott globálisokat tartalmazza.</p>
+<p>A soft-delete-tett csoportok kihagyva (<code>isNull(groups.deletedAt)</code>).</p>
+
+<h3>4.2 Service és route</h3>
+<ul>
+  <li><code>packages/backend/src/services/scoring-explainer.service.ts</code> — <strong>csak olvasó aggregátor</strong> a meglévő <code>scoring-config.service.ts</code>, <code>global-special-types.service.ts</code>, <code>global-type-subscriptions.service.ts</code> fölött. Üzleti logika nem kerül bele.</li>
+  <li><code>packages/backend/src/routes/scoring.routes.ts</code> — új public route a <code>/api/scoring</code> prefixen, az <code>authMiddleware</code>-rel.</li>
+</ul>
+
+<h3>4.3 Caching</h3>
+<div class="callout callout-warn">
+  <strong>Nincs cache.</strong> A query triviális (3 kis tábla, kulcs-lookup), és az admin recalc flow után azonnal pontos szabályzatot mutat — pont akkor, amikor számít.
+</div>
+
+<h3>4.4 Frozen state</h3>
+<p>A backend visszaadja a <code>frozenAt</code> időbélyeget. <strong>A modal mindig a current configot mutatja.</strong> Ha a <code>frozenAt</code> nem null, a fejlécben egy kis lakat-ikon jelenik meg + tooltip: <em>"Ez a szabályzat véglegesítve, a torna alatt nem változik."</em> — ez csak egy státusz-jelzés, a tartalom változatlan.</p>
+
+<h2 id="s5">5. Frontend</h2>
+
+<h3>5.1 Modulok</h3>
+<ul>
+  <li><code>packages/frontend/src/api/scoring.ts</code> — fetch wrapper a <code>/api/scoring/explainer</code>-hez</li>
+  <li><code>packages/frontend/src/stores/scoring-explainer.store.ts</code> — Pinia: <code>isOpen</code>, <code>data</code>, <code>loading</code>, <code>error</code>, <code>lastSource</code>, <code>open(source)</code>, <code>close()</code></li>
+  <li><code>packages/frontend/src/components/ScoringExplainerModal.vue</code> — a tényleges modal</li>
+  <li><code>packages/frontend/src/components/ScoringExplainerTrigger.vue</code> — kis ikon/link komponens, props: <code>source</code>, <code>variant: 'icon' | 'link'</code></li>
+</ul>
+
+<h3>5.2 Adatfolyam</h3>
+<ul>
+  <li><strong>Lazy load:</strong> a fetch csak az első nyitáskor fut le, az adat session végéig a store-ban marad</li>
+  <li><strong>Diff számítás (frontend):</strong> a default és group config között az alábbi 6 mezőt hasonlítja össze: <code>exactScore</code>, <code>correctWinnerAndDiff</code>, <code>correctWinner</code>, <code>correctDraw</code>, <code>correctOutcome</code>, <code>incorrect</code>. Ha a schema bővül, a spec és a diff field set bővül.</li>
+  <li><strong>Hibakezelés (MVP):</strong> ha a fetch elhasal, a modal nem nyílik meg, és egy toast jelenik meg: <em>"Nem sikerült betölteni a szabályokat"</em> (a meglévő <code>ToastContainer</code> használatával). A modalon belüli polished error state (statikus fallback + retry gomb) külön nice-to-have story alatt — lásd <code>UX-029</code>.</li>
+</ul>
+
+<h3>5.3 Lokalizáció (i18n)</h3>
+<p>A projekt már használ <code>vue-i18n</code>-t (<code>packages/frontend/src/i18n/index.ts</code>, <code>hu</code>/<code>en</code> locale).</p>
+<ul>
+  <li>A modal minden user-facing stringje a <code>hu.json</code> / <code>en.json</code> fájlokba kerül, namespace: <code>scoringExplainer.*</code></li>
+  <li>Trigger ikonok/linkek <code>aria-label</code>-je is i18n-en</li>
+  <li>A 3.2 táblázat példáinak <strong>kísérőszövege</strong> fordítva ("Te:", "Eredmény:") — a gólszámok nyilván nem</li>
+  <li>A backend nyers adatokat ad (számok, enum-szerű kulcsok), a UI fordít</li>
+  <li><code>specialPredictionTypes.name</code> és <code>description</code> (DB-ben tárolt user content) most <strong>nem</strong> fordítva — külön story</li>
+</ul>
+
+<h2 id="s6">6. Tesztelés</h2>
+
+<h3>6.1 Backend (Vitest)</h3>
+<p><code>scoring-explainer.service.test.ts</code>:</p>
+<ul>
+  <li>1-csoport user → 1 elemű <code>groups</code>, helyes <code>config</code>, <code>frozenAt</code>, <code>favoriteTeamDoublePoints</code></li>
+  <li>2+ csoport eltérő configgal → mindegyik a saját configjával</li>
+  <li>special tippek: csoport-saját + feliratkozott globális összeadva, helyes <code>source</code> címkével</li>
+  <li><code>frozenAt</code> érték helyesen propagálódik (default + group szinten)</li>
+  <li>soft-delete-tett csoportok kihagyva</li>
+  <li>nem-bejelentkezett kérés → 401 (a sima <code>authMiddleware</code>-en keresztül)</li>
+</ul>
+<p>Route-szintű integráció: <code>GET /api/scoring/explainer</code> 200 valid tokennel, 401 anélkül.</p>
+
+<h3>6.2 Frontend (Vitest)</h3>
+<ul>
+  <li><code>scoring-explainer.store.test.ts</code>: <code>open()</code> lazy fetch, <code>close()</code>, retry hibára, második nyitás cache-ből</li>
+  <li><code>ScoringExplainerModal.test.ts</code>: 1/2+ csoport mód helyes renderelése, "Eltérés" badge, frozen lakat ikon megjelenése <code>frozenAt != null</code> esetén, fetch hiba esetén toast + modal nem nyílik, focus trap + ESC, i18n key-ek léteznek <code>hu</code> és <code>en</code> alatt</li>
+</ul>
+
+<h3>6.3 E2E (Playwright)</h3>
+<ul>
+  <li>Bejelentkezett user a ranglistáról nyitja a modalt → látja a saját csoportja szabályait → bezárja</li>
+  <li>2+ csoporttal rendelkező user a főmenüből nyitja → látja a default szabályokat eltérés-badge-ekkel</li>
+</ul>
+
+<h2 id="s7">7. Telemetria</h2>
+<p>Esemény-szintű analytics:</p>
+<ul>
+  <li><code>scoring_explainer_opened</code> — props: <code>source</code> (<code>menu</code> | <code>leaderboard</code> | <code>group</code> | <code>match-tip</code> | <code>special-tip</code>), <code>groupCount</code> (1 | 2+), <code>userId</code></li>
+  <li><code>scoring_explainer_closed</code> — props: <code>durationMs</code></li>
+</ul>
+<p>Nem mérünk most: scrolldepth, szekciónkénti idő, A/B variánsokat.</p>
+
+<h2 id="s8">8. Most NEM csináljuk (YAGNI)</h2>
+<ul>
+  <li>Dedikált <code>/scoring</code> SEO-oldal</li>
+  <li>Inline lehajtható verzió</li>
+  <li>DB-ben tárolt special prediction type nevek/leírások fordítása (külön story)</li>
+  <li>Polished error state a modalon belül (retry gomb, statikus fallback szabálytábla) — külön story: <code>UX-029</code></li>
+  <li>Scrolldepth / szekciós analytics + A/B tesztek</li>
+  <li>Vizuális magyarázók (animált példák, ikonok minden sorhoz)</li>
+  <li>Csoportonkénti összehasonlító mátrix (2+ csoportnál csak diff badge)</li>
+  <li>PDF export / nyomtatás-barát nézet</li>
+  <li>Push értesítés a szabályzat változásakor</li>
+</ul>
+
+<h2 id="s9">9. Érintett fájlok (összegzés)</h2>
+
+<h4>Backend (új)</h4>
+<ul>
+  <li><code>packages/backend/src/services/scoring-explainer.service.ts</code> (+ test)</li>
+  <li><code>packages/backend/src/routes/scoring.routes.ts</code> (+ integration test)</li>
+</ul>
+
+<h4>Backend (módosított)</h4>
+<ul><li>route registry (a <code>scoring.routes.ts</code> bekötése)</li></ul>
+
+<h4>Frontend (új)</h4>
+<ul>
+  <li><code>packages/frontend/src/api/scoring.ts</code></li>
+  <li><code>packages/frontend/src/stores/scoring-explainer.store.ts</code> (+ test)</li>
+  <li><code>packages/frontend/src/components/ScoringExplainerModal.vue</code> (+ test)</li>
+  <li><code>packages/frontend/src/components/ScoringExplainerTrigger.vue</code></li>
+</ul>
+
+<h4>Frontend (módosított)</h4>
+<ul>
+  <li>főmenü navigáció (a "Pontozás" menüpont hozzáadása)</li>
+  <li>ranglista view (link)</li>
+  <li>csoport view (ikon)</li>
+  <li>match tip view (ikon)</li>
+  <li>special tip view (ikon)</li>
+  <li><code>packages/frontend/src/locales/hu.json</code> és <code>en.json</code> (új <code>scoringExplainer.*</code> namespace)</li>
+</ul>
+
+<h4>E2E (új)</h4>
+<ul><li><code>e2e/scoring-explainer.spec.ts</code> (2 happy path)</li></ul>
+
+<footer class="spec-footer">
+  Generated from <code>docs/superpowers/specs/2026-06-01-scoring-explainer-design.md</code>
+</footer>
+
+</div>
+</body>
+</html>

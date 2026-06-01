@@ -37,11 +37,14 @@ A pontozási szabályok ma csak a backend kódjában (`scoring.service.ts`) és 
 
 ### 3.1 Csoport-kontextus logika
 
+A modal csak bejelentkezett user számára érhető el (a 4 belépési pont mind authentikációt igényel). Ezért a logika:
+
 | Eset | Mit lát |
 |------|---------|
-| 0 csoport (vendég/új user) | csak a globális default szabályok |
 | 1 csoport | annak a csoportnak az effektív configja egyetlen táblaként; fejléc: "[Csoportnév] pontozása" |
 | 2+ csoport | default config a fő nézet; minden eltérő csoport sora kap egy "Eltérés a [Csoportnév]-ben" badge-et az érintett mező mellett |
+
+A "0 csoport" eset (bejelentkezett, de csoport-tagság nélkül) gyakorlatilag nem fordul elő, mert új userek a regisztráció után automatikusan kapnak csoport-tagságot vagy oda kell csatlakozniuk; ha mégis előfordul, a modal a globális defaultot mutatja "Általános szabályzat" fejléccel.
 
 ### 3.2 Meccs-pontozás (mindig látszik)
 
@@ -77,7 +80,7 @@ A backend `source` mezővel jelöli az eredetet (`group-owned` | `subscribed-glo
 
 ### 4.1 Új public endpoint
 
-`GET /api/scoring/explainer` — auth opcionális (vendégnek is működik).
+`GET /api/scoring/explainer` — bejelentkezett userek számára (a meglévő `authMiddleware` használatával).
 
 **Response shape:**
 
@@ -94,31 +97,26 @@ A backend `source` mezővel jelöli az eredetet (`group-owned` | `subscribed-glo
     specialTypes: Array<SpecialType & {
       source: 'group-owned' | 'subscribed-global'
     }>
-  }>,
-  globalSpecialTypes: SpecialType[]
+  }>
 }
 ```
 
-`groups[].specialTypes` mind a csoport-saját (`group_id = X`), mind a `groupGlobalTypeSubscriptions`-ön keresztül feliratkozott globálisokat tartalmazza. `globalSpecialTypes` a `global_special_types` katalógus, vendégnek is látszik.
+`groups[].specialTypes` mind a csoport-saját (`group_id = X`), mind a `groupGlobalTypeSubscriptions`-ön keresztül feliratkozott globálisokat tartalmazza.
 
 A soft-delete-tett csoportok kihagyva (`isNull(groups.deletedAt)`).
 
-### 4.2 Új middleware (net-new infra)
-
-`packages/backend/src/middleware/optionalAuth.middleware.ts` — ha van valid Bearer token, beállítja `ctx.state.user`-t; ha nincs vagy invalid, csendben tovább. A meglévő `authMiddleware` keményen 401-zik, ezért külön middleware kell. Egységtesztelve.
-
-### 4.3 Service és route
+### 4.2 Service és route
 
 - `packages/backend/src/services/scoring-explainer.service.ts` — **csak olvasó aggregátor** a meglévő `scoring-config.service.ts`, `global-special-types.service.ts`, `global-type-subscriptions.service.ts` fölött. Üzleti logika nem kerül bele.
-- `packages/backend/src/routes/scoring.routes.ts` — új public route a `/api/scoring` prefixen, az `optionalAuthMiddleware`-rel.
+- `packages/backend/src/routes/scoring.routes.ts` — új public route a `/api/scoring` prefixen, az `authMiddleware`-rel.
 
-### 4.4 Caching
+### 4.3 Caching
 
 **Nincs cache.** A query triviális (3 kis tábla, kulcs-lookup), és az admin recalc flow után azonnal pontos szabályzatot mutat — pont akkor, amikor számít.
 
-### 4.5 Frozen state
+### 4.4 Frozen state
 
-A backend visszaadja a `frozenAt` időbélyeget. Ha nem null, a UI lakat-ikont jelenít meg + tooltip: *"Ez a szabályzat véglegesítve, a torna alatt nem változik."*
+A backend visszaadja a `frozenAt` időbélyeget. **A modal mindig a current configot mutatja.** Ha a `frozenAt` nem null, a fejlécben egy kis lakat-ikon jelenik meg + tooltip: *"Ez a szabályzat véglegesítve, a torna alatt nem változik."* — ez csak egy státusz-jelzés, a tartalom változatlan.
 
 ## 5. Frontend
 
@@ -133,7 +131,7 @@ A backend visszaadja a `frozenAt` időbélyeget. Ha nem null, a UI lakat-ikont j
 
 - **Lazy load:** a fetch csak az első nyitáskor fut le, az adat session végéig a store-ban marad
 - **Diff számítás (frontend):** a default és group config között az alábbi 6 mezőt hasonlítja össze: `exactScore`, `correctWinnerAndDiff`, `correctWinner`, `correctDraw`, `correctOutcome`, `incorrect`. Ha a schema bővül, a spec és a diff field set bővül.
-- **Hibakezelés:** ha a fetch elhasal, a modal mutat egy "Nem sikerült betölteni a szabályokat" üzenetet + retry gombot. **A 6 alapszabály statikus copy-ja attól függetlenül megjelenik** — a felhasználó mindig lát szabályokat, soha nem üres a modal.
+  - **Hibakezelés (MVP):** ha a fetch elhasal, a modal nem nyílik meg, és egy toast jelenik meg: *"Nem sikerült betölteni a szabályokat"* (a meglévő `ToastContainer` használatával). A modalon belüli polished error state (statikus fallback + retry gomb) külön nice-to-have story alatt — lásd `UX-029`.
 
 ### 5.3 Lokalizáció (i18n)
 
@@ -150,34 +148,29 @@ A projekt már használ `vue-i18n`-t (`packages/frontend/src/i18n/index.ts`, `hu
 ### 6.1 Backend (Vitest)
 
 `scoring-explainer.service.test.ts`:
-- vendég → csak `default` + `globalSpecialTypes`, `groups: []`
 - 1-csoport user → 1 elemű `groups`, helyes `config`, `frozenAt`, `favoriteTeamDoublePoints`
 - 2+ csoport eltérő configgal → mindegyik a saját configjával
 - special tippek: csoport-saját + feliratkozott globális összeadva, helyes `source` címkével
 - `frozenAt` érték helyesen propagálódik (default + group szinten)
 - soft-delete-tett csoportok kihagyva
+- nem-bejelentkezett kérés → 401 (a sima `authMiddleware`-en keresztül)
 
-`optionalAuth.middleware.test.ts`:
-- nincs token → `ctx.state.user` undefined, 200
-- valid token → user beállítva, 200
-- invalid/expired token → user undefined, 200 (nem 401)
-
-Route-szintű integráció: `GET /api/scoring/explainer` 200, helyes shape, mindkét üzemmódban.
+Route-szintű integráció: `GET /api/scoring/explainer` 200 valid tokennel, 401 anélkül.
 
 ### 6.2 Frontend (Vitest)
 
 - `scoring-explainer.store.test.ts`: `open()` lazy fetch, `close()`, retry hibára, második nyitás cache-ből
-- `ScoringExplainerModal.test.ts`: 0/1/2+ csoport mód helyes renderelése, "Eltérés" badge, frozen lakat, fallback render fetch hiba esetén, focus trap + ESC, i18n key-ek léteznek `hu` és `en` alatt
+- `ScoringExplainerModal.test.ts`: 1/2+ csoport mód helyes renderelése, "Eltérés" badge, frozen lakat ikon megjelenése `frozenAt != null` esetén, fetch hiba esetén toast + modal nem nyílik, focus trap + ESC, i18n key-ek léteznek `hu` és `en` alatt
 
 ### 6.3 E2E (Playwright)
 
 - Bejelentkezett user a ranglistáról nyitja a modalt → látja a saját csoportja szabályait → bezárja
-- Vendég, főmenüből nyitja → csak default szabályok látszanak
+- 2+ csoporttal rendelkező user a főmenüből nyitja → látja a default szabályokat eltérés-badge-ekkel
 
 ## 7. Telemetria
 
 Esemény-szintű analytics:
-- `scoring_explainer_opened` — props: `source` (`menu` | `leaderboard` | `group` | `match-tip` | `special-tip`), `groupCount` (0 | 1 | 2+), `userId` ha bejelentkezett
+- `scoring_explainer_opened` — props: `source` (`menu` | `leaderboard` | `group` | `match-tip` | `special-tip`), `groupCount` (1 | 2+), `userId`
 - `scoring_explainer_closed` — props: `durationMs`
 
 Nem mérünk most: scrolldepth, szekciónkénti idő, A/B variánsokat.
@@ -187,6 +180,7 @@ Nem mérünk most: scrolldepth, szekciónkénti idő, A/B variánsokat.
 - Dedikált `/scoring` SEO-oldal
 - Inline lehajtható verzió
 - DB-ben tárolt special prediction type nevek/leírások fordítása (külön story)
+- Polished error state a modalon belül (retry gomb, statikus fallback szabálytábla) — külön story: `UX-029`
 - Scrolldepth / szekciós analytics + A/B tesztek
 - Vizuális magyarázók (animált példák, ikonok minden sorhoz)
 - Csoportonkénti összehasonlító mátrix (2+ csoportnál csak diff badge)
@@ -196,7 +190,6 @@ Nem mérünk most: scrolldepth, szekciónkénti idő, A/B variánsokat.
 ## 9. Érintett fájlok (összegzés)
 
 **Backend (új):**
-- `packages/backend/src/middleware/optionalAuth.middleware.ts` (+ test)
 - `packages/backend/src/services/scoring-explainer.service.ts` (+ test)
 - `packages/backend/src/routes/scoring.routes.ts` (+ integration test)
 

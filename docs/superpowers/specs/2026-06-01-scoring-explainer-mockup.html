@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pontozási szabályzat — Mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: 'Inter', system-ui, sans-serif; }
+  .tabular-nums { font-variant-numeric: tabular-nums; }
+  .modal-bg {
+    background-color: #475569;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(255,255,255,0.06), transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(255,255,255,0.04), transparent 40%);
+  }
+  .scrollbar-thin::-webkit-scrollbar { width: 6px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+</style>
+</head>
+<body class="bg-slate-100 min-h-screen">
+
+<div class="max-w-6xl mx-auto px-4 py-8">
+
+  <header class="text-center mb-6">
+    <h1 class="text-2xl font-bold text-gray-900 mb-1">Pontozási szabályzat — UI Mockup</h1>
+    <p class="text-sm text-gray-500">A meglévő VB Tippjáték designjához igazítva (Tailwind, Inter, kék accent).</p>
+  </header>
+
+  <div class="bg-white rounded-xl shadow-sm p-3 mb-8 flex flex-wrap gap-2 justify-center" id="states">
+    <button class="state-btn px-4 py-2 text-sm rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors data-[active=true]:bg-blue-600 data-[active=true]:text-white data-[active=true]:border-blue-600" data-state="single" data-active="true">1 csoport</button>
+    <button class="state-btn px-4 py-2 text-sm rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors data-[active=true]:bg-blue-600 data-[active=true]:text-white data-[active=true]:border-blue-600" data-state="multi" data-active="false">2+ csoport (eltérésekkel)</button>
+  </div>
+
+  <div class="flex flex-col lg:flex-row items-start justify-center gap-6">
+
+    <!-- Desktop -->
+    <div>
+      <div class="text-center text-xs uppercase tracking-wider text-gray-400 font-semibold mb-2">Asztal</div>
+      <div class="modal-bg w-[640px] max-w-full h-[680px] rounded-2xl overflow-hidden flex items-center justify-center p-6 shadow-2xl">
+        <div class="bg-white rounded-xl shadow-xl w-full max-h-full flex flex-col overflow-hidden" id="desktopModal"></div>
+      </div>
+    </div>
+
+    <!-- Mobile -->
+    <div>
+      <div class="text-center text-xs uppercase tracking-wider text-gray-400 font-semibold mb-2">Mobil</div>
+      <div class="bg-slate-900 rounded-[2.2rem] p-2 shadow-2xl">
+        <div class="modal-bg w-[320px] h-[640px] rounded-[1.8rem] overflow-hidden relative flex items-end">
+          <div class="absolute top-0 inset-x-0 h-7 flex items-center justify-center text-white text-xs font-semibold z-10">9:41</div>
+          <div class="bg-white w-full max-h-[calc(100%-1rem)] rounded-t-2xl flex flex-col overflow-hidden" id="mobileModal"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Triggers -->
+  <div class="max-w-4xl mx-auto mt-12 bg-white rounded-xl shadow-sm p-6">
+    <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Belépési pontok</h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div class="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 transition-colors">
+        <div class="text-xs text-gray-400 uppercase tracking-wider mb-2">Főmenü</div>
+        <a class="inline-flex items-center gap-2 text-blue-700 font-medium text-sm cursor-pointer hover:underline">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>
+          Pontozás
+        </a>
+      </div>
+      <div class="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 transition-colors">
+        <div class="text-xs text-gray-400 uppercase tracking-wider mb-2">Ranglista</div>
+        <a class="inline-flex items-center gap-1.5 text-blue-700 font-medium text-sm cursor-pointer hover:underline">
+          <span class="inline-flex w-4 h-4 rounded-full border border-current items-center justify-center text-[10px] font-bold italic">i</span>
+          Hogyan kapok pontot?
+        </a>
+      </div>
+      <div class="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 transition-colors">
+        <div class="text-xs text-gray-400 uppercase tracking-wider mb-2">Csoport oldal</div>
+        <span class="text-gray-800 font-medium text-sm inline-flex items-center gap-1.5">
+          Pulykák csoport
+          <span class="inline-flex w-4 h-4 rounded-full border border-blue-600 text-blue-600 items-center justify-center text-[10px] font-bold italic cursor-pointer">i</span>
+        </span>
+      </div>
+      <div class="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 transition-colors">
+        <div class="text-xs text-gray-400 uppercase tracking-wider mb-2">Tipp képernyő</div>
+        <span class="text-gray-800 font-medium text-sm inline-flex items-center gap-1.5">
+          HUN – GER
+          <span class="inline-flex w-4 h-4 rounded-full border border-blue-600 text-blue-600 items-center justify-center text-[10px] font-bold italic cursor-pointer">i</span>
+        </span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const STATES = {
+  single: {
+    title: 'Pulykák csoport pontozása',
+    subtitle: 'Az ebben a csoportban érvényes szabályok',
+    frozen: false,
+    rules: [
+      { name: 'Pontos eredmény', points: 4, example: 'Te: 2-1, Eredmény: 2-1' },
+      { name: 'Helyes győztes + gólkülönbség', points: 2, example: 'Te: 3-1, Eredmény: 2-0' },
+      { name: 'Helyes győztes', points: 1, example: 'Te: 2-0, Eredmény: 3-1' },
+      { name: 'Helyes döntetlen', points: 2, example: 'Te: 1-1, Eredmény: 2-2' },
+      { name: 'Helyes kimenetel (11-esek után)', points: 1, example: 'Te: hazai továbbjutás, valódi: hazai 11-esekkel' },
+      { name: 'Hibás', points: 0, example: 'Te: 1-0, Eredmény: 0-2' },
+    ],
+    bonus: { active: ['Pulykák csoport'] },
+    special: [{ group: null, items: [
+      { name: 'Gólkirály', desc: 'Tippeld meg, ki lesz a torna gólkirálya', points: 5 },
+      { name: 'Csoportgyőztesek', desc: 'A 8 csoport elsőhelyezettjei', points: 3 },
+      { name: 'Döntős párosítás', desc: 'Melyik két csapat játszik a döntőben', points: 8 },
+    ]}]
+  },
+  multi: {
+    title: 'Pontozási szabályzat',
+    subtitle: 'A te csoportjaidban érvényes szabályok',
+    frozen: false,
+    rules: [
+      { name: 'Pontos eredmény', points: 3, example: 'Te: 2-1, Eredmény: 2-1', diff: 'Pulykák: 4 pt' },
+      { name: 'Helyes győztes + gólkülönbség', points: 2, example: 'Te: 3-1, Eredmény: 2-0' },
+      { name: 'Helyes győztes', points: 1, example: 'Te: 2-0, Eredmény: 3-1', diff: 'Office: 2 pt' },
+      { name: 'Helyes döntetlen', points: 2, example: 'Te: 1-1, Eredmény: 2-2' },
+      { name: 'Helyes kimenetel (11-esek után)', points: 1, example: 'Te: hazai továbbjutás, valódi: hazai 11-esekkel' },
+      { name: 'Hibás', points: 0, example: 'Te: 1-0, Eredmény: 0-2' },
+    ],
+    bonus: { active: ['Pulykák csoport'] },
+    special: [
+      { group: 'Pulykák csoport', items: [
+        { name: 'Gólkirály', desc: 'A torna gólkirálya', points: 5 },
+        { name: 'Csoportgyőztesek', desc: '8 csoport elsőhelyezettje', points: 3 },
+      ]},
+      { group: 'Office liga', items: [
+        { name: 'Gólkirály', desc: 'A torna gólkirálya', points: 7 },
+        { name: 'Sárga lapok száma', desc: 'Total sárga lap a tornán', points: 4 },
+      ]}
+    ]
+  },
+  error: { error: true }
+};
+
+function pointsPill(p) {
+  const cls = p === 0 ? 'bg-gray-200 text-gray-600' : 'bg-blue-100 text-blue-700';
+  return `<span class="inline-flex items-center justify-center min-w-[2rem] px-2.5 py-0.5 rounded-full font-bold text-sm tabular-nums ${cls}">${p}</span>`;
+}
+
+function diffBadge(text) {
+  return `<span class="inline-flex items-center gap-1 ml-2 px-2 py-0.5 rounded-full text-[0.7rem] font-semibold bg-amber-50 text-amber-700 border border-amber-200">⚠ ${text}</span>`;
+}
+
+function rulesTable(rules) {
+  const rows = rules.map(r => `
+    <tr class="border-b border-gray-100 last:border-0">
+      <td class="px-3 py-2.5 text-gray-800">${r.name}${r.diff ? diffBadge(r.diff) : ''}</td>
+      <td class="px-3 py-2.5 text-center w-20">${pointsPill(r.points)}</td>
+      <td class="px-3 py-2.5 text-gray-500 text-xs">${r.example}</td>
+    </tr>`).join('');
+  return `
+    <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-200 text-gray-500 text-left text-xs">
+            <th class="px-3 py-2.5 font-medium">Eset</th>
+            <th class="px-3 py-2.5 font-medium text-center w-20">Pontok</th>
+            <th class="px-3 py-2.5 font-medium">Példa</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
+function bonusBlock(bonus) {
+  if (!bonus) return '';
+  return `
+    <div class="mt-5">
+      <h3 class="text-xs uppercase tracking-wider font-semibold text-gray-500 mb-2">Bónuszok</h3>
+      <div class="bg-amber-50 border-l-4 border-amber-500 rounded-lg p-3.5">
+        <div class="font-semibold text-amber-900 text-sm mb-0.5 flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+          Kedvenc csapat: dupla pont
+        </div>
+        <div class="text-sm text-amber-800">Ha a kedvenc csapatod meccsét tippeled, az ott szerzett pont ×2.</div>
+        <div class="text-xs text-amber-700 italic mt-1">Aktív: ${bonus.active.join(', ')}</div>
+      </div>
+    </div>`;
+}
+
+function specialBlock(special) {
+  const groups = special.map(g => {
+    const header = g.group ? `
+      <div class="flex items-center gap-2 mt-3 mb-2">
+        <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+        <span class="font-semibold text-sm text-gray-700">${g.group}</span>
+      </div>` : '';
+    const items = g.items.map(s => `
+      <div class="border border-gray-200 rounded-lg p-3 mb-2 last:mb-0 bg-white hover:bg-gray-50 transition-colors">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <div class="font-medium text-gray-800 text-sm">${s.name}</div>
+            <div class="text-gray-500 text-xs mt-0.5">${s.desc}</div>
+          </div>
+          ${pointsPill(s.points)}
+        </div>
+      </div>`).join('');
+    return header + items;
+  }).join('');
+  return `
+    <div class="mt-5">
+      <h3 class="text-xs uppercase tracking-wider font-semibold text-gray-500 mb-2">Speciális tippek</h3>
+      ${groups}
+    </div>`;
+}
+
+function renderModal(s) {
+  if (s.error) {
+    return `
+      <div class="px-5 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+        <h2 class="text-base font-bold text-gray-900">Pontozási szabályzat</h2>
+        <button class="w-8 h-8 rounded-lg text-gray-400 hover:bg-gray-200 hover:text-gray-600 flex items-center justify-center transition-colors" aria-label="Bezárás">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="flex-1 overflow-y-auto scrollbar-thin px-5 py-4">
+        <div class="text-center py-6">
+          <div class="w-12 h-12 mx-auto rounded-full bg-red-50 text-red-600 flex items-center justify-center mb-3">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+          </div>
+          <div class="font-semibold text-gray-900 mb-1">Nem sikerült betölteni a szabályokat</div>
+          <div class="text-sm text-gray-500 mb-4">Próbáld újra. Az alap szabályok addig is láthatók lent.</div>
+          <button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm px-5 py-2 rounded-lg transition-colors">Újra</button>
+        </div>
+        <div class="mt-6">
+          <h3 class="text-xs uppercase tracking-wider font-semibold text-gray-500 mb-2">Általános szabályok (offline)</h3>
+          ${rulesTable([
+            { name: 'Pontos eredmény', points: 3, example: 'Te: 2-1, Eredmény: 2-1' },
+            { name: 'Helyes győztes + gólkülönbség', points: 2, example: 'Te: 3-1, Eredmény: 2-0' },
+            { name: 'Helyes győztes', points: 1, example: 'Te: 2-0, Eredmény: 3-1' },
+            { name: 'Helyes döntetlen', points: 2, example: 'Te: 1-1, Eredmény: 2-2' },
+            { name: 'Hibás', points: 0, example: 'Te: 1-0, Eredmény: 0-2' },
+          ])}
+        </div>
+      </div>
+      <div class="px-5 py-3 border-t border-gray-200 bg-gray-50 flex justify-end">
+        <button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm px-5 py-2 rounded-lg transition-colors">Értem</button>
+      </div>`;
+  }
+
+  const lock = s.frozen ? `
+    <span class="inline-flex w-7 h-7 items-center justify-center bg-amber-100 text-amber-700 rounded-lg shrink-0" title="Véglegesítve">
+      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>
+    </span>` : '';
+
+  return `
+    <div class="px-5 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-2.5 min-w-0">
+        ${lock}
+        <div class="min-w-0">
+          <h2 class="text-base font-bold text-gray-900 truncate">${s.title}</h2>
+          <p class="text-xs text-gray-500 mt-0.5">${s.subtitle}</p>
+        </div>
+      </div>
+      <button class="w-8 h-8 rounded-lg text-gray-400 hover:bg-gray-200 hover:text-gray-600 flex items-center justify-center transition-colors shrink-0" aria-label="Bezárás">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="flex-1 overflow-y-auto scrollbar-thin px-5 py-4">
+      <div>
+        <h3 class="text-xs uppercase tracking-wider font-semibold text-gray-500 mb-2">Meccs-pontozás</h3>
+        ${rulesTable(s.rules)}
+      </div>
+      ${bonusBlock(s.bonus)}
+      ${specialBlock(s.special)}
+      <div class="mt-5 text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-lg p-3">
+        A pontok a meccs lefújása után automatikusan kerülnek jóváírásra. Ha a szabályzat változik a torna közben, a már kiosztott pontokat nem érinti.
+      </div>
+    </div>
+
+    <div class="px-5 py-3 border-t border-gray-200 bg-gray-50 flex justify-end">
+      <button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm px-5 py-2 rounded-lg transition-colors">Értem</button>
+    </div>`;
+}
+
+function setState(name) {
+  const html = renderModal(STATES[name]);
+  document.getElementById('desktopModal').innerHTML = html;
+  document.getElementById('mobileModal').innerHTML = html;
+  document.querySelectorAll('.state-btn').forEach(b => {
+    b.dataset.active = (b.dataset.state === name).toString();
+  });
+}
+
+document.getElementById('states').addEventListener('click', e => {
+  const btn = e.target.closest('.state-btn');
+  if (btn) setState(btn.dataset.state);
+});
+
+setState('single');
+</script>
+
+</body>
+</html>
