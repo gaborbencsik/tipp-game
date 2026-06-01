@@ -17,8 +17,6 @@ async function getAccessToken(): Promise<string> {
 export type ScoringExplainerSource = 'menu' | 'leaderboard' | 'group' | 'match-tip' | 'special-tip'
 
 export const useScoringExplainerStore = defineStore('scoringExplainer', () => {
-  const { t } = useI18n()
-
   const isOpen = ref(false)
   const data = ref<ScoringExplainerResponse | null>(null)
   const loading = ref(false)
@@ -40,6 +38,7 @@ export const useScoringExplainerStore = defineStore('scoringExplainer', () => {
       isOpen.value = true
     } catch (e) {
       error.value = e instanceof Error ? e.message : 'Unknown error'
+      const { t } = useI18n()
       const toast = useToastStore()
       toast.addToast(t('scoringExplainer.fetchError'), 'error')
     } finally {
