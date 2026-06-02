@@ -17,12 +17,9 @@ import { getVirtualPointsForUserInGroup } from '../src/services/virtual-points.s
 const GLOBAL_CFG = {
   id: 'g',
   name: 'global',
-  exactScore: 5,
-  correctWinnerAndDiff: 3,
-  correctWinner: 2,
-  correctDraw: 1,
-  correctOutcome: 1,
-  incorrect: 0,
+  correctOutcomePoints: 1,
+  exactBonusPoints: 1,
+  extraTimeBonusPoints: 1,
 }
 
 function chain(result: unknown) {
@@ -116,14 +113,14 @@ describe('getVirtualPointsForUserInGroup', () => {
       minute: 67,
       predHomeGoals: 2,
       predAwayGoals: 1,
-      virtualPoints: 5,
+      virtualPoints: 2,
     })
     expect(result[0]?.homeTeam.shortCode).toBe('ARG')
   })
 
   it('uses group config when available', async () => {
     scoringConfigMocks.getGroupConfig.mockResolvedValue({
-      ...GLOBAL_CFG, exactScore: 99,
+      ...GLOBAL_CFG, exactBonusPoints: 9,
     })
     setupSelectSequence([
       [{ id: 'g1' }],
@@ -132,7 +129,7 @@ describe('getVirtualPointsForUserInGroup', () => {
       [liveRow('m1', 2, 1, 67)],
     ])
     const result = await getVirtualPointsForUserInGroup('g1', 'u1')
-    expect(result[0]?.virtualPoints).toBe(99)
+    expect(result[0]?.virtualPoints).toBe(10)
   })
 
   it('skips matches without a matching prediction', async () => {

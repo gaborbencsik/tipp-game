@@ -41,12 +41,9 @@ async function resolveScoringConfig(groupId: string): Promise<ScoringConfig> {
   const groupConfig = await getGroupConfig(groupId)
   const cfg = groupConfig ?? await getGlobalConfig()
   return {
-    exactScore: cfg.exactScore,
-    correctWinnerAndDiff: cfg.correctWinnerAndDiff,
-    correctWinner: cfg.correctWinner,
-    correctDraw: cfg.correctDraw,
-    correctOutcome: cfg.correctOutcome,
-    incorrect: cfg.incorrect,
+    correctOutcomePoints: cfg.correctOutcomePoints,
+    exactBonusPoints: cfg.exactBonusPoints,
+    extraTimeBonusPoints: cfg.extraTimeBonusPoints,
   }
 }
 
