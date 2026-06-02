@@ -22,52 +22,56 @@ services:
       - key: SYNC_SERVICE_TOKEN
         sync: false
 
-  # Cron jobs that drive the automatic sync. Each one posts to the matching
-  # /api/internal/sync/* endpoint with the shared SYNC_SERVICE_TOKEN. The
-  # backend itself decides via sync-gate whether to actually run on each tick,
-  # so percent-minute scheduling is safe.
+  # Cron jobs that drive the automatic sync. Each one runs the same docker
+  # image (cron/Dockerfile) and posts to the matching /api/internal/sync/*
+  # endpoint, selected via the ENDPOINT env var. The backend's sync-gate
+  # decides whether to actually run on each tick, so percent-minute
+  # scheduling for /tick is safe.
 
   - type: cron
     name: tipp-game-cron-tick
-    runtime: image
-    image:
-      url: docker.io/curlimages/curl:8.10.1
+    runtime: docker
+    dockerfilePath: cron/Dockerfile
+    dockerContext: cron
     region: frankfurt
     plan: starter
     schedule: "* * * * *"
     envVars:
       - key: BACKEND_URL
         value: http://tipp-game-backend:3000
+      - key: ENDPOINT
+        value: tick
       - key: SYNC_SERVICE_TOKEN
         sync: false
-    dockerCommand: "sh -c 'curl --fail-with-body -sS -X POST -H \"Authorization: Bearer $SYNC_SERVICE_TOKEN\" \"$BACKEND_URL/api/internal/sync/tick\"'"
 
   - type: cron
     name: tipp-game-cron-polymarket
-    runtime: image
-    image:
-      url: docker.io/curlimages/curl:8.10.1
+    runtime: docker
+    dockerfilePath: cron/Dockerfile
+    dockerContext: cron
     region: frankfurt
     plan: starter
     schedule: "*/15 * * * *"
     envVars:
       - key: BACKEND_URL
         value: http://tipp-game-backend:3000
+      - key: ENDPOINT
+        value: polymarket-tick
       - key: SYNC_SERVICE_TOKEN
         sync: false
-    dockerCommand: "sh -c 'curl --fail-with-body -sS -X POST -H \"Authorization: Bearer $SYNC_SERVICE_TOKEN\" \"$BACKEND_URL/api/internal/sync/polymarket-tick\"'"
 
   - type: cron
     name: tipp-game-cron-transfermarkt
-    runtime: image
-    image:
-      url: docker.io/curlimages/curl:8.10.1
+    runtime: docker
+    dockerfilePath: cron/Dockerfile
+    dockerContext: cron
     region: frankfurt
     plan: starter
     schedule: "0 4 * * *"
     envVars:
       - key: BACKEND_URL
         value: http://tipp-game-backend:3000
+      - key: ENDPOINT
+        value: transfermarkt-tick
       - key: SYNC_SERVICE_TOKEN
         sync: false
-    dockerCommand: "sh -c 'curl --fail-with-body -sS -X POST -H \"Authorization: Bearer $SYNC_SERVICE_TOKEN\" \"$BACKEND_URL/api/internal/sync/transfermarkt-tick\"'"

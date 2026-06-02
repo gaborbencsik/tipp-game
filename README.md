@@ -72,7 +72,7 @@ Production-ben a 3 internal sync endpointot Render cron service-ek hívják (`re
 | `tipp-game-cron-polymarket` | `*/15 * * * *` | `POST /api/internal/sync/polymarket-tick` | Polymarket odds frissítés. On/off az admin UI-ról kapcsolható. |
 | `tipp-game-cron-transfermarkt` | `0 4 * * *` (napi 04:00 UTC) | `POST /api/internal/sync/transfermarkt-tick` | Csapat-piaci értékek. Belső 24h-os interval gate az endpointon. |
 
-A 3 cron service és a backend web service is a `frankfurt` régióban fut, így az internal hívás (`http://tipp-game-backend:3000`) a Render belső hálózatán megy.
+A 3 cron service és a backend web service is a `frankfurt` régióban fut, így az internal hívás (`http://tipp-game-backend:3000`) a Render belső hálózatán megy. A cron-ok a `cron/Dockerfile` által épített közös alpine + curl image-ből futnak, a célendpontot a service-szintű `ENDPOINT` env var választja ki.
 
 ### `SYNC_SERVICE_TOKEN` setup
 
