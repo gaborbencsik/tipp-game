@@ -3,12 +3,13 @@ import type { Group, GroupMember } from '../src/types/index.js'
 
 // ─── DB mock ──────────────────────────────────────────────────────────────────
 
-const { mockSelect, mockInsert, mockDelete, mockUpdate, mockGetGroupLeaderboard } = vi.hoisted(() => ({
+const { mockSelect, mockInsert, mockDelete, mockUpdate, mockGetGroupLeaderboard, mockReplicateUserTipsToGroup } = vi.hoisted(() => ({
   mockSelect: vi.fn(),
   mockInsert: vi.fn(),
   mockDelete: vi.fn(),
   mockUpdate: vi.fn(),
   mockGetGroupLeaderboard: vi.fn(),
+  mockReplicateUserTipsToGroup: vi.fn(),
 }))
 
 vi.mock('../src/db/client.js', () => ({
@@ -17,6 +18,10 @@ vi.mock('../src/db/client.js', () => ({
 
 vi.mock('../src/services/group-leaderboard.service.js', () => ({
   getGroupLeaderboard: mockGetGroupLeaderboard,
+}))
+
+vi.mock('../src/services/tournament-tips-replication.service.js', () => ({
+  replicateUserTipsToGroup: mockReplicateUserTipsToGroup,
 }))
 
 import { getMyGroups, createGroup, joinGroup, getGroupMembers, removeMember, setMemberAdmin, regenerateInviteCode, setInviteActive, deleteGroup, setGroupLeague } from '../src/services/groups.service.js'

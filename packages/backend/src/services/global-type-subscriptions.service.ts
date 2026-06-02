@@ -3,6 +3,7 @@ import { db } from '../db/client.js'
 import { groups, groupMembers, specialPredictionTypes, groupGlobalTypeSubscriptions } from '../db/schema/index.js'
 import type { GlobalTypeWithSubscription } from '../types/index.js'
 import { AppError } from './special-prediction-validation.js'
+import { replicateGroupSubscriptionToMembers } from './tournament-tips-replication.service.js'
 
 async function assertGroupExists(groupId: string): Promise<void> {
   const rows = await db
@@ -95,6 +96,8 @@ export async function subscribeGroup(
   await db
     .insert(groupGlobalTypeSubscriptions)
     .values({ groupId, globalTypeId })
+
+  await replicateGroupSubscriptionToMembers(groupId, globalTypeId)
 }
 
 export async function unsubscribeGroup(

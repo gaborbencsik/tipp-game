@@ -1,13 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-const { mockSelect, mockInsert, mockUpdate } = vi.hoisted(() => ({
+const { mockSelect, mockInsert, mockUpdate, mockTransaction } = vi.hoisted(() => ({
   mockSelect: vi.fn(),
   mockInsert: vi.fn(),
   mockUpdate: vi.fn(),
+  mockTransaction: vi.fn(),
 }))
 
 vi.mock('../src/db/client.js', () => ({
-  db: { select: mockSelect, insert: mockInsert, update: mockUpdate },
+  db: { select: mockSelect, insert: mockInsert, update: mockUpdate, transaction: mockTransaction },
 }))
 
 import { listGlobalTypesWithPredictions, upsertGlobalPrediction, userHasTournamentAccess } from '../src/services/tournament-tips.service.js'
@@ -83,6 +84,22 @@ function setupUpdateReturning(returning: unknown[]): void {
   const whereFn = vi.fn().mockReturnValue({ returning: returningFn })
   const setFn = vi.fn().mockReturnValue({ where: whereFn })
   mockUpdate.mockReturnValue({ set: setFn })
+}
+
+function setupTransaction(): void {
+  mockTransaction.mockImplementation(async (cb) => {
+    return cb({ select: mockSelect, insert: mockInsert, update: mockUpdate })
+  })
+}
+
+function setupInsertOnConflictReturning(returning: unknown[]): void {
+  const returningFn = vi.fn().mockResolvedValue(returning)
+  const onConflictDoUpdateFn = vi.fn().mockReturnValue({ returning: returningFn })
+  const valuesFn = vi.fn().mockReturnValue({
+    returning: returningFn,
+    onConflictDoUpdate: onConflictDoUpdateFn,
+  })
+  mockInsert.mockReturnValue({ values: valuesFn })
 }
 
 describe('listGlobalTypesWithPredictions', () => {
@@ -169,8 +186,10 @@ describe('upsertGlobalPrediction', () => {
     setupSelectSequence([
       ACCESS_GRANTED,
       [GLOBAL_TYPE_ROW],
-      [],
+      [], // eligibleGroups (none)
+      [], // existing prediction lookup
     ])
+    setupTransaction()
     setupInsertReturning([PRED_ROW])
 
     const result = await upsertGlobalPrediction(USER_ID, TYPE_ID, 'Messi')
@@ -186,8 +205,10 @@ describe('upsertGlobalPrediction', () => {
     setupSelectSequence([
       ACCESS_GRANTED,
       [GLOBAL_TYPE_ROW],
+      [], // eligibleGroups (none)
       [EXISTING],
     ])
+    setupTransaction()
     setupUpdateReturning([{ ...PRED_ROW, answer: 'Mbappé' }])
 
     const result = await upsertGlobalPrediction(USER_ID, TYPE_ID, 'Mbappé')
@@ -255,8 +276,10 @@ describe('upsertGlobalPrediction', () => {
       ACCESS_GRANTED,
       [TEAM_TYPE],
       [{ id: VALID_TEAM_UUID, name: 'Magyarország' }],
-      [],
+      [], // eligibleGroups
+      [], // existing prediction
     ])
+    setupTransaction()
     setupInsertReturning([{ ...PRED_ROW, answer: VALID_TEAM_UUID }])
 
     const result = await upsertGlobalPrediction(USER_ID, TYPE_ID, VALID_TEAM_UUID)

@@ -1,6 +1,6 @@
 import { and, eq, inArray, isNull } from 'drizzle-orm'
 import { db } from '../db/client.js'
-import { specialPredictionTypes, specialPredictions, teams, players, groupMembers, groups, groupLeagues, leagues } from '../db/schema/index.js'
+import { specialPredictionTypes, specialPredictions, teams, players, groupMembers, groups, groupLeagues, groupGlobalTypeSubscriptions, leagues } from '../db/schema/index.js'
 import type { AllGroupsStandingCompletion, BracketProgressionCompletion, SpecialPredictionInputType, SpecialPredictionOptions, SpecialPredictionWithType } from '../types/index.js'
 import { parseUpsetPicks, resolveUpsetMaxPoints, validateUpsetOptions } from './upset-special.service.js'
 import {
@@ -68,11 +68,16 @@ export async function listGlobalTypesWithPredictions(
     .from(specialPredictions)
     .where(and(
       eq(specialPredictions.userId, userId),
-      isNull(specialPredictions.groupId),
       inArray(specialPredictions.typeId, types.map(t => t.id)),
     ))
 
-  const predByTypeId = new Map(preds.map(p => [p.typeId, p]))
+  const predByTypeId = new Map<string, typeof preds[0]>()
+  for (const p of preds) {
+    const existing = predByTypeId.get(p.typeId)
+    if (!existing || (existing.groupId === null && p.groupId !== null)) {
+      predByTypeId.set(p.typeId, p)
+    }
+  }
 
   const teamIds: string[] = []
   const playerIds: string[] = []
@@ -358,7 +363,6 @@ export async function upsertGlobalPrediction(
         .where(and(
           eq(specialPredictions.userId, userId),
           eq(specialPredictions.typeId, standingsTypeRows[0].id),
-          isNull(specialPredictions.groupId),
         ))
         .limit(1)
       if (stRows[0]?.answer) {
@@ -374,36 +378,60 @@ export async function upsertGlobalPrediction(
     resolvedAnswerLabel = `${result.completion.totalDone}/${result.completion.totalSteps} mérkőzés tippelve`
   }
 
-  const existing = await db
-    .select()
-    .from(specialPredictions)
-    .where(and(
-      eq(specialPredictions.userId, userId),
-      eq(specialPredictions.typeId, typeId),
-      isNull(specialPredictions.groupId),
-    ))
-    .limit(1)
+  const row = await db.transaction(async (tx) => {
+    const eligibleGroups = await tx
+      .select({ groupId: groupMembers.groupId })
+      .from(groupMembers)
+      .innerJoin(
+        groupGlobalTypeSubscriptions,
+        eq(groupGlobalTypeSubscriptions.groupId, groupMembers.groupId),
+      )
+      .where(and(
+        eq(groupMembers.userId, userId),
+        eq(groupGlobalTypeSubscriptions.globalTypeId, typeId),
+      ))
 
-  let row
-  if (existing[0]) {
-    const updated = await db
-      .update(specialPredictions)
-      .set({ answer: normalizedAnswer, updatedAt: new Date() })
-      .where(eq(specialPredictions.id, existing[0].id))
-      .returning()
-    row = updated[0]
-  } else {
-    const inserted = await db
+    if (eligibleGroups.length > 0) {
+      let representative: typeof specialPredictions.$inferSelect | null = null
+      for (const { groupId } of eligibleGroups) {
+        const upserted = await tx
+          .insert(specialPredictions)
+          .values({ userId, typeId, groupId, answer: normalizedAnswer })
+          .onConflictDoUpdate({
+            target: [specialPredictions.userId, specialPredictions.typeId, specialPredictions.groupId],
+            set: { answer: normalizedAnswer, updatedAt: new Date() },
+          })
+          .returning()
+        if (!representative && upserted[0]) representative = upserted[0]
+      }
+      return representative
+    }
+
+    const existing = await tx
+      .select()
+      .from(specialPredictions)
+      .where(and(
+        eq(specialPredictions.userId, userId),
+        eq(specialPredictions.typeId, typeId),
+        isNull(specialPredictions.groupId),
+      ))
+      .limit(1)
+
+    if (existing[0]) {
+      const updated = await tx
+        .update(specialPredictions)
+        .set({ answer: normalizedAnswer, updatedAt: new Date() })
+        .where(eq(specialPredictions.id, existing[0].id))
+        .returning()
+      return updated[0] ?? null
+    }
+
+    const inserted = await tx
       .insert(specialPredictions)
-      .values({
-        userId,
-        typeId,
-        groupId: null,
-        answer: normalizedAnswer,
-      })
+      .values({ userId, typeId, groupId: null, answer: normalizedAnswer })
       .returning()
-    row = inserted[0]
-  }
+    return inserted[0] ?? null
+  })
 
   if (!row) throw new AppError(500, 'Failed to save prediction')
 

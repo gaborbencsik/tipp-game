@@ -3,6 +3,7 @@ import { db } from '../db/client.js'
 import { groups, groupMembers, users, specialPredictionTypes, groupGlobalTypeSubscriptions, groupLeagues, leagues, matches } from '../db/schema/index.js'
 import type { Group, GroupInput, GroupMember } from '../types/index.js'
 import { getGroupLeaderboard } from './group-leaderboard.service.js'
+import { replicateUserTipsToGroup } from './tournament-tips-replication.service.js'
 
 class AppError extends Error {
   readonly status: number
@@ -168,6 +169,8 @@ export async function createGroup(input: GroupInput, userId: string): Promise<Gr
 
   await db.insert(groupLeagues).values({ groupId: group.id, leagueId: input.leagueId })
 
+  await replicateUserTipsToGroup(userId, group.id)
+
   const league = await fetchGroupLeague(group.id)
 
   return toApiGroup(group, 1, true, null, league)
@@ -210,6 +213,8 @@ export async function joinGroup(inviteCode: string, userId: string): Promise<Gro
     userId,
     isAdmin: false,
   })
+
+  await replicateUserTipsToGroup(userId, group.id)
 
   const memberCount = existing.length + 1
   const league = await fetchGroupLeague(group.id)
