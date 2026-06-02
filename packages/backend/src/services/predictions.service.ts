@@ -2,7 +2,6 @@ import { eq, isNull, desc, sql } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { users, matches, predictions } from '../db/schema/index.js'
 import type { MatchOutcome, MatchPrediction, Prediction, PredictionInput } from '../types/index.js'
-import { freezeApplicableConfigs } from './scoring-freeze.service.js'
 
 class AppError extends Error {
   readonly status: number
@@ -78,8 +77,6 @@ export async function upsertPrediction(
 
   const row = rows[0]
   if (!row) throw new AppError(500, 'Failed to save prediction')
-
-  await freezeApplicableConfigs(user.id)
 
   return toApiPrediction(row)
 }
