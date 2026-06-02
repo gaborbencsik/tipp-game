@@ -428,6 +428,13 @@
       "when": 1788000000004,
       "tag": "0060_update_upset_special_choices",
       "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1788000000005,
+      "tag": "0061_simplify_scoring_config",
+      "breakpoints": true
     }
   ]
 }
