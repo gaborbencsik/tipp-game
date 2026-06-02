@@ -665,6 +665,7 @@
       "example": "Példa"
     },
     "diffBadge": "Eltérés a {groupName}-ben",
+    "diffInline": "{groupName}: {points} pt",
     "bonus": {
       "heading": "Bónuszok",
       "favoriteTeamTitle": "Kedvenc csapat: dupla pont",

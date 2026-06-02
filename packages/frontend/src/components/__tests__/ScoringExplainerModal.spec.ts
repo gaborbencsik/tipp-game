@@ -46,8 +46,8 @@ describe('ScoringExplainerModal', () => {
       ],
     })
     const wrapper = mount(ScoringExplainerModal, { global: { plugins: [i18n] } })
-    expect(wrapper.text()).toMatch(/Eltérés a Pulykák/)
-    expect(wrapper.text()).toMatch(/Eltérés a Office/)
+    expect(wrapper.text()).toMatch(/Pulykák: 4 pt/)
+    expect(wrapper.text()).toMatch(/Office: 2 pt/)
   })
 
   it('frozen lakat ikon megjelenik defaultFrozenAt != null esetén', () => {

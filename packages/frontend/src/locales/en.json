@@ -665,6 +665,7 @@
       "example": "Example"
     },
     "diffBadge": "Differs in {groupName}",
+    "diffInline": "{groupName}: {points} pt",
     "bonus": {
       "heading": "Bonuses",
       "favoriteTeamTitle": "Favorite team: double points",
