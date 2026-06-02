@@ -164,16 +164,16 @@ describe('ProfileView', () => {
       { id: 'l1', name: 'NB I', shortName: 'NB I', createdAt: '', updatedAt: '' },
     ])
     mockLeagueTeamsForLeague.mockResolvedValue([
-      { id: 't1', name: 'Ferencváros', shortCode: 'FTC' },
-      { id: 't2', name: 'Újpest FC', shortCode: 'UJP' },
+      { id: 't1', name: 'Ferencváros', shortCode: 'FTC', flagUrl: null },
+      { id: 't2', name: 'Újpest FC', shortCode: 'UJP', flagUrl: null },
     ])
     mockSetLeagueFavorite.mockResolvedValue({ id: 'fav-1', userId: 'user-1', leagueId: 'l1', teamId: 't1', setAt: '', isLocked: false })
 
     const { wrapper } = await mountView()
     await flushPromises()
 
-    const select = wrapper.find('[data-testid="fav-select-l1"]')
-    await select.setValue('t1')
+    await wrapper.find('[data-testid="fav-select-l1"]').trigger('click')
+    await wrapper.find('[data-testid="fav-option-l1-t1"]').trigger('click')
     await flushPromises()
 
     expect(wrapper.find('[data-testid="fav-saved-l1"]').exists()).toBe(true)
@@ -186,15 +186,15 @@ describe('ProfileView', () => {
       { id: 'l1', name: 'NB I', shortName: 'NB I', createdAt: '', updatedAt: '' },
     ])
     mockLeagueTeamsForLeague.mockResolvedValue([
-      { id: 't1', name: 'Ferencváros', shortCode: 'FTC' },
+      { id: 't1', name: 'Ferencváros', shortCode: 'FTC', flagUrl: null },
     ])
     mockSetLeagueFavorite.mockRejectedValue(new Error('Lock error'))
 
     const { wrapper } = await mountView()
     await flushPromises()
 
-    const select = wrapper.find('[data-testid="fav-select-l1"]')
-    await select.setValue('t1')
+    await wrapper.find('[data-testid="fav-select-l1"]').trigger('click')
+    await wrapper.find('[data-testid="fav-option-l1-t1"]').trigger('click')
     await flushPromises()
 
     expect(wrapper.find('[data-testid="fav-error-l1"]').exists()).toBe(true)
@@ -206,7 +206,7 @@ describe('ProfileView', () => {
       { id: 'l1', name: 'NB I', shortName: 'NB I', createdAt: '', updatedAt: '' },
     ])
     mockLeagueTeamsForLeague.mockResolvedValue([
-      { id: 't1', name: 'Ferencváros', shortCode: 'FTC' },
+      { id: 't1', name: 'Ferencváros', shortCode: 'FTC', flagUrl: null },
     ])
     let resolveSave!: (v: unknown) => void
     mockSetLeagueFavorite.mockReturnValue(new Promise(r => { resolveSave = r }))
@@ -214,16 +214,16 @@ describe('ProfileView', () => {
     const { wrapper } = await mountView()
     await flushPromises()
 
-    const select = wrapper.find('[data-testid="fav-select-l1"]')
-    await select.setValue('t1')
+    await wrapper.find('[data-testid="fav-select-l1"]').trigger('click')
+    await wrapper.find('[data-testid="fav-option-l1-t1"]').trigger('click')
     await wrapper.vm.$nextTick()
 
-    expect((wrapper.find('[data-testid="fav-select-l1"]').element as HTMLSelectElement).disabled).toBe(true)
+    expect((wrapper.find('[data-testid="fav-select-l1"]').element as HTMLButtonElement).disabled).toBe(true)
 
     resolveSave({ id: 'fav-1', userId: 'user-1', leagueId: 'l1', teamId: 't1', setAt: '', isLocked: false })
     await flushPromises()
 
-    expect((wrapper.find('[data-testid="fav-select-l1"]').element as HTMLSelectElement).disabled).toBe(false)
+    expect((wrapper.find('[data-testid="fav-select-l1"]').element as HTMLButtonElement).disabled).toBe(false)
   })
 
   // ─── UX-023: filter by group membership ──────────────────────────────────────

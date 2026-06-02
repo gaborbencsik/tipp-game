@@ -74,26 +74,65 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
             </svg>
+            <img
+              v-if="getFavTeamFlagUrl(league.id)"
+              :src="getFavTeamFlagUrl(league.id) ?? ''"
+              :alt="getFavTeamName(league.id)"
+              class="w-5 h-4 object-cover rounded-sm shrink-0"
+            />
             <span>{{ getFavTeamName(league.id) || '—' }}</span>
           </div>
 
-          <select
-            v-else
-            :value="favStore.favoriteByLeagueId(league.id)?.teamId ?? ''"
-            :disabled="favSaveStatus[league.id] === 'saving'"
-            :data-testid="`fav-select-${league.id}`"
-            class="border rounded px-3 py-1.5 text-sm flex-1 disabled:opacity-50"
-            @change="onFavChange(league.id, ($event.target as HTMLSelectElement).value)"
-          >
-            <option value="" disabled>{{ $t('profile.favPlaceholder') }}</option>
-            <option
-              v-for="team in favStore.leagueTeamsMap[league.id] ?? []"
-              :key="team.id"
-              :value="team.id"
+          <div v-else class="relative flex-1" :ref="(el) => setFavRootRef(league.id, el as HTMLElement | null)">
+            <button
+              type="button"
+              :disabled="favSaveStatus[league.id] === 'saving'"
+              :data-testid="`fav-select-${league.id}`"
+              :aria-expanded="favOpen[league.id] === true"
+              aria-haspopup="listbox"
+              class="w-full flex items-center gap-2 border rounded px-3 py-1.5 text-sm bg-white text-left disabled:opacity-50 focus:ring-2 focus:ring-blue-300 outline-none"
+              @click="toggleFavOpen(league.id)"
             >
-              {{ team.name }}
-            </option>
-          </select>
+              <img
+                v-if="getFavTeamFlagUrl(league.id)"
+                :src="getFavTeamFlagUrl(league.id) ?? ''"
+                :alt="getFavTeamName(league.id)"
+                class="w-5 h-4 object-cover rounded-sm shrink-0"
+              />
+              <span v-if="getFavTeamName(league.id)" class="flex-1 truncate text-gray-800">{{ getFavTeamName(league.id) }}</span>
+              <span v-else class="flex-1 truncate text-gray-400">{{ $t('profile.favPlaceholder') }}</span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 transition-transform shrink-0" :class="favOpen[league.id] ? 'rotate-180 text-blue-500' : 'text-gray-400'" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.06l3.71-3.83a.75.75 0 111.08 1.04l-4.25 4.39a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+              </svg>
+            </button>
+
+            <ul
+              v-if="favOpen[league.id]"
+              role="listbox"
+              :data-testid="`fav-options-${league.id}`"
+              class="absolute left-0 right-0 top-full mt-1 z-20 max-h-64 overflow-y-auto bg-white border border-slate-200 rounded-md shadow-lg py-1"
+            >
+              <li
+                v-for="team in favStore.leagueTeamsMap[league.id] ?? []"
+                :key="team.id"
+                role="option"
+                :aria-selected="favStore.favoriteByLeagueId(league.id)?.teamId === team.id"
+                :data-testid="`fav-option-${league.id}-${team.id}`"
+                class="px-3 py-2 text-sm text-gray-800 hover:bg-blue-50 cursor-pointer flex items-center gap-2"
+                :class="favStore.favoriteByLeagueId(league.id)?.teamId === team.id ? 'bg-blue-50' : ''"
+                @click="selectFav(league.id, team.id)"
+              >
+                <img
+                  v-if="team.flagUrl"
+                  :src="team.flagUrl"
+                  :alt="team.name"
+                  class="w-5 h-4 object-cover rounded-sm shrink-0"
+                />
+                <span v-else class="w-5 h-4 shrink-0" aria-hidden="true"></span>
+                <span class="flex-1 truncate">{{ team.name }}</span>
+              </li>
+            </ul>
+          </div>
 
           <span v-if="favSaveStatus[league.id] === 'saved'" class="text-xs text-green-600" :data-testid="`fav-saved-${league.id}`">{{ $t('profile.favSaved') }}</span>
           <span v-else-if="favSaveStatus[league.id] === 'error'" class="text-xs text-red-500" :data-testid="`fav-error-${league.id}`">{{ $t('profile.favError') }}</span>
@@ -116,7 +155,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, onBeforeUnmount, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '../stores/auth.store.js'
 import { useLeagueFavoritesStore } from '../stores/league-favorites.store.js'
@@ -144,6 +183,33 @@ const saveSuccess = ref(false)
 const favError = ref<string | null>(null)
 const favSaveStatus = reactive<Record<string, 'saving' | 'saved' | 'error' | null>>({})
 const favTimers: Record<string, ReturnType<typeof setTimeout>> = {}
+const favOpen = reactive<Record<string, boolean>>({})
+const favRootRefs: Record<string, HTMLElement | null> = {}
+
+function setFavRootRef(leagueId: string, el: HTMLElement | null): void {
+  favRootRefs[leagueId] = el
+}
+
+function toggleFavOpen(leagueId: string): void {
+  if (favSaveStatus[leagueId] === 'saving') return
+  const next = !favOpen[leagueId]
+  for (const k of Object.keys(favOpen)) favOpen[k] = false
+  favOpen[leagueId] = next
+}
+
+function selectFav(leagueId: string, teamId: string): void {
+  favOpen[leagueId] = false
+  void onFavChange(leagueId, teamId)
+}
+
+function onDocumentClick(event: MouseEvent): void {
+  const target = event.target as Node | null
+  for (const leagueId of Object.keys(favOpen)) {
+    if (!favOpen[leagueId]) continue
+    const root = favRootRefs[leagueId]
+    if (target && root && !root.contains(target)) favOpen[leagueId] = false
+  }
+}
 
 function isFavLocked(leagueId: string): boolean {
   return favStore.favoriteByLeagueId(leagueId)?.isLocked ?? false
@@ -154,6 +220,13 @@ function getFavTeamName(leagueId: string): string {
   if (!fav) return ''
   const teams = favStore.leagueTeamsMap[leagueId] ?? []
   return teams.find(t => t.id === fav.teamId)?.name ?? ''
+}
+
+function getFavTeamFlagUrl(leagueId: string): string | null {
+  const fav = favStore.favoriteByLeagueId(leagueId)
+  if (!fav) return null
+  const teams = favStore.leagueTeamsMap[leagueId] ?? []
+  return teams.find(t => t.id === fav.teamId)?.flagUrl ?? null
 }
 
 async function onFavChange(leagueId: string, teamId: string): Promise<void> {
@@ -172,6 +245,7 @@ async function onFavChange(leagueId: string, teamId: string): Promise<void> {
 }
 
 onMounted(async () => {
+  document.addEventListener('click', onDocumentClick)
   displayName.value = authStore.user?.displayName ?? ''
   await Promise.all([
     favStore.fetchLeagues(),
@@ -180,6 +254,10 @@ onMounted(async () => {
   ])
   groupsLoaded.value = true
   await Promise.all(favStore.userLeagues.map(l => favStore.fetchLeagueTeams(l.id)))
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', onDocumentClick)
 })
 
 async function save(): Promise<void> {
