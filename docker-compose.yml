@@ -111,6 +111,7 @@ services:
     build:
       context: .
       dockerfile: packages/backend/Dockerfile.dev
+    command: ["sh", "-c", "npm run db:migrate && npm run db:seed && npm run dev"]
     environment:
       NODE_ENV: development
       PORT: 3000
