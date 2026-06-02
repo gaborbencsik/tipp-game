@@ -110,14 +110,14 @@ onUnmounted(() => {
       <div class="flex items-center justify-between gap-3 border-b border-gray-200 bg-gray-50 px-5 py-4">
         <div class="flex min-w-0 items-center gap-2.5">
           <span
-            v-if="isFrozen"
-            data-testid="scoring-explainer-frozen"
-            class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700"
-            :title="t('scoringExplainer.frozenTooltip')"
-            aria-label="frozen"
+            :data-testid="isFrozen ? 'scoring-explainer-frozen' : undefined"
+            class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
+            :class="isFrozen ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'"
+            :title="isFrozen ? t('scoringExplainer.frozenTooltip') : undefined"
+            :aria-label="isFrozen ? 'frozen' : undefined"
           >
-            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9h2m4 0h2m-6-4h2m4 0h2" />
             </svg>
           </span>
           <div class="min-w-0">
