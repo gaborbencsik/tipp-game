@@ -4,6 +4,8 @@ import {
   scoringConfigs,
   groups,
   groupMembers,
+  leagues,
+  groupLeagues,
   specialPredictionTypes,
   groupGlobalTypeSubscriptions,
 } from '../db/schema/index.js'
@@ -23,18 +25,36 @@ class AppError extends Error {
   }
 }
 
-function toApiConfig(row: typeof scoringConfigs.$inferSelect): ScoringConfigFull {
+function toApiConfig(
+  row: typeof scoringConfigs.$inferSelect,
+  effectiveFrozen: Date | null,
+): ScoringConfigFull {
   return {
     id: row.id,
     name: row.name,
-    exactScore: row.exactScore,
-    correctWinnerAndDiff: row.correctWinnerAndDiff,
-    correctWinner: row.correctWinner,
-    correctDraw: row.correctDraw,
-    correctOutcome: row.correctOutcome,
-    incorrect: row.incorrect,
-    frozenAt: row.frozenAt ? row.frozenAt.toISOString() : null,
+    correctOutcomePoints: row.correctOutcomePoints,
+    exactBonusPoints: row.exactBonusPoints,
+    extraTimeBonusPoints: row.extraTimeBonusPoints,
+    frozenAt: effectiveFrozen ? effectiveFrozen.toISOString() : null,
   }
+}
+
+function effectiveFrozenAt(
+  configRelevantLeagues: ReadonlyArray<{ startsAt: Date | null }>,
+  now: Date = new Date(),
+): Date | null {
+  const past = configRelevantLeagues
+    .map(l => l.startsAt)
+    .filter((d): d is Date => d != null && d <= now)
+  if (past.length === 0) return null
+  return past.reduce((min, d) => (d < min ? d : min))
+}
+
+export function isConfigEffectivelyFrozen(
+  configRelevantLeagues: ReadonlyArray<{ startsAt: Date | null }>,
+  now: Date = new Date(),
+): boolean {
+  return effectiveFrozenAt(configRelevantLeagues, now) !== null
 }
 
 async function loadDefaultConfig(): Promise<typeof scoringConfigs.$inferSelect> {
@@ -73,6 +93,27 @@ async function loadConfigsByIds(ids: ReadonlyArray<string>): Promise<Map<string,
     .from(scoringConfigs)
     .where(inArray(scoringConfigs.id, ids as string[]))
   return new Map(rows.map(r => [r.id, r]))
+}
+
+async function loadAllLeagues(): Promise<Array<{ id: string; startsAt: Date | null }>> {
+  return db.select({ id: leagues.id, startsAt: leagues.startsAt }).from(leagues)
+}
+
+async function loadGroupLeaguesForGroups(
+  groupIds: ReadonlyArray<string>,
+): Promise<Map<string, Array<string>>> {
+  const result = new Map<string, Array<string>>()
+  if (groupIds.length === 0) return result
+  const rows = await db
+    .select({ groupId: groupLeagues.groupId, leagueId: groupLeagues.leagueId })
+    .from(groupLeagues)
+    .where(inArray(groupLeagues.groupId, groupIds as string[]))
+  for (const r of rows) {
+    const list = result.get(r.groupId) ?? []
+    list.push(r.leagueId)
+    result.set(r.groupId, list)
+  }
+  return result
 }
 
 async function loadGroupOwnedSpecialTypes(groupIds: ReadonlyArray<string>): Promise<Map<string, Array<typeof specialPredictionTypes.$inferSelect>>> {
@@ -135,14 +176,24 @@ export async function getScoringExplainer(userId: string): Promise<ScoringExplai
     .map(g => g.scoringConfigId)
     .filter((id): id is string => id !== null)
 
-  const [configs, owned, subscribed] = await Promise.all([
+  const [configs, owned, subscribed, allLeagues, groupLeaguesMap] = await Promise.all([
     loadConfigsByIds(configIdsToLoad),
     loadGroupOwnedSpecialTypes(groupIds),
     loadSubscribedGlobalSpecialTypes(groupIds),
+    loadAllLeagues(),
+    loadGroupLeaguesForGroups(groupIds),
   ])
+
+  const defaultEffective = effectiveFrozenAt(allLeagues)
 
   const groupsOut: Array<ScoringExplainerGroup> = userGroups.map(g => {
     const configRow = g.scoringConfigId ? configs.get(g.scoringConfigId) ?? defaultRow : defaultRow
+    const explicitLeagueIds = groupLeaguesMap.get(g.id) ?? []
+    const relevantLeagues = explicitLeagueIds.length === 0
+      ? allLeagues
+      : allLeagues.filter(l => explicitLeagueIds.includes(l.id))
+    const groupEffective = effectiveFrozenAt(relevantLeagues)
+
     const specialTypes: Array<ScoringExplainerSpecialType> = [
       ...(owned.get(g.id) ?? []).map(t => mapSpecialType(t, 'group-owned')),
       ...(subscribed.get(g.id) ?? []).map(t => mapSpecialType(t, 'subscribed-global')),
@@ -150,16 +201,16 @@ export async function getScoringExplainer(userId: string): Promise<ScoringExplai
     return {
       id: g.id,
       name: g.name,
-      config: toApiConfig(configRow),
-      configFrozenAt: configRow.frozenAt ? configRow.frozenAt.toISOString() : null,
+      config: toApiConfig(configRow, groupEffective),
+      configFrozenAt: groupEffective ? groupEffective.toISOString() : null,
       favoriteTeamDoublePoints: g.favoriteTeamDoublePoints,
       specialTypes,
     }
   })
 
   return {
-    default: toApiConfig(defaultRow),
-    defaultFrozenAt: defaultRow.frozenAt ? defaultRow.frozenAt.toISOString() : null,
+    default: toApiConfig(defaultRow, defaultEffective),
+    defaultFrozenAt: defaultEffective ? defaultEffective.toISOString() : null,
     groups: groupsOut,
   }
 }

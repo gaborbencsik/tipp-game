@@ -8,78 +8,106 @@ vi.mock('../src/db/client.js', () => ({
   db: { select: mockSelect },
 }))
 
-import { getScoringExplainer } from '../src/services/scoring-explainer.service.js'
+import { getScoringExplainer, isConfigEffectivelyFrozen } from '../src/services/scoring-explainer.service.js'
+
+const PAST = new Date('2026-06-01T00:00:00Z')
+const FUTURE = new Date('2027-01-01T00:00:00Z')
+
+const DEFAULT_CFG = {
+  id: 'cfg-default', name: 'Default', isGlobalDefault: true,
+  correctOutcomePoints: 1, exactBonusPoints: 1, extraTimeBonusPoints: 1,
+}
+
+function configResp(rows: unknown[]) {
+  return { from: () => ({ where: () => ({ limit: () => Promise.resolve(rows) }) }) }
+}
+function userGroupsResp(rows: unknown[]) {
+  return { from: () => ({ innerJoin: () => ({ where: () => Promise.resolve(rows) }) }) }
+}
+function configsByIdsResp(rows: unknown[]) {
+  return { from: () => ({ where: () => Promise.resolve(rows) }) }
+}
+function ownedResp(rows: unknown[]) {
+  return { from: () => ({ where: () => Promise.resolve(rows) }) }
+}
+function subscribedResp(rows: unknown[]) {
+  return { from: () => ({ innerJoin: () => ({ where: () => Promise.resolve(rows) }) }) }
+}
+function allLeaguesResp(rows: unknown[]) {
+  return { from: () => Promise.resolve(rows) }
+}
+function groupLeaguesResp(rows: unknown[]) {
+  return { from: () => ({ where: () => Promise.resolve(rows) }) }
+}
+
+describe('isConfigEffectivelyFrozen', () => {
+  it('returns true when at least one league has started', () => {
+    expect(isConfigEffectivelyFrozen([{ startsAt: PAST }, { startsAt: FUTURE }], new Date('2026-06-15T00:00:00Z'))).toBe(true)
+  })
+  it('returns false when all leagues are future or null', () => {
+    expect(isConfigEffectivelyFrozen([{ startsAt: FUTURE }, { startsAt: null }], new Date('2026-06-15T00:00:00Z'))).toBe(false)
+  })
+  it('returns false on empty input', () => {
+    expect(isConfigEffectivelyFrozen([], new Date('2026-06-15T00:00:00Z'))).toBe(false)
+  })
+})
 
 describe('scoring-explainer.service', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  it('1-csoport user → 1 elemű groups, helyes config + frozenAt + favoriteTeamDoublePoints', async () => {
-    const defaultConfig = {
-      id: 'cfg-default', name: 'Default', isGlobalDefault: true,
-      exactScore: 3, correctWinnerAndDiff: 2, correctWinner: 1, correctDraw: 2,
-      correctOutcome: 1, incorrect: 0, frozenAt: null,
-    }
+  it('1-csoport user → 1 elemű groups, helyes config + favoriteTeamDoublePoints', async () => {
     const groupRow = { id: 'g1', name: 'Pulykák', scoringConfigId: 'cfg-g1', favoriteTeamDoublePoints: true }
-    const groupConfig = { ...defaultConfig, id: 'cfg-g1', isGlobalDefault: false, exactScore: 4 }
+    const groupCfg = { ...DEFAULT_CFG, id: 'cfg-g1', isGlobalDefault: false, exactBonusPoints: 4 }
 
     mockSelect
-      .mockReturnValueOnce({ from: () => ({ where: () => ({ limit: () => Promise.resolve([defaultConfig]) }) }) })
-      .mockReturnValueOnce({ from: () => ({ innerJoin: () => ({ where: () => Promise.resolve([groupRow]) }) }) })
-      .mockReturnValueOnce({ from: () => ({ where: () => Promise.resolve([groupConfig]) }) })
-      .mockReturnValueOnce({ from: () => ({ where: () => Promise.resolve([]) }) })
-      .mockReturnValueOnce({ from: () => ({ innerJoin: () => ({ where: () => Promise.resolve([]) }) }) })
+      .mockReturnValueOnce(configResp([DEFAULT_CFG]))
+      .mockReturnValueOnce(userGroupsResp([groupRow]))
+      .mockReturnValueOnce(configsByIdsResp([groupCfg]))
+      .mockReturnValueOnce(ownedResp([]))
+      .mockReturnValueOnce(subscribedResp([]))
+      .mockReturnValueOnce(allLeaguesResp([{ id: 'l1', startsAt: FUTURE }]))
+      .mockReturnValueOnce(groupLeaguesResp([]))
 
     const result = await getScoringExplainer('user-1')
 
-    expect(result.default.exactScore).toBe(3)
+    expect(result.default.correctOutcomePoints).toBe(1)
+    expect(result.default.exactBonusPoints).toBe(1)
+    expect(result.default.extraTimeBonusPoints).toBe(1)
     expect(result.groups).toHaveLength(1)
-    expect(result.groups[0]).toMatchObject({
-      id: 'g1', name: 'Pulykák', favoriteTeamDoublePoints: true,
-    })
-    expect(result.groups[0]?.config.exactScore).toBe(4)
+    expect(result.groups[0]).toMatchObject({ id: 'g1', name: 'Pulykák', favoriteTeamDoublePoints: true })
+    expect(result.groups[0]?.config.exactBonusPoints).toBe(4)
     expect(result.groups[0]?.specialTypes).toEqual([])
   })
 
   it('csoport without scoringConfigId → öröklődő default config', async () => {
-    const defaultConfig = {
-      id: 'cfg-default', name: 'Default', isGlobalDefault: true,
-      exactScore: 3, correctWinnerAndDiff: 2, correctWinner: 1, correctDraw: 2,
-      correctOutcome: 1, incorrect: 0, frozenAt: null,
-    }
     const groupRow = { id: 'g1', name: 'Default-örökös', scoringConfigId: null, favoriteTeamDoublePoints: false }
 
-    // Call order: loadDefaultConfig, loadUserGroups, loadGroupOwnedSpecialTypes, loadSubscribedGlobalSpecialTypes
-    // loadConfigsByIds is skipped because configIdsToLoad is empty
     mockSelect
-      .mockReturnValueOnce({ from: () => ({ where: () => ({ limit: () => Promise.resolve([defaultConfig]) }) }) })
-      .mockReturnValueOnce({ from: () => ({ innerJoin: () => ({ where: () => Promise.resolve([groupRow]) }) }) })
-      .mockReturnValueOnce({ from: () => ({ where: () => Promise.resolve([]) }) })
-      .mockReturnValueOnce({ from: () => ({ innerJoin: () => ({ where: () => Promise.resolve([]) }) }) })
+      .mockReturnValueOnce(configResp([DEFAULT_CFG]))
+      .mockReturnValueOnce(userGroupsResp([groupRow]))
+      .mockReturnValueOnce(ownedResp([]))
+      .mockReturnValueOnce(subscribedResp([]))
+      .mockReturnValueOnce(allLeaguesResp([{ id: 'l1', startsAt: FUTURE }]))
+      .mockReturnValueOnce(groupLeaguesResp([]))
 
     const result = await getScoringExplainer('user-1')
-
-    expect(result.groups[0]?.config.exactScore).toBe(3)
+    expect(result.groups[0]?.config.correctOutcomePoints).toBe(1)
   })
 
   it('special tippek: csoport-saját + feliratkozott globális, helyes source címkével', async () => {
-    const defaultConfig = {
-      id: 'cfg-default', name: 'Default', isGlobalDefault: true,
-      exactScore: 3, correctWinnerAndDiff: 2, correctWinner: 1, correctDraw: 2,
-      correctOutcome: 1, incorrect: 0, frozenAt: null,
-    }
     const groupRow = { id: 'g1', name: 'Pulykák', scoringConfigId: null, favoriteTeamDoublePoints: false }
     const owned = { id: 'sp-owned', name: 'Csoport saját', description: 'd1', points: 5, groupId: 'g1' }
     const subscribed = { id: 'sp-global', name: 'Globális', description: 'd2', points: 7, groupId: null }
 
-    // Call order: loadDefaultConfig, loadUserGroups, loadGroupOwnedSpecialTypes, loadSubscribedGlobalSpecialTypes
-    // loadConfigsByIds is skipped because scoringConfigId is null
     mockSelect
-      .mockReturnValueOnce({ from: () => ({ where: () => ({ limit: () => Promise.resolve([defaultConfig]) }) }) })
-      .mockReturnValueOnce({ from: () => ({ innerJoin: () => ({ where: () => Promise.resolve([groupRow]) }) }) })
-      .mockReturnValueOnce({ from: () => ({ where: () => Promise.resolve([owned]) }) })
-      .mockReturnValueOnce({ from: () => ({ innerJoin: () => ({ where: () => Promise.resolve([{ groupId: 'g1', type: subscribed }]) }) }) })
+      .mockReturnValueOnce(configResp([DEFAULT_CFG]))
+      .mockReturnValueOnce(userGroupsResp([groupRow]))
+      .mockReturnValueOnce(ownedResp([owned]))
+      .mockReturnValueOnce(subscribedResp([{ groupId: 'g1', type: subscribed }]))
+      .mockReturnValueOnce(allLeaguesResp([{ id: 'l1', startsAt: FUTURE }]))
+      .mockReturnValueOnce(groupLeaguesResp([]))
 
     const result = await getScoringExplainer('user-1')
 
@@ -89,40 +117,100 @@ describe('scoring-explainer.service', () => {
     ])
   })
 
-  it('frozenAt érték helyesen propagálódik (default + group szinten)', async () => {
-    const frozen = new Date('2026-06-01T00:00:00Z')
-    const defaultConfig = {
-      id: 'cfg-default', name: 'Default', isGlobalDefault: true,
-      exactScore: 3, correctWinnerAndDiff: 2, correctWinner: 1, correctDraw: 2,
-      correctOutcome: 1, incorrect: 0, frozenAt: frozen,
-    }
-    const groupRow = { id: 'g1', name: 'X', scoringConfigId: 'cfg-g1', favoriteTeamDoublePoints: false }
-    const groupConfig = { ...defaultConfig, id: 'cfg-g1', isGlobalDefault: false, frozenAt: frozen }
-
-    mockSelect
-      .mockReturnValueOnce({ from: () => ({ where: () => ({ limit: () => Promise.resolve([defaultConfig]) }) }) })
-      .mockReturnValueOnce({ from: () => ({ innerJoin: () => ({ where: () => Promise.resolve([groupRow]) }) }) })
-      .mockReturnValueOnce({ from: () => ({ where: () => Promise.resolve([groupConfig]) }) })
-      .mockReturnValueOnce({ from: () => ({ where: () => Promise.resolve([]) }) })
-      .mockReturnValueOnce({ from: () => ({ innerJoin: () => ({ where: () => Promise.resolve([]) }) }) })
-
-    const result = await getScoringExplainer('user-1')
-
-    expect(result.defaultFrozenAt).toBe(frozen.toISOString())
-    expect(result.groups[0]?.configFrozenAt).toBe(frozen.toISOString())
-  })
-
   it('0-csoport user → üres groups array', async () => {
-    const defaultConfig = {
-      id: 'cfg-default', name: 'Default', isGlobalDefault: true,
-      exactScore: 3, correctWinnerAndDiff: 2, correctWinner: 1, correctDraw: 2,
-      correctOutcome: 1, incorrect: 0, frozenAt: null,
-    }
     mockSelect
-      .mockReturnValueOnce({ from: () => ({ where: () => ({ limit: () => Promise.resolve([defaultConfig]) }) }) })
-      .mockReturnValueOnce({ from: () => ({ innerJoin: () => ({ where: () => Promise.resolve([]) }) }) })
+      .mockReturnValueOnce(configResp([DEFAULT_CFG]))
+      .mockReturnValueOnce(userGroupsResp([]))
+      .mockReturnValueOnce(allLeaguesResp([{ id: 'l1', startsAt: FUTURE }]))
 
     const result = await getScoringExplainer('user-1')
     expect(result.groups).toEqual([])
+  })
+})
+
+describe('isConfigEffectivelyFrozen integration', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('globális default frozen, ha BÁRMELYIK liga starts_at <= now', async () => {
+    mockSelect
+      .mockReturnValueOnce(configResp([DEFAULT_CFG]))
+      .mockReturnValueOnce(userGroupsResp([]))
+      .mockReturnValueOnce(allLeaguesResp([{ id: 'l1', startsAt: PAST }, { id: 'l2', startsAt: FUTURE }]))
+
+    const result = await getScoringExplainer('user-1')
+    expect(result.defaultFrozenAt).toBe(PAST.toISOString())
+    expect(result.default.frozenAt).toBe(PAST.toISOString())
+  })
+
+  it('globális default NEM frozen, ha minden liga starts_at > now vagy null', async () => {
+    mockSelect
+      .mockReturnValueOnce(configResp([DEFAULT_CFG]))
+      .mockReturnValueOnce(userGroupsResp([]))
+      .mockReturnValueOnce(allLeaguesResp([{ id: 'l1', startsAt: FUTURE }, { id: 'l2', startsAt: null }]))
+
+    const result = await getScoringExplainer('user-1')
+    expect(result.defaultFrozenAt).toBeNull()
+    expect(result.default.frozenAt).toBeNull()
+  })
+
+  it('per-csoport config frozen csak a csoport ligái alapján', async () => {
+    const groupRow = { id: 'g1', name: 'Csoport', scoringConfigId: null, favoriteTeamDoublePoints: false }
+    mockSelect
+      .mockReturnValueOnce(configResp([DEFAULT_CFG]))
+      .mockReturnValueOnce(userGroupsResp([groupRow]))
+      .mockReturnValueOnce(ownedResp([]))
+      .mockReturnValueOnce(subscribedResp([]))
+      .mockReturnValueOnce(allLeaguesResp([{ id: 'l1', startsAt: PAST }, { id: 'l2', startsAt: FUTURE }]))
+      .mockReturnValueOnce(groupLeaguesResp([{ groupId: 'g1', leagueId: 'l1' }]))
+
+    const result = await getScoringExplainer('user-1')
+    expect(result.groups[0]?.configFrozenAt).toBe(PAST.toISOString())
+    expect(result.groups[0]?.config.frozenAt).toBe(PAST.toISOString())
+  })
+
+  it('csoport NEM frozen, ha csak future liga tartozik hozzá', async () => {
+    const groupRow = { id: 'g1', name: 'Csoport', scoringConfigId: null, favoriteTeamDoublePoints: false }
+    mockSelect
+      .mockReturnValueOnce(configResp([DEFAULT_CFG]))
+      .mockReturnValueOnce(userGroupsResp([groupRow]))
+      .mockReturnValueOnce(ownedResp([]))
+      .mockReturnValueOnce(subscribedResp([]))
+      .mockReturnValueOnce(allLeaguesResp([{ id: 'l1', startsAt: PAST }, { id: 'l2', startsAt: FUTURE }]))
+      .mockReturnValueOnce(groupLeaguesResp([{ groupId: 'g1', leagueId: 'l2' }]))
+
+    const result = await getScoringExplainer('user-1')
+    expect(result.groups[0]?.configFrozenAt).toBeNull()
+  })
+
+  it('üres group_leagues → fallback minden ligára', async () => {
+    const groupRow = { id: 'g1', name: 'Csoport', scoringConfigId: null, favoriteTeamDoublePoints: false }
+    mockSelect
+      .mockReturnValueOnce(configResp([DEFAULT_CFG]))
+      .mockReturnValueOnce(userGroupsResp([groupRow]))
+      .mockReturnValueOnce(ownedResp([]))
+      .mockReturnValueOnce(subscribedResp([]))
+      .mockReturnValueOnce(allLeaguesResp([{ id: 'l1', startsAt: PAST }]))
+      .mockReturnValueOnce(groupLeaguesResp([]))
+
+    const result = await getScoringExplainer('user-1')
+    expect(result.groups[0]?.configFrozenAt).toBe(PAST.toISOString())
+  })
+
+  it('API response 3 mezős config-ot ad vissza, régi mezők nem szerepelnek', async () => {
+    mockSelect
+      .mockReturnValueOnce(configResp([DEFAULT_CFG]))
+      .mockReturnValueOnce(userGroupsResp([]))
+      .mockReturnValueOnce(allLeaguesResp([]))
+
+    const result = await getScoringExplainer('user-1')
+    expect(result.default).toEqual(expect.objectContaining({
+      correctOutcomePoints: expect.any(Number),
+      exactBonusPoints: expect.any(Number),
+      extraTimeBonusPoints: expect.any(Number),
+    }))
+    expect(result.default).not.toHaveProperty('exactScore')
+    expect(result.default).not.toHaveProperty('correctWinner')
   })
 })
