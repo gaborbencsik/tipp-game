@@ -641,43 +641,50 @@
     "subtitleMulti": "A te csoportjaidban érvényes szabályok",
     "frozenTooltip": "Ez a szabályzat véglegesítve, a torna alatt nem változik.",
     "matchScoring": "Meccs-pontozás",
+    "matchScoringNote": "A bónuszok stackelhetők — egy meccsen több is járhat.",
     "rules": {
-      "exactScore": "Pontos eredmény",
-      "correctWinnerAndDiff": "Helyes győztes + gólkülönbség",
-      "correctWinner": "Helyes győztes",
-      "correctDraw": "Helyes döntetlen",
-      "correctOutcome": "Helyes kimenetel (11-esek után)",
-      "incorrect": "Hibás"
+      "correctOutcome": "Helyes kimenetel (1-X-2)",
+      "exactBonus": "Pontos eredmény bónusz",
+      "extraTimeBonus": "Hosszabbítás/tizenegyes kimenetel bónusz"
     },
     "examples": {
       "you": "Te",
       "result": "Eredmény",
-      "exactScore": "Te: 2-1, Eredmény: 2-1",
-      "correctWinnerAndDiff": "Te: 3-1, Eredmény: 2-0",
-      "correctWinner": "Te: 2-0, Eredmény: 3-1",
-      "correctDraw": "Te: 1-1, Eredmény: 2-2",
-      "correctOutcome": "Te: hazai továbbjutás, valódi: hazai 11-esekkel",
-      "incorrect": "Te: 1-0, Eredmény: 0-2"
+      "correctOutcome": "Te: 2-0, Eredmény: 3-1",
+      "exactBonus": "Te: 2-1, Eredmény: 2-1",
+      "extraTimeBonus": "Te: hazai továbbjutás, valódi: hazai 11-esekkel"
     },
     "columns": {
       "case": "Eset",
       "points": "Pontok",
       "example": "Példa"
     },
-    "diffBadge": "Eltérés a {groupName}-ben",
-    "diffInline": "{groupName}: {points} pt",
+    "tournament": {
+      "heading": "Torna tippek — csapatok haladása",
+      "groupOrder": "Helyes csoport (csoportkör végállás)",
+      "groupOrderDesc": "csoportonként, nincs részpont",
+      "round32": "Eltalált 32-be jutott csapat",
+      "round16": "Eltalált 16-ba jutott csapat",
+      "round8": "Eltalált 8-ba jutott csapat",
+      "round4": "Eltalált 4-be jutott csapat",
+      "finalist": "Eltalált döntős csapat",
+      "champion": "Eltalált világbajnok"
+    },
+    "stats": {
+      "heading": "Speciális statisztikai tippek",
+      "topScorerGroup": "Legtöbb gólt szerző csapat (csoportkör)",
+      "lowScorerGroup": "Legkevesebb gólt szerző csapat (csoportkör)",
+      "mostConcededGroup": "Legtöbb kapott gól (csoportkör)",
+      "leastConcededGroup": "Legkevesebb kapott gól (csoportkör)",
+      "topGoalscorer": "Torna gólkirálya"
+    },
     "bonus": {
       "heading": "Bónuszok",
       "favoriteTeamTitle": "Kedvenc csapat: dupla pont",
       "favoriteTeamDesc": "Ha a kedvenc csapatod meccsét tippeled, az ott szerzett pont ×2.",
       "active": "Aktív: {groups}"
     },
-    "special": {
-      "heading": "Speciális tippek"
-    },
-    "footnote": "A pontok a meccs lefújása után automatikusan kerülnek jóváírásra. Ha a szabályzat változik a torna közben, a már kiosztott pontokat nem érinti.",
     "close": "Bezárás",
-    "ack": "Értem",
     "fetchError": "Nem sikerült betölteni a szabályokat",
     "trigger": {
       "menu": "Pontozás",

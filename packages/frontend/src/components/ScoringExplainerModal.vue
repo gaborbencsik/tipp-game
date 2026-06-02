@@ -6,8 +6,34 @@ import { useScoringExplainerStore } from '../stores/scoring-explainer.store.js'
 const store = useScoringExplainerStore()
 const { t } = useI18n()
 
-type RuleKey = 'exactScore' | 'correctWinnerAndDiff' | 'correctWinner' | 'correctDraw' | 'correctOutcome' | 'incorrect'
-const RULE_KEYS: readonly RuleKey[] = ['exactScore', 'correctWinnerAndDiff', 'correctWinner', 'correctDraw', 'correctOutcome', 'incorrect'] as const
+type MatchRuleKey = 'correctOutcome' | 'exactBonus' | 'extraTimeBonus'
+const MATCH_RULES: ReadonlyArray<{ key: MatchRuleKey; points: number; bonus: boolean }> = [
+  { key: 'correctOutcome', points: 1, bonus: false },
+  { key: 'exactBonus', points: 1, bonus: true },
+  { key: 'extraTimeBonus', points: 1, bonus: true },
+]
+
+type TournamentKey =
+  | 'groupOrder' | 'round32' | 'round16' | 'round8' | 'round4' | 'finalist' | 'champion'
+const TOURNAMENT_RULES: ReadonlyArray<{ key: TournamentKey; points: number; hasDesc?: boolean }> = [
+  { key: 'groupOrder', points: 3, hasDesc: true },
+  { key: 'round32', points: 2 },
+  { key: 'round16', points: 3 },
+  { key: 'round8', points: 4 },
+  { key: 'round4', points: 6 },
+  { key: 'finalist', points: 8 },
+  { key: 'champion', points: 10 },
+]
+
+type StatKey =
+  | 'topScorerGroup' | 'lowScorerGroup' | 'mostConcededGroup' | 'leastConcededGroup' | 'topGoalscorer'
+const STAT_RULES: ReadonlyArray<{ key: StatKey; points: number }> = [
+  { key: 'topScorerGroup', points: 3 },
+  { key: 'lowScorerGroup', points: 3 },
+  { key: 'mostConcededGroup', points: 3 },
+  { key: 'leastConcededGroup', points: 3 },
+  { key: 'topGoalscorer', points: 5 },
+]
 
 const data = computed(() => store.data)
 const groups = computed(() => store.data?.groups ?? [])
@@ -25,54 +51,8 @@ const subtitle = computed(() =>
     : t('scoringExplainer.subtitleMulti'),
 )
 
-const isFrozen = computed(() => {
-  if (!data.value) return false
-  if (data.value.defaultFrozenAt) return true
-  return groups.value.some(g => g.configFrozenAt)
-})
-
-const displayConfig = computed(() => {
-  const sg = singleGroup.value
-  if (sg) return sg.config
-  return data.value?.default ?? null
-})
-
-const ruleDiffs = computed<Record<RuleKey, Array<{ groupName: string; points: number }>>>(() => {
-  const result = {} as Record<RuleKey, Array<{ groupName: string; points: number }>>
-  for (const k of RULE_KEYS) result[k] = []
-  if (!data.value || singleGroup.value || groups.value.length === 0) return result
-  const def = data.value.default
-  for (const g of groups.value) {
-    for (const k of RULE_KEYS) {
-      if (g.config[k] !== def[k]) result[k].push({ groupName: g.name, points: g.config[k] })
-    }
-  }
-  return result
-})
-
 const bonusGroups = computed(() => groups.value.filter(g => g.favoriteTeamDoublePoints))
 const showBonus = computed(() => bonusGroups.value.length > 0)
-
-const specialGroupOwned = computed(() => {
-  const out: Array<{ groupName: string; types: typeof groups.value[0]['specialTypes'] }> = []
-  for (const g of groups.value) {
-    const owned = g.specialTypes.filter(s => s.source === 'group-owned')
-    if (owned.length > 0) out.push({ groupName: g.name, types: owned })
-  }
-  return out
-})
-
-const specialSubscribed = computed(() => {
-  const seen = new Map<string, typeof groups.value[0]['specialTypes'][number]>()
-  for (const g of groups.value) {
-    for (const s of g.specialTypes) {
-      if (s.source === 'subscribed-global' && !seen.has(s.id)) seen.set(s.id, s)
-    }
-  }
-  return Array.from(seen.values())
-})
-
-const hasSpecials = computed(() => specialGroupOwned.value.length > 0 || specialSubscribed.value.length > 0)
 
 function pointsPillClass(value: number): string {
   if (value === 0) return 'bg-gray-200 text-gray-600'
@@ -108,22 +88,9 @@ onUnmounted(() => {
   >
     <div class="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl bg-white shadow-xl">
       <div class="flex items-center justify-between gap-3 border-b border-gray-200 bg-gray-50 px-5 py-4">
-        <div class="flex min-w-0 items-center gap-2.5">
-          <span
-            :data-testid="isFrozen ? 'scoring-explainer-frozen' : undefined"
-            class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
-            :class="isFrozen ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'"
-            :title="isFrozen ? t('scoringExplainer.frozenTooltip') : undefined"
-            :aria-label="isFrozen ? 'frozen' : undefined"
-          >
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9h2m4 0h2m-6-4h2m4 0h2" />
-            </svg>
-          </span>
-          <div class="min-w-0">
-            <h2 class="truncate text-base font-bold text-gray-900">{{ headerTitle }}</h2>
-            <p class="mt-0.5 text-xs text-gray-500">{{ subtitle }}</p>
-          </div>
+        <div class="min-w-0">
+          <h2 class="truncate text-base font-bold text-gray-900">{{ headerTitle }}</h2>
+          <p class="mt-0.5 text-xs text-gray-500">{{ subtitle }}</p>
         </div>
         <button
           type="button"
@@ -154,30 +121,71 @@ onUnmounted(() => {
               </thead>
               <tbody>
                 <tr
-                  v-for="key in RULE_KEYS"
-                  :key="key"
+                  v-for="rule in MATCH_RULES"
+                  :key="rule.key"
                   class="border-b border-gray-100 last:border-0"
                 >
                   <td class="px-3 py-2.5 text-gray-800">
-                    {{ t(`scoringExplainer.rules.${key}`) }}
-                    <span
-                      v-for="diff in ruleDiffs[key]"
-                      :key="diff.groupName"
-                      class="ml-2 inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[0.7rem] font-semibold text-amber-700"
-                    >⚠ {{ t('scoringExplainer.diffInline', { groupName: diff.groupName, points: diff.points }) }}</span>
+                    {{ t(`scoringExplainer.rules.${rule.key}`) }}
                   </td>
                   <td class="w-20 px-3 py-2.5 text-center">
                     <span
                       class="inline-flex min-w-[2rem] items-center justify-center rounded-full px-2.5 py-0.5 text-sm font-bold tabular-nums"
-                      :class="pointsPillClass(displayConfig?.[key] ?? 0)"
-                    >{{ displayConfig?.[key] ?? 0 }}</span>
+                      :class="pointsPillClass(rule.points)"
+                    >{{ rule.bonus ? `+${rule.points}` : rule.points }}</span>
                   </td>
                   <td class="px-3 py-2.5 text-xs text-gray-500">
-                    {{ t(`scoringExplainer.examples.${key}`) }}
+                    {{ t(`scoringExplainer.examples.${rule.key}`) }}
                   </td>
                 </tr>
               </tbody>
             </table>
+          </div>
+          <p class="mt-2 text-xs italic text-gray-500">{{ t('scoringExplainer.matchScoringNote') }}</p>
+        </div>
+
+        <div class="mt-5">
+          <h3 class="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
+            {{ t('scoringExplainer.tournament.heading') }}
+          </h3>
+          <div
+            v-for="rule in TOURNAMENT_RULES"
+            :key="rule.key"
+            class="mb-2 rounded-lg border border-gray-200 bg-white p-3 transition-colors last:mb-0 hover:bg-gray-50"
+          >
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <div class="text-sm font-medium text-gray-800">{{ t(`scoringExplainer.tournament.${rule.key}`) }}</div>
+                <div v-if="rule.hasDesc" class="mt-0.5 text-xs text-gray-500">
+                  {{ t('scoringExplainer.tournament.groupOrderDesc') }}
+                </div>
+              </div>
+              <span
+                class="inline-flex min-w-[2rem] items-center justify-center rounded-full px-2.5 py-0.5 text-sm font-bold tabular-nums"
+                :class="pointsPillClass(rule.points)"
+              >{{ rule.points }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-5">
+          <h3 class="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
+            {{ t('scoringExplainer.stats.heading') }}
+          </h3>
+          <div
+            v-for="rule in STAT_RULES"
+            :key="rule.key"
+            class="mb-2 rounded-lg border border-gray-200 bg-white p-3 transition-colors last:mb-0 hover:bg-gray-50"
+          >
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <div class="text-sm font-medium text-gray-800">{{ t(`scoringExplainer.stats.${rule.key}`) }}</div>
+              </div>
+              <span
+                class="inline-flex min-w-[2rem] items-center justify-center rounded-full px-2.5 py-0.5 text-sm font-bold tabular-nums"
+                :class="pointsPillClass(rule.points)"
+              >{{ rule.points }}</span>
+            </div>
           </div>
         </div>
 
@@ -198,60 +206,6 @@ onUnmounted(() => {
             </div>
           </div>
         </div>
-
-        <div v-if="hasSpecials" class="mt-5">
-          <h3 class="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
-            {{ t('scoringExplainer.special.heading') }}
-          </h3>
-          <div v-for="entry in specialGroupOwned" :key="entry.groupName">
-            <div class="mb-2 mt-3 flex items-center gap-2 first:mt-0">
-              <span class="h-1.5 w-1.5 rounded-full bg-blue-600"></span>
-              <span class="text-sm font-semibold text-gray-700">{{ entry.groupName }}</span>
-            </div>
-            <div
-              v-for="s in entry.types"
-              :key="s.id"
-              class="mb-2 rounded-lg border border-gray-200 bg-white p-3 transition-colors last:mb-0 hover:bg-gray-50"
-            >
-              <div class="flex items-start justify-between gap-3">
-                <div class="min-w-0">
-                  <div class="text-sm font-medium text-gray-800">{{ s.name }}</div>
-                </div>
-                <span
-                  class="inline-flex min-w-[2rem] items-center justify-center rounded-full px-2.5 py-0.5 text-sm font-bold tabular-nums"
-                  :class="pointsPillClass(s.points)"
-                >{{ s.points }}</span>
-              </div>
-            </div>
-          </div>
-          <div
-            v-for="s in specialSubscribed"
-            :key="s.id"
-            class="mb-2 rounded-lg border border-gray-200 bg-white p-3 transition-colors last:mb-0 hover:bg-gray-50"
-          >
-            <div class="flex items-start justify-between gap-3">
-              <div class="min-w-0">
-                <div class="text-sm font-medium text-gray-800">{{ s.name }}</div>
-              </div>
-              <span
-                class="inline-flex min-w-[2rem] items-center justify-center rounded-full px-2.5 py-0.5 text-sm font-bold tabular-nums"
-                :class="pointsPillClass(s.points)"
-              >{{ s.points }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="mt-5 rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs text-gray-500">
-          {{ t('scoringExplainer.footnote') }}
-        </div>
-      </div>
-
-      <div class="flex justify-end border-t border-gray-200 bg-gray-50 px-5 py-3">
-        <button
-          type="button"
-          class="rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
-          @click="close"
-        >{{ t('scoringExplainer.ack') }}</button>
       </div>
     </div>
   </div>

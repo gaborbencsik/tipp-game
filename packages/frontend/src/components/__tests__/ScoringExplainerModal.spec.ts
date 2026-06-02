@@ -36,7 +36,7 @@ describe('ScoringExplainerModal', () => {
     expect(wrapper.text()).toContain('Pulykák pontozása')
   })
 
-  it('2+ csoport — eltérés badge ott, ahol a config eltér a defaulttól', () => {
+  it('2+ csoport — torna tippek és statisztikai szekció megjelenik', () => {
     const store = useScoringExplainerStore()
     store.isOpen = true
     store.data = makeData({
@@ -46,16 +46,18 @@ describe('ScoringExplainerModal', () => {
       ],
     })
     const wrapper = mount(ScoringExplainerModal, { global: { plugins: [i18n] } })
-    expect(wrapper.text()).toMatch(/Pulykák: 4 pt/)
-    expect(wrapper.text()).toMatch(/Office: 2 pt/)
+    expect(wrapper.text()).toContain('Eltalált világbajnok')
+    expect(wrapper.text()).toContain('Torna gólkirálya')
   })
 
-  it('frozen lakat ikon megjelenik defaultFrozenAt != null esetén', () => {
+  it('match-pontozás — 3 stackelhető szabály jelenik meg', () => {
     const store = useScoringExplainerStore()
     store.isOpen = true
-    store.data = makeData({ defaultFrozenAt: '2026-06-01T00:00:00Z' })
+    store.data = makeData()
     const wrapper = mount(ScoringExplainerModal, { global: { plugins: [i18n] } })
-    expect(wrapper.find('[data-testid="scoring-explainer-frozen"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Helyes kimenetel (1-X-2)')
+    expect(wrapper.text()).toContain('Pontos eredmény bónusz')
+    expect(wrapper.text()).toContain('Hosszabbítás/tizenegyes kimenetel bónusz')
   })
 
   it('bónusz blokk csak akkor látszik, ha legalább egy csoport favoriteTeamDoublePoints=true', () => {
