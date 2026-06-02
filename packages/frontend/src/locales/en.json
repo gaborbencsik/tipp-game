@@ -645,7 +645,7 @@
     "rules": {
       "correctOutcome": "Correct outcome (1-X-2)",
       "exactBonus": "Exact score bonus",
-      "extraTimeBonus": "Extra time / penalty outcome bonus",
+      "extraTimeBonus": "Extra time / penalty outcome bonus (knockout stage)",
       "favoriteTeamMultiplier": "Favorite team's match"
     },
     "examples": {
@@ -662,7 +662,7 @@
       "example": "Example"
     },
     "tournament": {
-      "heading": "Tournament tips — team progression",
+      "heading": "Tournament tips",
       "groupOrder": "Correct group placement (group stage standing)",
       "groupOrderDesc": "per group, no partial credit",
       "perTeam": "per team",

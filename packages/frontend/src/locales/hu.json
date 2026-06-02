@@ -645,7 +645,7 @@
     "rules": {
       "correctOutcome": "Helyes kimenetel (1-X-2)",
       "exactBonus": "Pontos eredmény bónusz",
-      "extraTimeBonus": "Hosszabbítás/tizenegyes kimenetel bónusz",
+      "extraTimeBonus": "Hosszabbítás/tizenegyes kimenetel bónusz (egyenes kiesésben)",
       "favoriteTeamMultiplier": "Kedvenc csapat meccse"
     },
     "examples": {
@@ -662,7 +662,7 @@
       "example": "Példa"
     },
     "tournament": {
-      "heading": "Torna tippek — csapatok haladása",
+      "heading": "Torna tippek",
       "groupOrder": "Helyes csoport (csoportkör végállás)",
       "groupOrderDesc": "csoportonként, nincs részpont",
       "perTeam": "csapatonként",
