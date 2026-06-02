@@ -1,12 +1,12 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-06-02
+> Utoljára frissítve: 2026-06-02 (OPS-002 scope kibővítve 3 cron service-re, complexity XS → S)
 
 ## Nyitott story-k
 
 | Story ID | Cím | Prioritás | Függőség |
 |----------|-----|-----------|----------|
-| OPS-002 | Render cron service konfigurálása az adaptive sync-hez | Must Have | — |
+| OPS-002 | Render cron service-ek konfigurálása az automatikus sync-hez (tick + polymarket + transfermarkt) | Must Have | — |
 | OPS-001 | Strukturált logolás és frontend hibakezelés (MVP) | Should Have | — |
 | PUSH-001 | Webpush infrastruktúra és admin trigger UI | Should Have | — |
 | PUSH-002 | Push: meccs előtt 30 perccel, ha nincs tipp | Should Have | PUSH-001 |
