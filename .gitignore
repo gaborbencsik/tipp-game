@@ -158,3 +158,4 @@ result.json
 .vscode/
 screenshots/
 .playwright-mcp/
+.local/

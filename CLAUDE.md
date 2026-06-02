@@ -159,6 +159,10 @@ src/
 - **Párhuzamos független kutatások:** több haiku/sonnet subagent egyszerre
 - **Git műveletek (commit, push, status):** subagent `model: "haiku"`
 
+## Git commit message
+
+- **Mindig angolul** írd a commit message-et (title + body egyaránt), függetlenül attól, hogy a beszélgetés magyarul folyik.
+
 ## Output minimalizálás (kötelező)
 
 - **Minden szöveges output max 1 mondat, max 120 karakter** – tool hívások előtt, között, után egyaránt
