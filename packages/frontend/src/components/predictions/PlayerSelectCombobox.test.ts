@@ -71,4 +71,27 @@ describe('PlayerSelectCombobox', () => {
     const input = wrapper.find('input').element as HTMLInputElement
     expect(input.value).toBe('Vinicius Jr.')
   })
+
+  it('renders the team flag inside the input when selected player has teamFlagUrl', async () => {
+    playersListMock.mockResolvedValue([
+      { id: UUID, name: 'Vinicius Jr.', teamId: 't1', teamName: 'Brazil', teamShortCode: 'BRA', teamFlagUrl: 'https://example.com/br.svg' },
+    ])
+    const wrapper = mountCombobox({ modelValue: UUID, leagueId: 'l1', answerLabel: null })
+    await flushPromises()
+
+    const flag = wrapper.find('img')
+    expect(flag.exists()).toBe(true)
+    expect(flag.attributes('src')).toBe('https://example.com/br.svg')
+    expect(flag.attributes('alt')).toBe('Brazil')
+  })
+
+  it('does not render a flag when no player is selected', async () => {
+    playersListMock.mockResolvedValue([
+      { id: UUID, name: 'Vinicius Jr.', teamId: 't1', teamName: 'Brazil', teamShortCode: 'BRA', teamFlagUrl: 'https://example.com/br.svg' },
+    ])
+    const wrapper = mountCombobox({ modelValue: null, leagueId: 'l1', answerLabel: null })
+    await flushPromises()
+
+    expect(wrapper.find('img').exists()).toBe(false)
+  })
 })

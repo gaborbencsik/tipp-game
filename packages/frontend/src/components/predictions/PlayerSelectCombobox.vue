@@ -11,6 +11,12 @@
   </div>
   <div v-else class="relative" ref="containerRef">
     <div class="flex items-center border border-slate-300 rounded-md bg-white overflow-hidden focus-within:ring-2 focus-within:ring-blue-300">
+      <img
+        v-if="selectedPlayer?.teamFlagUrl"
+        :src="selectedPlayer.teamFlagUrl"
+        :alt="selectedPlayer.teamName ?? ''"
+        class="w-6 h-4 object-cover rounded-sm shrink-0 ml-2.5"
+      />
       <input
         ref="inputRef"
         type="text"
