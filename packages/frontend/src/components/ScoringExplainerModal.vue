@@ -7,21 +7,26 @@ const store = useScoringExplainerStore()
 const { t } = useI18n()
 
 type MatchRuleKey = 'correctOutcome' | 'exactBonus' | 'extraTimeBonus'
-const MATCH_RULES: ReadonlyArray<{ key: MatchRuleKey; points: number; bonus: boolean }> = [
-  { key: 'correctOutcome', points: 1, bonus: false },
-  { key: 'exactBonus', points: 1, bonus: true },
-  { key: 'extraTimeBonus', points: 1, bonus: true },
+type MatchRule =
+  | { key: MatchRuleKey; kind: 'base' | 'bonus'; points: number }
+  | { key: 'favoriteTeamMultiplier'; kind: 'multiplier'; multiplier: number }
+
+const MATCH_RULES: ReadonlyArray<MatchRule> = [
+  { key: 'correctOutcome', kind: 'base', points: 1 },
+  { key: 'exactBonus', kind: 'bonus', points: 1 },
+  { key: 'extraTimeBonus', kind: 'bonus', points: 1 },
+  { key: 'favoriteTeamMultiplier', kind: 'multiplier', multiplier: 2 },
 ]
 
 type TournamentKey =
   | 'groupOrder' | 'round32' | 'round16' | 'round8' | 'round4' | 'finalist' | 'champion'
-const TOURNAMENT_RULES: ReadonlyArray<{ key: TournamentKey; points: number; hasDesc?: boolean }> = [
-  { key: 'groupOrder', points: 3, hasDesc: true },
-  { key: 'round32', points: 2 },
-  { key: 'round16', points: 3 },
-  { key: 'round8', points: 4 },
-  { key: 'round4', points: 6 },
-  { key: 'finalist', points: 8 },
+const TOURNAMENT_RULES: ReadonlyArray<{ key: TournamentKey; points: number; descKey?: string }> = [
+  { key: 'groupOrder', points: 3, descKey: 'groupOrderDesc' },
+  { key: 'round32', points: 2, descKey: 'perTeam' },
+  { key: 'round16', points: 3, descKey: 'perTeam' },
+  { key: 'round8', points: 4, descKey: 'perTeam' },
+  { key: 'round4', points: 6, descKey: 'perTeam' },
+  { key: 'finalist', points: 8, descKey: 'perTeam' },
   { key: 'champion', points: 10 },
 ]
 
@@ -52,11 +57,21 @@ const subtitle = computed(() =>
 )
 
 const bonusGroups = computed(() => groups.value.filter(g => g.favoriteTeamDoublePoints))
-const showBonus = computed(() => bonusGroups.value.length > 0)
 
 function pointsPillClass(value: number): string {
   if (value === 0) return 'bg-gray-200 text-gray-600'
   return 'bg-blue-100 text-blue-700'
+}
+
+function matchPointsLabel(rule: MatchRule): string {
+  if (rule.kind === 'multiplier') return `×${rule.multiplier}`
+  if (rule.kind === 'bonus') return `+${rule.points}`
+  return String(rule.points)
+}
+
+function matchPillClass(rule: MatchRule): string {
+  if (rule.kind === 'multiplier') return 'bg-amber-100 text-amber-800'
+  return pointsPillClass(rule.points)
 }
 
 function close(): void {
@@ -127,12 +142,16 @@ onUnmounted(() => {
                 >
                   <td class="px-3 py-2.5 text-gray-800">
                     {{ t(`scoringExplainer.rules.${rule.key}`) }}
+                    <span
+                      v-if="rule.kind === 'multiplier' && bonusGroups.length > 0 && groups.length > 1"
+                      class="ml-2 text-xs italic text-gray-500"
+                    >({{ t('scoringExplainer.bonus.active', { groups: bonusGroups.map(g => g.name).join(', ') }) }})</span>
                   </td>
                   <td class="w-20 px-3 py-2.5 text-center">
                     <span
                       class="inline-flex min-w-[2rem] items-center justify-center rounded-full px-2.5 py-0.5 text-sm font-bold tabular-nums"
-                      :class="pointsPillClass(rule.points)"
-                    >{{ rule.bonus ? `+${rule.points}` : rule.points }}</span>
+                      :class="matchPillClass(rule)"
+                    >{{ matchPointsLabel(rule) }}</span>
                   </td>
                   <td class="px-3 py-2.5 text-xs text-gray-500">
                     {{ t(`scoringExplainer.examples.${rule.key}`) }}
@@ -156,8 +175,8 @@ onUnmounted(() => {
             <div class="flex items-start justify-between gap-3">
               <div class="min-w-0">
                 <div class="text-sm font-medium text-gray-800">{{ t(`scoringExplainer.tournament.${rule.key}`) }}</div>
-                <div v-if="rule.hasDesc" class="mt-0.5 text-xs text-gray-500">
-                  {{ t('scoringExplainer.tournament.groupOrderDesc') }}
+                <div v-if="rule.descKey" class="mt-0.5 text-xs text-gray-500">
+                  {{ t(`scoringExplainer.tournament.${rule.descKey}`) }}
                 </div>
               </div>
               <span
@@ -185,24 +204,6 @@ onUnmounted(() => {
                 class="inline-flex min-w-[2rem] items-center justify-center rounded-full px-2.5 py-0.5 text-sm font-bold tabular-nums"
                 :class="pointsPillClass(rule.points)"
               >{{ rule.points }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div v-if="showBonus" class="mt-5">
-          <h3 class="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
-            {{ t('scoringExplainer.bonus.heading') }}
-          </h3>
-          <div class="rounded-lg border-l-4 border-amber-500 bg-amber-50 p-3.5">
-            <div class="mb-0.5 flex items-center gap-1.5 text-sm font-semibold text-amber-900">
-              <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-              </svg>
-              {{ t('scoringExplainer.bonus.favoriteTeamTitle') }}
-            </div>
-            <div class="text-sm text-amber-800">{{ t('scoringExplainer.bonus.favoriteTeamDesc') }}</div>
-            <div v-if="bonusGroups.length > 0" class="mt-1 text-xs italic text-amber-700">
-              {{ t('scoringExplainer.bonus.active', { groups: bonusGroups.map(g => g.name).join(', ') }) }}
             </div>
           </div>
         </div>

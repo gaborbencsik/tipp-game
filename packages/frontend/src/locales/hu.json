@@ -645,14 +645,16 @@
     "rules": {
       "correctOutcome": "Helyes kimenetel (1-X-2)",
       "exactBonus": "Pontos eredmény bónusz",
-      "extraTimeBonus": "Hosszabbítás/tizenegyes kimenetel bónusz"
+      "extraTimeBonus": "Hosszabbítás/tizenegyes kimenetel bónusz",
+      "favoriteTeamMultiplier": "Kedvenc csapat meccse"
     },
     "examples": {
       "you": "Te",
       "result": "Eredmény",
       "correctOutcome": "Te: 2-0, Eredmény: 3-1",
       "exactBonus": "Te: 2-1, Eredmény: 2-1",
-      "extraTimeBonus": "Te: hazai továbbjutás, valódi: hazai 11-esekkel"
+      "extraTimeBonus": "Te: hazai továbbjutás, valódi: hazai 11-esekkel",
+      "favoriteTeamMultiplier": "A meccsen szerzett összes pont ×2"
     },
     "columns": {
       "case": "Eset",
@@ -663,6 +665,7 @@
       "heading": "Torna tippek — csapatok haladása",
       "groupOrder": "Helyes csoport (csoportkör végállás)",
       "groupOrderDesc": "csoportonként, nincs részpont",
+      "perTeam": "csapatonként",
       "round32": "Eltalált 32-be jutott csapat",
       "round16": "Eltalált 16-ba jutott csapat",
       "round8": "Eltalált 8-ba jutott csapat",

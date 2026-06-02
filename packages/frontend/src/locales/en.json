@@ -645,14 +645,16 @@
     "rules": {
       "correctOutcome": "Correct outcome (1-X-2)",
       "exactBonus": "Exact score bonus",
-      "extraTimeBonus": "Extra time / penalty outcome bonus"
+      "extraTimeBonus": "Extra time / penalty outcome bonus",
+      "favoriteTeamMultiplier": "Favorite team's match"
     },
     "examples": {
       "you": "You",
       "result": "Result",
       "correctOutcome": "You: 2-0, Result: 3-1",
       "exactBonus": "You: 2-1, Result: 2-1",
-      "extraTimeBonus": "You: home win, actual: home on penalties"
+      "extraTimeBonus": "You: home win, actual: home on penalties",
+      "favoriteTeamMultiplier": "All points earned on that match ×2"
     },
     "columns": {
       "case": "Case",
@@ -663,6 +665,7 @@
       "heading": "Tournament tips — team progression",
       "groupOrder": "Correct group placement (group stage standing)",
       "groupOrderDesc": "per group, no partial credit",
+      "perTeam": "per team",
       "round32": "Each team correctly into the round of 32",
       "round16": "Each team correctly into the round of 16",
       "round8": "Each team correctly into the quarterfinals",
