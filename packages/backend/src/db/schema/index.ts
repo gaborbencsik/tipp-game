@@ -144,6 +144,7 @@ export const leagues = pgTable('leagues', {
   id:        uuid('id').primaryKey().defaultRandom(),
   name:      varchar('name', { length: 100 }).notNull(),
   shortName: varchar('short_name', { length: 20 }).notNull(),
+  startsAt:  timestamp('starts_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
@@ -251,18 +252,14 @@ export const matchInsights = pgTable('match_insights', {
 // ─── SCORING CONFIGS ──────────────────────────────────────────────────────────
 
 export const scoringConfigs = pgTable('scoring_configs', {
-  id:                   uuid('id').primaryKey().defaultRandom(),
-  name:                 varchar('name', { length: 100 }).notNull(),
-  isGlobalDefault:      boolean('is_global_default').notNull().default(false),
-  exactScore:           smallint('exact_score').notNull().default(3),
-  correctWinnerAndDiff: smallint('correct_winner_and_diff').notNull().default(2),
-  correctWinner:        smallint('correct_winner').notNull().default(1),
-  correctDraw:          smallint('correct_draw').notNull().default(2),
-  correctOutcome:       smallint('correct_outcome').notNull().default(1),
-  incorrect:            smallint('incorrect').notNull().default(0),
-  frozenAt:             timestamp('frozen_at', { withTimezone: true }),
-  createdAt:            timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt:            timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  id:                    uuid('id').primaryKey().defaultRandom(),
+  name:                  varchar('name', { length: 100 }).notNull(),
+  isGlobalDefault:       boolean('is_global_default').notNull().default(false),
+  correctOutcomePoints:  smallint('correct_outcome_points').notNull().default(1),
+  exactBonusPoints:      smallint('exact_bonus_points').notNull().default(1),
+  extraTimeBonusPoints:  smallint('extra_time_bonus_points').notNull().default(1),
+  createdAt:             timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt:             timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
 // ─── GROUPS ───────────────────────────────────────────────────────────────────
