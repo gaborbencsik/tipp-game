@@ -29,23 +29,17 @@ export interface DbUser {
 export type MatchOutcome = 'extra_time_home' | 'extra_time_away' | 'penalties_home' | 'penalties_away'
 
 export interface ScoringConfig {
-  readonly exactScore: number
-  readonly correctWinnerAndDiff: number
-  readonly correctWinner: number
-  readonly correctDraw: number
-  readonly correctOutcome: number
-  readonly incorrect: number
+  readonly correctOutcomePoints: number
+  readonly exactBonusPoints: number
+  readonly extraTimeBonusPoints: number
 }
 
 export interface ScoringConfigFull {
   readonly id: string
   readonly name: string
-  readonly exactScore: number
-  readonly correctWinnerAndDiff: number
-  readonly correctWinner: number
-  readonly correctDraw: number
-  readonly correctOutcome: number
-  readonly incorrect: number
+  readonly correctOutcomePoints: number
+  readonly exactBonusPoints: number
+  readonly extraTimeBonusPoints: number
   readonly frozenAt: string | null
 }
 
@@ -76,12 +70,9 @@ export interface RecalcStatus {
 }
 
 export interface ScoringConfigInput {
-  readonly exactScore: number
-  readonly correctWinnerAndDiff: number
-  readonly correctWinner: number
-  readonly correctDraw: number
-  readonly correctOutcome: number
-  readonly incorrect: number
+  readonly correctOutcomePoints: number
+  readonly exactBonusPoints: number
+  readonly extraTimeBonusPoints: number
 }
 
 export interface ScoreLine {
