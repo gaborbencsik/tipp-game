@@ -62,6 +62,44 @@ A `VITE_DEV_AUTH_BYPASS=true` env-változó beállításával a bejelentkezés g
 
 ---
 
+## Production sync (Render cron jobs)
+
+Production-ben a 3 internal sync endpointot Render cron service-ek hívják (`render.yaml`):
+
+| Cron service | Schedule (UTC) | Endpoint | Cél |
+|---|---|---|---|
+| `tipp-game-cron-tick` | `* * * * *` (percenként) | `POST /api/internal/sync/tick` | Meccs eredmény + gólszerzők; 24h-ként player sync. A backend `sync-gate` dönti el a tényleges futást a `sync_state.mode` alapján. |
+| `tipp-game-cron-polymarket` | `*/15 * * * *` | `POST /api/internal/sync/polymarket-tick` | Polymarket odds frissítés. On/off az admin UI-ról kapcsolható. |
+| `tipp-game-cron-transfermarkt` | `0 4 * * *` (napi 04:00 UTC) | `POST /api/internal/sync/transfermarkt-tick` | Csapat-piaci értékek. Belső 24h-os interval gate az endpointon. |
+
+A 3 cron service és a backend web service is a `frankfurt` régióban fut, így az internal hívás (`http://tipp-game-backend:3000`) a Render belső hálózatán megy.
+
+### `SYNC_SERVICE_TOKEN` setup
+
+Az endpoint-okat a `serviceTokenMiddleware` őrzi `Authorization: Bearer <token>` header alapján. A token azonos kell legyen a backend-en és mindhárom cron service-en.
+
+```bash
+# Token generálás (lokálisan)
+openssl rand -hex 32
+```
+
+Render dashboard-on kézzel kell beállítani — a `render.yaml` mind a négy service-nél `sync: false`-szel jelöli, ezért nem kerül a repo-ba:
+
+1. **`tipp-game-backend`** → Environment → Add `SYNC_SERVICE_TOKEN` = `<generált érték>`
+2. **`tipp-game-cron-tick`** → Environment → Add `SYNC_SERVICE_TOKEN` = `<ugyanaz>`
+3. **`tipp-game-cron-polymarket`** → ugyanígy
+4. **`tipp-game-cron-transfermarkt`** → ugyanígy
+
+Lokálisan a `.env`-ben opcionális; ha nincs beállítva, az internal endpointok 401-et adnak vissza (a fejlesztéshez nem szükséges, mert lokálisan az admin `/admin/sync/*` triggerekkel manuálisan tesztelhető a sync).
+
+### Verifikáció
+
+- Render dashboard → cron job logs: zöld futások a megadott schedule szerint
+- Backend logs: `sync.tick.received`, `polymarket.sync.completed`, `transfermarkt.sync.completed` események
+- Élő meccs alatt: percenként hívódik a `/tick`, de csak `adaptive` módban 2 percenként ténylegesen futtat (gate skip-eli a többit `interval not elapsed` reason-nel)
+
+---
+
 ## Implementációs státusz
 
 ### Kész
