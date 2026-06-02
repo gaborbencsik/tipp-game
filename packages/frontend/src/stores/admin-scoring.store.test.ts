@@ -50,12 +50,9 @@ import { useAdminScoringStore } from '@/stores/admin-scoring.store'
 const CONFIG: ScoringConfigFull = {
   id: 'config-uuid-1',
   name: 'Default',
-  exactScore: 3,
-  correctWinnerAndDiff: 2,
-  correctWinner: 1,
-  correctDraw: 2,
-  correctOutcome: 1,
-  incorrect: 0,
+  correctOutcomePoints: 1,
+  exactBonusPoints: 1,
+  extraTimeBonusPoints: 1,
   frozenAt: null,
 }
 
@@ -66,12 +63,9 @@ const CONFIG_WITH_IMPACT: ScoringConfigWithImpact = {
 }
 
 const INPUT = {
-  exactScore: 3,
-  correctWinnerAndDiff: 2,
-  correctWinner: 1,
-  correctDraw: 2,
-  correctOutcome: 1,
-  incorrect: 0,
+  correctOutcomePoints: 1,
+  exactBonusPoints: 1,
+  extraTimeBonusPoints: 1,
 }
 
 describe('admin-scoring.store', () => {
@@ -122,11 +116,11 @@ describe('admin-scoring.store', () => {
   // ─── updateConfig ─────────────────────────────────────────────────────────
 
   it('updateConfig() → config state updated, saveStatus saved', async () => {
-    const updated = { ...CONFIG, exactScore: 5 }
+    const updated = { ...CONFIG, exactBonusPoints: 5 }
     mockScoringConfigUpdate.mockResolvedValue(updated)
     const store = useAdminScoringStore()
-    await store.updateConfig({ ...INPUT, exactScore: 5 })
-    expect(store.config?.exactScore).toBe(5)
+    await store.updateConfig({ ...INPUT, exactBonusPoints: 5 })
+    expect(store.config?.exactBonusPoints).toBe(5)
     expect(store.saveStatus).toBe('saved')
   })
 
@@ -150,11 +144,11 @@ describe('admin-scoring.store', () => {
   // ─── overrideConfig ───────────────────────────────────────────────────────
 
   it('overrideConfig() → config updated, saveStatus saved', async () => {
-    const updated = { ...CONFIG, exactScore: 7, frozenAt: null }
+    const updated = { ...CONFIG, exactBonusPoints: 7, frozenAt: null }
     mockScoringConfigOverride.mockResolvedValue(updated)
     const store = useAdminScoringStore()
     await store.overrideConfig({ values: INPUT, reason: 'fix', recalculate: false })
-    expect(store.config?.exactScore).toBe(7)
+    expect(store.config?.exactBonusPoints).toBe(7)
     expect(store.saveStatus).toBe('saved')
   })
 

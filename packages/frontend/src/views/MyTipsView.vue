@@ -204,12 +204,9 @@ async function loadScoringConfig(): Promise<void> {
     const token = await getAccessToken()
     const config = await api.scoringConfig.default(token)
     scoringConfig.value = {
-      exactScore: config.exactScore,
-      correctWinnerAndDiff: config.correctWinnerAndDiff,
-      correctWinner: config.correctWinner,
-      correctDraw: config.correctDraw,
-      correctOutcome: config.correctOutcome,
-      incorrect: config.incorrect,
+      correctOutcomePoints: config.correctOutcomePoints,
+      exactBonusPoints: config.exactBonusPoints,
+      extraTimeBonusPoints: config.extraTimeBonusPoints,
     }
   } catch {
     scoringConfig.value = null
@@ -231,9 +228,7 @@ const stats = useMyStats({
 
 const distributionLabels = computed(() => ({
   exact: t('myStats.distExact'),
-  winnerAndDiff: t('myStats.distWinnerAndDiff'),
   winner: t('myStats.distWinner'),
-  draw: t('myStats.distDraw'),
   incorrect: t('myStats.distZero'),
   missed: t('myStats.distMissed'),
 }))
@@ -281,8 +276,10 @@ function matchesFilter(item: ListItem, key: FilterKey): boolean {
       return !!p && p.pointsGlobal !== null && p.pointsGlobal > 0
     case 'exact':
       if (!p || p.pointsGlobal === null) return false
-      const exact = scoringConfig.value?.exactScore
-      if (exact !== undefined) return p.pointsGlobal === exact
+      if (scoringConfig.value) {
+        const exactThreshold = scoringConfig.value.correctOutcomePoints + scoringConfig.value.exactBonusPoints
+        return p.pointsGlobal >= exactThreshold
+      }
       const max = Math.max(...predictionsStore.predictions.map(x => x.pointsGlobal ?? 0))
       return p.pointsGlobal === max && max > 0
     case 'zero':

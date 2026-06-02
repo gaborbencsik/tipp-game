@@ -110,42 +110,30 @@ const store = useAdminScoringStore()
 const overrideOpen = ref(false)
 
 const fields: Array<{ key: keyof ScoringConfigInput; label: string }> = [
-  { key: 'exactScore', label: 'Pontos találat' },
-  { key: 'correctWinnerAndDiff', label: 'Helyes győztes + gólkülönbség' },
-  { key: 'correctWinner', label: 'Helyes győztes' },
-  { key: 'correctDraw', label: 'Döntetlen tipp döntetlenre' },
-  { key: 'correctOutcome', label: 'Outcome bónusz (hossz./tizenegyes)' },
-  { key: 'incorrect', label: 'Helytelen tipp' },
+  { key: 'correctOutcomePoints', label: 'Helyes kimenetel' },
+  { key: 'exactBonusPoints', label: 'Pontos eredmény bónusz' },
+  { key: 'extraTimeBonusPoints', label: 'Hosszabbítás/tizenegyes bónusz' },
 ]
 
 type DraftConfig = {
-  exactScore: number
-  correctWinnerAndDiff: number
-  correctWinner: number
-  correctDraw: number
-  correctOutcome: number
-  incorrect: number
+  correctOutcomePoints: number
+  exactBonusPoints: number
+  extraTimeBonusPoints: number
 }
 
 const draft = reactive<DraftConfig>({
-  exactScore: 0,
-  correctWinnerAndDiff: 0,
-  correctWinner: 0,
-  correctDraw: 0,
-  correctOutcome: 0,
-  incorrect: 0,
+  correctOutcomePoints: 0,
+  exactBonusPoints: 0,
+  extraTimeBonusPoints: 0,
 })
 
 watch(
   () => store.config,
   (cfg) => {
     if (!cfg) return
-    draft.exactScore = cfg.exactScore
-    draft.correctWinnerAndDiff = cfg.correctWinnerAndDiff
-    draft.correctWinner = cfg.correctWinner
-    draft.correctDraw = cfg.correctDraw
-    draft.correctOutcome = cfg.correctOutcome
-    draft.incorrect = cfg.incorrect
+    draft.correctOutcomePoints = cfg.correctOutcomePoints
+    draft.exactBonusPoints = cfg.exactBonusPoints
+    draft.extraTimeBonusPoints = cfg.extraTimeBonusPoints
   },
   { immediate: true },
 )

@@ -1051,42 +1051,30 @@ async function toggleGlobalSubscription(gt: GlobalTypeWithSubscription): Promise
 }
 
 const scoringFields: Array<{ key: keyof ScoringConfigInput; label: string }> = [
-  { key: 'exactScore', label: t('scoring.exact') },
-  { key: 'correctWinnerAndDiff', label: t('scoring.goalDiff') },
-  { key: 'correctWinner', label: t('scoring.winner') },
-  { key: 'correctDraw', label: t('scoring.drawOnDraw') },
-  { key: 'correctOutcome', label: t('scoring.outcomeBonus') },
-  { key: 'incorrect', label: t('scoring.wrong') },
+  { key: 'correctOutcomePoints', label: t('scoring.correctOutcome') },
+  { key: 'exactBonusPoints', label: t('scoring.exactBonus') },
+  { key: 'extraTimeBonusPoints', label: t('scoring.extraTimeBonus') },
 ]
 
 type ScoringDraft = {
-  exactScore: number
-  correctWinnerAndDiff: number
-  correctWinner: number
-  correctDraw: number
-  correctOutcome: number
-  incorrect: number
+  correctOutcomePoints: number
+  exactBonusPoints: number
+  extraTimeBonusPoints: number
 }
 
 const scoringDraft = reactive<ScoringDraft>({
-  exactScore: 3,
-  correctWinnerAndDiff: 2,
-  correctWinner: 1,
-  correctDraw: 2,
-  correctOutcome: 1,
-  incorrect: 0,
+  correctOutcomePoints: 1,
+  exactBonusPoints: 1,
+  extraTimeBonusPoints: 1,
 })
 
 watch(
   () => groupsStore.groupScoringConfigs[groupId],
   (cfg) => {
     if (!cfg) return
-    scoringDraft.exactScore = cfg.exactScore
-    scoringDraft.correctWinnerAndDiff = cfg.correctWinnerAndDiff
-    scoringDraft.correctWinner = cfg.correctWinner
-    scoringDraft.correctDraw = cfg.correctDraw
-    scoringDraft.correctOutcome = cfg.correctOutcome
-    scoringDraft.incorrect = cfg.incorrect
+    scoringDraft.correctOutcomePoints = cfg.correctOutcomePoints
+    scoringDraft.exactBonusPoints = cfg.exactBonusPoints
+    scoringDraft.extraTimeBonusPoints = cfg.extraTimeBonusPoints
   },
   { immediate: true },
 )

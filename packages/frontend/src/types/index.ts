@@ -427,12 +427,9 @@ export interface StatPredictionTemplate {
 export interface ScoringConfigFull {
   readonly id: string
   readonly name: string
-  readonly exactScore: number
-  readonly correctWinnerAndDiff: number
-  readonly correctWinner: number
-  readonly correctDraw: number
-  readonly correctOutcome: number
-  readonly incorrect: number
+  readonly correctOutcomePoints: number
+  readonly exactBonusPoints: number
+  readonly extraTimeBonusPoints: number
   readonly frozenAt?: string | null
 }
 
@@ -442,12 +439,9 @@ export interface ScoringConfigWithImpact extends ScoringConfigFull {
 }
 
 export interface ScoringConfigInput {
-  readonly exactScore: number
-  readonly correctWinnerAndDiff: number
-  readonly correctWinner: number
-  readonly correctDraw: number
-  readonly correctOutcome: number
-  readonly incorrect: number
+  readonly correctOutcomePoints: number
+  readonly exactBonusPoints: number
+  readonly extraTimeBonusPoints: number
 }
 
 export interface ScoringOverrideInput {

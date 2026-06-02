@@ -379,12 +379,9 @@ describe('groups.store', () => {
   const SCORING_CONFIG = {
     id: 'config-uuid-1',
     name: 'Group Override',
-    exactScore: 5,
-    correctWinnerAndDiff: 3,
-    correctWinner: 2,
-    correctDraw: 3,
-    correctOutcome: 1,
-    incorrect: 0,
+    correctOutcomePoints: 2,
+    exactBonusPoints: 3,
+    extraTimeBonusPoints: 1,
   }
 
   it('fetchGroupScoringConfig() → config stored in groupScoringConfigs', async () => {
@@ -411,18 +408,15 @@ describe('groups.store', () => {
   // ─── setGroupScoringConfig ────────────────────────────────────────────────────
 
   it('setGroupScoringConfig() → config updated in groupScoringConfigs', async () => {
-    const updatedConfig = { ...SCORING_CONFIG, exactScore: 10 }
+    const updatedConfig = { ...SCORING_CONFIG, exactBonusPoints: 10 }
     mockGroupsSetScoringConfig.mockResolvedValue(updatedConfig)
     const store = useGroupsStore()
     await store.setGroupScoringConfig('group-uuid-1', {
-      exactScore: 10,
-      correctWinnerAndDiff: 3,
-      correctWinner: 2,
-      correctDraw: 3,
-      correctOutcome: 1,
-      incorrect: 0,
+      correctOutcomePoints: 2,
+      exactBonusPoints: 10,
+      extraTimeBonusPoints: 1,
     })
-    expect(store.groupScoringConfigs['group-uuid-1']?.exactScore).toBe(10)
+    expect(store.groupScoringConfigs['group-uuid-1']?.exactBonusPoints).toBe(10)
     expect(store.groupScoringSaveStatus).toBe('saved')
   })
 
@@ -430,12 +424,9 @@ describe('groups.store', () => {
     mockGroupsSetScoringConfig.mockRejectedValue(new Error('Not authorized'))
     const store = useGroupsStore()
     await store.setGroupScoringConfig('group-uuid-1', {
-      exactScore: 5,
-      correctWinnerAndDiff: 3,
-      correctWinner: 2,
-      correctDraw: 3,
-      correctOutcome: 1,
-      incorrect: 0,
+      correctOutcomePoints: 2,
+      exactBonusPoints: 5,
+      extraTimeBonusPoints: 1,
     })
     expect(store.groupScoringSaveStatus).toBe('error')
   })

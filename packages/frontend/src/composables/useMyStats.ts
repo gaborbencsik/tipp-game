@@ -2,19 +2,14 @@ import { computed, type ComputedRef, type Ref } from 'vue'
 import type { Match, Prediction } from '../types/index.js'
 
 export interface ScoringBuckets {
-  readonly exactScore: number
-  readonly correctWinnerAndDiff: number
-  readonly correctWinner: number
-  readonly correctDraw: number
-  readonly correctOutcome: number
-  readonly incorrect: number
+  readonly correctOutcomePoints: number
+  readonly exactBonusPoints: number
+  readonly extraTimeBonusPoints: number
 }
 
 export interface PointDistribution {
   readonly exact: number
-  readonly winnerAndDiff: number
   readonly winner: number
-  readonly draw: number
   readonly incorrect: number
   readonly missed: number
 }
@@ -114,25 +109,22 @@ function computeDistribution(
   const predMatchIds = new Set(allPreds.map(p => p.matchId))
   const missed = matches.filter(m => m.status === 'finished' && !predMatchIds.has(m.id)).length
 
-  const buckets = { exact: 0, winnerAndDiff: 0, winner: 0, draw: 0, incorrect: 0 }
+  const buckets = { exact: 0, winner: 0, incorrect: 0 }
 
   for (const p of evaluatedPreds) {
     const points = p.pointsGlobal ?? 0
-    if (config === null) {
-      if (points > 0) {
-        const maxPoints = Math.max(...allPreds.map(x => x.pointsGlobal ?? 0))
-        if (points === maxPoints) buckets.exact += 1
-        else buckets.winner += 1
-      } else {
-        buckets.incorrect += 1
-      }
+    if (points === 0) {
+      buckets.incorrect += 1
       continue
     }
-    if (points === 0) buckets.incorrect += 1
-    else if (points === config.exactScore) buckets.exact += 1
-    else if (points === config.correctWinnerAndDiff) buckets.winnerAndDiff += 1
-    else if (points === config.correctWinner) buckets.winner += 1
-    else if (points === config.correctDraw) buckets.draw += 1
+    if (config === null) {
+      const maxPoints = Math.max(...allPreds.map(x => x.pointsGlobal ?? 0))
+      if (points === maxPoints) buckets.exact += 1
+      else buckets.winner += 1
+      continue
+    }
+    const exactThreshold = config.correctOutcomePoints + config.exactBonusPoints
+    if (points >= exactThreshold) buckets.exact += 1
     else buckets.winner += 1
   }
 

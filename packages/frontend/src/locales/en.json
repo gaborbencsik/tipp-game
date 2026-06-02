@@ -140,9 +140,7 @@
     "points": "pt",
     "missedShort": "Missed",
     "distExact": "Exact",
-    "distWinnerAndDiff": "Winner + diff",
-    "distWinner": "Winner",
-    "distDraw": "Draw",
+    "distWinner": "Correct outcome",
     "distZero": "0 points",
     "distMissed": "Missed"
   },
@@ -410,12 +408,9 @@
     "placeholder": "Select a team..."
   },
   "scoring": {
-    "exact": "Exact score",
-    "goalDiff": "Correct winner + goal difference",
-    "winner": "Correct winner",
-    "drawOnDraw": "Draw predicted on draw",
-    "outcomeBonus": "Outcome bonus (ET/Penalties)",
-    "wrong": "Wrong prediction"
+    "correctOutcome": "Correct outcome",
+    "exactBonus": "Exact score bonus",
+    "extraTimeBonus": "Extra time / penalties bonus"
   },
   "status": {
     "scheduled": "Scheduled",

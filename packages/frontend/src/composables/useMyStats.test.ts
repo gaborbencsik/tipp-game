@@ -42,12 +42,9 @@ function pred(matchId: string, points: number | null): Prediction {
 }
 
 const config: ScoringBuckets = {
-  exactScore: 5,
-  correctWinnerAndDiff: 3,
-  correctWinner: 2,
-  correctDraw: 1,
-  correctOutcome: 1,
-  incorrect: 0,
+  correctOutcomePoints: 1,
+  exactBonusPoints: 2,
+  extraTimeBonusPoints: 1,
 }
 
 describe('computeMyStats', () => {
@@ -62,7 +59,7 @@ describe('computeMyStats', () => {
     expect(stats.bestStreak).toBe(0)
     expect(stats.currentStreak).toBe(0)
     expect(stats.distribution).toEqual({
-      exact: 0, winnerAndDiff: 0, winner: 0, draw: 0, incorrect: 0, missed: 0,
+      exact: 0, winner: 0, incorrect: 0, missed: 0,
     })
   })
 
@@ -174,16 +171,17 @@ describe('computeMyStats', () => {
       match('m4', '2026-06-04T18:00:00Z'),
       match('m5', '2026-06-05T18:00:00Z'),
     ]
+    // exactThreshold = 1 + 2 = 3
     const predictions = [
-      pred('m1', 5), // exact
-      pred('m2', 3), // winnerAndDiff
-      pred('m3', 2), // winner
-      pred('m4', 1), // draw (correctDraw=1, correctWinner=2)
-      pred('m5', 0), // incorrect
+      pred('m1', 5), // ≥3 → exact
+      pred('m2', 3), // ≥3 → exact
+      pred('m3', 2), // <3, >0 → winner
+      pred('m4', 1), // <3, >0 → winner
+      pred('m5', 0), // 0 → incorrect
     ]
     const stats = computeMyStats(predictions, matches, config)
     expect(stats.distribution).toEqual({
-      exact: 1, winnerAndDiff: 1, winner: 1, draw: 1, incorrect: 1, missed: 0,
+      exact: 2, winner: 2, incorrect: 1, missed: 0,
     })
   })
 

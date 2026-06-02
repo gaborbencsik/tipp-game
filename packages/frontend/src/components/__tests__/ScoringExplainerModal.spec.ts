@@ -12,8 +12,8 @@ const i18n = createI18n({ legacy: false, locale: 'hu', messages: { hu, en } })
 function makeData(overrides: any = {}) {
   const baseConfig = {
     id: 'cfg', name: 'Default',
-    exactScore: 3, correctWinnerAndDiff: 2, correctWinner: 1,
-    correctDraw: 2, correctOutcome: 1, incorrect: 0, frozenAt: null,
+    correctOutcomePoints: 1, exactBonusPoints: 1, extraTimeBonusPoints: 1,
+    frozenAt: null,
   }
   return {
     default: baseConfig,
@@ -30,7 +30,7 @@ describe('ScoringExplainerModal', () => {
     const store = useScoringExplainerStore()
     store.isOpen = true
     store.data = makeData({
-      groups: [{ id: 'g1', name: 'Pulykák', config: { exactScore: 4, correctWinnerAndDiff: 2, correctWinner: 1, correctDraw: 2, correctOutcome: 1, incorrect: 0 }, configFrozenAt: null, favoriteTeamDoublePoints: false, specialTypes: [] }],
+      groups: [{ id: 'g1', name: 'Pulykák', config: { correctOutcomePoints: 1, exactBonusPoints: 2, extraTimeBonusPoints: 1 }, configFrozenAt: null, favoriteTeamDoublePoints: false, specialTypes: [] }],
     })
     const wrapper = mount(ScoringExplainerModal, { global: { plugins: [i18n] } })
     expect(wrapper.text()).toContain('Pulykák pontozása')
@@ -41,8 +41,8 @@ describe('ScoringExplainerModal', () => {
     store.isOpen = true
     store.data = makeData({
       groups: [
-        { id: 'g1', name: 'Pulykák', config: { exactScore: 4, correctWinnerAndDiff: 2, correctWinner: 1, correctDraw: 2, correctOutcome: 1, incorrect: 0 }, configFrozenAt: null, favoriteTeamDoublePoints: false, specialTypes: [] },
-        { id: 'g2', name: 'Office', config: { exactScore: 3, correctWinnerAndDiff: 2, correctWinner: 2, correctDraw: 2, correctOutcome: 1, incorrect: 0 }, configFrozenAt: null, favoriteTeamDoublePoints: false, specialTypes: [] },
+        { id: 'g1', name: 'Pulykák', config: { correctOutcomePoints: 1, exactBonusPoints: 2, extraTimeBonusPoints: 1 }, configFrozenAt: null, favoriteTeamDoublePoints: false, specialTypes: [] },
+        { id: 'g2', name: 'Office', config: { correctOutcomePoints: 2, exactBonusPoints: 1, extraTimeBonusPoints: 1 }, configFrozenAt: null, favoriteTeamDoublePoints: false, specialTypes: [] },
       ],
     })
     const wrapper = mount(ScoringExplainerModal, { global: { plugins: [i18n] } })
@@ -64,7 +64,7 @@ describe('ScoringExplainerModal', () => {
     const store = useScoringExplainerStore()
     store.isOpen = true
     store.data = makeData({
-      groups: [{ id: 'g1', name: 'X', config: { exactScore: 3, correctWinnerAndDiff: 2, correctWinner: 1, correctDraw: 2, correctOutcome: 1, incorrect: 0 }, configFrozenAt: null, favoriteTeamDoublePoints: true, specialTypes: [] }],
+      groups: [{ id: 'g1', name: 'X', config: { correctOutcomePoints: 1, exactBonusPoints: 1, extraTimeBonusPoints: 1 }, configFrozenAt: null, favoriteTeamDoublePoints: true, specialTypes: [] }],
     })
     const wrapper = mount(ScoringExplainerModal, { global: { plugins: [i18n] } })
     expect(wrapper.text()).toContain('Kedvenc csapat meccse')

@@ -27,9 +27,7 @@ interface Props {
   distribution: PointDistribution
   labels: {
     exact: string
-    winnerAndDiff: string
     winner: string
-    draw: string
     incorrect: string
     missed: string
   }
@@ -39,18 +37,14 @@ const props = defineProps<Props>()
 
 const SEG_DEFS = [
   { key: 'exact', bgClass: 'bg-green-500' },
-  { key: 'winnerAndDiff', bgClass: 'bg-blue-500' },
   { key: 'winner', bgClass: 'bg-sky-400' },
-  { key: 'draw', bgClass: 'bg-cyan-400' },
   { key: 'incorrect', bgClass: 'bg-gray-400' },
   { key: 'missed', bgClass: 'bg-red-300' },
 ] as const
 
 const total = computed(() =>
   props.distribution.exact +
-  props.distribution.winnerAndDiff +
   props.distribution.winner +
-  props.distribution.draw +
   props.distribution.incorrect +
   props.distribution.missed
 )

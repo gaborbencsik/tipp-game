@@ -140,9 +140,7 @@
     "points": "pont",
     "missedShort": "Kihagyott",
     "distExact": "Pontos",
-    "distWinnerAndDiff": "Győztes + diff",
-    "distWinner": "Győztes",
-    "distDraw": "Döntetlen",
+    "distWinner": "Helyes kimenetel",
     "distZero": "0 pont",
     "distMissed": "Kihagyott"
   },
@@ -410,12 +408,9 @@
     "placeholder": "Válassz csapatot..."
   },
   "scoring": {
-    "exact": "Pontos találat",
-    "goalDiff": "Helyes győztes + gólkülönbség",
-    "winner": "Helyes győztes",
-    "drawOnDraw": "Döntetlen tipp döntetlenre",
-    "outcomeBonus": "Outcome bónusz (hossz./tizenegyes)",
-    "wrong": "Helytelen tipp"
+    "correctOutcome": "Helyes kimenetel",
+    "exactBonus": "Pontos eredmény bónusz",
+    "extraTimeBonus": "Hosszabbítás/tizenegyes bónusz"
   },
   "status": {
     "scheduled": "Tervezett",

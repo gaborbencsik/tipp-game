@@ -59,12 +59,9 @@ vi.mock('@/stores/auth.store', async (importOriginal) => {
 const CONFIG: ScoringConfigFull = {
   id: 'config-uuid-1',
   name: 'Default',
-  exactScore: 3,
-  correctWinnerAndDiff: 2,
-  correctWinner: 1,
-  correctDraw: 2,
-  correctOutcome: 1,
-  incorrect: 0,
+  correctOutcomePoints: 1,
+  exactBonusPoints: 1,
+  extraTimeBonusPoints: 1,
 }
 
 function buildRouter() {
@@ -101,8 +98,8 @@ describe('AdminScoringView', () => {
   it('form visible after config loaded, fields pre-filled', async () => {
     const { wrapper } = await mountView()
     expect(wrapper.find('[data-testid="scoring-form"]').exists()).toBe(true)
-    expect((wrapper.find('[data-testid="field-exactScore"]').element as HTMLInputElement).value).toBe('3')
-    expect((wrapper.find('[data-testid="field-correctWinner"]').element as HTMLInputElement).value).toBe('1')
+    expect((wrapper.find('[data-testid="field-correctOutcomePoints"]').element as HTMLInputElement).value).toBe('1')
+    expect((wrapper.find('[data-testid="field-exactBonusPoints"]').element as HTMLInputElement).value).toBe('1')
   })
 
   it('submit → store.updateConfig called with form values', async () => {
@@ -111,12 +108,9 @@ describe('AdminScoringView', () => {
     await wrapper.find('[data-testid="scoring-form"]').trigger('submit')
     await flushPromises()
     expect(updateSpy).toHaveBeenCalledWith({
-      exactScore: 3,
-      correctWinnerAndDiff: 2,
-      correctWinner: 1,
-      correctDraw: 2,
-      correctOutcome: 1,
-      incorrect: 0,
+      correctOutcomePoints: 1,
+      exactBonusPoints: 1,
+      extraTimeBonusPoints: 1,
     })
   })
 

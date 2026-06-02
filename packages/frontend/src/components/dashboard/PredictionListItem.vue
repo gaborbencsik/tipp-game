@@ -61,7 +61,10 @@ const emit = defineEmits<{ click: [] }>()
 const pointsClass = computed(() => {
   if (!props.prediction || props.prediction.pointsGlobal === null) return 'bg-gray-100 text-gray-500'
   const p = props.prediction.pointsGlobal
-  if (props.scoringConfig && p === props.scoringConfig.exactScore) return 'bg-green-50 text-green-700'
+  if (props.scoringConfig) {
+    const exactThreshold = props.scoringConfig.correctOutcomePoints + props.scoringConfig.exactBonusPoints
+    if (p >= exactThreshold) return 'bg-green-50 text-green-700'
+  }
   if (p > 0) return 'bg-blue-50 text-blue-700'
   return 'bg-gray-100 text-gray-500'
 })
