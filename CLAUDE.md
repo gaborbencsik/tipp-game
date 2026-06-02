@@ -162,6 +162,7 @@ src/
 ## Git commit message
 
 - **Mindig angolul** írd a commit message-et (title + body egyaránt), függetlenül attól, hogy a beszélgetés magyarul folyik.
+- **Ne tegyél Claude co-author trailert** (`Co-Authored-By: Claude ...`) a commit message-be.
 
 ## Output minimalizálás (kötelező)
 
