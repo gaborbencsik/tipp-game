@@ -124,7 +124,7 @@ router.put('/api/groups/:groupId/scoring-config', authMiddleware, async (ctx) =>
   }
   const body = ctx.request.body as Record<string, unknown>
   const fields: Array<keyof ScoringConfigInput> = [
-    'exactScore', 'correctWinnerAndDiff', 'correctWinner', 'correctDraw', 'correctOutcome', 'incorrect',
+    'correctOutcomePoints', 'exactBonusPoints', 'extraTimeBonusPoints',
   ]
   for (const field of fields) {
     if (typeof body[field] !== 'number') {
@@ -161,7 +161,7 @@ router.post('/api/groups/:groupId/scoring-config/override', authMiddleware, asyn
     return
   }
   const fields: Array<keyof ScoringConfigInput> = [
-    'exactScore', 'correctWinnerAndDiff', 'correctWinner', 'correctDraw', 'correctOutcome', 'incorrect',
+    'correctOutcomePoints', 'exactBonusPoints', 'extraTimeBonusPoints',
   ]
   for (const field of fields) {
     if (typeof values[field] !== 'number') {

@@ -156,7 +156,7 @@ adminRouter.get('/scoring-config', async (ctx) => {
 adminRouter.put('/scoring-config', async (ctx) => {
   const body = ctx.request.body as Record<string, unknown>
   const fields: Array<keyof ScoringConfigInput> = [
-    'exactScore', 'correctWinnerAndDiff', 'correctWinner', 'correctDraw', 'correctOutcome', 'incorrect',
+    'correctOutcomePoints', 'exactBonusPoints', 'extraTimeBonusPoints',
   ]
   for (const field of fields) {
     if (typeof body[field] !== 'number') {
@@ -185,7 +185,7 @@ adminRouter.post('/scoring-config/override', async (ctx) => {
     return
   }
   const fields: Array<keyof ScoringConfigInput> = [
-    'exactScore', 'correctWinnerAndDiff', 'correctWinner', 'correctDraw', 'correctOutcome', 'incorrect',
+    'correctOutcomePoints', 'exactBonusPoints', 'extraTimeBonusPoints',
   ]
   for (const field of fields) {
     if (typeof values[field] !== 'number') {

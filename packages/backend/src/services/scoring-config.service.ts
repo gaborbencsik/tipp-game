@@ -1,6 +1,14 @@
-import { eq, sql } from 'drizzle-orm'
+import { eq, sql, inArray } from 'drizzle-orm'
 import { db } from '../db/client.js'
-import { scoringConfigs, groups, matchResults, predictions, groupMembers } from '../db/schema/index.js'
+import {
+  scoringConfigs,
+  groups,
+  groupLeagues,
+  leagues,
+  matchResults,
+  predictions,
+  groupMembers,
+} from '../db/schema/index.js'
 import type {
   ScoringConfigFull,
   ScoringConfigInput,
@@ -16,17 +24,49 @@ class AppError extends Error {
   }
 }
 
-function toApiConfig(row: typeof scoringConfigs.$inferSelect): ScoringConfigFull {
+function effectiveFrozenAtFromLeagues(
+  rows: ReadonlyArray<{ startsAt: Date | null }>,
+  now: Date = new Date(),
+): Date | null {
+  const past = rows
+    .map(r => r.startsAt)
+    .filter((d): d is Date => d != null && d <= now)
+  if (past.length === 0) return null
+  return past.reduce((min, d) => (d < min ? d : min))
+}
+
+async function loadAllLeagues(): Promise<Array<{ id: string; startsAt: Date | null }>> {
+  return db.select({ id: leagues.id, startsAt: leagues.startsAt }).from(leagues)
+}
+
+async function loadGroupLeagueIds(groupId: string): Promise<string[]> {
+  const rows = await db
+    .select({ leagueId: groupLeagues.leagueId })
+    .from(groupLeagues)
+    .where(eq(groupLeagues.groupId, groupId))
+  return rows.map(r => r.leagueId)
+}
+
+async function effectiveFrozenAtForRequest(groupId: string | null): Promise<Date | null> {
+  const allLeagues = await loadAllLeagues()
+  if (!groupId) return effectiveFrozenAtFromLeagues(allLeagues)
+  const ids = await loadGroupLeagueIds(groupId)
+  if (ids.length === 0) return effectiveFrozenAtFromLeagues(allLeagues)
+  const idSet = new Set(ids)
+  return effectiveFrozenAtFromLeagues(allLeagues.filter(l => idSet.has(l.id)))
+}
+
+function toApiConfig(
+  row: typeof scoringConfigs.$inferSelect,
+  effectiveFrozen: Date | null,
+): ScoringConfigFull {
   return {
     id: row.id,
     name: row.name,
-    exactScore: row.exactScore,
-    correctWinnerAndDiff: row.correctWinnerAndDiff,
-    correctWinner: row.correctWinner,
-    correctDraw: row.correctDraw,
-    correctOutcome: row.correctOutcome,
-    incorrect: row.incorrect,
-    frozenAt: row.frozenAt ? row.frozenAt.toISOString() : null,
+    correctOutcomePoints: row.correctOutcomePoints,
+    exactBonusPoints: row.exactBonusPoints,
+    extraTimeBonusPoints: row.extraTimeBonusPoints,
+    frozenAt: effectiveFrozen ? effectiveFrozen.toISOString() : null,
   }
 }
 
@@ -57,9 +97,10 @@ async function loadGroupConfigRow(groupId: string): Promise<typeof scoringConfig
   return rows[0] ?? null
 }
 
-function assertNotFrozen(row: typeof scoringConfigs.$inferSelect): void {
-  if (row.frozenAt) {
-    throw new AppError(409, 'Scoring config is frozen')
+async function assertNotFrozen(groupId: string | null): Promise<void> {
+  const effective = await effectiveFrozenAtForRequest(groupId)
+  if (effective !== null) {
+    throw new AppError(423, 'Scoring config is frozen')
   }
 }
 
@@ -92,14 +133,17 @@ async function countGroupImpact(groupId: string): Promise<{ matches: number; pre
 }
 
 export async function getGlobalConfig(): Promise<ScoringConfigFull> {
-  return toApiConfig(await loadGlobalConfigRow())
+  const row = await loadGlobalConfigRow()
+  const effective = await effectiveFrozenAtForRequest(null)
+  return toApiConfig(row, effective)
 }
 
 export async function getGlobalConfigWithImpact(): Promise<ScoringConfigWithImpact> {
   const row = await loadGlobalConfigRow()
+  const effective = await effectiveFrozenAtForRequest(null)
   const impact = await countGlobalImpact()
   return {
-    ...toApiConfig(row),
+    ...toApiConfig(row, effective),
     affectedMatches: impact.matches,
     affectedPredictions: impact.predictions,
   }
@@ -107,21 +151,18 @@ export async function getGlobalConfigWithImpact(): Promise<ScoringConfigWithImpa
 
 export async function updateGlobalConfig(input: ScoringConfigInput): Promise<ScoringConfigFull> {
   const current = await loadGlobalConfigRow()
-  assertNotFrozen(current)
+  await assertNotFrozen(null)
   const updated = await db
     .update(scoringConfigs)
     .set({
-      exactScore: input.exactScore,
-      correctWinnerAndDiff: input.correctWinnerAndDiff,
-      correctWinner: input.correctWinner,
-      correctDraw: input.correctDraw,
-      correctOutcome: input.correctOutcome,
-      incorrect: input.incorrect,
+      correctOutcomePoints: input.correctOutcomePoints,
+      exactBonusPoints: input.exactBonusPoints,
+      extraTimeBonusPoints: input.extraTimeBonusPoints,
       updatedAt: new Date(),
     })
     .where(eq(scoringConfigs.id, current.id))
     .returning()
-  return toApiConfig(updated[0]!)
+  return toApiConfig(updated[0]!, null)
 }
 
 export async function overrideGlobalConfig(input: ScoringConfigInput): Promise<ScoringConfigFull> {
@@ -129,31 +170,30 @@ export async function overrideGlobalConfig(input: ScoringConfigInput): Promise<S
   const updated = await db
     .update(scoringConfigs)
     .set({
-      exactScore: input.exactScore,
-      correctWinnerAndDiff: input.correctWinnerAndDiff,
-      correctWinner: input.correctWinner,
-      correctDraw: input.correctDraw,
-      correctOutcome: input.correctOutcome,
-      incorrect: input.incorrect,
-      frozenAt: null,
+      correctOutcomePoints: input.correctOutcomePoints,
+      exactBonusPoints: input.exactBonusPoints,
+      extraTimeBonusPoints: input.extraTimeBonusPoints,
       updatedAt: new Date(),
     })
     .where(eq(scoringConfigs.id, current.id))
     .returning()
-  return toApiConfig(updated[0]!)
+  return toApiConfig(updated[0]!, null)
 }
 
 export async function getGroupConfig(groupId: string): Promise<ScoringConfigFull | null> {
   const row = await loadGroupConfigRow(groupId)
-  return row ? toApiConfig(row) : null
+  if (!row) return null
+  const effective = await effectiveFrozenAtForRequest(groupId)
+  return toApiConfig(row, effective)
 }
 
 export async function getGroupConfigWithImpact(groupId: string): Promise<ScoringConfigWithImpact | null> {
   const row = await loadGroupConfigRow(groupId)
   if (!row) return null
+  const effective = await effectiveFrozenAtForRequest(groupId)
   const impact = await countGroupImpact(groupId)
   return {
-    ...toApiConfig(row),
+    ...toApiConfig(row, effective),
     affectedMatches: impact.matches,
     affectedPredictions: impact.predictions,
   }
@@ -168,6 +208,8 @@ export async function setGroupConfig(groupId: string, input: ScoringConfigInput)
 
   if (!groupRows[0]) throw new AppError(404, 'Group not found')
 
+  await assertNotFrozen(groupId)
+
   const existingConfigId = groupRows[0].scoringConfigId
 
   if (!existingConfigId) {
@@ -176,12 +218,9 @@ export async function setGroupConfig(groupId: string, input: ScoringConfigInput)
       .values({
         name: 'Group Override',
         isGlobalDefault: false,
-        exactScore: input.exactScore,
-        correctWinnerAndDiff: input.correctWinnerAndDiff,
-        correctWinner: input.correctWinner,
-        correctDraw: input.correctDraw,
-        correctOutcome: input.correctOutcome,
-        incorrect: input.incorrect,
+        correctOutcomePoints: input.correctOutcomePoints,
+        exactBonusPoints: input.exactBonusPoints,
+        extraTimeBonusPoints: input.extraTimeBonusPoints,
       })
       .returning()
 
@@ -191,31 +230,21 @@ export async function setGroupConfig(groupId: string, input: ScoringConfigInput)
       .set({ scoringConfigId: newConfig.id, updatedAt: new Date() })
       .where(eq(groups.id, groupId))
 
-    return toApiConfig(newConfig)
+    return toApiConfig(newConfig, null)
   }
-
-  const existingRows = await db
-    .select()
-    .from(scoringConfigs)
-    .where(eq(scoringConfigs.id, existingConfigId))
-    .limit(1)
-  if (existingRows[0]) assertNotFrozen(existingRows[0])
 
   const updated = await db
     .update(scoringConfigs)
     .set({
-      exactScore: input.exactScore,
-      correctWinnerAndDiff: input.correctWinnerAndDiff,
-      correctWinner: input.correctWinner,
-      correctDraw: input.correctDraw,
-      correctOutcome: input.correctOutcome,
-      incorrect: input.incorrect,
+      correctOutcomePoints: input.correctOutcomePoints,
+      exactBonusPoints: input.exactBonusPoints,
+      extraTimeBonusPoints: input.extraTimeBonusPoints,
       updatedAt: new Date(),
     })
     .where(eq(scoringConfigs.id, existingConfigId))
     .returning()
 
-  return toApiConfig(updated[0]!)
+  return toApiConfig(updated[0]!, null)
 }
 
 export async function overrideGroupConfig(groupId: string, input: ScoringConfigInput): Promise<ScoringConfigFull> {
@@ -235,12 +264,9 @@ export async function overrideGroupConfig(groupId: string, input: ScoringConfigI
       .values({
         name: 'Group Override',
         isGlobalDefault: false,
-        exactScore: input.exactScore,
-        correctWinnerAndDiff: input.correctWinnerAndDiff,
-        correctWinner: input.correctWinner,
-        correctDraw: input.correctDraw,
-        correctOutcome: input.correctOutcome,
-        incorrect: input.incorrect,
+        correctOutcomePoints: input.correctOutcomePoints,
+        exactBonusPoints: input.exactBonusPoints,
+        extraTimeBonusPoints: input.extraTimeBonusPoints,
       })
       .returning()
 
@@ -250,23 +276,19 @@ export async function overrideGroupConfig(groupId: string, input: ScoringConfigI
       .set({ scoringConfigId: newConfig.id, updatedAt: new Date() })
       .where(eq(groups.id, groupId))
 
-    return toApiConfig(newConfig)
+    return toApiConfig(newConfig, null)
   }
 
   const updated = await db
     .update(scoringConfigs)
     .set({
-      exactScore: input.exactScore,
-      correctWinnerAndDiff: input.correctWinnerAndDiff,
-      correctWinner: input.correctWinner,
-      correctDraw: input.correctDraw,
-      correctOutcome: input.correctOutcome,
-      incorrect: input.incorrect,
-      frozenAt: null,
+      correctOutcomePoints: input.correctOutcomePoints,
+      exactBonusPoints: input.exactBonusPoints,
+      extraTimeBonusPoints: input.extraTimeBonusPoints,
       updatedAt: new Date(),
     })
     .where(eq(scoringConfigs.id, existingConfigId))
     .returning()
 
-  return toApiConfig(updated[0]!)
+  return toApiConfig(updated[0]!, null)
 }

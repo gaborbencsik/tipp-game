@@ -53,19 +53,16 @@ import {
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
 
 const NOW = new Date('2026-01-01T00:00:00.000Z')
-const FROZEN_AT = new Date('2026-05-01T10:00:00.000Z')
+const PAST = new Date('2025-12-01T00:00:00.000Z')
+const FUTURE = new Date('2027-01-01T00:00:00.000Z')
 
 const CONFIG_ROW = {
   id: 'config-uuid-1',
   name: 'Default',
   isGlobalDefault: true,
-  exactScore: 3,
-  correctWinnerAndDiff: 2,
-  correctWinner: 1,
-  correctDraw: 2,
-  correctOutcome: 1,
-  incorrect: 0,
-  frozenAt: null,
+  correctOutcomePoints: 1,
+  exactBonusPoints: 1,
+  extraTimeBonusPoints: 1,
   createdAt: NOW,
   updatedAt: NOW,
 }
@@ -73,12 +70,9 @@ const CONFIG_ROW = {
 const CONFIG_API: ScoringConfigFull = {
   id: 'config-uuid-1',
   name: 'Default',
-  exactScore: 3,
-  correctWinnerAndDiff: 2,
-  correctWinner: 1,
-  correctDraw: 2,
-  correctOutcome: 1,
-  incorrect: 0,
+  correctOutcomePoints: 1,
+  exactBonusPoints: 1,
+  extraTimeBonusPoints: 1,
   frozenAt: null,
 }
 
@@ -86,29 +80,22 @@ const GROUP_CONFIG_ROW = {
   id: 'config-uuid-2',
   name: 'Group Override',
   isGlobalDefault: false,
-  exactScore: 5,
-  correctWinnerAndDiff: 3,
-  correctWinner: 2,
-  correctDraw: 3,
-  correctOutcome: 1,
-  incorrect: 0,
-  frozenAt: null,
+  correctOutcomePoints: 2,
+  exactBonusPoints: 3,
+  extraTimeBonusPoints: 1,
   createdAt: NOW,
   updatedAt: NOW,
 }
 
 const SCORING_INPUT = {
-  exactScore: 5,
-  correctWinnerAndDiff: 3,
-  correctWinner: 2,
-  correctDraw: 3,
-  correctOutcome: 1,
-  incorrect: 0,
+  correctOutcomePoints: 2,
+  exactBonusPoints: 3,
+  extraTimeBonusPoints: 1,
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/** Push a single select(...).from(...).where(...).limit() result onto the queue */
+/** select(...).from(...).where(...).limit(...) — used for single-row lookups */
 function queueSelectLimit(rows: unknown[]) {
   mockLimit.mockResolvedValueOnce(rows)
   mockSelectWhere.mockReturnValueOnce({ limit: mockLimit })
@@ -116,21 +103,46 @@ function queueSelectLimit(rows: unknown[]) {
   mockSelect.mockReturnValueOnce({ from: mockFrom })
 }
 
-/** Push a select().from() that ends in `.from(...)` (no where) — used for count(*) */
-function queueSelectCount(value: number) {
-  // select(...).from(table)
-  const fromResult = Promise.resolve([{ count: value }])
-  mockFrom.mockReturnValueOnce(fromResult)
+/** select(...).from(table) — used for leagues / count(*) where chain ends at .from */
+function queueSelectFromOnly(rows: unknown[]) {
+  mockFrom.mockReturnValueOnce(Promise.resolve(rows))
   mockSelect.mockReturnValueOnce({ from: mockFrom })
 }
 
-/** Push a select().from().innerJoin().where() chain (group impact predictions count) */
-function queueSelectJoinCount(value: number) {
-  const wherePromise = Promise.resolve([{ count: value }])
-  mockSelectWhere.mockReturnValueOnce(wherePromise)
+/** select(...).from(...).where(...) — used for groupLeagues / partial count chain */
+function queueSelectFromWhere(rows: unknown[]) {
+  mockSelectWhere.mockReturnValueOnce(Promise.resolve(rows))
+  mockFrom.mockReturnValueOnce({ where: mockSelectWhere })
+  mockSelect.mockReturnValueOnce({ from: mockFrom })
+}
+
+/** select(...).from(...).innerJoin(...).where(...) — used for group impact predictions count */
+function queueSelectJoinWhere(rows: unknown[]) {
+  mockSelectWhere.mockReturnValueOnce(Promise.resolve(rows))
   mockInnerJoin.mockReturnValueOnce({ where: mockSelectWhere })
   mockFrom.mockReturnValueOnce({ innerJoin: mockInnerJoin })
   mockSelect.mockReturnValueOnce({ from: mockFrom })
+}
+
+/** Push a not-frozen leagues response (used for global / no-group queries) */
+function queueLeaguesNotFrozen() {
+  queueSelectFromOnly([{ id: 'l1', startsAt: FUTURE }])
+}
+
+/** Push a frozen leagues response (at least one past startsAt) */
+function queueLeaguesFrozen() {
+  queueSelectFromOnly([{ id: 'l1', startsAt: PAST }])
+}
+
+/** Push group-scoped frozen check: leagues + groupLeagues map */
+function queueGroupNotFrozen() {
+  queueSelectFromOnly([{ id: 'l1', startsAt: FUTURE }])
+  queueSelectFromWhere([{ leagueId: 'l1' }])
+}
+
+function queueGroupFrozen() {
+  queueSelectFromOnly([{ id: 'l1', startsAt: PAST }])
+  queueSelectFromWhere([{ leagueId: 'l1' }])
 }
 
 function setupUpdateChain(rows: unknown[]) {
@@ -155,16 +167,18 @@ describe('scoring-config.service', () => {
 
   // ─── getGlobalConfig ──────────────────────────────────────────────────────
 
-  it('getGlobalConfig() → returns the global config (frozenAt null)', async () => {
+  it('getGlobalConfig() → returns the global config (frozenAt null when no past leagues)', async () => {
     queueSelectLimit([CONFIG_ROW])
+    queueLeaguesNotFrozen()
     const result = await getGlobalConfig()
     expect(result).toEqual(CONFIG_API)
   })
 
-  it('getGlobalConfig() → frozenAt is ISO string when frozen', async () => {
-    queueSelectLimit([{ ...CONFIG_ROW, frozenAt: FROZEN_AT }])
+  it('getGlobalConfig() → frozenAt is ISO string when at least one league has started', async () => {
+    queueSelectLimit([CONFIG_ROW])
+    queueLeaguesFrozen()
     const result = await getGlobalConfig()
-    expect(result.frozenAt).toBe(FROZEN_AT.toISOString())
+    expect(result.frozenAt).toBe(PAST.toISOString())
   })
 
   it('getGlobalConfig() → 404 if no global default exists', async () => {
@@ -176,8 +190,9 @@ describe('scoring-config.service', () => {
 
   it('getGlobalConfigWithImpact() → adds affected counts', async () => {
     queueSelectLimit([CONFIG_ROW])
-    queueSelectCount(7)
-    queueSelectCount(42)
+    queueLeaguesNotFrozen()
+    queueSelectFromOnly([{ count: 7 }])
+    queueSelectFromOnly([{ count: 42 }])
     const result = await getGlobalConfigWithImpact()
     expect(result.affectedMatches).toBe(7)
     expect(result.affectedPredictions).toBe(42)
@@ -187,15 +202,16 @@ describe('scoring-config.service', () => {
 
   it('updateGlobalConfig() → updates and returns the config', async () => {
     queueSelectLimit([CONFIG_ROW])
-    const updatedRow = { ...CONFIG_ROW, exactScore: 5 }
-    setupUpdateChain([updatedRow])
+    queueLeaguesNotFrozen()
+    setupUpdateChain([{ ...CONFIG_ROW, exactBonusPoints: 3 }])
     const result = await updateGlobalConfig(SCORING_INPUT)
-    expect(result.exactScore).toBe(5)
+    expect(result.exactBonusPoints).toBe(3)
   })
 
-  it('updateGlobalConfig() → 409 if config is frozen', async () => {
-    queueSelectLimit([{ ...CONFIG_ROW, frozenAt: FROZEN_AT }])
-    await expect(updateGlobalConfig(SCORING_INPUT)).rejects.toMatchObject({ status: 409, message: 'Scoring config is frozen' })
+  it('updateGlobalConfig() → 423 Locked when at least one league has started', async () => {
+    queueSelectLimit([CONFIG_ROW])
+    queueLeaguesFrozen()
+    await expect(updateGlobalConfig(SCORING_INPUT)).rejects.toMatchObject({ status: 423, message: 'Scoring config is frozen' })
   })
 
   it('updateGlobalConfig() → 404 if no global default exists', async () => {
@@ -205,13 +221,21 @@ describe('scoring-config.service', () => {
 
   // ─── overrideGlobalConfig ─────────────────────────────────────────────────
 
-  it('overrideGlobalConfig() → ignores frozenAt and clears it', async () => {
-    queueSelectLimit([{ ...CONFIG_ROW, frozenAt: FROZEN_AT }])
-    setupUpdateChain([{ ...CONFIG_ROW, exactScore: 5, frozenAt: null }])
+  it('overrideGlobalConfig() → bypasses frozen check and writes 3 fields only', async () => {
+    queueSelectLimit([CONFIG_ROW])
+    setupUpdateChain([{ ...CONFIG_ROW, exactBonusPoints: 3 }])
     const result = await overrideGlobalConfig(SCORING_INPUT)
     expect(result.frozenAt).toBeNull()
-    expect(result.exactScore).toBe(5)
-    expect(mockSet).toHaveBeenCalledWith(expect.objectContaining({ frozenAt: null }))
+    expect(result.exactBonusPoints).toBe(3)
+    expect(mockSet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        correctOutcomePoints: SCORING_INPUT.correctOutcomePoints,
+        exactBonusPoints: SCORING_INPUT.exactBonusPoints,
+        extraTimeBonusPoints: SCORING_INPUT.extraTimeBonusPoints,
+      }),
+    )
+    const setArg = mockSet.mock.calls[0]?.[0] as Record<string, unknown>
+    expect(setArg).not.toHaveProperty('frozenAt')
   })
 
   // ─── getGroupConfig ───────────────────────────────────────────────────────
@@ -219,9 +243,10 @@ describe('scoring-config.service', () => {
   it('getGroupConfig() → returns the group-specific config', async () => {
     queueSelectLimit([{ id: 'group-uuid-1', scoringConfigId: 'config-uuid-2' }])
     queueSelectLimit([GROUP_CONFIG_ROW])
+    queueGroupNotFrozen()
     const result = await getGroupConfig('group-uuid-1')
     expect(result).not.toBeNull()
-    expect(result?.exactScore).toBe(5)
+    expect(result?.exactBonusPoints).toBe(3)
   })
 
   it('getGroupConfig() → returns null if group has no override', async () => {
@@ -240,8 +265,9 @@ describe('scoring-config.service', () => {
   it('getGroupConfigWithImpact() → adds counts for group members', async () => {
     queueSelectLimit([{ id: 'group-uuid-1', scoringConfigId: 'config-uuid-2' }])
     queueSelectLimit([GROUP_CONFIG_ROW])
-    queueSelectCount(3)
-    queueSelectJoinCount(11)
+    queueGroupNotFrozen()
+    queueSelectFromOnly([{ count: 3 }])
+    queueSelectJoinWhere([{ count: 11 }])
     const result = await getGroupConfigWithImpact('group-uuid-1')
     expect(result?.affectedMatches).toBe(3)
     expect(result?.affectedPredictions).toBe(11)
@@ -256,37 +282,32 @@ describe('scoring-config.service', () => {
   // ─── setGroupConfig ───────────────────────────────────────────────────────
 
   it('setGroupConfig() → creates new config when group has none', async () => {
-    const groupRow = { id: 'group-uuid-1', scoringConfigId: null }
-    const newConfigRow = { ...GROUP_CONFIG_ROW, id: 'config-uuid-new' }
-
-    queueSelectLimit([groupRow])
-    setupInsertChain([newConfigRow])
+    queueSelectLimit([{ id: 'group-uuid-1', scoringConfigId: null }])
+    queueGroupNotFrozen()
+    setupInsertChain([{ ...GROUP_CONFIG_ROW, id: 'config-uuid-new' }])
 
     const mockUpdateSet2 = vi.fn().mockReturnValue({ where: vi.fn() })
     mockUpdate.mockReturnValueOnce({ set: mockUpdateSet2 })
 
     const result = await setGroupConfig('group-uuid-1', SCORING_INPUT)
-    expect(result.exactScore).toBe(5)
+    expect(result.exactBonusPoints).toBe(3)
     expect(mockInsert).toHaveBeenCalled()
   })
 
   it('setGroupConfig() → updates existing config when group already has one', async () => {
-    const groupRow = { id: 'group-uuid-1', scoringConfigId: 'config-uuid-2' }
-    const updatedConfigRow = { ...GROUP_CONFIG_ROW, exactScore: 5 }
-
-    queueSelectLimit([groupRow])
-    queueSelectLimit([GROUP_CONFIG_ROW])
-    setupUpdateChain([updatedConfigRow])
+    queueSelectLimit([{ id: 'group-uuid-1', scoringConfigId: 'config-uuid-2' }])
+    queueGroupNotFrozen()
+    setupUpdateChain([{ ...GROUP_CONFIG_ROW, exactBonusPoints: 3 }])
 
     const result = await setGroupConfig('group-uuid-1', SCORING_INPUT)
-    expect(result.exactScore).toBe(5)
+    expect(result.exactBonusPoints).toBe(3)
     expect(mockUpdate).toHaveBeenCalled()
   })
 
-  it('setGroupConfig() → 409 if existing config is frozen', async () => {
+  it('setGroupConfig() → 423 Locked when group leagues have started', async () => {
     queueSelectLimit([{ id: 'group-uuid-1', scoringConfigId: 'config-uuid-2' }])
-    queueSelectLimit([{ ...GROUP_CONFIG_ROW, frozenAt: FROZEN_AT }])
-    await expect(setGroupConfig('group-uuid-1', SCORING_INPUT)).rejects.toMatchObject({ status: 409, message: 'Scoring config is frozen' })
+    queueGroupFrozen()
+    await expect(setGroupConfig('group-uuid-1', SCORING_INPUT)).rejects.toMatchObject({ status: 423, message: 'Scoring config is frozen' })
   })
 
   it('setGroupConfig() → 404 if group not found', async () => {
@@ -296,12 +317,18 @@ describe('scoring-config.service', () => {
 
   // ─── overrideGroupConfig ──────────────────────────────────────────────────
 
-  it('overrideGroupConfig() → ignores frozenAt and clears it on existing config', async () => {
+  it('overrideGroupConfig() → bypasses frozen check and writes 3 fields only', async () => {
     queueSelectLimit([{ id: 'group-uuid-1', scoringConfigId: 'config-uuid-2' }])
-    setupUpdateChain([{ ...GROUP_CONFIG_ROW, exactScore: 5, frozenAt: null }])
+    setupUpdateChain([{ ...GROUP_CONFIG_ROW, exactBonusPoints: 3 }])
     const result = await overrideGroupConfig('group-uuid-1', SCORING_INPUT)
     expect(result.frozenAt).toBeNull()
-    expect(mockSet).toHaveBeenCalledWith(expect.objectContaining({ frozenAt: null }))
+    const setArg = mockSet.mock.calls[0]?.[0] as Record<string, unknown>
+    expect(setArg).not.toHaveProperty('frozenAt')
+    expect(setArg).toMatchObject({
+      correctOutcomePoints: SCORING_INPUT.correctOutcomePoints,
+      exactBonusPoints: SCORING_INPUT.exactBonusPoints,
+      extraTimeBonusPoints: SCORING_INPUT.extraTimeBonusPoints,
+    })
   })
 
   it('overrideGroupConfig() → creates new config when group has none', async () => {
@@ -310,6 +337,6 @@ describe('scoring-config.service', () => {
     const mockUpdateSet2 = vi.fn().mockReturnValue({ where: vi.fn() })
     mockUpdate.mockReturnValueOnce({ set: mockUpdateSet2 })
     const result = await overrideGroupConfig('group-uuid-1', SCORING_INPUT)
-    expect(result.exactScore).toBe(5)
+    expect(result.exactBonusPoints).toBe(3)
   })
 })

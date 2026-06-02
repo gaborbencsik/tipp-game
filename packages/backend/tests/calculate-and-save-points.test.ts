@@ -33,29 +33,23 @@ const RESULT = { homeGoals: 2, awayGoals: 1 }
 
 const DEFAULT_CONFIG_ROW = {
   id: 'config-1',
-  exactScore: 3,
-  correctWinnerAndDiff: 2,
-  correctWinner: 1,
-  correctDraw: 2,
-  correctOutcome: 1,
-  incorrect: 0,
+  correctOutcomePoints: 1,
+  exactBonusPoints: 1,
+  extraTimeBonusPoints: 1,
   isGlobalDefault: true,
 }
 
 const PREDICTIONS = [
-  { id: 'pred-1', userId: 'user-1', matchId: MATCH_ID, homeGoals: 2, awayGoals: 1 }, // exact → 3
+  { id: 'pred-1', userId: 'user-1', matchId: MATCH_ID, homeGoals: 2, awayGoals: 1 }, // exact → 2 (1+1)
   { id: 'pred-2', userId: 'user-2', matchId: MATCH_ID, homeGoals: 3, awayGoals: 1 }, // correct winner → 1
   { id: 'pred-3', userId: 'user-3', matchId: MATCH_ID, homeGoals: 0, awayGoals: 1 }, // wrong → 0
 ]
 
 const GROUP_CONFIG_ROW = {
   id: 'group-config-1',
-  exactScore: 5,
-  correctWinnerAndDiff: 3,
-  correctWinner: 2,
-  correctDraw: 3,
-  correctOutcome: 1,
-  incorrect: 0,
+  correctOutcomePoints: 2,
+  exactBonusPoints: 3,
+  extraTimeBonusPoints: 1,
   isGlobalDefault: false,
 }
 
@@ -88,7 +82,7 @@ describe('calculateAndSavePoints', () => {
     await calculateAndSavePoints(MATCH_ID, RESULT)
 
     const setCalls = mockSet.mock.calls.map(c => (c[0] as { pointsGlobal: number }).pointsGlobal)
-    expect(setCalls).toEqual(expect.arrayContaining([3, 1, 0]))
+    expect(setCalls).toEqual(expect.arrayContaining([2, 1, 0]))
   })
 
   it('is idempotent — runs twice without error', async () => {
@@ -206,7 +200,7 @@ describe('calculateAndSaveGroupPoints', () => {
     expect(mockInsert).toHaveBeenCalledTimes(1)
     const insertedValues = mockInsertValues.mock.calls[0]![0] as { groupId: string; points: number }
     expect(insertedValues.groupId).toBe('group-uuid-1')
-    expect(insertedValues.points).toBe(5) // exact score with GROUP_CONFIG_ROW.exactScore = 5
+    expect(insertedValues.points).toBe(5) // exact 2-1 with GROUP cfg: outcome(2) + exact(3) = 5
   })
 
   it('no groups with config or doublePoints → no inserts', async () => {
@@ -235,7 +229,7 @@ describe('calculateAndSaveGroupPoints', () => {
 
     expect(mockInsert).toHaveBeenCalledTimes(1)
     const insertedValues = mockInsertValues.mock.calls[0]![0] as { groupId: string; points: number }
-    expect(insertedValues.points).toBe(6) // exact(3) × 2
+    expect(insertedValues.points).toBe(4) // exact 2-1 default cfg: 2 × 2 (fav)
   })
 
   it('favorite team double points → ×1 when fav team does NOT play', async () => {
@@ -252,6 +246,6 @@ describe('calculateAndSaveGroupPoints', () => {
 
     expect(mockInsert).toHaveBeenCalledTimes(1)
     const insertedValues = mockInsertValues.mock.calls[0]![0] as { groupId: string; points: number }
-    expect(insertedValues.points).toBe(3) // exact(3) × 1 (fav not playing)
+    expect(insertedValues.points).toBe(2) // exact 2-1 default cfg: 2 × 1 (fav not playing)
   })
 })
