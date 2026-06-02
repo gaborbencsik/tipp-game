@@ -233,7 +233,7 @@ describe('ProfileView', () => {
     mockLeaguesList.mockResolvedValue([
       { id: 'l1', name: 'VB', shortName: 'VB', createdAt: '', updatedAt: '' },
       { id: 'l2', name: 'NB I', shortName: 'NB I', createdAt: '', updatedAt: '' },
-      { id: 'l3', name: 'PRE-VB-1', shortName: 'PRE-VB-1', createdAt: '', updatedAt: '' },
+      { id: 'l3', name: 'Bundesliga', shortName: 'BL', createdAt: '', updatedAt: '' },
     ])
     mockLeagueTeamsForLeague.mockResolvedValue([])
 

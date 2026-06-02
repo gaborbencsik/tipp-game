@@ -267,11 +267,6 @@ export async function upsertFixtures(
       status,
     }).onConflictDoUpdate({
       target: matches.externalId,
-      // leagueId is intentionally NOT in this SET. The PRE-VB-1/2/3 split is
-      // statically curated (see pre-vb-fixture-groups.ts); each fixture id
-      // belongs to exactly one group at insert time. Omitting leagueId here
-      // also makes the upsert safe if a fixture were ever re-listed under a
-      // different league assignment — its initial assignment is preserved.
       set: {
         scheduledAt: sql`excluded.scheduled_at`,
         status: sql`excluded.status`,
@@ -368,20 +363,6 @@ export interface RunSyncOptions {
   readonly mode: SyncMode
   readonly dateRange?: { from?: string; to?: string }
   readonly fixtureAllowlist?: readonly number[]
-}
-
-export interface SplitSyncGroup {
-  readonly internalId: string
-  readonly allowlist: readonly number[]
-}
-
-export interface RunSplitSyncOptions {
-  readonly leagueExternalId: number
-  readonly groups: readonly SplitSyncGroup[]
-  readonly season: number
-  readonly client: FootballApiClient
-  readonly mode: SyncMode
-  readonly dateRange?: { from?: string; to?: string }
 }
 
 export async function runSync(opts: RunSyncOptions): Promise<SyncRunResult> {
@@ -488,103 +469,4 @@ export async function runSync(opts: RunSyncOptions): Promise<SyncRunResult> {
     errors,
     partial: errors.length > 0,
   }
-}
-
-export async function runSplitSync(opts: RunSplitSyncOptions): Promise<SyncRunResult[]> {
-  const {
-    leagueExternalId,
-    groups,
-    season,
-    client,
-    mode,
-    dateRange,
-  } = opts
-  const results: SyncRunResult[] = []
-
-  let allFixtures: readonly ApiFootballFixture[] = []
-  const fetchErrors: string[] = []
-
-  try {
-    const fixturesResponse = await client.fetchFixtures({
-      league: leagueExternalId,
-      season,
-      ...(dateRange?.from ? { from: dateRange.from } : {}),
-      ...(dateRange?.to ? { to: dateRange.to } : {}),
-    })
-    allFixtures = fixturesResponse.response as readonly ApiFootballFixture[]
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Unknown error fetching fixtures'
-    fetchErrors.push(`fixtures: ${message}`)
-  }
-
-  for (const group of groups) {
-    const groupFixtures = filterFixturesByAllowlist(allFixtures, group.allowlist)
-    const startedAt = new Date().toISOString()
-    const errors: string[] = [...fetchErrors]
-    let teamsUpserted = 0
-    let fixturesUpserted = 0
-    let resultsUpserted = 0
-
-    try {
-      teamsUpserted = await upsertTeams(teamsFromFixtures(groupFixtures), group.internalId)
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Unknown error upserting teams'
-      errors.push(`teams: ${message}`)
-    }
-
-    try {
-      fixturesUpserted = await upsertFixtures(groupFixtures, group.internalId)
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Unknown error upserting fixtures'
-      errors.push(`fixtures: ${message}`)
-    }
-
-    try {
-      resultsUpserted = await upsertResults(groupFixtures)
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Unknown error upserting results'
-      errors.push(`results: ${message}`)
-    }
-
-    const finishedAt = new Date().toISOString()
-
-    try {
-      await db.insert(auditLogs).values({
-        id: crypto.randomUUID(),
-        actorId: null,
-        action: 'update',
-        entityType: 'sync_run',
-        entityId: group.internalId,
-        previousValue: null,
-        newValue: {
-          mode,
-          leagueExternalId,
-          season,
-          allowlistSize: group.allowlist.length,
-          matchedFixtures: groupFixtures.length,
-          teamsUpserted,
-          fixturesUpserted,
-          resultsUpserted,
-          errors,
-        },
-      })
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Unknown error writing audit log'
-      errors.push(`audit: ${message}`)
-    }
-
-    results.push({
-      startedAt,
-      finishedAt,
-      mode,
-      leaguesSynced: 1,
-      fixturesUpserted,
-      teamsUpserted,
-      resultsUpserted,
-      errors,
-      partial: errors.length > 0,
-    })
-  }
-
-  return results
 }

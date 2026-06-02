@@ -15,8 +15,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:seed": "tsx scripts/seed.ts",
-    "db:seed-local": "tsx scripts/seed-local.ts",
-    "fetch:pre-wc": "tsx scripts/fetch-pre-wc-friendlies.ts"
+    "db:seed-local": "tsx scripts/seed-local.ts"
   },
   "dependencies": {
     "@google/genai": "^2.6.0",
