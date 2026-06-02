@@ -40,7 +40,7 @@ services:
         value: http://tipp-game-backend:3000
       - key: SYNC_SERVICE_TOKEN
         sync: false
-    dockerCommand: sh -c 'curl --fail-with-body -sS -X POST -H "Authorization: Bearer $SYNC_SERVICE_TOKEN" "$BACKEND_URL/api/internal/sync/tick"'
+    dockerCommand: "sh -c 'curl --fail-with-body -sS -X POST -H \"Authorization: Bearer $SYNC_SERVICE_TOKEN\" \"$BACKEND_URL/api/internal/sync/tick\"'"
 
   - type: cron
     name: tipp-game-cron-polymarket
@@ -55,7 +55,7 @@ services:
         value: http://tipp-game-backend:3000
       - key: SYNC_SERVICE_TOKEN
         sync: false
-    dockerCommand: sh -c 'curl --fail-with-body -sS -X POST -H "Authorization: Bearer $SYNC_SERVICE_TOKEN" "$BACKEND_URL/api/internal/sync/polymarket-tick"'
+    dockerCommand: "sh -c 'curl --fail-with-body -sS -X POST -H \"Authorization: Bearer $SYNC_SERVICE_TOKEN\" \"$BACKEND_URL/api/internal/sync/polymarket-tick\"'"
 
   - type: cron
     name: tipp-game-cron-transfermarkt
@@ -70,4 +70,4 @@ services:
         value: http://tipp-game-backend:3000
       - key: SYNC_SERVICE_TOKEN
         sync: false
-    dockerCommand: sh -c 'curl --fail-with-body -sS -X POST -H "Authorization: Bearer $SYNC_SERVICE_TOKEN" "$BACKEND_URL/api/internal/sync/transfermarkt-tick"'
+    dockerCommand: "sh -c 'curl --fail-with-body -sS -X POST -H \"Authorization: Bearer $SYNC_SERVICE_TOKEN\" \"$BACKEND_URL/api/internal/sync/transfermarkt-tick\"'"
