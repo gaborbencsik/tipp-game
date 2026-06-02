@@ -9,11 +9,9 @@ async function seed(): Promise<void> {
   await db.insert(scoringConfigs).values({
     name: 'Global Default',
     isGlobalDefault: true,
-    exactScore: 3,
-    correctWinnerAndDiff: 2,
-    correctWinner: 1,
-    correctDraw: 2,
-    incorrect: 0,
+    correctOutcomePoints: 1,
+    exactBonusPoints: 1,
+    extraTimeBonusPoints: 1,
   }).onConflictDoNothing()
 
   // ─── Venues (FIFA 2026) ──────────────────────────────────────────────────
@@ -142,13 +140,17 @@ async function seed(): Promise<void> {
 
   // ─── Leagues ────────────────────────────────────────────────────────────
   const leagueData = [
-    { name: 'FIFA World Cup 2026', shortName: 'WC2026' },
-    { name: 'NB I 2025/26', shortName: 'NB I' },
+    { name: 'FIFA World Cup 2026', shortName: 'WC2026', startsAt: new Date('2026-06-11T18:00:00Z') },
+    { name: 'NB I 2025/26', shortName: 'NB I', startsAt: null },
   ]
 
   for (const league of leagueData) {
     await db.insert(leagues).values(league).onConflictDoNothing()
   }
+  // Backfill startsAt for the WC league when row already existed (idempotent).
+  await db.update(leagues)
+    .set({ startsAt: new Date('2026-06-11T18:00:00Z') })
+    .where(eq(leagues.shortName, 'WC2026'))
 
   console.log('Base seed complete.')
   console.log('  Scoring config: Global Default')
