@@ -13,6 +13,8 @@
 | PUSH-003 | Push: torna tipp deadline előtt 1 nappal | Should Have | PUSH-001 |
 | PUSH-004 | Push: napi első meccs előtt 1 órával (Europe/Budapest) | Should Have | PUSH-001 |
 | PUSH-005 | Frequency cap és csendes órák a webpush küldéshez | Should Have | PUSH-001 |
+| PWA-001 | PWA alapok – telepíthető app + offline shell | Should Have | — |
+| SCORING-001 | Pontozási konfig egyszerűsítés – 6 mezőből 3 stackelhető bónuszra | Should Have | ~~UX-028~~ |
 | US-1204 | NB II liga szinkronizáció támogatás | Nice to Have | ~~US-1202~~, ~~US-1203~~ |
 | US-1303 | Match Pulse – automatikus insight generálás cron jobban | Should Have | ~~US-1302~~, ~~US-1203~~ |
 | US-1304 | Match Pulse – insight megjelenítése a meccs kártyán | Should Have | ~~US-1302~~, ~~US-1310~~ |
@@ -34,4 +36,4 @@
 
 ---
 
-**Haladás: 136 / 161 story kész** — Must Have: 31/32, Should Have: 105/124, Nice to Have: 0/5 (US-937 won't do)
+**Haladás: 136 / 163 story kész** — Must Have: 31/32, Should Have: 105/126, Nice to Have: 0/5 (US-937 won't do)
