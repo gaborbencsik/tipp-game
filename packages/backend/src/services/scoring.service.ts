@@ -20,50 +20,30 @@ export function calculatePoints(
   result: ResultScore,
   config: ScoringConfig
 ): number {
-  const predDiff = prediction.homeGoals - prediction.awayGoals
-  const resDiff = result.homeGoals - result.awayGoals
+  const predWinner = Math.sign(prediction.homeGoals - prediction.awayGoals)
+  const resWinner = Math.sign(result.homeGoals - result.awayGoals)
 
-  // Pontos találat: mindkét gólszám egyezik
-  if (prediction.homeGoals === result.homeGoals && prediction.awayGoals === result.awayGoals) {
-    const base = config.exactScore
-    return base + outcomeBonus(prediction, result, config)
-  }
+  if (predWinner !== resWinner) return 0
 
-  const predWinner = Math.sign(predDiff)
-  const resWinner = Math.sign(resDiff)
+  let pts = config.correctOutcomePoints
 
-  // Döntetlen tipp döntetlenre (de nem pontos találat)
-  if (predWinner === 0 && resWinner === 0) {
-    return config.correctDraw + outcomeBonus(prediction, result, config)
-  }
-
-  // Helyes győztes
-  if (predWinner === resWinner) {
-    // Azonos gólkülönbség
-    if (predDiff === resDiff) {
-      return config.correctWinnerAndDiff
-    }
-    return config.correctWinner
-  }
-
-  return config.incorrect
-}
-
-function outcomeBonus(
-  prediction: PredictionScore,
-  result: ResultScore,
-  config: ScoringConfig
-): number {
-  // Outcome bónusz csak döntetlen eredményre értelmezett
-  if (result.homeGoals !== result.awayGoals) return 0
   if (
-    result.outcomeAfterDraw != null &&
+    prediction.homeGoals === result.homeGoals &&
+    prediction.awayGoals === result.awayGoals
+  ) {
+    pts += config.exactBonusPoints
+  }
+
+  if (
+    result.homeGoals === result.awayGoals &&
     prediction.outcomeAfterDraw != null &&
+    result.outcomeAfterDraw != null &&
     prediction.outcomeAfterDraw === result.outcomeAfterDraw
   ) {
-    return config.correctOutcome
+    pts += config.extraTimeBonusPoints
   }
-  return 0
+
+  return pts
 }
 
 export async function calculateAndSavePoints(
