@@ -121,7 +121,7 @@ e2e:
 	@echo "Várakozás az E2E stack-re..."
 	@until docker compose --profile e2e exec backend-e2e curl -sf http://localhost:3000/api/health > /dev/null 2>&1; do sleep 1; done
 	@echo "DB schema push az E2E DB-re..."
-	docker compose --profile e2e exec backend-e2e npx drizzle-kit push --force
+	docker compose --profile e2e exec -T backend-e2e sh -c 'echo "" | npx drizzle-kit push --force'
 	@echo "Playwright tesztek indulnak..."
 	docker compose --profile e2e run --rm playwright npx playwright test
 	docker compose --profile e2e down
