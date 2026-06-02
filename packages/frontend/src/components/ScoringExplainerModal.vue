@@ -125,7 +125,7 @@ onUnmounted(() => {
           <h3 class="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
             {{ t('scoringExplainer.matchScoring') }}
           </h3>
-          <div class="overflow-hidden rounded-xl border border-gray-200 bg-white">
+          <div class="hidden overflow-hidden rounded-xl border border-gray-200 bg-white sm:block">
             <table class="w-full text-sm">
               <thead>
                 <tr class="border-b border-gray-200 text-left text-xs text-gray-500">
@@ -159,6 +159,33 @@ onUnmounted(() => {
                 </tr>
               </tbody>
             </table>
+          </div>
+          <div class="sm:hidden" data-testid="match-rules-mobile">
+            <div
+              v-for="rule in MATCH_RULES"
+              :key="rule.key"
+              data-testid="match-rule-card"
+              class="mb-2 rounded-lg border border-gray-200 bg-white p-3 transition-colors last:mb-0 hover:bg-gray-50"
+            >
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0 flex-1">
+                  <div class="text-sm font-medium text-gray-800">
+                    {{ t(`scoringExplainer.rules.${rule.key}`) }}
+                  </div>
+                  <div
+                    v-if="rule.kind === 'multiplier' && bonusGroups.length > 0 && groups.length > 1"
+                    class="mt-0.5 text-xs italic text-gray-500"
+                  >({{ t('scoringExplainer.bonus.active', { groups: bonusGroups.map(g => g.name).join(', ') }) }})</div>
+                  <div class="mt-1.5 text-xs text-gray-500">
+                    {{ t(`scoringExplainer.examples.${rule.key}`) }}
+                  </div>
+                </div>
+                <span
+                  class="inline-flex min-w-[2rem] shrink-0 items-center justify-center rounded-full px-2.5 py-0.5 text-sm font-bold tabular-nums"
+                  :class="matchPillClass(rule)"
+                >{{ matchPointsLabel(rule) }}</span>
+              </div>
+            </div>
           </div>
           <p class="mt-2 text-xs italic text-gray-500">{{ t('scoringExplainer.matchScoringNote') }}</p>
         </div>

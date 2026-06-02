@@ -1,6 +1,6 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-06-01
+> Utoljára frissítve: 2026-06-02
 
 ## Nyitott story-k
 
@@ -34,4 +34,4 @@
 
 ---
 
-**Haladás: 135 / 161 story kész** — Must Have: 31/32, Should Have: 104/124, Nice to Have: 0/5 (US-937 won't do)
+**Haladás: 136 / 161 story kész** — Must Have: 31/32, Should Have: 105/124, Nice to Have: 0/5 (US-937 won't do)
