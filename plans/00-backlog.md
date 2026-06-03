@@ -8,6 +8,7 @@
 |----------|-----|-----------|----------|
 | OPS-002 | Render cron service-ek konfigurálása az automatikus sync-hez (tick + polymarket + transfermarkt) | Must Have | — |
 | OPS-001 | Strukturált logolás és frontend hibakezelés (MVP) | Should Have | — |
+| OPS-003 | Auto-generált DB schema referencia agentnek és fejlesztőnek | Should Have | — |
 | PWA-003 | PWA telepítés smart banner + onboarding integráció | Should Have | ~~PWA-002~~ |
 | PUSH-001 | Webpush infrastruktúra és admin trigger UI | Should Have | — |
 | PUSH-002 | Push: meccs előtt 30 perccel, ha nincs tipp | Should Have | PUSH-001 |
@@ -35,4 +36,4 @@
 
 ---
 
-**Haladás: 141 / 164 story kész** — Must Have: 31/32, Should Have: 110/127, Nice to Have: 0/5 (US-937 won't do)
+**Haladás: 141 / 165 story kész** — Must Have: 31/32, Should Have: 110/128, Nice to Have: 0/5 (US-937 won't do)
