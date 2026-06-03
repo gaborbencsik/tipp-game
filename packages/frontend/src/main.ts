@@ -4,6 +4,7 @@ import App from './App.vue'
 import { router } from './router/index.js'
 import { i18n } from './i18n/index.js'
 import { useAuthStore } from './stores/auth.store.js'
+import './lib/install-prompt.js'
 import './style.css'
 
 const bootstrap = async (): Promise<void> => {

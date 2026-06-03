@@ -55,6 +55,14 @@
       >
         {{ $t('nav.profile') }}
       </router-link>
+      <router-link
+        to="/app/install"
+        data-testid="menu-install"
+        class="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+        @click="menuOpen = false"
+      >
+        {{ $t('nav.installApp') }}
+      </router-link>
       <button
         data-testid="menu-replay-onboarding"
         class="flex items-center w-full px-4 py-2.5 text-sm text-gray-500 hover:bg-gray-50"

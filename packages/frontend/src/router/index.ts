@@ -122,6 +122,12 @@ export const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/app/install',
+      name: 'install',
+      component: () => import('../views/InstallView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/app/join/:code',
       name: 'join',
       component: () => import('../views/JoinView.vue'),

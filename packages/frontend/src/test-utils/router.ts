@@ -18,6 +18,7 @@ const APP_ROUTES: RouteRecordRaw[] = [
   { path: '/app/groups/:id', component: Stub },
   { path: '/app/leaderboard', component: Stub },
   { path: '/app/profile', component: Stub },
+  { path: '/app/install', component: Stub },
   { path: '/app/join/:code', component: Stub },
   { path: '/admin/matches', component: Stub },
   { path: '/admin/teams', component: Stub },

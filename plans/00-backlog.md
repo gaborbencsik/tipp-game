@@ -1,6 +1,6 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-06-02 (PWA-001 lezárva — telepíthető PWA + offline shell)
+> Utoljára frissítve: 2026-06-03 (PWA-002 lezárva — install tutorial oldal + user menü; PWA-003 nyitva — smart banner + onboarding)
 
 ## Nyitott story-k
 
@@ -8,6 +8,7 @@
 |----------|-----|-----------|----------|
 | OPS-002 | Render cron service-ek konfigurálása az automatikus sync-hez (tick + polymarket + transfermarkt) | Must Have | — |
 | OPS-001 | Strukturált logolás és frontend hibakezelés (MVP) | Should Have | — |
+| PWA-003 | PWA telepítés smart banner + onboarding integráció | Should Have | ~~PWA-002~~ |
 | PUSH-001 | Webpush infrastruktúra és admin trigger UI | Should Have | — |
 | PUSH-002 | Push: meccs előtt 30 perccel, ha nincs tipp | Should Have | PUSH-001 |
 | PUSH-003 | Push: torna tipp deadline előtt 1 nappal | Should Have | PUSH-001 |
@@ -34,4 +35,4 @@
 
 ---
 
-**Haladás: 138 / 163 story kész** — Must Have: 31/32, Should Have: 107/126, Nice to Have: 0/5 (US-937 won't do)
+**Haladás: 139 / 164 story kész** — Must Have: 31/32, Should Have: 108/127, Nice to Have: 0/5 (US-937 won't do)

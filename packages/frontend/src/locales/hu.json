@@ -29,7 +29,8 @@
     "logout": "Kijelentkezés",
     "openNav": "Navigáció megnyitása",
     "replayOnboarding": "Bemutató újranézése",
-    "admin": "Admin"
+    "admin": "Admin",
+    "installApp": "Telepítés főképernyőre"
   },
   "login": {
     "title": "VB Tippjáték",
@@ -688,6 +689,59 @@
       "menu": "Pontozás",
       "leaderboard": "Hogyan kapok pontot?",
       "iconAria": "Pontozás megnyitása"
+    }
+  },
+  "install": {
+    "title": "Alkalmazásként a telefonodon",
+    "subtitle": "Telepítsd a VB Tippjátékot a főképernyődre, és úgy használd, mint egy natív appot — saját ikon, teljes képernyő, gyorsabb indítás.",
+    "tabs": {
+      "ios": "iPhone / iPad",
+      "android": "Android"
+    },
+    "promptCta": {
+      "title": "Telepítés egy kattintással",
+      "description": "A böngésződ támogatja az automatikus telepítést — koppints a gombra, és a rendszer felugró ablakban kéri a megerősítést.",
+      "button": "Telepítés most",
+      "installing": "Telepítés...",
+      "manualFallback": "Vagy kövesd a lépéseket lentebb."
+    },
+    "installed": {
+      "title": "Az alkalmazás már telepítve van",
+      "description": "A főképernyődről indítva használod ezt az appot — nincs több teendőd."
+    },
+    "ios": {
+      "heading": "Telepítés iOS-en",
+      "requirements": "Safari böngésző, iOS 16.4 vagy újabb",
+      "steps": [
+        { "text": "Nyisd meg a <strong>{domain}</strong> oldalt a <strong>Safari</strong> böngészőben.", "hint": "Más böngészőből (Chrome, Firefox) iOS-en nem működik a telepítés." },
+        { "text": "Koppints a képernyő alján található <strong>Megosztás</strong> gombra (négyzet felfelé mutató nyíllal)." },
+        { "text": "Görgess le, majd koppints a <strong>Hozzáadás a Főképernyőhöz</strong> opcióra." },
+        { "text": "Nevezd át igény szerint, majd koppints a <strong>Hozzáadás</strong> gombra a jobb felső sarokban." },
+        { "text": "Kész! A főképernyőn megjelent egy új ikon — innen indítva már alkalmazásként fut a tippjáték." }
+      ],
+      "note": "Ha bejelentkezve voltál a Safariban, az alkalmazásban újra be kell jelentkezned. A bejelentkezés ezután megmarad."
+    },
+    "android": {
+      "heading": "Telepítés Androidon",
+      "requirements": "Chrome, Edge, Brave vagy Samsung Internet",
+      "manualHeading": "Vagy kézzel a böngésző menüjéből",
+      "steps": [
+        { "text": "Nyisd meg a <strong>{domain}</strong> oldalt <strong>Chrome</strong> (vagy Edge / Samsung Internet) böngészőben." },
+        { "text": "Koppints a jobb felső sarokban lévő <strong>három pont</strong> menüre." },
+        { "text": "Válaszd a <strong>Telepítés alkalmazásként</strong> vagy <strong>Hozzáadás a kezdőképernyőhöz</strong> opciót.", "hint": "Egyes telefonokon \"Telepítés\" felirattal jelenik meg egy banner közvetlenül az URL alatt — koppints rá, és kihagyhatod a menüt." },
+        { "text": "Erősítsd meg a <strong>Telepítés</strong> gombbal a felugró ablakban." },
+        { "text": "Kész! Az app a telefon kezdőképernyőjén és az appfiókban is megjelenik, saját ikonnal." }
+      ],
+      "note": "Ha nem látod a Telepítés opciót, frissítsd a böngészőt a legújabb verzióra, vagy próbálj ki egy másikat (pl. Chrome)."
+    },
+    "benefits": {
+      "title": "Mi változik, ha telepíted?",
+      "items": [
+        "Saját ikon a főképernyőn — egy koppintás és kész.",
+        "Teljes képernyős nézet, böngésző fejléc nélkül.",
+        "Gyorsabb indulás, mert a felület már tárolva van.",
+        "Offline alapnézet — ha nincs net, akkor is megnyílik egy üzenettel."
+      ]
     }
   }
 }

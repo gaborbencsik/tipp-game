@@ -29,7 +29,8 @@
     "logout": "Log out",
     "openNav": "Open navigation",
     "replayOnboarding": "Replay intro",
-    "admin": "Admin"
+    "admin": "Admin",
+    "installApp": "Install on home screen"
   },
   "login": {
     "title": "World Cup Prediction Game",
@@ -688,6 +689,59 @@
       "menu": "Scoring",
       "leaderboard": "How do I earn points?",
       "iconAria": "Open scoring rules"
+    }
+  },
+  "install": {
+    "title": "Install as an app on your phone",
+    "subtitle": "Add the World Cup Prediction Game to your home screen and use it like a native app — own icon, full screen, faster launch.",
+    "tabs": {
+      "ios": "iPhone / iPad",
+      "android": "Android"
+    },
+    "promptCta": {
+      "title": "One-tap install",
+      "description": "Your browser supports automatic install — tap the button and confirm in the system dialog.",
+      "button": "Install now",
+      "installing": "Installing...",
+      "manualFallback": "Or follow the steps below."
+    },
+    "installed": {
+      "title": "App is already installed",
+      "description": "You're launching this app from the home screen — nothing more to do."
+    },
+    "ios": {
+      "heading": "Install on iOS",
+      "requirements": "Safari browser, iOS 16.4 or later",
+      "steps": [
+        { "text": "Open <strong>{domain}</strong> in <strong>Safari</strong>.", "hint": "Installation will not work from other browsers (Chrome, Firefox) on iOS." },
+        { "text": "Tap the <strong>Share</strong> button at the bottom of the screen (square with an upward arrow)." },
+        { "text": "Scroll down and tap <strong>Add to Home Screen</strong>." },
+        { "text": "Rename it if you like, then tap <strong>Add</strong> in the top-right corner." },
+        { "text": "Done! A new icon appears on your home screen — launch from there to run the prediction game as an app." }
+      ],
+      "note": "If you were signed in inside Safari, you'll need to sign in again the first time you open the app. After that the session sticks."
+    },
+    "android": {
+      "heading": "Install on Android",
+      "requirements": "Chrome, Edge, Brave, or Samsung Internet",
+      "manualHeading": "Or do it manually from the browser menu",
+      "steps": [
+        { "text": "Open <strong>{domain}</strong> in <strong>Chrome</strong> (or Edge / Samsung Internet)." },
+        { "text": "Tap the <strong>three-dot</strong> menu in the top-right corner." },
+        { "text": "Choose <strong>Install app</strong> or <strong>Add to Home screen</strong>.", "hint": "Some phones show an \"Install\" banner directly below the address bar — tap that to skip the menu." },
+        { "text": "Confirm with the <strong>Install</strong> button in the dialog that pops up." },
+        { "text": "Done! The app appears on your home screen and in the app drawer with its own icon." }
+      ],
+      "note": "If you don't see the Install option, update your browser to the latest version or try a different one (e.g. Chrome)."
+    },
+    "benefits": {
+      "title": "What changes after installing?",
+      "items": [
+        "Own icon on the home screen — one tap and you're in.",
+        "Full-screen view, no browser chrome.",
+        "Faster launch, since the shell is already cached.",
+        "Offline base view — even without network, the app opens with a friendly message."
+      ]
     }
   }
 }
