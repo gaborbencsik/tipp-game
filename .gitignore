@@ -158,4 +158,5 @@ result.json
 .vscode/
 screenshots/
 .playwright-mcp/
-.local/
+.local
+.claude-logs/

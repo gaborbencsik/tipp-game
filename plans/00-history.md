@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 137 story kész (Must Have: 31/31, Should Have: 106/106)
+> 138 story kész (Must Have: 31/31, Should Have: 107/107)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -141,3 +141,4 @@
 | UX-028 | Pontozási szabályzat modal MVP | Should Have |
 | UX-030 | Pontozási szabályzat modal – mobil nézet finomhangolás | Should Have |
 | SCORING-001 | Pontozási konfig egyszerűsítés – 6 mezőből 3 stackelhető bónuszra | Should Have |
+| PWA-001 | PWA alapok – telepíthető app + offline shell | Should Have |
