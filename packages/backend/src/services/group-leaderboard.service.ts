@@ -29,12 +29,11 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
   const memberIds = membership.map(m => m.userId)
   if (!memberIds.includes(requesterId)) throw new AppError(403, 'Not a member of this group')
 
-  const leagueRow = await db
+  const leagueRows = await db
     .select({ leagueId: groupLeagues.leagueId })
     .from(groupLeagues)
     .where(eq(groupLeagues.groupId, groupId))
-    .limit(1)
-  const leagueId = leagueRow[0]?.leagueId ?? null
+  const leagueIds = leagueRows.map(r => r.leagueId)
 
   const useGroupPoints = group[0].scoringConfigId !== null || group[0].favoriteTeamDoublePoints
 
@@ -50,8 +49,9 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
   // League / soft-delete filter goes into the matches JOIN ON clause — keeping it
   // in WHERE would turn the LEFT JOIN into an inner join for any member whose
   // predictions all belong to other leagues, dropping that member entirely.
-  const matchesJoinOn = leagueId
-    ? sql`${matches.id} = ${predictions.matchId} AND ${matches.deletedAt} IS NULL AND ${matches.leagueId} = ${leagueId}::uuid`
+  // Multi-league groups: include matches from ANY subscribed league.
+  const matchesJoinOn = leagueIds.length > 0
+    ? sql`${matches.id} = ${predictions.matchId} AND ${matches.deletedAt} IS NULL AND ${matches.leagueId} IN (${sql.join(leagueIds.map(id => sql`${id}::uuid`), sql`, `)})`
     : sql`${matches.id} = ${predictions.matchId} AND ${matches.deletedAt} IS NULL`
 
   if (useGroupPoints) {
@@ -140,7 +140,7 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
 
   // Fetch favorite teams if feature is enabled
   let favoritesByUser = new Map<string, { countryCode: string; name: string }>()
-  if (group[0].favoriteTeamDoublePoints && leagueId) {
+  if (group[0].favoriteTeamDoublePoints && leagueIds.length > 0) {
     const favRows = await db
       .select({
         userId: userLeagueFavorites.userId,
@@ -151,7 +151,7 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
       .innerJoin(teams, eq(teams.id, userLeagueFavorites.teamId))
       .where(and(
         inArray(userLeagueFavorites.userId, memberIds),
-        eq(userLeagueFavorites.leagueId, leagueId),
+        inArray(userLeagueFavorites.leagueId, leagueIds),
       ))
     for (const row of favRows) {
       if (row.countryCode) {

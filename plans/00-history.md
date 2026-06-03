@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 139 story kész (Must Have: 31/31, Should Have: 108/108)
+> 140 story kész (Must Have: 31/31, Should Have: 109/109)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -143,3 +143,4 @@
 | SCORING-001 | Pontozási konfig egyszerűsítés – 6 mezőből 3 stackelhető bónuszra | Should Have |
 | PWA-001 | PWA alapok – telepíthető app + offline shell | Should Have |
 | PWA-002 | PWA telepítés tutorial oldal + user menü belépési pont | Should Have |
+| BUG-008 | Csoport-leaderboard csak egy ligát vesz figyelembe ha a csoport több ligához tartozik | Should Have |

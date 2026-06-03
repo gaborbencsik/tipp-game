@@ -108,8 +108,7 @@ function setupLeaderboardSelectChain(
   mockMemberWhere.mockResolvedValueOnce(memberRows)
   mockMemberFrom.mockReturnValue({ where: mockMemberWhere })
 
-  mockLeagueLimit.mockResolvedValueOnce(leagueRows)
-  mockLeagueWhere.mockReturnValue({ limit: mockLeagueLimit })
+  mockLeagueWhere.mockResolvedValueOnce(leagueRows)
   mockLeagueFrom.mockReturnValue({ where: mockLeagueWhere })
 
   mockOrderBy.mockResolvedValueOnce(leaderboardRows)
@@ -338,6 +337,38 @@ describe('getGroupLeaderboard', () => {
 
     await getGroupLeaderboard(GROUP_ID, REQUESTER_ID)
 
+    const newCalls = sqlMock.mock.calls.slice(callsBefore)
+    const interpolated = newCalls.flat(3)
+    expect(interpolated).toContain('matches.deletedAt')
+  })
+
+  // ─── BUG-007 regression: groups with multiple leagues must include all ────
+
+  it('includes predictions from all subscribed leagues, not just one', async () => {
+    setupLeaderboardSelectChain(
+      GROUP_ROW_NO_CONFIG,
+      MEMBER_ROWS,
+      LEADERBOARD_ROWS,
+      false,
+      [],
+      [{ leagueId: 'league-1' }, { leagueId: 'league-2' }],
+    )
+
+    const { sql } = await import('drizzle-orm')
+    const sqlMock = sql as unknown as { mock: { calls: unknown[][] } }
+    const joinMock = (sql as unknown as { join: ReturnType<typeof vi.fn> }).join
+    const callsBefore = sqlMock.mock.calls.length
+    const joinCallsBefore = joinMock.mock.calls.length
+
+    const result = await getGroupLeaderboard(GROUP_ID, REQUESTER_ID)
+
+    expect(result).toHaveLength(2)
+    // Verify the matches join filter was built using sql.join over both league IDs
+    expect(joinMock.mock.calls.length).toBeGreaterThan(joinCallsBefore)
+    const joinArg = joinMock.mock.calls[joinCallsBefore]?.[0]
+    expect(Array.isArray(joinArg)).toBe(true)
+    expect(joinArg).toHaveLength(2)
+    // matches.deletedAt still referenced in the JOIN ON clause
     const newCalls = sqlMock.mock.calls.slice(callsBefore)
     const interpolated = newCalls.flat(3)
     expect(interpolated).toContain('matches.deletedAt')
