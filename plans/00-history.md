@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 141 story kész (Must Have: 31/31, Should Have: 110/110)
+> 142 story kész (Must Have: 31/31, Should Have: 111/111)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -144,4 +144,5 @@
 | PWA-001 | PWA alapok – telepíthető app + offline shell | Should Have |
 | PWA-002 | PWA telepítés tutorial oldal + user menü belépési pont | Should Have |
 | BUG-008 | Csoport-leaderboard csak egy ligát vesz figyelembe ha a csoport több ligához tartozik | Should Have |
+| BUG-009 | Csoport-leaderboard 0 tippet mutat ha favoriteTeamDoublePoints aktív és még nincs lefutott meccs | Should Have |
 | BUG-007 | Csoport-leaderboard nem szűri ki a soft-deleted usereket | Should Have |

@@ -1,6 +1,6 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-06-03 (BUG-007 lezárva — soft-deleted user szűrés a csoport-leaderboardon; BUG-008 lezárva — multi-league fix)
+> Utoljára frissítve: 2026-06-03 (BUG-009 lezárva — group-leaderboard 0 tipp ha favoriteTeamDoublePoints aktív és nincs lefutott meccs; BUG-008 lezárva — multi-league fix; BUG-007 lezárva — soft-deleted user szűrés)
 
 ## Nyitott story-k
 
@@ -36,4 +36,4 @@
 
 ---
 
-**Haladás: 141 / 165 story kész** — Must Have: 31/32, Should Have: 110/128, Nice to Have: 0/5 (US-937 won't do)
+**Haladás: 142 / 165 story kész** — Must Have: 31/32, Should Have: 111/128, Nice to Have: 0/5 (US-937 won't do)
