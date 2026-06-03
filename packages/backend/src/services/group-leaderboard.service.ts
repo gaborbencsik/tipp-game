@@ -1,4 +1,4 @@
-import { eq, sql, and, or, inArray } from 'drizzle-orm'
+import { eq, sql, and, or, inArray, isNull } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { users, predictions, groupMembers, groups, groupPredictionPoints, specialPredictions, specialPredictionTypes, groupGlobalTypeSubscriptions, groupLeagues, matches, userLeagueFavorites, teams } from '../db/schema/index.js'
 import type { LeaderboardEntry } from './leaderboard.service.js'
@@ -65,7 +65,7 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
         correctCount: sql<number>`count(case when ${matches.id} is not null and ${groupPredictionPoints.points} > 0 then 1 end)`,
       })
       .from(groupMembers)
-      .innerJoin(users, eq(users.id, groupMembers.userId))
+      .innerJoin(users, and(eq(users.id, groupMembers.userId), isNull(users.deletedAt)))
       .leftJoin(predictions, eq(predictions.userId, users.id))
       .leftJoin(matches, matchesJoinOn)
       .leftJoin(
@@ -86,7 +86,7 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
         correctCount: sql<number>`count(case when ${matches.id} is not null and ${predictions.pointsGlobal} > 0 then 1 end)`,
       })
       .from(groupMembers)
-      .innerJoin(users, eq(users.id, groupMembers.userId))
+      .innerJoin(users, and(eq(users.id, groupMembers.userId), isNull(users.deletedAt)))
       .leftJoin(predictions, eq(predictions.userId, users.id))
       .leftJoin(matches, matchesJoinOn)
       .where(eq(groupMembers.groupId, groupId))

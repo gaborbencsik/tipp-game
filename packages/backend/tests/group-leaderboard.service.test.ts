@@ -41,7 +41,7 @@ vi.mock('../src/db/client.js', () => ({
 }))
 
 vi.mock('../src/db/schema/index.js', () => ({
-  users: { id: 'users.id', displayName: 'users.displayName', avatarUrl: 'users.avatarUrl' },
+  users: { id: 'users.id', displayName: 'users.displayName', avatarUrl: 'users.avatarUrl', deletedAt: 'users.deletedAt' },
   predictions: { pointsGlobal: 'predictions.pointsGlobal', id: 'predictions.id', userId: 'predictions.userId', matchId: 'predictions.matchId' },
   groups: { id: 'groups.id', scoringConfigId: 'groups.scoringConfigId', favoriteTeamDoublePoints: 'groups.favoriteTeamDoublePoints' },
   groupMembers: { groupId: 'groupMembers.groupId', userId: 'groupMembers.userId' },
@@ -58,10 +58,10 @@ vi.mock('../src/db/schema/index.js', () => ({
 
 vi.mock('drizzle-orm', () => ({
   eq: vi.fn(),
-  isNull: vi.fn(),
+  isNull: vi.fn((col: unknown) => ({ __isNull: col })),
   sql: Object.assign(vi.fn(() => 'sql-expr'), { raw: vi.fn(), join: vi.fn(() => 'sql-join') }),
   count: vi.fn(() => 'count-expr'),
-  and: vi.fn(),
+  and: vi.fn((...args: unknown[]) => ({ __and: args })),
   or: vi.fn(),
   inArray: vi.fn(),
 }))
@@ -372,5 +372,36 @@ describe('getGroupLeaderboard', () => {
     const newCalls = sqlMock.mock.calls.slice(callsBefore)
     const interpolated = newCalls.flat(3)
     expect(interpolated).toContain('matches.deletedAt')
+  })
+
+  // ─── BUG-007 regression: soft-deleted users must be excluded ──────────────
+
+  it('users join filters out soft-deleted users via isNull(users.deletedAt)', async () => {
+    setupLeaderboardSelectChain(GROUP_ROW_NO_CONFIG, MEMBER_ROWS, LEADERBOARD_ROWS)
+
+    const { isNull, and } = await import('drizzle-orm')
+    const isNullMock = isNull as unknown as ReturnType<typeof vi.fn>
+    const andMock = and as unknown as ReturnType<typeof vi.fn>
+
+    await getGroupLeaderboard(GROUP_ID, REQUESTER_ID)
+
+    expect(isNullMock).toHaveBeenCalledWith('users.deletedAt')
+    const andCallsWithDeletedAtGuard = andMock.mock.calls.filter(args =>
+      args.some(a => a && typeof a === 'object' && (a as { __isNull?: unknown }).__isNull === 'users.deletedAt'),
+    )
+    expect(andCallsWithDeletedAtGuard.length).toBeGreaterThan(0)
+  })
+
+  it('soft-deleted users do not appear in the response (DB-filtered out)', async () => {
+    const ROWS_ACTIVE_ONLY = [
+      { userId: REQUESTER_ID, displayName: 'Alice', avatarUrl: null, totalPoints: 10, predictionCount: 3, correctCount: 2 },
+    ]
+    setupLeaderboardSelectChain(GROUP_ROW_NO_CONFIG, MEMBER_ROWS, ROWS_ACTIVE_ONLY)
+
+    const result = await getGroupLeaderboard(GROUP_ID, REQUESTER_ID)
+
+    expect(result).toHaveLength(1)
+    expect(result[0]?.userId).toBe(REQUESTER_ID)
+    expect(result.find(r => r.userId === 'user-uuid-2')).toBeUndefined()
   })
 })

@@ -1,6 +1,6 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-06-03 (BUG-008 lezárva — multi-league leaderboard fix; PWA-002 lezárva — install tutorial; PWA-003 nyitva — smart banner + onboarding)
+> Utoljára frissítve: 2026-06-03 (BUG-007 lezárva — soft-deleted user szűrés a csoport-leaderboardon; BUG-008 lezárva — multi-league fix)
 
 ## Nyitott story-k
 
@@ -30,10 +30,9 @@
 | UX-022 | Torna tippek kitöltöttsége az admin statisztikákban | Should Have | UX-021 |
 | UX-029 | Pontozási szabályzat modal – polished error state | Nice to Have | ~~UX-028~~ |
 | SEC-002 | HMAC-aláírt meghívó URL-ek | Nice to Have | — |
-| BUG-007 | Csoport-leaderboard nem szűri ki a soft-deleted usereket | Should Have | — |
 
 > UX-019 felülírva — UX-020 implementálja a frissített, mockup-alapú 5 lépéses onboardingot.
 
 ---
 
-**Haladás: 140 / 164 story kész** — Must Have: 31/32, Should Have: 109/127, Nice to Have: 0/5 (US-937 won't do)
+**Haladás: 141 / 164 story kész** — Must Have: 31/32, Should Have: 110/127, Nice to Have: 0/5 (US-937 won't do)
