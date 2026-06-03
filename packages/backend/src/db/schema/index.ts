@@ -33,7 +33,21 @@ export const specialPredictionInputTypeEnum = pgEnum(
 )
 
 export const auditActionEnum = pgEnum('audit_action', [
-  'create', 'update', 'delete', 'result_set', 'ban', 'role_change'
+  'create', 'update', 'delete', 'result_set', 'ban', 'role_change', 'push_send'
+])
+
+export const pushNotificationTypeEnum = pgEnum('push_notification_type', [
+  'match_kickoff_reminder',
+  'tournament_tip_deadline',
+  'daily_match_review',
+  'admin_broadcast',
+])
+
+export const pushSkippedReasonEnum = pgEnum('push_skipped_reason', [
+  'quiet_hours',
+  'rate_limit',
+  'push_disabled',
+  'no_subscription',
 ])
 
 export const waitlistSourceEnum = pgEnum('waitlist_source', ['hero', 'footer', 'admin'])
@@ -59,6 +73,7 @@ export const users = pgTable('users', {
   avatarUrl:   text('avatar_url'),
   role:        userRoleEnum('role').notNull().default('user'),
   preferredLocale: varchar('preferred_locale', { length: 5 }).notNull().default('hu'),
+  pushEnabled: boolean('push_enabled').notNull().default(true),
   onboardingCompletedAt: timestamp('onboarding_completed_at', { withTimezone: true }),
   bannedAt:    timestamp('banned_at', { withTimezone: true }),
   banReason:   text('ban_reason'),
@@ -440,6 +455,38 @@ export const userLeagueFavorites = pgTable('user_league_favorites', {
   userLeagueUnique: uniqueIndex('ulf_user_league_unique').on(t.userId, t.leagueId),
   userIdx:          index('ulf_user_idx').on(t.userId),
   leagueIdx:        index('ulf_league_idx').on(t.leagueId),
+}))
+
+// ─── PUSH NOTIFICATIONS ──────────────────────────────────────────────────────
+
+export const pushSubscriptions = pgTable('push_subscriptions', {
+  id:         uuid('id').primaryKey().defaultRandom(),
+  userId:     uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  endpoint:   text('endpoint').notNull(),
+  auth:       text('auth').notNull(),
+  p256dh:     text('p256dh').notNull(),
+  userAgent:  text('user_agent'),
+  createdAt:  timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
+  deletedAt:  timestamp('deleted_at', { withTimezone: true }),
+}, (t) => ({
+  userEndpointUnique: uniqueIndex('push_sub_user_endpoint_unique').on(t.userId, t.endpoint),
+  userIdx:            index('push_sub_user_idx').on(t.userId),
+}))
+
+export const pushNotificationLog = pgTable('push_notification_log', {
+  id:            uuid('id').primaryKey().defaultRandom(),
+  userId:        uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  type:          pushNotificationTypeEnum('type').notNull(),
+  scopeKey:      text('scope_key'),
+  endpoint:      text('endpoint'),
+  sentAt:        timestamp('sent_at', { withTimezone: true }).notNull().defaultNow(),
+  clickedAt:     timestamp('clicked_at', { withTimezone: true }),
+  skippedReason: pushSkippedReasonEnum('skipped_reason'),
+}, (t) => ({
+  userTypeScopeUnique: uniqueIndex('push_log_user_type_scope_unique').on(t.userId, t.type, t.scopeKey),
+  userIdx:             index('push_log_user_idx').on(t.userId),
+  sentAtIdx:           index('push_log_sent_at_idx').on(t.sentAt),
 }))
 
 // ─── RELATIONS ────────────────────────────────────────────────────────────────
