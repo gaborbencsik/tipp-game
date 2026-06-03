@@ -580,4 +580,33 @@ export const api = {
         body: JSON.stringify({ email, source, website, _t: elapsed }),
       }),
   },
+  push: {
+    status: (token: string) =>
+      request<{ pushEnabled: boolean; activeSubscriptions: number }>('/push/status', {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+    setEnabled: (token: string, enabled: boolean) =>
+      request<{ pushEnabled: boolean }>('/users/me/push-enabled', {
+        method: 'PUT',
+        body: JSON.stringify({ enabled }),
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+    subscribe: (token: string, params: { endpoint: string; auth: string; p256dh: string; userAgent?: string }) =>
+      request<{ message: string }>('/push/subscribe', {
+        method: 'POST',
+        body: JSON.stringify(params),
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+    unsubscribe: (token: string, endpoint?: string) =>
+      request<void>('/push/subscribe', {
+        method: 'DELETE',
+        body: JSON.stringify(endpoint ? { endpoint } : {}),
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+    clicked: (logId: string) =>
+      request<void>('/push/clicked', {
+        method: 'POST',
+        body: JSON.stringify({ logId }),
+      }),
+  },
 }

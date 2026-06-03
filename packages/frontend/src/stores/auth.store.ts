@@ -47,6 +47,12 @@ export const useAuthStore = defineStore('auth', () => {
     return user.value?.role === 'admin'
   }
 
+  async function getAccessToken(): Promise<string> {
+    if (DEV_AUTH_BYPASS) return 'dev-bypass-token'
+    const { data: { session } } = await supabase.auth.getSession()
+    return session?.access_token ?? ''
+  }
+
   function savePendingInviteCode(code: string): void {
     pendingInviteCode.value = code
     try {
@@ -242,6 +248,6 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  return { user, ready, pendingInviteCode, isAuthenticated, isAdmin, savePendingInviteCode, clearPendingInviteCode, handleSession, restoreSession, logout, loginWithEmail, registerWithEmail, updateProfile, completeOnboarding, resetOnboarding }
+  return { user, ready, pendingInviteCode, isAuthenticated, isAdmin, getAccessToken, savePendingInviteCode, clearPendingInviteCode, handleSession, restoreSession, logout, loginWithEmail, registerWithEmail, updateProfile, completeOnboarding, resetOnboarding }
 })
 

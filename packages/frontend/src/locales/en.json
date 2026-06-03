@@ -299,7 +299,13 @@
     "favPlaceholder": "Select a team...",
     "favSaved": "Saved!",
     "favError": "Something went wrong",
-    "favEmpty": "You're not a member of any group yet. Join a group to set up your favorite team."
+    "favEmpty": "You're not a member of any group yet. Join a group to set up your favorite team.",
+    "pushTitle": "Push notifications",
+    "pushDesc": "Toggle browser push notifications (match kickoff reminders, tournament tip deadlines, daily review).",
+    "pushEnabledLabel": "Receive push notifications",
+    "pushActiveCount": "{count} active subscription(s)",
+    "pushNoSubscriptions": "No active push subscription on this device yet.",
+    "pushSaved": "Saved ✓"
   },
   "join": {
     "loading": "Joining group...",

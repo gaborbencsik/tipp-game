@@ -299,7 +299,13 @@
     "favPlaceholder": "Válassz csapatot...",
     "favSaved": "Elmentve ✓",
     "favError": "Hiba történt",
-    "favEmpty": "Még nem vagy egyetlen csoport tagja sem. Csatlakozz egy csoporthoz, hogy beállíthasd a kedvenc csapatodat."
+    "favEmpty": "Még nem vagy egyetlen csoport tagja sem. Csatlakozz egy csoporthoz, hogy beállíthasd a kedvenc csapatodat.",
+    "pushTitle": "Push értesítések",
+    "pushDesc": "Itt kapcsolhatod be vagy ki a böngésző push értesítéseit (meccs előtti emlékeztetők, szezonális tippek, napi összegzés).",
+    "pushEnabledLabel": "Push értesítések fogadása",
+    "pushActiveCount": "{count} aktív feliratkozás",
+    "pushNoSubscriptions": "Még nincs aktív push feliratkozás ezen az eszközön.",
+    "pushSaved": "Mentve ✓"
   },
   "join": {
     "loading": "Csatlakozás folyamatban...",

@@ -151,6 +151,31 @@
         <h2 class="text-lg font-semibold text-gray-900">{{ $t('profile.favTitle') }}</h2>
         <p class="text-sm text-gray-500">{{ $t('profile.favEmpty') }}</p>
       </div>
+
+      <div class="bg-white rounded shadow p-6 space-y-3 mt-6">
+        <h2 class="text-lg font-semibold text-gray-900">{{ $t('profile.pushTitle') }}</h2>
+        <p class="text-sm text-gray-500">{{ $t('profile.pushDesc') }}</p>
+
+        <label class="flex items-center gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            data-testid="push-enabled-toggle"
+            :checked="pushEnabled"
+            :disabled="pushSaving"
+            class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            @change="onPushToggle(($event.target as HTMLInputElement).checked)"
+          />
+          <span class="text-sm text-gray-800">{{ $t('profile.pushEnabledLabel') }}</span>
+        </label>
+
+        <p v-if="pushActiveCount > 0" class="text-xs text-gray-500" data-testid="push-active-count">
+          {{ $t('profile.pushActiveCount', { count: pushActiveCount }) }}
+        </p>
+        <p v-else class="text-xs text-gray-500">{{ $t('profile.pushNoSubscriptions') }}</p>
+
+        <p v-if="pushError" data-testid="push-error" class="text-xs text-red-600">{{ pushError }}</p>
+        <p v-if="pushSaved" data-testid="push-saved" class="text-xs text-green-600">{{ $t('profile.pushSaved') }}</p>
+      </div>
   </AppLayout>
 </template>
 
@@ -162,12 +187,20 @@ import { useLeagueFavoritesStore } from '../stores/league-favorites.store.js'
 import { useGroupsStore } from '../stores/groups.store.js'
 import AppLayout from '../components/AppLayout.vue'
 import { dicebearUrl } from '../lib/avatar.js'
+import { api } from '../api/index.js'
 
 const { t } = useI18n()
 const authStore = useAuthStore()
 const favStore = useLeagueFavoritesStore()
 const groupsStore = useGroupsStore()
 const groupsLoaded = ref(false)
+
+const pushEnabled = ref(true)
+const pushActiveCount = ref(0)
+const pushSaving = ref(false)
+const pushError = ref<string | null>(null)
+const pushSaved = ref(false)
+let pushSavedTimer: ReturnType<typeof setTimeout> | null = null
 
 const avatarSrc = computed((): string => {
   const user = authStore.user
@@ -251,6 +284,7 @@ onMounted(async () => {
     favStore.fetchLeagues(),
     favStore.fetchFavorites(),
     groupsStore.fetchMyGroups(),
+    loadPushStatus(),
   ])
   groupsLoaded.value = true
   await Promise.all(favStore.userLeagues.map(l => favStore.fetchLeagueTeams(l.id)))
@@ -258,7 +292,39 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   document.removeEventListener('click', onDocumentClick)
+  if (pushSavedTimer) clearTimeout(pushSavedTimer)
 })
+
+async function loadPushStatus(): Promise<void> {
+  try {
+    const token = await authStore.getAccessToken()
+    if (!token) return
+    const status = await api.push.status(token)
+    pushEnabled.value = status.pushEnabled
+    pushActiveCount.value = status.activeSubscriptions
+  } catch {
+    // ignore — settings panel renders with defaults
+  }
+}
+
+async function onPushToggle(next: boolean): Promise<void> {
+  pushSaving.value = true
+  pushError.value = null
+  pushSaved.value = false
+  try {
+    const token = await authStore.getAccessToken()
+    if (!token) throw new Error(t('common.unknownError'))
+    const result = await api.push.setEnabled(token, next)
+    pushEnabled.value = result.pushEnabled
+    pushSaved.value = true
+    if (pushSavedTimer) clearTimeout(pushSavedTimer)
+    pushSavedTimer = setTimeout(() => { pushSaved.value = false }, 3000)
+  } catch (err) {
+    pushError.value = err instanceof Error ? err.message : t('common.unknownError')
+  } finally {
+    pushSaving.value = false
+  }
+}
 
 async function save(): Promise<void> {
   if (!displayName.value.trim()) return
