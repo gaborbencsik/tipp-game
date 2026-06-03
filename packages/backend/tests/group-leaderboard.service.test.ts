@@ -374,6 +374,41 @@ describe('getGroupLeaderboard', () => {
     expect(interpolated).toContain('matches.deletedAt')
   })
 
+  // ─── BUG-009 regression: predictionCount must count predictions, not group points ──
+
+  it('predictionCount counts predictions.id (not groupPredictionPoints.id) in group-points branch', async () => {
+    // When favoriteTeamDoublePoints is true but no matches have results yet,
+    // groupPredictionPoints is empty. predictionCount must still reflect the
+    // user's submitted tips (counted via predictions.id), not the empty group
+    // points table.
+    const GROUP_ROW_DOUBLE = { id: GROUP_ID, scoringConfigId: null, favoriteTeamDoublePoints: true }
+    setupLeaderboardSelectChain(GROUP_ROW_DOUBLE, MEMBER_ROWS, LEADERBOARD_ROWS, true, [], [{ leagueId: 'league-1' }])
+
+    const { sql } = await import('drizzle-orm')
+    const sqlMock = sql as unknown as { mock: { calls: unknown[][] } }
+    const callsBefore = sqlMock.mock.calls.length
+
+    await getGroupLeaderboard(GROUP_ID, REQUESTER_ID)
+
+    const newCalls = sqlMock.mock.calls.slice(callsBefore)
+
+    // Find every sql tagged-template call whose first fragment starts with "count(".
+    // These are the count(...) aggregate expressions in the SELECT.
+    const countCalls = newCalls.filter(call => {
+      const strings = call[0] as unknown
+      return Array.isArray(strings) && typeof strings[0] === 'string' && strings[0].startsWith('count(')
+    })
+    expect(countCalls.length).toBeGreaterThan(0)
+
+    // The predictionCount expression in the group-points branch must reference
+    // predictions.id (so it counts submitted tips), and NO count expression may
+    // reference gpp.id (group_prediction_points rows are only created after a
+    // match is scored — counting them shows 0 tips before any results land).
+    const allInterpolations = countCalls.flatMap(call => call.slice(1).flat(2))
+    expect(allInterpolations).toContain('predictions.id')
+    expect(allInterpolations).not.toContain('gpp.id')
+  })
+
   // ─── BUG-007 regression: soft-deleted users must be excluded ──────────────
 
   it('users join filters out soft-deleted users via isNull(users.deletedAt)', async () => {

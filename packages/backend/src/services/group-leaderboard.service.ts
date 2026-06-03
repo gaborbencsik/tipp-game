@@ -61,7 +61,7 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
         displayName: users.displayName,
         avatarUrl: users.avatarUrl,
         totalPoints: sql<number>`coalesce(sum(case when ${matches.id} is not null then ${groupPredictionPoints.points} end), 0)`,
-        predictionCount: sql<number>`count(case when ${matches.id} is not null then ${groupPredictionPoints.id} end)`,
+        predictionCount: sql<number>`count(case when ${matches.id} is not null then ${predictions.id} end)`,
         correctCount: sql<number>`count(case when ${matches.id} is not null and ${groupPredictionPoints.points} > 0 then 1 end)`,
       })
       .from(groupMembers)
