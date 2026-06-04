@@ -167,10 +167,10 @@
           <input
             type="checkbox"
             data-testid="push-enabled-toggle"
-            :checked="pushEnabled"
+            v-model="pushEnabled"
             :disabled="pushSaving || !pushSupported"
             class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-            @change="onPushToggle(($event.target as HTMLInputElement).checked)"
+            @change="onPushToggle"
           />
           <span class="text-sm text-gray-800">{{ $t('profile.pushEnabledLabel') }}</span>
         </label>
@@ -320,7 +320,8 @@ async function loadPushStatus(): Promise<void> {
   }
 }
 
-async function onPushToggle(next: boolean): Promise<void> {
+async function onPushToggle(): Promise<void> {
+  const desired = pushEnabled.value
   pushSaving.value = true
   pushError.value = null
   pushSaved.value = false
@@ -328,7 +329,7 @@ async function onPushToggle(next: boolean): Promise<void> {
     const token = await authStore.getAccessToken()
     if (!token) throw new Error(t('common.unknownError'))
 
-    if (next) {
+    if (desired) {
       if (!isPushSupported()) {
         pushSupported.value = false
         throw new Error(t('profile.pushUnsupported'))
@@ -342,7 +343,7 @@ async function onPushToggle(next: boolean): Promise<void> {
       await unsubscribeFromPush(token)
     }
 
-    const result = await api.push.setEnabled(token, next)
+    const result = await api.push.setEnabled(token, desired)
     pushEnabled.value = result.pushEnabled
     const refreshed = await api.push.status(token)
     pushActiveCount.value = refreshed.activeSubscriptions
@@ -351,6 +352,14 @@ async function onPushToggle(next: boolean): Promise<void> {
     pushSavedTimer = setTimeout(() => { pushSaved.value = false }, 3000)
   } catch (err) {
     pushError.value = err instanceof Error ? err.message : t('common.unknownError')
+    try {
+      const token = await authStore.getAccessToken()
+      if (token) {
+        const status = await api.push.status(token)
+        pushEnabled.value = status.pushEnabled
+        pushActiveCount.value = status.activeSubscriptions
+      }
+    } catch { /* ignore status refresh failure */ }
   } finally {
     pushSaving.value = false
   }
