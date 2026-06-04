@@ -442,6 +442,13 @@
       "when": 1788000000006,
       "tag": "0062_push_notifications",
       "breakpoints": true
+    },
+    {
+      "idx": 63,
+      "version": "7",
+      "when": 1788000000007,
+      "tag": "0063_push_enabled_default_false",
+      "breakpoints": true
     }
   ]
 }
