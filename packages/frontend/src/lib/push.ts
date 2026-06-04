@@ -47,6 +47,11 @@ export async function getCurrentSubscription(): Promise<PushSubscription | null>
   return reg.pushManager.getSubscription()
 }
 
+export async function getCurrentDeviceEndpoint(): Promise<string | null> {
+  const sub = await getCurrentSubscription()
+  return sub?.endpoint ?? null
+}
+
 export async function ensureSubscribed(token: string): Promise<PushSubscription | null> {
   const vapid = getVapidPublicKey()
   if (!isPushSupported() || !vapid) return null

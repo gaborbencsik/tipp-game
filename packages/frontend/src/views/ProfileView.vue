@@ -163,26 +163,100 @@
           {{ $t('profile.pushPermissionDenied') }}
         </p>
 
-        <label class="flex items-center gap-3 cursor-pointer">
-          <input
-            type="checkbox"
-            data-testid="push-enabled-toggle"
-            v-model="pushEnabled"
-            :disabled="pushSaving || !pushSupported"
-            class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-            @change="onPushToggle"
-          />
-          <span class="text-sm text-gray-800">{{ $t('profile.pushEnabledLabel') }}</span>
-        </label>
+        <div v-if="pushSupported && !pushPermissionDenied && !currentDeviceActive" class="pt-1">
+          <button
+            type="button"
+            data-testid="push-enable-here"
+            :disabled="pushSaving"
+            class="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            @click="enableHere"
+          >
+            {{ pushSaving ? $t('common.saving') : $t('profile.pushEnableHere') }}
+          </button>
+        </div>
 
-        <p v-if="pushActiveCount > 0" class="text-xs text-gray-500" data-testid="push-active-count">
-          {{ $t('profile.pushActiveCount', { count: pushActiveCount }) }}
+        <ul
+          v-if="devices.length > 0"
+          role="list"
+          data-testid="push-devices-list"
+          class="divide-y divide-gray-100 border border-gray-100 rounded"
+        >
+          <li
+            v-for="device in devices"
+            :key="device.id"
+            role="listitem"
+            :data-testid="`push-device-${device.id}`"
+            :class="[
+              'flex items-start gap-3 px-3 py-3',
+              device.isCurrent ? 'bg-blue-50' : '',
+            ]"
+          >
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-medium text-gray-900 truncate">{{ device.browserName }}</span>
+                <span
+                  v-if="device.isCurrent"
+                  data-testid="push-device-current-badge"
+                  aria-label="Jelenleg használt böngésző"
+                  class="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-800"
+                >
+                  {{ $t('profile.pushCurrentBadge') }}
+                </span>
+              </div>
+              <p class="text-xs text-gray-500 mt-0.5">
+                {{ $t('profile.pushAddedAt') }}: {{ formatDate(device.createdAt) }}
+                · {{ $t('profile.pushLastNotified') }}:
+                {{ device.lastUsedAt ? formatRelativePast(device.lastUsedAt) : $t('profile.pushNeverNotified') }}
+              </p>
+            </div>
+            <button
+              type="button"
+              :data-testid="`push-device-remove-${device.id}`"
+              :aria-label="$t('profile.pushRemoveDeviceAria', { name: device.browserName })"
+              :disabled="pushSaving"
+              class="shrink-0 inline-flex items-center justify-center w-11 h-11 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
+              @click="askRemoveDevice(device)"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+            </button>
+          </li>
+        </ul>
+
+        <p
+          v-else-if="pushSupported && devicesLoaded"
+          data-testid="push-devices-empty"
+          class="text-sm text-gray-500"
+        >
+          {{ $t('profile.pushDevicesFirstUse') }}
         </p>
-        <p v-else class="text-xs text-gray-500">{{ $t('profile.pushNoSubscriptions') }}</p>
+
+        <div v-if="devices.length > 0" class="pt-1">
+          <button
+            type="button"
+            data-testid="push-disable-all"
+            :disabled="pushSaving"
+            class="text-sm text-red-600 hover:text-red-700 hover:underline disabled:opacity-50"
+            @click="askDisableAll"
+          >
+            {{ $t('profile.pushDisableAll') }}
+          </button>
+        </div>
 
         <p v-if="pushError" data-testid="push-error" class="text-xs text-red-600">{{ pushError }}</p>
-        <p v-if="pushSaved" data-testid="push-saved" class="text-xs text-green-600">{{ $t('profile.pushSaved') }}</p>
+        <p v-if="pushSaved" data-testid="push-saved" class="text-xs text-green-600">{{ pushSavedLabel }}</p>
       </div>
+
+      <ConfirmModal
+        v-if="confirmModal"
+        :title="confirmModal.title"
+        :body="confirmModal.body"
+        :confirm-label="confirmModal.confirmLabel"
+        variant="danger"
+        @confirm="onConfirm"
+        @cancel="onCancelModal"
+      />
   </AppLayout>
 </template>
 
@@ -193,24 +267,43 @@ import { useAuthStore } from '../stores/auth.store.js'
 import { useLeagueFavoritesStore } from '../stores/league-favorites.store.js'
 import { useGroupsStore } from '../stores/groups.store.js'
 import AppLayout from '../components/AppLayout.vue'
+import ConfirmModal from '../components/ConfirmModal.vue'
 import { dicebearUrl } from '../lib/avatar.js'
 import { api } from '../api/index.js'
-import { isPushSupported, getPermissionState, ensureSubscribed, unsubscribeFromPush } from '../lib/push.js'
+import { isPushSupported, getPermissionState, ensureSubscribed, unsubscribeFromPush, getCurrentDeviceEndpoint } from '../lib/push.js'
 
-const { t } = useI18n()
+interface DeviceRow {
+  id: string
+  endpoint: string
+  browserName: string
+  createdAt: string
+  lastUsedAt: string | null
+  isCurrent: boolean
+}
+
+type ConfirmIntent =
+  | { kind: 'remove-device'; device: DeviceRow }
+  | { kind: 'disable-all' }
+
+const { t, locale } = useI18n()
 const authStore = useAuthStore()
 const favStore = useLeagueFavoritesStore()
 const groupsStore = useGroupsStore()
 const groupsLoaded = ref(false)
 
-const pushEnabled = ref(false)
-const pushActiveCount = ref(0)
 const pushSaving = ref(false)
 const pushError = ref<string | null>(null)
 const pushSaved = ref(false)
+const pushSavedLabel = ref('')
 const pushSupported = ref(true)
 const pushPermissionDenied = ref(false)
+const devices = ref<DeviceRow[]>([])
+const devicesLoaded = ref(false)
+const confirmModal = ref<{ title: string; body: string; confirmLabel: string } | null>(null)
+const pendingIntent = ref<ConfirmIntent | null>(null)
 let pushSavedTimer: ReturnType<typeof setTimeout> | null = null
+
+const currentDeviceActive = computed((): boolean => devices.value.some(d => d.isCurrent))
 
 const avatarSrc = computed((): string => {
   const user = authStore.user
@@ -307,62 +400,158 @@ onBeforeUnmount(() => {
 
 async function loadPushStatus(): Promise<void> {
   pushSupported.value = isPushSupported()
-  if (!pushSupported.value) return
+  if (!pushSupported.value) {
+    devicesLoaded.value = true
+    return
+  }
   pushPermissionDenied.value = getPermissionState() === 'denied'
   try {
     const token = await authStore.getAccessToken()
     if (!token) return
-    const status = await api.push.status(token)
-    pushEnabled.value = status.pushEnabled
-    pushActiveCount.value = status.activeSubscriptions
+    const [{ devices: list }, currentEndpoint] = await Promise.all([
+      api.push.listDevices(token),
+      getCurrentDeviceEndpoint(),
+    ])
+    devices.value = list.map(d => ({ ...d, isCurrent: !!currentEndpoint && d.endpoint === currentEndpoint }))
   } catch {
     // ignore — settings panel renders with defaults
+  } finally {
+    devicesLoaded.value = true
   }
 }
 
-async function onPushToggle(): Promise<void> {
-  const desired = pushEnabled.value
+async function refreshDevices(): Promise<void> {
+  const token = await authStore.getAccessToken()
+  if (!token) return
+  const [{ devices: list }, currentEndpoint] = await Promise.all([
+    api.push.listDevices(token),
+    getCurrentDeviceEndpoint(),
+  ])
+  devices.value = list.map(d => ({ ...d, isCurrent: !!currentEndpoint && d.endpoint === currentEndpoint }))
+}
+
+function flashSaved(label: string): void {
+  pushSaved.value = true
+  pushSavedLabel.value = label
+  if (pushSavedTimer) clearTimeout(pushSavedTimer)
+  pushSavedTimer = setTimeout(() => { pushSaved.value = false }, 3000)
+}
+
+async function enableHere(): Promise<void> {
   pushSaving.value = true
   pushError.value = null
   pushSaved.value = false
   try {
     const token = await authStore.getAccessToken()
     if (!token) throw new Error(t('common.unknownError'))
-
-    if (desired) {
-      if (!isPushSupported()) {
-        pushSupported.value = false
-        throw new Error(t('profile.pushUnsupported'))
-      }
-      const sub = await ensureSubscribed(token)
-      if (!sub) {
-        pushPermissionDenied.value = getPermissionState() === 'denied'
-        throw new Error(pushPermissionDenied.value ? t('profile.pushPermissionDenied') : t('profile.pushUnsupported'))
-      }
-    } else {
-      await unsubscribeFromPush(token)
+    if (!isPushSupported()) {
+      pushSupported.value = false
+      throw new Error(t('profile.pushUnsupported'))
     }
-
-    const result = await api.push.setEnabled(token, desired)
-    pushEnabled.value = result.pushEnabled
-    const refreshed = await api.push.status(token)
-    pushActiveCount.value = refreshed.activeSubscriptions
-    pushSaved.value = true
-    if (pushSavedTimer) clearTimeout(pushSavedTimer)
-    pushSavedTimer = setTimeout(() => { pushSaved.value = false }, 3000)
+    const sub = await ensureSubscribed(token)
+    if (!sub) {
+      pushPermissionDenied.value = getPermissionState() === 'denied'
+      throw new Error(pushPermissionDenied.value ? t('profile.pushPermissionDenied') : t('profile.pushUnsupported'))
+    }
+    await refreshDevices()
+    flashSaved(t('profile.pushSaved'))
   } catch (err) {
     pushError.value = err instanceof Error ? err.message : t('common.unknownError')
-    try {
-      const token = await authStore.getAccessToken()
-      if (token) {
-        const status = await api.push.status(token)
-        pushEnabled.value = status.pushEnabled
-        pushActiveCount.value = status.activeSubscriptions
-      }
-    } catch { /* ignore status refresh failure */ }
   } finally {
     pushSaving.value = false
   }
+}
+
+function askRemoveDevice(device: DeviceRow): void {
+  pendingIntent.value = { kind: 'remove-device', device }
+  confirmModal.value = {
+    title: t('profile.pushRemoveConfirmTitle'),
+    body: t('profile.pushRemoveConfirmBody'),
+    confirmLabel: t('profile.pushRemoveDevice'),
+  }
+}
+
+function askDisableAll(): void {
+  pendingIntent.value = { kind: 'disable-all' }
+  confirmModal.value = {
+    title: t('profile.pushDisableAllConfirmTitle'),
+    body: t('profile.pushDisableAllConfirmBody'),
+    confirmLabel: t('profile.pushDisableAll'),
+  }
+}
+
+function onCancelModal(): void {
+  confirmModal.value = null
+  pendingIntent.value = null
+}
+
+async function onConfirm(): Promise<void> {
+  const intent = pendingIntent.value
+  confirmModal.value = null
+  pendingIntent.value = null
+  if (!intent) return
+  if (intent.kind === 'remove-device') await removeDevice(intent.device)
+  else if (intent.kind === 'disable-all') await disableAll()
+}
+
+async function removeDevice(device: DeviceRow): Promise<void> {
+  pushSaving.value = true
+  pushError.value = null
+  pushSaved.value = false
+  try {
+    const token = await authStore.getAccessToken()
+    if (!token) throw new Error(t('common.unknownError'))
+    await api.push.removeDevice(token, device.id)
+    if (device.isCurrent) {
+      try { await unsubscribeFromPush(token) } catch { /* ignore */ }
+    }
+    await refreshDevices()
+    flashSaved(t('profile.pushDeviceRemoved'))
+  } catch (err) {
+    pushError.value = err instanceof Error ? err.message : t('common.unknownError')
+  } finally {
+    pushSaving.value = false
+  }
+}
+
+async function disableAll(): Promise<void> {
+  pushSaving.value = true
+  pushError.value = null
+  pushSaved.value = false
+  try {
+    const token = await authStore.getAccessToken()
+    if (!token) throw new Error(t('common.unknownError'))
+    await api.push.disableAll(token)
+    try { await unsubscribeFromPush(token) } catch { /* ignore */ }
+    await refreshDevices()
+    flashSaved(t('profile.pushAllDisabled'))
+  } catch (err) {
+    pushError.value = err instanceof Error ? err.message : t('common.unknownError')
+  } finally {
+    pushSaving.value = false
+  }
+}
+
+function formatDate(iso: string): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return '—'
+  return d.toLocaleDateString(locale.value === 'hu' ? 'hu-HU' : 'en-US', {
+    year: 'numeric', month: 'short', day: 'numeric',
+  })
+}
+
+function formatRelativePast(iso: string | null): string {
+  if (!iso) return ''
+  const then = new Date(iso).getTime()
+  if (Number.isNaN(then)) return ''
+  const diffMs = Date.now() - then
+  const min = Math.floor(diffMs / 60_000)
+  const hr = Math.floor(diffMs / 3_600_000)
+  const day = Math.floor(diffMs / 86_400_000)
+  const rtf = new Intl.RelativeTimeFormat(locale.value === 'hu' ? 'hu-HU' : 'en-US', { numeric: 'auto' })
+  if (day >= 1) return rtf.format(-day, 'day')
+  if (hr >= 1) return rtf.format(-hr, 'hour')
+  return rtf.format(-Math.max(min, 0), 'minute')
 }
 
 async function save(): Promise<void> {

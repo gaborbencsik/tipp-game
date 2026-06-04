@@ -1,6 +1,6 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-06-04 (PUSH-001 lezárva — webpush infrastruktúra (DB séma, VAPID, subscribe/click endpoints, profile toggle, SW push handler, admin broadcast UI))
+> Utoljára frissítve: 2026-06-04 (PUSH-006 lezárva — push feliratkozás per-böngésző kezelése: egységes eszközlista, eszközönkénti törlés, "kikapcsolás mindenhol", confirm modal)
 
 ## Nyitott story-k
 
@@ -35,4 +35,4 @@
 
 ---
 
-**Haladás: 143 / 165 story kész** — Must Have: 31/32, Should Have: 112/128, Nice to Have: 0/5 (US-937 won't do)
+**Haladás: 144 / 166 story kész** — Must Have: 31/32, Should Have: 113/129, Nice to Have: 0/5 (US-937 won't do)

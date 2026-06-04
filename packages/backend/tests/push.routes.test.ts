@@ -3,6 +3,7 @@ import request from 'supertest'
 
 const {
   mockSubscribe, mockUnsubscribe, mockMarkClicked, mockSetPushEnabled, mockGetPushStatus, mockUpsertUser,
+  mockListDevices, mockRemoveDevice, mockDisableAll,
 } = vi.hoisted(() => ({
   mockSubscribe: vi.fn(),
   mockUnsubscribe: vi.fn(),
@@ -10,6 +11,9 @@ const {
   mockSetPushEnabled: vi.fn(),
   mockGetPushStatus: vi.fn(),
   mockUpsertUser: vi.fn(),
+  mockListDevices: vi.fn(),
+  mockRemoveDevice: vi.fn(),
+  mockDisableAll: vi.fn(),
 }))
 
 vi.mock('../src/services/push.service.js', () => ({
@@ -18,6 +22,9 @@ vi.mock('../src/services/push.service.js', () => ({
   markClicked: mockMarkClicked,
   setPushEnabled: mockSetPushEnabled,
   getPushStatus: mockGetPushStatus,
+  listDevices: mockListDevices,
+  removeDevice: mockRemoveDevice,
+  disableAll: mockDisableAll,
 }))
 
 vi.mock('../src/services/user.service.js', () => ({
@@ -47,6 +54,9 @@ describe('push.routes', () => {
     mockMarkClicked.mockResolvedValue(undefined)
     mockSetPushEnabled.mockResolvedValue(undefined)
     mockGetPushStatus.mockResolvedValue({ pushEnabled: true, activeSubscriptions: 1 })
+    mockListDevices.mockResolvedValue([])
+    mockRemoveDevice.mockResolvedValue({ removed: true, remainingDevices: 0, pushEnabled: false })
+    mockDisableAll.mockResolvedValue(undefined)
   })
 
   describe('GET /api/push/status', () => {
@@ -176,6 +186,65 @@ describe('push.routes', () => {
       const res = await request(app.callback()).post('/api/push/clicked').send({})
       expect(res.status).toBe(400)
       expect(mockMarkClicked).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('GET /api/push/devices', () => {
+    it('401 without token', async () => {
+      const res = await request(app.callback()).get('/api/push/devices')
+      expect(res.status).toBe(401)
+    })
+
+    it('returns devices for authenticated user', async () => {
+      const devices = [
+        { id: 'd1', endpoint: 'e1', browserName: 'Chrome (macOS)', createdAt: '2026-06-01T00:00:00Z', lastUsedAt: '2026-06-03T00:00:00Z' },
+      ]
+      mockListDevices.mockResolvedValueOnce(devices)
+      const res = await request(app.callback()).get('/api/push/devices').set('Authorization', 'Bearer valid')
+      expect(res.status).toBe(200)
+      expect(res.body).toEqual({ devices })
+      expect(mockListDevices).toHaveBeenCalledWith('user-1')
+    })
+  })
+
+  describe('DELETE /api/push/devices/:id', () => {
+    it('401 without token', async () => {
+      const res = await request(app.callback()).delete('/api/push/devices/d1')
+      expect(res.status).toBe(401)
+    })
+
+    it('200 with success body when removed', async () => {
+      mockRemoveDevice.mockResolvedValueOnce({ removed: true, remainingDevices: 1, pushEnabled: true })
+      const res = await request(app.callback())
+        .delete('/api/push/devices/d1')
+        .set('Authorization', 'Bearer valid')
+      expect(res.status).toBe(200)
+      expect(res.body).toEqual({ success: true, remainingDevices: 1, pushEnabled: true })
+      expect(mockRemoveDevice).toHaveBeenCalledWith('user-1', 'd1')
+    })
+
+    it('404 when device does not belong to the user', async () => {
+      mockRemoveDevice.mockResolvedValueOnce({ removed: false, remainingDevices: 0, pushEnabled: false })
+      const res = await request(app.callback())
+        .delete('/api/push/devices/foreign')
+        .set('Authorization', 'Bearer valid')
+      expect(res.status).toBe(404)
+    })
+  })
+
+  describe('POST /api/push/disable-all', () => {
+    it('401 without token', async () => {
+      const res = await request(app.callback()).post('/api/push/disable-all')
+      expect(res.status).toBe(401)
+    })
+
+    it('soft-deletes everything for the user', async () => {
+      const res = await request(app.callback())
+        .post('/api/push/disable-all')
+        .set('Authorization', 'Bearer valid')
+      expect(res.status).toBe(200)
+      expect(res.body).toEqual({ success: true })
+      expect(mockDisableAll).toHaveBeenCalledWith('user-1')
     })
   })
 })

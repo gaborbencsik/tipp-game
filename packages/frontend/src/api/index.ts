@@ -620,5 +620,19 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ logId }),
       }),
+    listDevices: (token: string) =>
+      request<{ devices: Array<{ id: string; endpoint: string; browserName: string; createdAt: string; lastUsedAt: string | null }> }>('/push/devices', {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+    removeDevice: (token: string, deviceId: string) =>
+      request<{ success: boolean; remainingDevices: number; pushEnabled: boolean }>(`/push/devices/${encodeURIComponent(deviceId)}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+    disableAll: (token: string) =>
+      request<{ success: boolean }>('/push/disable-all', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      }),
   },
 }

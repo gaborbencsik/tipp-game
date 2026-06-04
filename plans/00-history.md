@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 143 story kész (Must Have: 31/31, Should Have: 112/112)
+> 144 story kész (Must Have: 31/31, Should Have: 113/113)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -147,3 +147,4 @@
 | BUG-009 | Csoport-leaderboard 0 tippet mutat ha favoriteTeamDoublePoints aktív és még nincs lefutott meccs | Should Have |
 | BUG-007 | Csoport-leaderboard nem szűri ki a soft-deleted usereket | Should Have |
 | PUSH-001 | Webpush infrastruktúra és admin trigger UI | Should Have |
+| PUSH-006 | Push feliratkozás per-böngésző kezelése (egységes lista + 'kikapcsolás mindenhol') | Should Have |
