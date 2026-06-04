@@ -1,6 +1,6 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-06-03 (BUG-009 lezárva — group-leaderboard 0 tipp ha favoriteTeamDoublePoints aktív és nincs lefutott meccs; BUG-008 lezárva — multi-league fix; BUG-007 lezárva — soft-deleted user szűrés)
+> Utoljára frissítve: 2026-06-04 (PUSH-001 lezárva — webpush infrastruktúra (DB séma, VAPID, subscribe/click endpoints, profile toggle, SW push handler, admin broadcast UI))
 
 ## Nyitott story-k
 
@@ -10,11 +10,10 @@
 | OPS-001 | Strukturált logolás és frontend hibakezelés (MVP) | Should Have | — |
 | OPS-003 | Auto-generált DB schema referencia agentnek és fejlesztőnek | Should Have | — |
 | PWA-003 | PWA telepítés smart banner + onboarding integráció | Should Have | ~~PWA-002~~ |
-| PUSH-001 | Webpush infrastruktúra és admin trigger UI | Should Have | — |
-| PUSH-002 | Push: meccs előtt 30 perccel, ha nincs tipp | Should Have | PUSH-001 |
-| PUSH-003 | Push: torna tipp deadline előtt 1 nappal | Should Have | PUSH-001 |
-| PUSH-004 | Push: napi első meccs előtt 1 órával (Europe/Budapest) | Should Have | PUSH-001 |
-| PUSH-005 | Frequency cap és csendes órák a webpush küldéshez | Should Have | PUSH-001 |
+| PUSH-002 | Push: meccs előtt 30 perccel, ha nincs tipp | Should Have | ~~PUSH-001~~ |
+| PUSH-003 | Push: torna tipp deadline előtt 1 nappal | Should Have | ~~PUSH-001~~ |
+| PUSH-004 | Push: napi első meccs előtt 1 órával (Europe/Budapest) | Should Have | ~~PUSH-001~~ |
+| PUSH-005 | Frequency cap és csendes órák a webpush küldéshez | Should Have | ~~PUSH-001~~ |
 | US-1204 | NB II liga szinkronizáció támogatás | Nice to Have | ~~US-1202~~, ~~US-1203~~ |
 | US-1303 | Match Pulse – automatikus insight generálás cron jobban | Should Have | ~~US-1302~~, ~~US-1203~~ |
 | US-1304 | Match Pulse – insight megjelenítése a meccs kártyán | Should Have | ~~US-1302~~, ~~US-1310~~ |
@@ -36,4 +35,4 @@
 
 ---
 
-**Haladás: 142 / 165 story kész** — Must Have: 31/32, Should Have: 111/128, Nice to Have: 0/5 (US-937 won't do)
+**Haladás: 143 / 165 story kész** — Must Have: 31/32, Should Have: 112/128, Nice to Have: 0/5 (US-937 won't do)
