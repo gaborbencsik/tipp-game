@@ -28,6 +28,7 @@ const APP_ROUTES: RouteRecordRaw[] = [
   { path: '/admin/players', component: Stub },
   { path: '/admin/global-types', component: Stub },
   { path: '/admin/sync', component: Stub },
+  { path: '/admin/push', component: Stub },
   { path: '/admin/stats', component: Stub },
 ]
 
