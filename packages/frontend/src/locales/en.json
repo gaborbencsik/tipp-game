@@ -305,7 +305,9 @@
     "pushEnabledLabel": "Receive push notifications",
     "pushActiveCount": "{count} active subscription(s)",
     "pushNoSubscriptions": "No active push subscription on this device yet.",
-    "pushSaved": "Saved ✓"
+    "pushSaved": "Saved ✓",
+    "pushUnsupported": "This browser does not support push notifications.",
+    "pushPermissionDenied": "The browser blocked notifications — enable them in browser settings."
   },
   "join": {
     "loading": "Joining group...",

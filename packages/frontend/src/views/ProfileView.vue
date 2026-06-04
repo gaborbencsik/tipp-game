@@ -156,12 +156,19 @@
         <h2 class="text-lg font-semibold text-gray-900">{{ $t('profile.pushTitle') }}</h2>
         <p class="text-sm text-gray-500">{{ $t('profile.pushDesc') }}</p>
 
+        <p v-if="!pushSupported" data-testid="push-unsupported" class="text-xs text-amber-600">
+          {{ $t('profile.pushUnsupported') }}
+        </p>
+        <p v-else-if="pushPermissionDenied" data-testid="push-perm-denied" class="text-xs text-amber-600">
+          {{ $t('profile.pushPermissionDenied') }}
+        </p>
+
         <label class="flex items-center gap-3 cursor-pointer">
           <input
             type="checkbox"
             data-testid="push-enabled-toggle"
             :checked="pushEnabled"
-            :disabled="pushSaving"
+            :disabled="pushSaving || !pushSupported"
             class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
             @change="onPushToggle(($event.target as HTMLInputElement).checked)"
           />
@@ -188,6 +195,7 @@ import { useGroupsStore } from '../stores/groups.store.js'
 import AppLayout from '../components/AppLayout.vue'
 import { dicebearUrl } from '../lib/avatar.js'
 import { api } from '../api/index.js'
+import { isPushSupported, getPermissionState, ensureSubscribed, unsubscribeFromPush } from '../lib/push.js'
 
 const { t } = useI18n()
 const authStore = useAuthStore()
@@ -200,6 +208,8 @@ const pushActiveCount = ref(0)
 const pushSaving = ref(false)
 const pushError = ref<string | null>(null)
 const pushSaved = ref(false)
+const pushSupported = ref(true)
+const pushPermissionDenied = ref(false)
 let pushSavedTimer: ReturnType<typeof setTimeout> | null = null
 
 const avatarSrc = computed((): string => {
@@ -296,6 +306,9 @@ onBeforeUnmount(() => {
 })
 
 async function loadPushStatus(): Promise<void> {
+  pushSupported.value = isPushSupported()
+  if (!pushSupported.value) return
+  pushPermissionDenied.value = getPermissionState() === 'denied'
   try {
     const token = await authStore.getAccessToken()
     if (!token) return
@@ -314,8 +327,25 @@ async function onPushToggle(next: boolean): Promise<void> {
   try {
     const token = await authStore.getAccessToken()
     if (!token) throw new Error(t('common.unknownError'))
+
+    if (next) {
+      if (!isPushSupported()) {
+        pushSupported.value = false
+        throw new Error(t('profile.pushUnsupported'))
+      }
+      const sub = await ensureSubscribed(token)
+      if (!sub) {
+        pushPermissionDenied.value = getPermissionState() === 'denied'
+        throw new Error(pushPermissionDenied.value ? t('profile.pushPermissionDenied') : t('profile.pushUnsupported'))
+      }
+    } else {
+      await unsubscribeFromPush(token)
+    }
+
     const result = await api.push.setEnabled(token, next)
     pushEnabled.value = result.pushEnabled
+    const refreshed = await api.push.status(token)
+    pushActiveCount.value = refreshed.activeSubscriptions
     pushSaved.value = true
     if (pushSavedTimer) clearTimeout(pushSavedTimer)
     pushSavedTimer = setTimeout(() => { pushSaved.value = false }, 3000)

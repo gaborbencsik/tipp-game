@@ -305,7 +305,9 @@
     "pushEnabledLabel": "Push értesítések fogadása",
     "pushActiveCount": "{count} aktív feliratkozás",
     "pushNoSubscriptions": "Még nincs aktív push feliratkozás ezen az eszközön.",
-    "pushSaved": "Mentve ✓"
+    "pushSaved": "Mentve ✓",
+    "pushUnsupported": "Ez a böngésző nem támogatja a push értesítéseket.",
+    "pushPermissionDenied": "A böngésző letiltotta az értesítéseket — engedélyezd a böngésző beállításaiban."
   },
   "join": {
     "loading": "Csatlakozás folyamatban...",
