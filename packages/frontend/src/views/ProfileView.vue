@@ -203,7 +203,7 @@ const favStore = useLeagueFavoritesStore()
 const groupsStore = useGroupsStore()
 const groupsLoaded = ref(false)
 
-const pushEnabled = ref(true)
+const pushEnabled = ref(false)
 const pushActiveCount = ref(0)
 const pushSaving = ref(false)
 const pushError = ref<string | null>(null)

@@ -87,7 +87,7 @@ export async function getPushStatus(userId: string): Promise<{ pushEnabled: bool
     .from(users)
     .where(eq(users.id, userId))
     .limit(1)
-  const pushEnabled = userRows[0]?.pushEnabled ?? true
+  const pushEnabled = userRows[0]?.pushEnabled ?? false
   const activeSubscriptions = await getActiveSubscriptionCount(userId)
   return { pushEnabled, activeSubscriptions }
 }

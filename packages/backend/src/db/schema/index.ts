@@ -73,7 +73,7 @@ export const users = pgTable('users', {
   avatarUrl:   text('avatar_url'),
   role:        userRoleEnum('role').notNull().default('user'),
   preferredLocale: varchar('preferred_locale', { length: 5 }).notNull().default('hu'),
-  pushEnabled: boolean('push_enabled').notNull().default(true),
+  pushEnabled: boolean('push_enabled').notNull().default(false),
   onboardingCompletedAt: timestamp('onboarding_completed_at', { withTimezone: true }),
   bannedAt:    timestamp('banned_at', { withTimezone: true }),
   banReason:   text('ban_reason'),
