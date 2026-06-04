@@ -28,5 +28,6 @@ const links: ReadonlyArray<AdminNavLink> = [
   { to: '/admin/waitlist', label: 'Waitlist' },
   { to: '/admin/global-types', label: 'Speciális tippek' },
   { to: '/admin/sync', label: 'Szinkron' },
+  { to: '/admin/push', label: 'Push' },
 ] as const
 </script>

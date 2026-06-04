@@ -566,6 +566,18 @@ export const api = {
           headers: { Authorization: `Bearer ${token}` },
         }),
     },
+    push: {
+      targets: (token: string) =>
+        request<{ count: number }>('/admin/push/targets', {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      send: (token: string, params: { title: string; body: string; url?: string; bypassQuietHours?: boolean; bypassRateLimit?: boolean }) =>
+        request<{ totalTargets: number; delivered: number; failed: number; errors: string[] }>('/admin/push/send', {
+          method: 'POST',
+          body: JSON.stringify(params),
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+    },
   },
   leaderboard: {
     get: (token: string) =>

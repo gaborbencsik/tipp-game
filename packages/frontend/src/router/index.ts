@@ -104,6 +104,12 @@ export const router = createRouter({
       meta: { requiresAuth: true, requiresAdmin: true },
     },
     {
+      path: '/admin/push',
+      name: 'admin-push',
+      component: () => import('../views/AdminPushView.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true },
+    },
+    {
       path: '/app/my-tips',
       name: 'my-tips',
       component: () => import('../views/MyTipsView.vue'),
