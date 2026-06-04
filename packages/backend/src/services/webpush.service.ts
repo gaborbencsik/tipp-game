@@ -2,6 +2,17 @@ import webpush from 'web-push'
 import { eq, and, gte, isNull, sql } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { users, pushSubscriptions, pushNotificationLog } from '../db/schema/index.js'
+import { createLogger } from './logger.service.js'
+
+const logger = createLogger('webpush')
+
+function endpointHost(endpoint: string): string {
+  try {
+    return new URL(endpoint).host
+  } catch {
+    return 'unknown'
+  }
+}
 
 export interface IPushPayload {
   title: string
@@ -111,13 +122,18 @@ export async function sendToUser(
     .where(eq(users.id, userId))
     .limit(1)
 
-  if (!userRows[0]) return
+  if (!userRows[0]) {
+    logger.debug('push skipped: user not found', { userId, type, scopeKey })
+    return
+  }
   if (!userRows[0].pushEnabled) {
+    logger.debug('push skipped', { userId, type, scopeKey, reason: 'push_disabled' })
     await logEntry({ userId, type, scopeKey, endpoint: null, skippedReason: 'push_disabled' })
     return
   }
 
   if (!options.bypassQuietHours && isQuietHourBudapest(now)) {
+    logger.debug('push skipped', { userId, type, scopeKey, reason: 'quiet_hours' })
     await logEntry({ userId, type, scopeKey, endpoint: null, skippedReason: 'quiet_hours' })
     return
   }
@@ -125,6 +141,7 @@ export async function sendToUser(
   if (!options.bypassRateLimit) {
     const count = await countRecentSends(userId, now)
     if (count >= RATE_LIMIT_MAX) {
+      logger.debug('push skipped', { userId, type, scopeKey, reason: 'rate_limit', recentSends: count })
       await logEntry({ userId, type, scopeKey, endpoint: null, skippedReason: 'rate_limit' })
       return
     }
@@ -144,16 +161,30 @@ export async function sendToUser(
     ))
 
   if (subs.length === 0) {
+    logger.debug('push skipped', { userId, type, scopeKey, reason: 'no_subscription' })
     await logEntry({ userId, type, scopeKey, endpoint: null, skippedReason: 'no_subscription' })
     return
   }
 
   for (const sub of subs) {
+    const startedAt = Date.now()
+    const host = endpointHost(sub.endpoint)
     try {
-      await webpush.sendNotification(
+      const body = JSON.stringify(payload)
+      const res = await webpush.sendNotification(
         { endpoint: sub.endpoint, keys: { auth: sub.auth, p256dh: sub.p256dh } },
-        JSON.stringify(payload),
+        body,
       )
+      logger.info('push delivered', {
+        userId,
+        type,
+        scopeKey,
+        statusCode: res?.statusCode ?? null,
+        host,
+        subscriptionId: sub.id,
+        payloadBytes: Buffer.byteLength(body, 'utf8'),
+        latencyMs: Date.now() - startedAt,
+      })
       await db
         .update(pushSubscriptions)
         .set({ lastUsedAt: now })
@@ -161,7 +192,20 @@ export async function sendToUser(
       await logEntry({ userId, type, scopeKey, endpoint: sub.endpoint, skippedReason: null })
     } catch (err) {
       const status = (err as { statusCode?: number }).statusCode
-      if (status === 404 || status === 410) {
+      const responseBody = (err as { body?: string }).body
+      const isGone = status === 404 || status === 410
+      logger.error('push delivery failed', {
+        userId,
+        type,
+        scopeKey,
+        statusCode: status ?? null,
+        host,
+        subscriptionId: sub.id,
+        responseBody: responseBody?.slice(0, 500) ?? null,
+        latencyMs: Date.now() - startedAt,
+        action: isGone ? 'soft_delete_subscription' : 'rethrow',
+      })
+      if (isGone) {
         await db
           .update(pushSubscriptions)
           .set({ deletedAt: now })

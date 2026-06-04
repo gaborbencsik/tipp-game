@@ -41,6 +41,9 @@ services:
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-flash-latest}
       INSIGHT_AUTO_TRANSLATE: ${INSIGHT_AUTO_TRANSLATE:-true}
       INSIGHT_RAW_STATS_USE_DATE_RANGE: ${INSIGHT_RAW_STATS_USE_DATE_RANGE:-false}
+      VAPID_PUBLIC_KEY: ${VITE_VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-}
     volumes:
       - ./packages/backend/src:/app/packages/backend/src
     depends_on:
@@ -64,6 +67,7 @@ services:
       VITE_DEV_AUTH_BYPASS: "true"
       VITE_ODDS_ENABLED: "false"
       VITE_API_URL: http://localhost:3000
+      VITE_VAPID_PUBLIC_KEY: ${VITE_VAPID_PUBLIC_KEY:-}
       VITE_DONATION_URL: https://revolut.me/gaborbencsik?currency={currency}&amount={amount}&note={note}
     volumes:
       - ./packages/frontend/src:/app/packages/frontend/src

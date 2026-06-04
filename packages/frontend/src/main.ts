@@ -18,10 +18,9 @@ const bootstrap = async (): Promise<void> => {
 
   app.mount('#app')
 
-  if ('serviceWorker' in navigator && import.meta.env.PROD) {
-    navigator.serviceWorker.register('/sw.js').catch((err) => {
-      console.error('SW registration failed', err)
-    })
+  if ('serviceWorker' in navigator) {
+    const { registerSW } = await import('virtual:pwa-register')
+    registerSW({ immediate: true, onRegisterError: (err) => console.error('SW registration failed', err) })
   }
 }
 

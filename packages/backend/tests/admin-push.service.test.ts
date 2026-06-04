@@ -64,13 +64,13 @@ describe('broadcastToAllUsers', () => {
     mockSendToUser.mockResolvedValue(undefined)
   })
 
-  it('sends to every eligible user with admin_broadcast type and tag', async () => {
+  it('sends to every eligible user with admin_broadcast type and unique tag', async () => {
     setEligibleUserIds(['u1', 'u2'])
     const result = await broadcastToAllUsers('actor-1', { title: 'Hi', body: 'Test' })
     expect(result).toEqual({ totalTargets: 2, delivered: 2, failed: 0, errors: [] })
     expect(mockSendToUser).toHaveBeenCalledTimes(2)
     expect(mockSendToUser).toHaveBeenCalledWith('u1',
-      expect.objectContaining({ title: 'Hi', body: 'Test', tag: 'admin_broadcast' }),
+      expect.objectContaining({ title: 'Hi', body: 'Test', tag: expect.stringMatching(/^admin_broadcast_\d+$/) }),
       expect.objectContaining({ type: 'admin_broadcast', bypassQuietHours: false, bypassRateLimit: false }),
     )
   })

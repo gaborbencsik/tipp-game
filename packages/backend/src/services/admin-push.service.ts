@@ -3,6 +3,9 @@ import { db } from '../db/client.js'
 import { users, auditLogs } from '../db/schema/index.js'
 import { sendToUser } from './webpush.service.js'
 import type { IPushPayload, ISendOptions } from './webpush.service.js'
+import { createLogger } from './logger.service.js'
+
+const logger = createLogger('admin-push')
 
 export interface AdminBroadcastInput {
   title: string
@@ -39,13 +42,22 @@ export async function broadcastToAllUsers(
   actorId: string,
   input: AdminBroadcastInput,
 ): Promise<AdminBroadcastResult> {
+  const startedAt = Date.now()
   const targets = await listEligibleUserIds()
+  logger.info('broadcast started', {
+    actorId,
+    titleLength: input.title.length,
+    bodyLength: input.body.length,
+    bypassQuietHours: input.bypassQuietHours ?? false,
+    bypassRateLimit: input.bypassRateLimit ?? false,
+    targetCount: targets.length,
+  })
 
   const payload: IPushPayload = {
     title: input.title,
     body: input.body,
     url: input.url,
-    tag: 'admin_broadcast',
+    tag: `admin_broadcast_${Date.now()}`,
   }
 
   const sendOpts: ISendOptions = {
@@ -84,6 +96,14 @@ export async function broadcastToAllUsers(
       delivered,
       failed,
     },
+  })
+
+  logger.info('broadcast finished', {
+    actorId,
+    targetCount: targets.length,
+    delivered,
+    failed,
+    durationMs: Date.now() - startedAt,
   })
 
   return {
