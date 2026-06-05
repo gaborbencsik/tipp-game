@@ -18,7 +18,7 @@ describe('parseMoneylineOdds', () => {
       { groupItemTitle: 'Senegal', outcomePrices: '[0.20, 0.80]', bestBid: 0.19, bestAsk: 0.21, lastTradePrice: 0.20, volume: 2000, liquidity: '1500', oneDayPriceChange: -0.01, oneWeekPriceChange: -0.05 },
     ])
 
-    const result = parseMoneylineOdds(event)
+    const result = parseMoneylineOdds(event, 'France', 'Senegal')
     expect(result).not.toBeNull()
     expect(result!.homeWin).toBe(0.55)
     expect(result!.draw).toBe(0.25)
@@ -41,7 +41,7 @@ describe('parseMoneylineOdds', () => {
       { groupItemTitle: 'Senegal', outcomePrices: '[0.35, 0.65]', bestBid: 0.34, bestAsk: 0.36, lastTradePrice: 0.35, volume: 4000, liquidity: '2000', oneDayPriceChange: -0.03, oneWeekPriceChange: -0.1 },
     ])
 
-    const result = parseMoneylineOdds(event)
+    const result = parseMoneylineOdds(event, 'France', 'Senegal')
     expect(result).not.toBeNull()
     expect(result!.homeWin).toBe(0.65)
     expect(result!.draw).toBeNull()
@@ -52,12 +52,12 @@ describe('parseMoneylineOdds', () => {
     const event = makeEvent([
       { groupItemTitle: 'France', outcomePrices: '[0.65, 0.35]', bestBid: 0.64, bestAsk: 0.66, lastTradePrice: 0.65, volume: 8000, liquidity: '4000', oneDayPriceChange: 0.03, oneWeekPriceChange: 0.1 },
     ])
-    expect(parseMoneylineOdds(event)).toBeNull()
+    expect(parseMoneylineOdds(event, 'France', 'Senegal')).toBeNull()
   })
 
   it('returns null when markets array is empty', () => {
     const event = makeEvent([])
-    expect(parseMoneylineOdds(event)).toBeNull()
+    expect(parseMoneylineOdds(event, 'France', 'Senegal')).toBeNull()
   })
 
   it('parses context_description from eventMetadata', () => {
@@ -68,7 +68,7 @@ describe('parseMoneylineOdds', () => {
       { groupItemTitle: 'Senegal', outcomePrices: '[0.20, 0.80]', bestBid: 0.19, bestAsk: 0.21, lastTradePrice: 0.20, volume: 2000, liquidity: '1500', oneDayPriceChange: -0.01, oneWeekPriceChange: -0.05 },
     ], 0.8, metadata)
 
-    const result = parseMoneylineOdds(event)
+    const result = parseMoneylineOdds(event, 'France', 'Senegal')
     expect(result!.contextDescription).toBe('France are strong favorites after qualifying top of their group.')
   })
 
@@ -78,7 +78,65 @@ describe('parseMoneylineOdds', () => {
       { groupItemTitle: 'Senegal', outcomePrices: '[0.45, 0.55]', bestBid: 0.44, bestAsk: 0.46, lastTradePrice: 0.45, volume: 5000, liquidity: '3000', oneDayPriceChange: -0.02, oneWeekPriceChange: -0.05 },
     ], 0.9, 'not-valid-json')
 
-    const result = parseMoneylineOdds(event)
+    const result = parseMoneylineOdds(event, 'France', 'Senegal')
     expect(result!.contextDescription).toBeNull()
+  })
+
+  it('assigns odds by team name, not market order (away team is favorite)', () => {
+    // Polymarket returns markets ordered by probability, not by home/away.
+    // When the away team is favorite, it appears FIRST in the markets array.
+    const event = makeEvent([
+      { groupItemTitle: 'Senegal', outcomePrices: '[0.60, 0.40]', bestBid: 0.59, bestAsk: 0.61, lastTradePrice: 0.60, volume: 9000, liquidity: '4000', oneDayPriceChange: 0.04, oneWeekPriceChange: 0.08 },
+      { groupItemTitle: 'Draw', outcomePrices: '[0.25, 0.75]', bestBid: 0.24, bestAsk: 0.26, lastTradePrice: 0.25, volume: 3000, liquidity: '2000', oneDayPriceChange: -0.01, oneWeekPriceChange: 0.0 },
+      { groupItemTitle: 'France', outcomePrices: '[0.15, 0.85]', bestBid: 0.14, bestAsk: 0.16, lastTradePrice: 0.15, volume: 2000, liquidity: '1500', oneDayPriceChange: -0.03, oneWeekPriceChange: -0.08 },
+    ])
+
+    const result = parseMoneylineOdds(event, 'France', 'Senegal')
+    expect(result).not.toBeNull()
+    expect(result!.homeWin).toBe(0.15)
+    expect(result!.awayWin).toBe(0.60)
+    expect(result!.oneDayChangeHome).toBe(-0.03)
+    expect(result!.oneDayChangeAway).toBe(0.04)
+    expect(result!.bestBidHome).toBe(0.14)
+    expect(result!.bestAskHome).toBe(0.16)
+    expect(result!.lastTradePriceHome).toBe(0.15)
+  })
+
+  it('returns null when home or away team market cannot be matched by name', () => {
+    const event = makeEvent([
+      { groupItemTitle: 'France', outcomePrices: '[0.55, 0.45]', bestBid: 0.54, bestAsk: 0.56, lastTradePrice: 0.55, volume: 10000, liquidity: '5000', oneDayPriceChange: 0.02, oneWeekPriceChange: 0.05 },
+      { groupItemTitle: 'Draw', outcomePrices: '[0.25, 0.75]', bestBid: 0.24, bestAsk: 0.26, lastTradePrice: 0.25, volume: 3000, liquidity: '2000', oneDayPriceChange: -0.01, oneWeekPriceChange: 0.0 },
+      { groupItemTitle: 'Senegal', outcomePrices: '[0.20, 0.80]', bestBid: 0.19, bestAsk: 0.21, lastTradePrice: 0.20, volume: 2000, liquidity: '1500', oneDayPriceChange: -0.01, oneWeekPriceChange: -0.05 },
+    ])
+
+    expect(parseMoneylineOdds(event, 'France', 'Brazil')).toBeNull()
+  })
+
+  describe('team name aliases (DB name vs Polymarket groupItemTitle)', () => {
+    const cases: ReadonlyArray<readonly [string, string]> = [
+      ['USA', 'United States'],
+      ['South Korea', 'Korea Republic'],
+      ['Czech Republic', 'Czechia'],
+      ['Ivory Coast', "Côte d'Ivoire"],
+      ['Cape Verde Islands', 'Cabo Verde'],
+      ['Congo DR', 'DR Congo'],
+      ['Bosnia & Herzegovina', 'Bosnia and Herzegovina'],
+      ['Iran', 'IR Iran'],
+    ]
+
+    for (const [dbName, polyName] of cases) {
+      it(`matches "${dbName}" (DB) ↔ "${polyName}" (Polymarket)`, () => {
+        const event = makeEvent([
+          { groupItemTitle: polyName, outcomePrices: '[0.60, 0.40]', bestBid: 0.59, bestAsk: 0.61, lastTradePrice: 0.60, volume: 9000, liquidity: '4000', oneDayPriceChange: 0.04, oneWeekPriceChange: 0.08 },
+          { groupItemTitle: `Draw (${polyName} vs. Spain)`, outcomePrices: '[0.20, 0.80]', bestBid: 0.19, bestAsk: 0.21, lastTradePrice: 0.20, volume: 3000, liquidity: '2000', oneDayPriceChange: -0.01, oneWeekPriceChange: 0.0 },
+          { groupItemTitle: 'Spain', outcomePrices: '[0.20, 0.80]', bestBid: 0.19, bestAsk: 0.21, lastTradePrice: 0.20, volume: 2000, liquidity: '1500', oneDayPriceChange: -0.03, oneWeekPriceChange: -0.08 },
+        ])
+
+        const result = parseMoneylineOdds(event, dbName, 'Spain')
+        expect(result).not.toBeNull()
+        expect(result!.homeWin).toBe(0.60)
+        expect(result!.awayWin).toBe(0.20)
+      })
+    }
   })
 })

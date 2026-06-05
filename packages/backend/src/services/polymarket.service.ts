@@ -2,8 +2,17 @@ import { desc, eq, isNotNull, sql } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { matches, matchMarketData, teams } from '../db/schema/index.js'
 import { alias } from 'drizzle-orm/pg-core'
+import { createLogger } from './logger.service.js'
 
 const GAMMA_API_BASE = 'https://gamma-api.polymarket.com'
+const USER_AGENT = 'tipp-game/1.0 (+https://github.com/gbencsik/tipp-game)'
+const REQUEST_DELAY_MS = 150
+
+const logger = createLogger('polymarket')
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
 
 interface MarketSide {
   readonly label: string
@@ -66,14 +75,64 @@ interface ParsedOdds {
 
 export async function fetchEventBySlug(slug: string): Promise<PolymarketEvent | null> {
   const url = `${GAMMA_API_BASE}/events/slug/${slug}`
-  const response = await fetch(url)
-  if (!response.ok) return null
+  const response = await fetch(url, { headers: { 'User-Agent': USER_AGENT, accept: 'application/json' } })
+  if (!response.ok) {
+    logger.warn('fetch failed', { slug, status: response.status, statusText: response.statusText })
+    return null
+  }
   const data = await response.json() as PolymarketEvent
-  if (!data.markets || data.markets.length === 0) return null
+  if (!data.markets || data.markets.length === 0) {
+    logger.warn('no markets in event', { slug, eventId: data.id })
+    return null
+  }
   return data
 }
 
-export function parseMoneylineOdds(event: PolymarketEvent): ParsedOdds | null {
+// Map DB team names to their canonical form. Polymarket uses different
+// spellings (e.g. "United States" vs "USA"); after normalization both sides
+// must reduce to the same key. Keys and values are stored lowercased and
+// pre-normalized (diacritics stripped, "&"→"and", non-alnum stripped).
+const TEAM_NAME_ALIASES: Readonly<Record<string, string>> = {
+  // DB form (normalized) → canonical key
+  'usa': 'unitedstates',
+  'us': 'unitedstates',
+  'unitedstates': 'unitedstates',
+  'southkorea': 'korea',
+  'korearepublic': 'korea',
+  'korea': 'korea',
+  'czechrepublic': 'czechia',
+  'czechia': 'czechia',
+  'ivorycoast': 'cotedivoire',
+  'cotedivoire': 'cotedivoire',
+  'capeverdeislands': 'caboverde',
+  'capeverde': 'caboverde',
+  'caboverde': 'caboverde',
+  'congodr': 'drcongo',
+  'drcongo': 'drcongo',
+  'democraticrepublicofthecongo': 'drcongo',
+  'bosniaandherzegovina': 'bosnia',
+  'bosniaherzegovina': 'bosnia',
+  'bosnia': 'bosnia',
+  'iran': 'iran',
+  'iriran': 'iran',
+  'islamicrepublicofiran': 'iran',
+}
+
+function normalizeTeamName(raw: string): string {
+  const stripped = raw
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9]/g, '')
+  return TEAM_NAME_ALIASES[stripped] ?? stripped
+}
+
+export function parseMoneylineOdds(
+  event: PolymarketEvent,
+  homeTeamName: string,
+  awayTeamName: string,
+): ParsedOdds | null {
   const markets = event.markets
   if (!markets || markets.length < 2) return null
 
@@ -92,26 +151,31 @@ export function parseMoneylineOdds(event: PolymarketEvent): ParsedOdds | null {
   let totalVolume = 0
   let totalLiquidity = 0
 
+  const homeKey = normalizeTeamName(homeTeamName)
+  const awayKey = normalizeTeamName(awayTeamName)
+
   for (const market of markets) {
-    const title = market.groupItemTitle?.toLowerCase() ?? ''
+    const rawTitle = market.groupItemTitle ?? ''
+    const lowerTitle = rawTitle.toLowerCase()
+    const titleKey = normalizeTeamName(rawTitle)
     const prices = JSON.parse(market.outcomePrices) as number[]
     const yesPrice = prices[0] ?? 0
 
     totalVolume += parseFloat(String(market.volume ?? '0'))
     totalLiquidity += parseFloat(String(market.liquidity ?? '0'))
 
-    if (title.includes('draw')) {
+    if (lowerTitle.includes('draw')) {
       draw = yesPrice
       oneDayChangeDraw = market.oneDayPriceChange ?? null
       oneWeekChangeDraw = market.oneWeekPriceChange ?? null
-    } else if (homeWin === null) {
+    } else if (titleKey === homeKey) {
       homeWin = yesPrice
       oneDayChangeHome = market.oneDayPriceChange ?? null
       oneWeekChangeHome = market.oneWeekPriceChange ?? null
       bestBidHome = market.bestBid ?? null
       bestAskHome = market.bestAsk ?? null
       lastTradePriceHome = market.lastTradePrice ?? null
-    } else {
+    } else if (titleKey === awayKey) {
       awayWin = yesPrice
       oneDayChangeAway = market.oneDayPriceChange ?? null
       oneWeekChangeAway = market.oneWeekPriceChange ?? null
@@ -151,25 +215,51 @@ export function parseMoneylineOdds(event: PolymarketEvent): ParsedOdds | null {
 }
 
 export async function syncAllMatchOdds(): Promise<{ synced: number; failed: number; errors: string[] }> {
+  const homeTeam = alias(teams, 'home_team')
+  const awayTeam = alias(teams, 'away_team')
+
   const matchesWithSlug = await db
     .select({
       id: matches.id,
       polymarketSlug: matches.polymarketSlug,
+      homeTeamName: homeTeam.name,
+      awayTeamName: awayTeam.name,
     })
     .from(matches)
+    .innerJoin(homeTeam, eq(matches.homeTeamId, homeTeam.id))
+    .innerJoin(awayTeam, eq(matches.awayTeamId, awayTeam.id))
     .where(isNotNull(matches.polymarketSlug))
 
   let synced = 0
   let failed = 0
   const errors: string[] = []
 
-  for (const match of matchesWithSlug) {
-    try {
-      const event = await fetchEventBySlug(match.polymarketSlug!)
-      if (!event) { failed++; errors.push(`${match.polymarketSlug}: no event found`); continue }
+  logger.info('sync started', { totalMatches: matchesWithSlug.length })
 
-      const odds = parseMoneylineOdds(event)
-      if (!odds) { failed++; errors.push(`${match.polymarketSlug}: could not parse moneyline`); continue }
+  for (const match of matchesWithSlug) {
+    const slug = match.polymarketSlug!
+    const matchScope = { slug, matchId: match.id, home: match.homeTeamName, away: match.awayTeamName }
+    try {
+      const event = await fetchEventBySlug(slug)
+      if (!event) {
+        failed++
+        const reason = 'no event found'
+        errors.push(`${slug}: ${reason}`)
+        logger.warn('match sync failed', { ...matchScope, reason })
+        await delay(REQUEST_DELAY_MS)
+        continue
+      }
+
+      const odds = parseMoneylineOdds(event, match.homeTeamName, match.awayTeamName)
+      if (!odds) {
+        failed++
+        const marketTitles = event.markets.map((m) => m.groupItemTitle)
+        const reason = 'could not parse moneyline (team name mismatch?)'
+        errors.push(`${slug}: ${reason}`)
+        logger.warn('match sync failed', { ...matchScope, reason, marketTitles })
+        await delay(REQUEST_DELAY_MS)
+        continue
+      }
 
       await db.insert(matchMarketData).values({
         matchId: match.id,
@@ -193,12 +283,17 @@ export async function syncAllMatchOdds(): Promise<{ synced: number; failed: numb
         rawPayload: event,
       })
       synced++
+      logger.info('match synced', { ...matchScope, homeWin: odds.homeWin, draw: odds.draw, awayWin: odds.awayWin })
     } catch (err) {
       failed++
       const msg = err instanceof Error ? err.message : String(err)
-      errors.push(`${match.polymarketSlug}: ${msg}`)
+      errors.push(`${slug}: ${msg}`)
+      logger.error('match sync error', { ...matchScope, error: msg })
     }
+    await delay(REQUEST_DELAY_MS)
   }
+
+  logger.info('sync finished', { synced, failed, total: matchesWithSlug.length })
 
   return { synced, failed, errors }
 }
