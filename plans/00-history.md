@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 144 story kész (Must Have: 31/31, Should Have: 113/113)
+> 145 story kész (Must Have: 31/31, Should Have: 114/114)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -148,3 +148,4 @@
 | BUG-007 | Csoport-leaderboard nem szűri ki a soft-deleted usereket | Should Have |
 | PUSH-001 | Webpush infrastruktúra és admin trigger UI | Should Have |
 | PUSH-006 | Push feliratkozás per-böngésző kezelése (egységes lista + 'kikapcsolás mindenhol') | Should Have |
+| BUG-010 | Csoport csatlakozás "Group is full" a 20 tag elérésekor (rossz konstans) | Should Have |

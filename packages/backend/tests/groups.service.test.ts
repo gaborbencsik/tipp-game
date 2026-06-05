@@ -355,8 +355,9 @@ describe('joinGroup', () => {
   it('valid join → returns group with isAdmin=false', async () => {
     mockSelect
       .mockReturnValueOnce(makeSelectChain([GROUP_ROW]))         // find group
-      .mockReturnValueOnce(makeSelectChain([]))                  // existing members
+      .mockReturnValueOnce(makeSelectChain([]))                  // existing membership for user
       .mockReturnValueOnce(makeSelectChain([{ count: 0 }]))      // user joined count
+      .mockReturnValueOnce(makeSelectChain([{ count: 1 }]))      // group member count
       .mockReturnValueOnce(makeSelectChain([]))                  // fetchGroupLeague
 
     const memberValuesFn = vi.fn().mockResolvedValue(undefined)
@@ -368,11 +369,11 @@ describe('joinGroup', () => {
   })
 
   it('valid join → memberCount = existing + 1', async () => {
-    const otherMember = { ...MEMBER_ROW, userId: 'someone-else' }
     mockSelect
       .mockReturnValueOnce(makeSelectChain([GROUP_ROW]))
-      .mockReturnValueOnce(makeSelectChain([otherMember]))
-      .mockReturnValueOnce(makeSelectChain([{ count: 1 }]))
+      .mockReturnValueOnce(makeSelectChain([]))                  // existing membership for user
+      .mockReturnValueOnce(makeSelectChain([{ count: 1 }]))      // user joined count
+      .mockReturnValueOnce(makeSelectChain([{ count: 2 }]))      // group member count
       .mockReturnValueOnce(makeSelectChain([]))                  // fetchGroupLeague
 
     mockInsert.mockReturnValueOnce({ values: vi.fn().mockResolvedValue(undefined) })

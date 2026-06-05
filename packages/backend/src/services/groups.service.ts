@@ -187,17 +187,13 @@ export async function joinGroup(inviteCode: string, userId: string): Promise<Gro
   if (!group || group.deletedAt) throw new AppError(404, 'Group not found')
   if (!group.inviteActive) throw new AppError(410, 'Invite code is no longer active')
 
-  const existing = await db
+  const existingMembership = await db
     .select()
     .from(groupMembers)
-    .where(eq(groupMembers.groupId, group.id))
+    .where(and(eq(groupMembers.groupId, group.id), eq(groupMembers.userId, userId)))
+    .limit(1)
 
-  const alreadyMember = existing.some((m) => m.userId === userId)
-  if (alreadyMember) throw new AppError(409, 'Already a member of this group')
-
-  if (existing.length >= MAX_GROUPS_JOINED) {
-    throw new AppError(422, 'Group is full')
-  }
+  if (existingMembership.length > 0) throw new AppError(409, 'Already a member of this group')
 
   const joinedCountRows = await db
     .select({ count: sql<number>`count(*)::int` })
@@ -216,7 +212,12 @@ export async function joinGroup(inviteCode: string, userId: string): Promise<Gro
 
   await replicateUserTipsToGroup(userId, group.id)
 
-  const memberCount = existing.length + 1
+  const memberCountRows = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(groupMembers)
+    .where(eq(groupMembers.groupId, group.id))
+  const memberCount = memberCountRows[0]?.count ?? 1
+
   const league = await fetchGroupLeague(group.id)
   return toApiGroup(group, memberCount, false, null, league)
 }
