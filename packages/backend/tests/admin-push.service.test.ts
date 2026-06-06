@@ -18,7 +18,13 @@ vi.mock('../src/db/client.js', () => ({
 }))
 
 vi.mock('../src/db/schema/index.js', () => ({
-  users: { id: 'users.id', pushEnabled: 'users.pushEnabled', deletedAt: 'users.deletedAt' },
+  users: {
+    id: 'users.id',
+    pushEnabled: 'users.pushEnabled',
+    deletedAt: 'users.deletedAt',
+    displayName: 'users.displayName',
+    email: 'users.email',
+  },
   auditLogs: 'auditLogs',
   matches: { id: 'matches.id', kickoffTime: 'matches.kickoffTime', kickedAt: 'matches.kickedAt', deletedAt: 'matches.deletedAt' },
   predictions: { matchId: 'predictions.matchId', userId: 'predictions.userId', deletedAt: 'predictions.deletedAt' },
@@ -33,6 +39,7 @@ vi.mock('drizzle-orm', () => ({
   gt: vi.fn((c: unknown, v: unknown) => ({ __gt: [c, v] })),
   exists: vi.fn((q: unknown) => ({ __exists: q })),
   notExists: vi.fn((q: unknown) => ({ __notExists: q })),
+  asc: vi.fn((c: unknown) => ({ __asc: c })),
   sql: Object.assign(
     vi.fn((strings: TemplateStringsArray, ...vals: unknown[]) => ({ __sql: { strings, vals } })),
     { raw: vi.fn((s: string) => ({ __sqlRaw: s })) },
@@ -43,7 +50,7 @@ vi.mock('../src/services/webpush.service.js', () => ({
   sendToUser: mockSendToUser,
 }))
 
-import { broadcastToAllUsers, getBroadcastTargetCount } from '../src/services/admin-push.service.js'
+import { broadcastToAllUsers, getBroadcastTargetCount, listEligibleUsersBySegment } from '../src/services/admin-push.service.js'
 
 function setEligibleUserIds(ids: string[]): void {
   mockWhere.mockResolvedValueOnce(ids.map(id => ({ id })))
@@ -215,5 +222,49 @@ describe('segment support', () => {
     const result = await broadcastToAllUsers('actor-1', { title: 'T', body: 'B' }, 'missing-tournament-tips')
     expect(result).toEqual({ totalTargets: 0, delivered: 0, failed: 0, errors: [] })
     expect(mockSendToUser).not.toHaveBeenCalled()
+  })
+})
+
+describe('listEligibleUsersBySegment', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  function setUserRows(rows: Array<{ id: string; displayName: string | null; email: string }>): void {
+    const orderBy = vi.fn().mockResolvedValueOnce(rows)
+    const where = vi.fn().mockReturnValue({ orderBy })
+    const from = vi.fn().mockReturnValue({ where })
+    mockSelect.mockReturnValueOnce({ from })
+  }
+
+  it("returns user summaries for 'all' segment", async () => {
+    setUserRows([
+      { id: 'u1', displayName: 'Alice', email: 'a@x.hu' },
+      { id: 'u2', displayName: 'Bob', email: 'b@x.hu' },
+    ])
+    const result = await listEligibleUsersBySegment('all')
+    expect(result).toEqual([
+      { id: 'u1', displayName: 'Alice', email: 'a@x.hu' },
+      { id: 'u2', displayName: 'Bob', email: 'b@x.hu' },
+    ])
+  })
+
+  it("works for 'missing-tournament-tips'", async () => {
+    setUserRows([{ id: 'u1', displayName: 'Carl', email: 'c@x.hu' }])
+    const result = await listEligibleUsersBySegment('missing-tournament-tips')
+    expect(result).toHaveLength(1)
+    expect(result[0].id).toBe('u1')
+  })
+
+  it("works for 'missing-today-match-tips'", async () => {
+    setUserRows([{ id: 'u3', displayName: null, email: 'd@x.hu' }])
+    const result = await listEligibleUsersBySegment('missing-today-match-tips')
+    expect(result).toEqual([{ id: 'u3', displayName: null, email: 'd@x.hu' }])
+  })
+
+  it('returns empty array when no eligible users', async () => {
+    setUserRows([])
+    const result = await listEligibleUsersBySegment('all')
+    expect(result).toEqual([])
   })
 })

@@ -78,13 +78,25 @@
         </div>
       </fieldset>
 
-      <div class="text-xs text-gray-600 mb-3" data-testid="admin-push-targets">
+      <div class="text-xs text-gray-600 mb-3 flex items-center gap-3 flex-wrap" data-testid="admin-push-targets">
         <span v-if="targetsLoading" class="text-gray-400">Címzettek számolása…</span>
         <span v-else-if="targetsError" class="text-red-600">{{ targetsError }}</span>
-        <span v-else>
-          Aktív címzettek (push engedélyezve, nem törölt{{ segmentSuffix }}):
-          <span class="font-semibold">{{ targetCount }}</span>
-        </span>
+        <template v-else>
+          <span>
+            Aktív címzettek (push engedélyezve, nem törölt{{ segmentSuffix }}):
+            <span class="font-semibold">{{ targetCount }}</span>
+          </span>
+          <button
+            v-if="targetCount > 0"
+            type="button"
+            class="text-blue-600 hover:underline disabled:text-gray-400"
+            data-testid="admin-push-targets-details-button"
+            :disabled="sending"
+            @click="openTargetsModal"
+          >
+            Részletek
+          </button>
+        </template>
       </div>
 
       <div class="flex flex-col gap-1 mb-3">
@@ -177,11 +189,65 @@
         A küldés audit logba kerül.
       </p>
     </section>
+
+    <Teleport to="body">
+      <div
+        v-if="targetsModalOpen"
+        class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
+        data-testid="admin-push-targets-modal"
+        @click.self="closeTargetsModal"
+        @keydown.esc="closeTargetsModal"
+      >
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
+          <header class="px-4 py-3 border-b flex items-center justify-between">
+            <h3 class="font-semibold text-base">
+              Címzettek – {{ segmentLabel(segment) }}
+              <span class="text-gray-500 text-sm font-normal">({{ targetCount }} felhasználó)</span>
+            </h3>
+            <button
+              type="button"
+              class="text-gray-500 hover:text-gray-800 text-xl leading-none"
+              aria-label="Bezárás"
+              data-testid="admin-push-targets-modal-close"
+              @click="closeTargetsModal"
+            >×</button>
+          </header>
+          <div class="overflow-y-auto px-4 py-3 flex-1">
+            <div v-if="targetsModalLoading" class="text-sm text-gray-400">Betöltés…</div>
+            <div v-else-if="targetsModalError" class="text-sm text-red-600">{{ targetsModalError }}</div>
+            <div v-else-if="targetsModalUsers.length === 0" class="text-sm text-gray-500">
+              Nincsenek címzettek a kiválasztott szegmensben.
+            </div>
+            <ul v-else class="divide-y" data-testid="admin-push-targets-list">
+              <li
+                v-for="u in targetsModalUsers"
+                :key="u.id"
+                class="py-2 text-sm"
+                data-testid="admin-push-targets-list-row"
+              >
+                <div class="font-medium">{{ u.displayName || '— névtelen —' }}</div>
+                <div class="text-xs text-gray-500">{{ u.email }}</div>
+              </li>
+            </ul>
+            <p v-if="targetsModalTruncated" class="text-xs text-gray-400 mt-2">
+              … az első 500 felhasználó látszik, a többi rejtve.
+            </p>
+          </div>
+          <footer class="px-4 py-2 border-t flex justify-end">
+            <button
+              type="button"
+              class="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded"
+              @click="closeTargetsModal"
+            >Bezárás</button>
+          </footer>
+        </div>
+      </div>
+    </Teleport>
   </AppLayout>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch, Teleport } from 'vue'
 import AppLayout from '../components/AppLayout.vue'
 import AdminNav from '../components/admin/AdminNav.vue'
 import { api } from '../api/index.js'
@@ -220,6 +286,12 @@ const bypassRateLimit = ref(false)
 const sending = ref(false)
 const sendError = ref('')
 const lastResult = ref<SendResult | null>(null)
+
+const targetsModalOpen = ref(false)
+const targetsModalLoading = ref(false)
+const targetsModalError = ref('')
+const targetsModalUsers = ref<{ id: string; displayName: string | null; email: string }[]>([])
+const targetsModalTruncated = ref(false)
 
 function segmentLabel(s: Segment): string {
   if (s === 'missing-tournament-tips') return 'Hiányzó torna tippek'
@@ -290,6 +362,44 @@ async function saveSettings(): Promise<void> {
 
 watch(segment, () => {
   void loadTargets()
+  if (targetsModalOpen.value) {
+    void loadTargetsModal()
+  }
+})
+
+async function loadTargetsModal(): Promise<void> {
+  targetsModalLoading.value = true
+  targetsModalError.value = ''
+  targetsModalTruncated.value = false
+  try {
+    const token = await authStore.getAccessToken()
+    const data = await api.admin.push.targetsDetails(token, segment.value)
+    targetsModalUsers.value = data.users
+    targetsModalTruncated.value = data.users.length === 500 && targetCount.value > 500
+  } catch (err) {
+    targetsModalError.value = err instanceof Error ? err.message : 'Hiba történt'
+  } finally {
+    targetsModalLoading.value = false
+  }
+}
+
+function openTargetsModal(): void {
+  targetsModalOpen.value = true
+  void loadTargetsModal()
+}
+
+function closeTargetsModal(): void {
+  targetsModalOpen.value = false
+  targetsModalUsers.value = []
+  targetsModalError.value = ''
+}
+
+function onEscapeKey(e: KeyboardEvent): void {
+  if (e.key === 'Escape' && targetsModalOpen.value) closeTargetsModal()
+}
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', onEscapeKey)
 })
 
 async function confirmAndSend(): Promise<void> {
@@ -332,6 +442,7 @@ async function send(): Promise<void> {
 }
 
 onMounted(async () => {
+  window.addEventListener('keydown', onEscapeKey)
   await Promise.all([loadTargets(), loadSettings()])
 })
 </script>

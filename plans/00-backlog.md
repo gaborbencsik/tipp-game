@@ -1,6 +1,6 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-06-06 (PUSH-008 lezárva — admin toggle a kickoff reminder + daily review cron jobokra)
+> Utoljára frissítve: 2026-06-06 (PUSH-009 lezárva — admin push címzettek részletes listája modal popup-ban)
 
 ## Nyitott story-k
 
@@ -31,4 +31,4 @@
 
 ---
 
-**Haladás: 149 / 168 story kész** — Must Have: 31/32, Should Have: 118/131, Nice to Have: 0/5 (US-937, PUSH-003 won't do)
+**Haladás: 150 / 169 story kész** — Must Have: 31/32, Should Have: 119/132, Nice to Have: 0/5 (US-937, PUSH-003 won't do)

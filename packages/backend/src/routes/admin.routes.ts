@@ -45,7 +45,7 @@ import { startRecalculation } from '../services/recalculate.service.js'
 import { getRecalcStatus } from '../services/sync-state.service.js'
 import { getWaitlistEntries, deleteWaitlistEntry, addWaitlistEntry, isValidEmail } from '../services/waitlist.service.js'
 import { getAdminStats, getAdminStatsMatches } from '../services/admin-stats.service.js'
-import { getBroadcastTargetCount, broadcastToAllUsers } from '../services/admin-push.service.js'
+import { getBroadcastTargetCount, broadcastToAllUsers, listEligibleUsersBySegment } from '../services/admin-push.service.js'
 import type { BroadcastSegment } from '../services/admin-push.service.js'
 import { getPushSettings, setKickoffReminderEnabled, setDailyReviewEnabled } from '../services/push-settings.service.js'
 import type { MatchOutcome, TeamInput, MatchInput, ScoringConfigInput, PlayerInput, SpecialTypeInput, LeagueInput } from '../types/index.js'
@@ -378,6 +378,17 @@ adminRouter.get('/push/targets', async (ctx) => {
   }
   const count = await getBroadcastTargetCount(segment)
   ctx.body = { count, segment }
+})
+
+adminRouter.get('/push/targets/details', async (ctx) => {
+  const segment = parseSegment(ctx.query.segment)
+  if (segment === null) {
+    ctx.status = 400
+    ctx.body = { error: 'invalid segment' }
+    return
+  }
+  const users = await listEligibleUsersBySegment(segment)
+  ctx.body = { segment, users }
 })
 
 adminRouter.post('/push/send', async (ctx) => {

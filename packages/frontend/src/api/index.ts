@@ -571,6 +571,10 @@ export const api = {
         request<{ count: number; segment: string }>(`/admin/push/targets?segment=${encodeURIComponent(segment)}`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
+      targetsDetails: (token: string, segment: 'all' | 'missing-tournament-tips' | 'missing-today-match-tips' = 'all') =>
+        request<{ segment: string; users: { id: string; displayName: string | null; email: string }[] }>(`/admin/push/targets/details?segment=${encodeURIComponent(segment)}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
       send: (token: string, params: { title: string; body: string; url?: string; bypassQuietHours?: boolean; bypassRateLimit?: boolean; segment?: 'all' | 'missing-tournament-tips' | 'missing-today-match-tips' }) =>
         request<{ totalTargets: number; delivered: number; failed: number; errors: string[] }>('/admin/push/send', {
           method: 'POST',

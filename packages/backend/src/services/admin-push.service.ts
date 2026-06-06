@@ -1,4 +1,4 @@
-import { and, eq, isNull, sql } from 'drizzle-orm'
+import { and, eq, isNull, sql, asc } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { users, auditLogs } from '../db/schema/index.js'
 import { sendToUser } from './webpush.service.js'
@@ -26,6 +26,14 @@ export interface AdminBroadcastResult {
   failed: number
   errors: string[]
 }
+
+export interface EligibleUserSummary {
+  id: string
+  displayName: string | null
+  email: string
+}
+
+const MAX_DETAILS_ROWS = 500
 
 const MISSING_TOURNAMENT_TIPS_SQL = sql`EXISTS (
   SELECT 1 FROM special_prediction_types t
@@ -60,6 +68,25 @@ async function listEligibleUserIdsBySegment(segment: BroadcastSegment): Promise<
   }
   const rows = await db.select({ id: users.id }).from(users).where(and(...baseConds))
   return rows.map(r => r.id)
+}
+
+export async function listEligibleUsersBySegment(segment: BroadcastSegment): Promise<EligibleUserSummary[]> {
+  const baseConds = [eq(users.pushEnabled, true), isNull(users.deletedAt)]
+  if (segment === 'missing-tournament-tips') {
+    baseConds.push(MISSING_TOURNAMENT_TIPS_SQL)
+  } else if (segment === 'missing-today-match-tips') {
+    baseConds.push(MISSING_TODAY_MATCH_TIPS_SQL)
+  }
+  const rows = await db
+    .select({
+      id: users.id,
+      displayName: users.displayName,
+      email: users.email,
+    })
+    .from(users)
+    .where(and(...baseConds))
+    .orderBy(asc(sql`coalesce(${users.displayName}, ${users.email})`))
+  return rows.slice(0, MAX_DETAILS_ROWS)
 }
 
 export async function getBroadcastTargetCount(segment: BroadcastSegment = 'all'): Promise<number> {

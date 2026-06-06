@@ -1,11 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 const {
-  mockBroadcast, mockGetTargets, mockUpsertUser,
+  mockBroadcast, mockGetTargets, mockListUsers, mockUpsertUser,
   mockAuthMiddleware, mockAdminMiddleware,
 } = vi.hoisted(() => ({
   mockBroadcast: vi.fn(),
   mockGetTargets: vi.fn(),
+  mockListUsers: vi.fn(),
   mockUpsertUser: vi.fn(),
   mockAuthMiddleware: vi.fn(async (_ctx: unknown, next: () => Promise<void>) => next()),
   mockAdminMiddleware: vi.fn(async (_ctx: unknown, next: () => Promise<void>) => next()),
@@ -14,6 +15,7 @@ const {
 vi.mock('../src/services/admin-push.service.js', () => ({
   broadcastToAllUsers: mockBroadcast,
   getBroadcastTargetCount: mockGetTargets,
+  listEligibleUsersBySegment: mockListUsers,
 }))
 
 vi.mock('../src/middleware/auth.middleware.js', () => ({ authMiddleware: mockAuthMiddleware }))
@@ -71,6 +73,48 @@ describe('GET /api/admin/push/targets', () => {
     await handler.stack[handler.stack.length - 1](ctx as never, async () => {})
     expect(ctx.status).toBe(400)
     expect(mockGetTargets).not.toHaveBeenCalled()
+  })
+})
+
+describe('GET /api/admin/push/targets/details', () => {
+  beforeEach(() => {
+    vi.resetAllMocks()
+    mockAuthMiddleware.mockImplementation(async (_ctx: unknown, next: () => Promise<void>) => next())
+    mockAdminMiddleware.mockImplementation(async (_ctx: unknown, next: () => Promise<void>) => next())
+  })
+
+  it('returns the eligible users for the given segment', async () => {
+    mockListUsers.mockResolvedValue([
+      { id: 'u1', displayName: 'Alice', email: 'a@x.hu' },
+      { id: 'u2', displayName: null, email: 'b@x.hu' },
+    ])
+    const handler = getHandler('/api/admin/push/targets/details', 'GET')
+    const ctx: Record<string, unknown> = { query: { segment: 'missing-tournament-tips' } }
+    await handler.stack[handler.stack.length - 1](ctx as never, async () => {})
+    expect(mockListUsers).toHaveBeenCalledWith('missing-tournament-tips')
+    expect(ctx.body).toEqual({
+      segment: 'missing-tournament-tips',
+      users: [
+        { id: 'u1', displayName: 'Alice', email: 'a@x.hu' },
+        { id: 'u2', displayName: null, email: 'b@x.hu' },
+      ],
+    })
+  })
+
+  it("defaults to 'all' segment when not provided", async () => {
+    mockListUsers.mockResolvedValue([])
+    const handler = getHandler('/api/admin/push/targets/details', 'GET')
+    const ctx: Record<string, unknown> = { query: {} }
+    await handler.stack[handler.stack.length - 1](ctx as never, async () => {})
+    expect(mockListUsers).toHaveBeenCalledWith('all')
+  })
+
+  it('400 on invalid segment', async () => {
+    const handler = getHandler('/api/admin/push/targets/details', 'GET')
+    const ctx: Record<string, unknown> = { query: { segment: 'bogus' } }
+    await handler.stack[handler.stack.length - 1](ctx as never, async () => {})
+    expect(ctx.status).toBe(400)
+    expect(mockListUsers).not.toHaveBeenCalled()
   })
 })
 
