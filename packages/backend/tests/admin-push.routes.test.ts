@@ -50,9 +50,27 @@ describe('GET /api/admin/push/targets', () => {
   it('returns the broadcast target count', async () => {
     mockGetTargets.mockResolvedValue(42)
     const handler = getHandler('/api/admin/push/targets', 'GET')
-    const ctx: Record<string, unknown> = {}
+    const ctx: Record<string, unknown> = { query: {} }
     await handler.stack[handler.stack.length - 1](ctx as never, async () => {})
-    expect(ctx.body).toEqual({ count: 42 })
+    expect(ctx.body).toEqual({ count: 42, segment: 'all' })
+    expect(mockGetTargets).toHaveBeenCalledWith('all')
+  })
+
+  it('passes segment query param to the service', async () => {
+    mockGetTargets.mockResolvedValue(7)
+    const handler = getHandler('/api/admin/push/targets', 'GET')
+    const ctx: Record<string, unknown> = { query: { segment: 'missing-tournament-tips' } }
+    await handler.stack[handler.stack.length - 1](ctx as never, async () => {})
+    expect(ctx.body).toEqual({ count: 7, segment: 'missing-tournament-tips' })
+    expect(mockGetTargets).toHaveBeenCalledWith('missing-tournament-tips')
+  })
+
+  it('400 when segment query is invalid', async () => {
+    const handler = getHandler('/api/admin/push/targets', 'GET')
+    const ctx: Record<string, unknown> = { query: { segment: 'bogus' } }
+    await handler.stack[handler.stack.length - 1](ctx as never, async () => {})
+    expect(ctx.status).toBe(400)
+    expect(mockGetTargets).not.toHaveBeenCalled()
   })
 })
 
@@ -129,7 +147,7 @@ describe('POST /api/admin/push/send', () => {
       url: '/matches',
       bypassQuietHours: true,
       bypassRateLimit: false,
-    })
+    }, 'all')
     expect(ctx.body).toEqual({ totalTargets: 10, delivered: 9, failed: 1, errors: ['x: err'] })
   })
 
@@ -141,6 +159,28 @@ describe('POST /api/admin/push/send', () => {
       state: { user: {} },
     }
     await handler.stack[handler.stack.length - 1](ctx as never, async () => {})
-    expect(mockBroadcast).toHaveBeenCalledWith('admin-1', expect.objectContaining({ url: undefined }))
+    expect(mockBroadcast).toHaveBeenCalledWith('admin-1', expect.objectContaining({ url: undefined }), 'all')
+  })
+
+  it('forwards segment to the service', async () => {
+    mockBroadcast.mockResolvedValue({ totalTargets: 3, delivered: 3, failed: 0, errors: [] })
+    const handler = getHandler('/api/admin/push/send', 'POST')
+    const ctx: Record<string, unknown> = {
+      request: { body: { title: 'T', body: 'B', segment: 'missing-tournament-tips' } },
+      state: { user: {} },
+    }
+    await handler.stack[handler.stack.length - 1](ctx as never, async () => {})
+    expect(mockBroadcast).toHaveBeenCalledWith('admin-1', expect.anything(), 'missing-tournament-tips')
+  })
+
+  it('400 when segment value is invalid', async () => {
+    const handler = getHandler('/api/admin/push/send', 'POST')
+    const ctx: Record<string, unknown> = {
+      request: { body: { title: 'T', body: 'B', segment: 'bogus' } },
+      state: { user: {} },
+    }
+    await handler.stack[handler.stack.length - 1](ctx as never, async () => {})
+    expect(ctx.status).toBe(400)
+    expect(mockBroadcast).not.toHaveBeenCalled()
   })
 })

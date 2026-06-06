@@ -15,6 +15,7 @@ import { waitlistRouter } from './routes/waitlist.routes.js'
 import { specialPredictionsRouter } from './routes/special-predictions.routes.js'
 import { syncRouter } from './routes/sync.routes.js'
 import { internalSyncRouter } from './routes/internal-sync.routes.js'
+import { internalCronRouter } from './routes/internal-cron.routes.js'
 import { scoringConfigRouter } from './routes/scoring-config.routes.js'
 import { scoringRouter } from './routes/scoring.routes.js'
 import { pushRouter } from './routes/push.routes.js'
@@ -56,6 +57,8 @@ app.use(syncRouter.routes())
 app.use(syncRouter.allowedMethods())
 app.use(internalSyncRouter.routes())
 app.use(internalSyncRouter.allowedMethods())
+app.use(internalCronRouter.routes())
+app.use(internalCronRouter.allowedMethods())
 app.use(scoringConfigRouter.routes())
 app.use(scoringConfigRouter.allowedMethods())
 app.use(scoringRouter.routes())

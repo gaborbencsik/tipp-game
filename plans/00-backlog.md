@@ -1,6 +1,6 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-06-05 (PUSH-003 won't do — minden globális speciális típus deadline-ja 2026-06-11, manuális broadcast elég; helyette PUSH-007 admin szegmensszűrés)
+> Utoljára frissítve: 2026-06-06 (PUSH-008 lezárva — admin toggle a kickoff reminder + daily review cron jobokra)
 
 ## Nyitott story-k
 
@@ -10,10 +10,6 @@
 | OPS-001 | Strukturált logolás és frontend hibakezelés (MVP) | Should Have | — |
 | OPS-003 | Auto-generált DB schema referencia agentnek és fejlesztőnek | Should Have | — |
 | PWA-003 | PWA telepítés smart banner + onboarding integráció | Should Have | ~~PWA-002~~ |
-| PUSH-002 | Push: meccs előtt 30 perccel, ha nincs tipp | Should Have | ~~PUSH-001~~ |
-| PUSH-004 | Push: napi első meccs előtt 1 órával (Europe/Budapest) | Should Have | ~~PUSH-001~~ |
-| PUSH-005 | Frequency cap és csendes órák a webpush küldéshez | Should Have | ~~PUSH-001~~ |
-| PUSH-007 | Admin push: szegmensszűrés (hiányzó torna tippek, hiányzó meccs tippek) | Should Have | ~~PUSH-001~~ |
 | US-1204 | NB II liga szinkronizáció támogatás | Nice to Have | ~~US-1202~~, ~~US-1203~~ |
 | US-1303 | Match Pulse – automatikus insight generálás cron jobban | Should Have | ~~US-1302~~, ~~US-1203~~ |
 | US-1304 | Match Pulse – insight megjelenítése a meccs kártyán | Should Have | ~~US-1302~~, ~~US-1310~~ |
@@ -35,4 +31,4 @@
 
 ---
 
-**Haladás: 145 / 167 story kész** — Must Have: 31/32, Should Have: 114/130, Nice to Have: 0/5 (US-937, PUSH-003 won't do)
+**Haladás: 149 / 168 story kész** — Must Have: 31/32, Should Have: 118/131, Nice to Have: 0/5 (US-937, PUSH-003 won't do)

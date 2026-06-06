@@ -46,6 +46,8 @@ import { getRecalcStatus } from '../services/sync-state.service.js'
 import { getWaitlistEntries, deleteWaitlistEntry, addWaitlistEntry, isValidEmail } from '../services/waitlist.service.js'
 import { getAdminStats, getAdminStatsMatches } from '../services/admin-stats.service.js'
 import { getBroadcastTargetCount, broadcastToAllUsers } from '../services/admin-push.service.js'
+import type { BroadcastSegment } from '../services/admin-push.service.js'
+import { getPushSettings, setKickoffReminderEnabled, setDailyReviewEnabled } from '../services/push-settings.service.js'
 import type { MatchOutcome, TeamInput, MatchInput, ScoringConfigInput, PlayerInput, SpecialTypeInput, LeagueInput } from '../types/index.js'
 import type { WaitlistFilters, WaitlistSource } from '../services/waitlist.service.js'
 
@@ -359,13 +361,27 @@ adminRouter.get('/stats/matches', async (ctx) => {
 
 // --- Push broadcasts ---
 
+const VALID_SEGMENTS: readonly BroadcastSegment[] = ['all', 'missing-tournament-tips', 'missing-today-match-tips'] as const
+
+function parseSegment(raw: unknown): BroadcastSegment | null {
+  if (raw === undefined || raw === null || raw === '') return 'all'
+  if (typeof raw !== 'string') return null
+  return (VALID_SEGMENTS as readonly string[]).includes(raw) ? raw as BroadcastSegment : null
+}
+
 adminRouter.get('/push/targets', async (ctx) => {
-  const count = await getBroadcastTargetCount()
-  ctx.body = { count }
+  const segment = parseSegment(ctx.query.segment)
+  if (segment === null) {
+    ctx.status = 400
+    ctx.body = { error: 'invalid segment' }
+    return
+  }
+  const count = await getBroadcastTargetCount(segment)
+  ctx.body = { count, segment }
 })
 
 adminRouter.post('/push/send', async (ctx) => {
-  const body = ctx.request.body as { title?: unknown; body?: unknown; url?: unknown; bypassQuietHours?: unknown; bypassRateLimit?: unknown }
+  const body = ctx.request.body as { title?: unknown; body?: unknown; url?: unknown; bypassQuietHours?: unknown; bypassRateLimit?: unknown; segment?: unknown }
   const title = typeof body.title === 'string' ? body.title.trim() : ''
   const text = typeof body.body === 'string' ? body.body.trim() : ''
   if (!title || !text) {
@@ -376,6 +392,12 @@ adminRouter.post('/push/send', async (ctx) => {
   if (title.length > 100 || text.length > 300) {
     ctx.status = 400
     ctx.body = { error: 'title max 100 chars, body max 300 chars' }
+    return
+  }
+  const segment = parseSegment(body.segment)
+  if (segment === null) {
+    ctx.status = 400
+    ctx.body = { error: 'invalid segment' }
     return
   }
   const url = typeof body.url === 'string' && body.url.trim().length > 0 ? body.url.trim() : undefined
@@ -389,8 +411,23 @@ adminRouter.post('/push/send', async (ctx) => {
     url,
     bypassQuietHours,
     bypassRateLimit,
-  })
+  }, segment)
   ctx.body = result
+})
+
+adminRouter.get('/push/settings', async (ctx) => {
+  ctx.body = await getPushSettings()
+})
+
+adminRouter.put('/push/settings', async (ctx) => {
+  const body = ctx.request.body as { kickoffReminderEnabled?: unknown; dailyReviewEnabled?: unknown }
+  if (typeof body.kickoffReminderEnabled === 'boolean') {
+    await setKickoffReminderEnabled(body.kickoffReminderEnabled)
+  }
+  if (typeof body.dailyReviewEnabled === 'boolean') {
+    await setDailyReviewEnabled(body.dailyReviewEnabled)
+  }
+  ctx.body = await getPushSettings()
 })
 
 export { adminRouter }

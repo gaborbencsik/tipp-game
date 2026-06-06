@@ -20,12 +20,23 @@ vi.mock('../src/db/client.js', () => ({
 vi.mock('../src/db/schema/index.js', () => ({
   users: { id: 'users.id', pushEnabled: 'users.pushEnabled', deletedAt: 'users.deletedAt' },
   auditLogs: 'auditLogs',
+  matches: { id: 'matches.id', kickoffTime: 'matches.kickoffTime', kickedAt: 'matches.kickedAt', deletedAt: 'matches.deletedAt' },
+  predictions: { matchId: 'predictions.matchId', userId: 'predictions.userId', deletedAt: 'predictions.deletedAt' },
+  specialPredictionTypes: { id: 'spt.id', isGlobal: 'spt.isGlobal', isActive: 'spt.isActive', deadline: 'spt.deadline' },
+  specialPredictions: { typeId: 'sp.typeId', userId: 'sp.userId', deletedAt: 'sp.deletedAt' },
 }))
 
 vi.mock('drizzle-orm', () => ({
   and: vi.fn((...args: unknown[]) => ({ __and: args })),
   eq: vi.fn((c: unknown, v: unknown) => ({ __eq: [c, v] })),
   isNull: vi.fn((c: unknown) => ({ __isNull: c })),
+  gt: vi.fn((c: unknown, v: unknown) => ({ __gt: [c, v] })),
+  exists: vi.fn((q: unknown) => ({ __exists: q })),
+  notExists: vi.fn((q: unknown) => ({ __notExists: q })),
+  sql: Object.assign(
+    vi.fn((strings: TemplateStringsArray, ...vals: unknown[]) => ({ __sql: { strings, vals } })),
+    { raw: vi.fn((s: string) => ({ __sqlRaw: s })) },
+  ),
 }))
 
 vi.mock('../src/services/webpush.service.js', () => ({
@@ -132,5 +143,77 @@ describe('broadcastToAllUsers', () => {
     expect(mockValues).toHaveBeenCalledWith(expect.objectContaining({
       newValue: expect.objectContaining({ url: null }),
     }))
+  })
+})
+
+describe('segment support', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockInsert.mockReturnValue({ values: mockValues })
+    mockSendToUser.mockResolvedValue(undefined)
+  })
+
+  it("getBroadcastTargetCount defaults to 'all' segment", async () => {
+    setEligibleUserIds(['u1', 'u2'])
+    expect(await getBroadcastTargetCount()).toBe(2)
+  })
+
+  it("getBroadcastTargetCount accepts 'all' explicitly", async () => {
+    setEligibleUserIds(['u1', 'u2'])
+    expect(await getBroadcastTargetCount('all')).toBe(2)
+  })
+
+  it("getBroadcastTargetCount accepts 'missing-tournament-tips'", async () => {
+    setEligibleUserIds(['u1'])
+    expect(await getBroadcastTargetCount('missing-tournament-tips')).toBe(1)
+  })
+
+  it("getBroadcastTargetCount accepts 'missing-today-match-tips'", async () => {
+    setEligibleUserIds(['u1', 'u2'])
+    expect(await getBroadcastTargetCount('missing-today-match-tips')).toBe(2)
+  })
+
+  it("broadcastToAllUsers defaults to 'all' segment when not given", async () => {
+    setEligibleUserIds(['u1'])
+    const result = await broadcastToAllUsers('actor-1', { title: 'T', body: 'B' })
+    expect(result.totalTargets).toBe(1)
+    expect(mockSendToUser).toHaveBeenCalledWith('u1', expect.anything(), expect.anything())
+  })
+
+  it("broadcastToAllUsers passes 'missing-tournament-tips' through to lookup", async () => {
+    setEligibleUserIds(['u1', 'u2'])
+    const result = await broadcastToAllUsers('actor-1', { title: 'T', body: 'B' }, 'missing-tournament-tips')
+    expect(result.totalTargets).toBe(2)
+    expect(result.delivered).toBe(2)
+  })
+
+  it("broadcastToAllUsers passes 'missing-today-match-tips' through to lookup", async () => {
+    setEligibleUserIds(['u3'])
+    const result = await broadcastToAllUsers('actor-1', { title: 'T', body: 'B' }, 'missing-today-match-tips')
+    expect(result.totalTargets).toBe(1)
+    expect(mockSendToUser).toHaveBeenCalledWith('u3', expect.anything(), expect.anything())
+  })
+
+  it('audit log includes the segment field', async () => {
+    setEligibleUserIds(['u1'])
+    await broadcastToAllUsers('actor-1', { title: 'T', body: 'B' }, 'missing-tournament-tips')
+    expect(mockValues).toHaveBeenCalledWith(expect.objectContaining({
+      newValue: expect.objectContaining({ segment: 'missing-tournament-tips' }),
+    }))
+  })
+
+  it("audit log includes segment='all' when default", async () => {
+    setEligibleUserIds(['u1'])
+    await broadcastToAllUsers('actor-1', { title: 'T', body: 'B' })
+    expect(mockValues).toHaveBeenCalledWith(expect.objectContaining({
+      newValue: expect.objectContaining({ segment: 'all' }),
+    }))
+  })
+
+  it('returns zero targets gracefully for any segment with no matches', async () => {
+    setEligibleUserIds([])
+    const result = await broadcastToAllUsers('actor-1', { title: 'T', body: 'B' }, 'missing-tournament-tips')
+    expect(result).toEqual({ totalTargets: 0, delivered: 0, failed: 0, errors: [] })
+    expect(mockSendToUser).not.toHaveBeenCalled()
   })
 })

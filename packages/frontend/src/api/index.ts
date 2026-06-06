@@ -567,13 +567,23 @@ export const api = {
         }),
     },
     push: {
-      targets: (token: string) =>
-        request<{ count: number }>('/admin/push/targets', {
+      targets: (token: string, segment: 'all' | 'missing-tournament-tips' | 'missing-today-match-tips' = 'all') =>
+        request<{ count: number; segment: string }>(`/admin/push/targets?segment=${encodeURIComponent(segment)}`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
-      send: (token: string, params: { title: string; body: string; url?: string; bypassQuietHours?: boolean; bypassRateLimit?: boolean }) =>
+      send: (token: string, params: { title: string; body: string; url?: string; bypassQuietHours?: boolean; bypassRateLimit?: boolean; segment?: 'all' | 'missing-tournament-tips' | 'missing-today-match-tips' }) =>
         request<{ totalTargets: number; delivered: number; failed: number; errors: string[] }>('/admin/push/send', {
           method: 'POST',
+          body: JSON.stringify(params),
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      getSettings: (token: string) =>
+        request<{ kickoffReminderEnabled: boolean; dailyReviewEnabled: boolean }>('/admin/push/settings', {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      updateSettings: (token: string, params: { kickoffReminderEnabled?: boolean; dailyReviewEnabled?: boolean }) =>
+        request<{ kickoffReminderEnabled: boolean; dailyReviewEnabled: boolean }>('/admin/push/settings', {
+          method: 'PUT',
           body: JSON.stringify(params),
           headers: { Authorization: `Bearer ${token}` },
         }),

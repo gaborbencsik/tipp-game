@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 145 story kész (Must Have: 31/31, Should Have: 114/114)
+> 149 story kész (Must Have: 31/31, Should Have: 118/118)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -149,3 +149,7 @@
 | PUSH-001 | Webpush infrastruktúra és admin trigger UI | Should Have |
 | PUSH-006 | Push feliratkozás per-böngésző kezelése (egységes lista + 'kikapcsolás mindenhol') | Should Have |
 | BUG-010 | Csoport csatlakozás "Group is full" a 20 tag elérésekor (rossz konstans) | Should Have |
+| PUSH-007 | Admin push: szegmensszűrés (mind / hiányzó torna / hiányzó mai meccs) | Should Have |
+| PUSH-002 | Push: meccs előtt reminder, ha nincs tipp (cron + endpoint) | Should Have |
+| PUSH-004 | Push: napi review (cron + endpoint, Europe/Budapest naptári dátum scope) | Should Have |
+| PUSH-008 | Admin toggle a kickoff reminder + daily review cron jobokra | Should Have |

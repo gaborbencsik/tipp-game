@@ -613,6 +613,15 @@ export const syncState = pgTable('sync_state', {
   updatedAt:                 timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
+// ─── PUSH SETTINGS (singleton) ───────────────────────────────────────────────
+
+export const pushSettings = pgTable('push_settings', {
+  id:                       uuid('id').primaryKey().defaultRandom(),
+  kickoffReminderEnabled:   boolean('kickoff_reminder_enabled').notNull().default(true),
+  dailyReviewEnabled:       boolean('daily_review_enabled').notNull().default(true),
+  updatedAt:                timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
 // ─── LLM USAGE LOG ───────────────────────────────────────────────────────────
 
 export const llmUsageLog = pgTable('llm_usage_log', {

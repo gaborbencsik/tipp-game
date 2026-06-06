@@ -5,12 +5,84 @@
     </div>
     <AdminNav />
 
+    <section class="mb-4 p-4 bg-white rounded-lg border" data-testid="admin-push-automation-section">
+      <h2 class="text-base font-semibold mb-2">Automatikus push-ok</h2>
+      <p class="text-xs text-gray-500 mb-3">A Render cron service-ek által hívott háttérjobok ki/be kapcsolása. Ha kikapcsolod, a job a fut elején silent skip-pel kilép.</p>
+      <div v-if="settingsLoading" class="text-xs text-gray-400">Betöltés…</div>
+      <div v-else-if="settingsError" class="text-xs text-red-600">{{ settingsError }}</div>
+      <div v-else class="flex flex-col gap-2">
+        <label class="inline-flex items-center gap-3 text-sm">
+          <input
+            v-model="kickoffReminderEnabled"
+            type="checkbox"
+            data-testid="admin-push-toggle-kickoff-reminder"
+            :disabled="settingsSaving"
+            @change="saveSettings"
+          />
+          <div class="flex flex-col">
+            <span class="font-medium">Kickoff reminder</span>
+            <span class="text-xs text-gray-500">Meccs előtt 30–45 perccel reminder a tippnélküli usereknek (15 percenként fut)</span>
+          </div>
+        </label>
+        <label class="inline-flex items-center gap-3 text-sm">
+          <input
+            v-model="dailyReviewEnabled"
+            type="checkbox"
+            data-testid="admin-push-toggle-daily-review"
+            :disabled="settingsSaving"
+            @change="saveSettings"
+          />
+          <div class="flex flex-col">
+            <span class="font-medium">Daily review</span>
+            <span class="text-xs text-gray-500">Naponta egyszer 12:00 CET-kor, 17:00 → másnap 07:00 közötti meccsek hiányos tippjei</span>
+          </div>
+        </label>
+        <span v-if="settingsSavedAt" class="text-xs text-green-600">Elmentve.</span>
+      </div>
+    </section>
+
     <section class="mb-4 p-4 bg-white rounded-lg border" data-testid="admin-push-section">
+      <fieldset class="mb-3 border rounded p-3" data-testid="admin-push-segment-group">
+        <legend class="text-xs text-gray-600 px-1">Címzettek</legend>
+        <div class="flex flex-col gap-1.5">
+          <label class="inline-flex items-center gap-2 text-sm">
+            <input
+              v-model="segment"
+              type="radio"
+              value="all"
+              data-testid="admin-push-segment-all"
+              :disabled="sending"
+            />
+            <span>Mindenki</span>
+          </label>
+          <label class="inline-flex items-center gap-2 text-sm">
+            <input
+              v-model="segment"
+              type="radio"
+              value="missing-tournament-tips"
+              data-testid="admin-push-segment-missing-tournament"
+              :disabled="sending"
+            />
+            <span>Akiknek van hiányzó torna tippje</span>
+          </label>
+          <label class="inline-flex items-center gap-2 text-sm">
+            <input
+              v-model="segment"
+              type="radio"
+              value="missing-today-match-tips"
+              data-testid="admin-push-segment-missing-match"
+              :disabled="sending"
+            />
+            <span>Akiknek van hiányzó mai meccs tippje</span>
+          </label>
+        </div>
+      </fieldset>
+
       <div class="text-xs text-gray-600 mb-3" data-testid="admin-push-targets">
         <span v-if="targetsLoading" class="text-gray-400">Címzettek számolása…</span>
         <span v-else-if="targetsError" class="text-red-600">{{ targetsError }}</span>
         <span v-else>
-          Aktív címzettek (push engedélyezve, nem törölt):
+          Aktív címzettek (push engedélyezve, nem törölt{{ segmentSuffix }}):
           <span class="font-semibold">{{ targetCount }}</span>
         </span>
       </div>
@@ -92,7 +164,7 @@
       <div v-if="lastResult" class="p-3 rounded text-sm bg-green-50 border border-green-200" data-testid="admin-push-result">
         <div class="font-medium">✅ Elküldve</div>
         <div class="text-gray-700 mt-1">
-          Címzettek: {{ lastResult.totalTargets }} | Kézbesítve: {{ lastResult.delivered }} | Sikertelen: {{ lastResult.failed }}
+          Szegmens: <span class="font-medium">{{ segmentLabel(lastResult.segment) }}</span> | Címzettek: {{ lastResult.totalTargets }} | Kézbesítve: {{ lastResult.delivered }} | Sikertelen: {{ lastResult.failed }}
         </div>
         <div v-if="lastResult.errors.length > 0" class="mt-2 text-xs text-red-600 space-y-0.5">
           <div v-for="(err, i) in lastResult.errors.slice(0, 5)" :key="i">{{ err }}</div>
@@ -109,24 +181,35 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import AppLayout from '../components/AppLayout.vue'
 import AdminNav from '../components/admin/AdminNav.vue'
 import { api } from '../api/index.js'
 import { useAuthStore } from '../stores/auth.store.js'
+
+type Segment = 'all' | 'missing-tournament-tips' | 'missing-today-match-tips'
 
 interface SendResult {
   totalTargets: number
   delivered: number
   failed: number
   errors: string[]
+  segment: Segment
 }
 
 const authStore = useAuthStore()
 
+const segment = ref<Segment>('all')
 const targetCount = ref(0)
 const targetsLoading = ref(false)
 const targetsError = ref('')
+
+const kickoffReminderEnabled = ref(true)
+const dailyReviewEnabled = ref(true)
+const settingsLoading = ref(false)
+const settingsError = ref('')
+const settingsSaving = ref(false)
+const settingsSavedAt = ref<number | null>(null)
 
 const title = ref('')
 const body = ref('')
@@ -137,6 +220,17 @@ const bypassRateLimit = ref(false)
 const sending = ref(false)
 const sendError = ref('')
 const lastResult = ref<SendResult | null>(null)
+
+function segmentLabel(s: Segment): string {
+  if (s === 'missing-tournament-tips') return 'Hiányzó torna tippek'
+  if (s === 'missing-today-match-tips') return 'Hiányzó mai meccs tippek'
+  return 'Mindenki'
+}
+
+const segmentSuffix = computed((): string => {
+  if (segment.value === 'all') return ''
+  return `, ${segmentLabel(segment.value).toLowerCase()}`
+})
 
 const canSend = computed((): boolean => {
   if (sending.value) return false
@@ -150,7 +244,7 @@ async function loadTargets(): Promise<void> {
   targetsError.value = ''
   try {
     const token = await authStore.getAccessToken()
-    const data = await api.admin.push.targets(token)
+    const data = await api.admin.push.targets(token, segment.value)
     targetCount.value = data.count
   } catch (err) {
     targetsError.value = err instanceof Error ? err.message : 'Hiba történt'
@@ -159,10 +253,49 @@ async function loadTargets(): Promise<void> {
   }
 }
 
+async function loadSettings(): Promise<void> {
+  settingsLoading.value = true
+  settingsError.value = ''
+  try {
+    const token = await authStore.getAccessToken()
+    const data = await api.admin.push.getSettings(token)
+    kickoffReminderEnabled.value = data.kickoffReminderEnabled
+    dailyReviewEnabled.value = data.dailyReviewEnabled
+  } catch (err) {
+    settingsError.value = err instanceof Error ? err.message : 'Hiba történt'
+  } finally {
+    settingsLoading.value = false
+  }
+}
+
+async function saveSettings(): Promise<void> {
+  settingsSaving.value = true
+  settingsError.value = ''
+  try {
+    const token = await authStore.getAccessToken()
+    const data = await api.admin.push.updateSettings(token, {
+      kickoffReminderEnabled: kickoffReminderEnabled.value,
+      dailyReviewEnabled: dailyReviewEnabled.value,
+    })
+    kickoffReminderEnabled.value = data.kickoffReminderEnabled
+    dailyReviewEnabled.value = data.dailyReviewEnabled
+    settingsSavedAt.value = Date.now()
+    setTimeout(() => { settingsSavedAt.value = null }, 2000)
+  } catch (err) {
+    settingsError.value = err instanceof Error ? err.message : 'Hiba történt'
+  } finally {
+    settingsSaving.value = false
+  }
+}
+
+watch(segment, () => {
+  void loadTargets()
+})
+
 async function confirmAndSend(): Promise<void> {
   if (!canSend.value) return
   const ok = window.confirm(
-    `Biztosan elküldöd ezt az üzenetet ${targetCount.value} felhasználónak?\n\nCím: ${title.value.trim()}\nÜzenet: ${body.value.trim()}`,
+    `Biztosan elküldöd ezt az üzenetet ${targetCount.value} felhasználónak (${segmentLabel(segment.value)})?\n\nCím: ${title.value.trim()}\nÜzenet: ${body.value.trim()}`,
   )
   if (!ok) return
   await send()
@@ -175,14 +308,16 @@ async function send(): Promise<void> {
   try {
     const token = await authStore.getAccessToken()
     const trimmedUrl = url.value.trim()
+    const sentSegment = segment.value
     const result = await api.admin.push.send(token, {
       title: title.value.trim(),
       body: body.value.trim(),
       ...(trimmedUrl.length > 0 ? { url: trimmedUrl } : {}),
       bypassQuietHours: bypassQuietHours.value,
       bypassRateLimit: bypassRateLimit.value,
+      segment: sentSegment,
     })
-    lastResult.value = result
+    lastResult.value = { ...result, segment: sentSegment }
     title.value = ''
     body.value = ''
     url.value = ''
@@ -197,6 +332,6 @@ async function send(): Promise<void> {
 }
 
 onMounted(async () => {
-  await loadTargets()
+  await Promise.all([loadTargets(), loadSettings()])
 })
 </script>

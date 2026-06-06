@@ -1,4 +1,4 @@
-import { and, eq, isNull } from 'drizzle-orm'
+import { and, eq, isNull, sql } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { users, auditLogs } from '../db/schema/index.js'
 import { sendToUser } from './webpush.service.js'
@@ -6,6 +6,11 @@ import type { IPushPayload, ISendOptions } from './webpush.service.js'
 import { createLogger } from './logger.service.js'
 
 const logger = createLogger('admin-push')
+
+export type BroadcastSegment =
+  | 'all'
+  | 'missing-tournament-tips'
+  | 'missing-today-match-tips'
 
 export interface AdminBroadcastInput {
   title: string
@@ -22,30 +27,56 @@ export interface AdminBroadcastResult {
   errors: string[]
 }
 
-async function listEligibleUserIds(): Promise<string[]> {
-  const rows = await db
-    .select({ id: users.id })
-    .from(users)
-    .where(and(
-      eq(users.pushEnabled, true),
-      isNull(users.deletedAt),
-    ))
+const MISSING_TOURNAMENT_TIPS_SQL = sql`EXISTS (
+  SELECT 1 FROM special_prediction_types t
+  WHERE t.is_global = true
+    AND t.is_active = true
+    AND t.deadline > now()
+    AND NOT EXISTS (
+      SELECT 1 FROM special_predictions sp
+      WHERE sp.type_id = t.id
+        AND sp.user_id = ${users.id}
+    )
+)`
+
+const MISSING_TODAY_MATCH_TIPS_SQL = sql`EXISTS (
+  SELECT 1 FROM matches m
+  WHERE m.deleted_at IS NULL
+    AND m.status = 'scheduled'
+    AND date(m.scheduled_at AT TIME ZONE 'Europe/Budapest') = date(now() AT TIME ZONE 'Europe/Budapest')
+    AND NOT EXISTS (
+      SELECT 1 FROM predictions p
+      WHERE p.match_id = m.id
+        AND p.user_id = ${users.id}
+    )
+)`
+
+async function listEligibleUserIdsBySegment(segment: BroadcastSegment): Promise<string[]> {
+  const baseConds = [eq(users.pushEnabled, true), isNull(users.deletedAt)]
+  if (segment === 'missing-tournament-tips') {
+    baseConds.push(MISSING_TOURNAMENT_TIPS_SQL)
+  } else if (segment === 'missing-today-match-tips') {
+    baseConds.push(MISSING_TODAY_MATCH_TIPS_SQL)
+  }
+  const rows = await db.select({ id: users.id }).from(users).where(and(...baseConds))
   return rows.map(r => r.id)
 }
 
-export async function getBroadcastTargetCount(): Promise<number> {
-  const ids = await listEligibleUserIds()
+export async function getBroadcastTargetCount(segment: BroadcastSegment = 'all'): Promise<number> {
+  const ids = await listEligibleUserIdsBySegment(segment)
   return ids.length
 }
 
 export async function broadcastToAllUsers(
   actorId: string,
   input: AdminBroadcastInput,
+  segment: BroadcastSegment = 'all',
 ): Promise<AdminBroadcastResult> {
   const startedAt = Date.now()
-  const targets = await listEligibleUserIds()
+  const targets = await listEligibleUserIdsBySegment(segment)
   logger.info('broadcast started', {
     actorId,
+    segment,
     titleLength: input.title.length,
     bodyLength: input.body.length,
     bypassQuietHours: input.bypassQuietHours ?? false,
@@ -90,6 +121,7 @@ export async function broadcastToAllUsers(
       title: input.title,
       body: input.body,
       url: input.url ?? null,
+      segment,
       bypassQuietHours: input.bypassQuietHours ?? false,
       bypassRateLimit: input.bypassRateLimit ?? false,
       totalTargets: targets.length,
@@ -100,6 +132,7 @@ export async function broadcastToAllUsers(
 
   logger.info('broadcast finished', {
     actorId,
+    segment,
     targetCount: targets.length,
     delivered,
     failed,
