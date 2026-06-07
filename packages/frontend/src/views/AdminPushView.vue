@@ -247,7 +247,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, watch, Teleport } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import AppLayout from '../components/AppLayout.vue'
 import AdminNav from '../components/admin/AdminNav.vue'
 import { api } from '../api/index.js'
