@@ -84,14 +84,35 @@ jobs:
           set -euo pipefail
           # Web service: deploy hook (cron services don't expose deploy hooks)
           curl -f -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
+          echo
           # Cron services: Render REST API (requires RENDER_API_KEY + service IDs)
-          for sid in "$RENDER_SERVICE_ID_CRON_TICK" "$RENDER_SERVICE_ID_CRON_POLYMARKET" "$RENDER_SERVICE_ID_CRON_TRANSFERMARKT"; do
-            curl -f -X POST "https://api.render.com/v1/services/${sid}/deploys" \
+          deploy_cron() {
+            local label="$1" sid="$2"
+            if [ -z "$sid" ]; then
+              echo "::error::cron $label: service ID secret is empty"
+              return 1
+            fi
+            echo "deploying cron $label (sid prefix: ${sid:0:8}…, len=${#sid})"
+            local body status
+            body=$(mktemp)
+            status=$(curl -sS -o "$body" -w '%{http_code}' -X POST \
+              "https://api.render.com/v1/services/${sid}/deploys" \
               -H "Authorization: Bearer ${RENDER_API_KEY}" \
               -H "Accept: application/json" \
               -H "Content-Type: application/json" \
-              -d '{"clearCache":"do_not_clear"}'
-          done
+              -d '{"clearCache":"do_not_clear"}')
+            echo "  HTTP $status"
+            echo "  body: $(cat "$body")"
+            rm -f "$body"
+            if [ "$status" -ge 200 ] && [ "$status" -lt 300 ]; then
+              return 0
+            fi
+            echo "::error::cron $label: deploy API returned HTTP $status"
+            return 1
+          }
+          deploy_cron tick "$RENDER_SERVICE_ID_CRON_TICK"
+          deploy_cron polymarket "$RENDER_SERVICE_ID_CRON_POLYMARKET"
+          deploy_cron transfermarkt "$RENDER_SERVICE_ID_CRON_TRANSFERMARKT"
 
   deploy-frontend:
     needs: [ci, e2e]
