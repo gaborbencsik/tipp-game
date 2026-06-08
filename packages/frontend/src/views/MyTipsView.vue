@@ -71,6 +71,15 @@
           :hint="exactHitsHint"
           icon="⭐"
         />
+        <KpiCard
+          v-if="stats.scorerSubmittedCount > 0"
+          :label="$t('myStats.scorerKpi')"
+          :value="`${stats.scorerHitCount} / ${stats.scorerSubmittedCount}`"
+          :hint="$t('myStats.scorerKpiHint', { hit: stats.scorerHitCount, total: stats.scorerSubmittedCount })"
+          :tone="stats.scorerSubmittedCount > 0 && stats.scorerHitCount * 2 >= stats.scorerSubmittedCount ? 'positive' : 'default'"
+          icon="⚽"
+          data-testid="scorer-kpi"
+        />
       </div>
 
       <!-- Distribution bar -->

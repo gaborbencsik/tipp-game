@@ -158,7 +158,12 @@
     "distExact": "Exact",
     "distWinner": "Correct outcome",
     "distZero": "0 points",
-    "distMissed": "Missed"
+    "distMissed": "Missed",
+    "scorerKpi": "Scorer",
+    "scorerKpiHint": "{hit} / {total} hit",
+    "scorerPending": "Awaiting result",
+    "scorerHit": "Hit",
+    "scorerMiss": "Missed"
   },
   "groups": {
     "title": "Groups",

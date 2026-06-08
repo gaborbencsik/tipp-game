@@ -44,6 +44,19 @@ function pred(matchId: string, points: number | null): Prediction {
   }
 }
 
+function scorerPred(
+  matchId: string,
+  points: number | null,
+  scorerBonus: number | null,
+): Prediction {
+  return {
+    ...pred(matchId, points),
+    scorerPickPlayerId: `player-${matchId}`,
+    scorerPlayerNameSnapshot: `Player ${matchId}`,
+    scorerBonusPoints: scorerBonus,
+  }
+}
+
 const config: ScoringBuckets = {
   correctOutcomePoints: 1,
   exactBonusPoints: 2,
@@ -251,5 +264,83 @@ describe('computeMyStats', () => {
   it('exactHits = null when config is null even with no predictions', () => {
     const stats = computeMyStats([], [], null)
     expect(stats.exactHits).toBeNull()
+  })
+
+  describe('scorer stats', () => {
+    it('zero scorer picks → all scorer counts = 0', () => {
+      const stats = computeMyStats([], [], config)
+      expect(stats.scorerSubmittedCount).toBe(0)
+      expect(stats.scorerHitCount).toBe(0)
+      expect(stats.scorerTotalBonus).toBe(0)
+    })
+
+    it('plain (non-scorer) predictions do not contribute to scorer counts', () => {
+      const matches = [
+        match('m1', '2026-06-01T18:00:00Z'),
+        match('m2', '2026-06-02T18:00:00Z'),
+      ]
+      const predictions = [pred('m1', 5), pred('m2', 0)]
+      const stats = computeMyStats(predictions, matches, config)
+      expect(stats.scorerSubmittedCount).toBe(0)
+      expect(stats.scorerHitCount).toBe(0)
+      expect(stats.scorerTotalBonus).toBe(0)
+    })
+
+    it('one hit scorer pick → submitted=1, hit=1, bonus=1', () => {
+      const matches = [match('m1', '2026-06-01T18:00:00Z')]
+      const predictions = [scorerPred('m1', 5, 1)]
+      const stats = computeMyStats(predictions, matches, config)
+      expect(stats.scorerSubmittedCount).toBe(1)
+      expect(stats.scorerHitCount).toBe(1)
+      expect(stats.scorerTotalBonus).toBe(1)
+    })
+
+    it('one miss scorer pick → submitted=1, hit=0, bonus=0', () => {
+      const matches = [match('m1', '2026-06-01T18:00:00Z')]
+      const predictions = [scorerPred('m1', 1, 0)]
+      const stats = computeMyStats(predictions, matches, config)
+      expect(stats.scorerSubmittedCount).toBe(1)
+      expect(stats.scorerHitCount).toBe(0)
+      expect(stats.scorerTotalBonus).toBe(0)
+    })
+
+    it('not yet evaluated scorer pick → submitted=1, hit=0, bonus=0', () => {
+      const matches = [match('m1', '2026-06-01T18:00:00Z', 'scheduled')]
+      const predictions = [scorerPred('m1', null, null)]
+      const stats = computeMyStats(predictions, matches, config)
+      expect(stats.scorerSubmittedCount).toBe(1)
+      expect(stats.scorerHitCount).toBe(0)
+      expect(stats.scorerTotalBonus).toBe(0)
+    })
+
+    it('mixed scorer picks (3 submitted, 2 hit) aggregate correctly', () => {
+      const matches = [
+        match('m1', '2026-06-01T18:00:00Z'),
+        match('m2', '2026-06-02T18:00:00Z'),
+        match('m3', '2026-06-03T18:00:00Z'),
+        match('m4', '2026-06-04T18:00:00Z'),
+      ]
+      const predictions = [
+        scorerPred('m1', 5, 1), // hit
+        scorerPred('m2', 1, 0), // miss
+        scorerPred('m3', 5, 1), // hit
+        pred('m4', 5),          // not a scorer pick
+      ]
+      const stats = computeMyStats(predictions, matches, config)
+      expect(stats.scorerSubmittedCount).toBe(3)
+      expect(stats.scorerHitCount).toBe(2)
+      expect(stats.scorerTotalBonus).toBe(2)
+    })
+
+    it('scorer stats ignore predictions whose match is missing', () => {
+      const matches = [match('m1', '2026-06-01T18:00:00Z')]
+      const predictions = [
+        scorerPred('m1', 5, 1),
+        scorerPred('m-orphan', 5, 1),
+      ]
+      const stats = computeMyStats(predictions, matches, config)
+      expect(stats.scorerSubmittedCount).toBe(1)
+      expect(stats.scorerHitCount).toBe(1)
+    })
   })
 })

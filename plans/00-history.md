@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 151 story kész (Must Have: 31/31, Should Have: 120/120)
+> 152 story kész (Must Have: 31/31, Should Have: 121/121)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -157,3 +157,4 @@
 | SCORER-002 | Góllövő tipp – tipp leadása és tárolása | Should Have |
 | SCORER-003 | Góllövő tipp – manuális kiértékelés és pontozás integrációja | Should Have |
 | ADMIN-001 | Csoport tag fizetett státusz bejelölése (admin) | Should Have |
+| SCORER-005 | Gólszerző tippek megjelenítése a Statisztikáim oldalon | Should Have |

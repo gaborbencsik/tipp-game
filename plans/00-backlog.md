@@ -1,12 +1,11 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-06-08 (ADMIN-001 lezárult)
+> Utoljára frissítve: 2026-06-08 (SCORER-005 lezárult)
 
 ## Nyitott story-k
 
 | Story ID | Cím | Prioritás | Függőség |
 |----------|-----|-----------|----------|
-| SCORER-005 | Gólszerző tippek megjelenítése a Statisztikáim oldalon | Should Have | ~~SCORER-003~~ |
 | SCORER-004 | Góllövő auto-sync az api-football /fixtures/events-ből | Should Have | ~~SCORER-003~~ |
 | OPS-002 | Render cron service-ek konfigurálása az automatikus sync-hez (tick + polymarket + transfermarkt) | Must Have | — |
 | OPS-001 | Strukturált logolás és frontend hibakezelés (MVP) | Should Have | — |
@@ -33,4 +32,4 @@
 
 ---
 
-**Haladás: 153 / 174 story kész** — Must Have: 31/32, Should Have: 122/136, Nice to Have: 0/5 (US-937, PUSH-003 won't do)
+**Haladás: 154 / 174 story kész** — Must Have: 31/32, Should Have: 123/136, Nice to Have: 0/5 (US-937, PUSH-003 won't do)

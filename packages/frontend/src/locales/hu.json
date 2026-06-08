@@ -158,7 +158,12 @@
     "distExact": "Pontos",
     "distWinner": "Helyes kimenetel",
     "distZero": "0 pont",
-    "distMissed": "Kihagyott"
+    "distMissed": "Kihagyott",
+    "scorerKpi": "Gólszerző",
+    "scorerKpiHint": "{hit} / {total} eltalálva",
+    "scorerPending": "Még nincs kiértékelve",
+    "scorerHit": "Eltalálva",
+    "scorerMiss": "Nem talált"
   },
   "groups": {
     "title": "Csoportok",

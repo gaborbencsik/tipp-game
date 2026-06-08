@@ -25,6 +25,9 @@ export interface MyStats {
   readonly currentStreak: number
   readonly distribution: PointDistribution
   readonly exactHits: number | null
+  readonly scorerSubmittedCount: number
+  readonly scorerHitCount: number
+  readonly scorerTotalBonus: number
 }
 
 const AVAILABLE_STATUSES: ReadonlyArray<Match['status']> = ['scheduled', 'live', 'finished']
@@ -86,6 +89,15 @@ export function computeMyStats(
   const distribution = computeDistribution(evaluated.map(e => e.prediction), matches, predictions, config)
   const exactHits = config === null ? null : distribution.exact
 
+  const scorerPicks = joined.filter(({ prediction }) => prediction.scorerPickPlayerId !== null)
+  const scorerSubmittedCount = scorerPicks.length
+  const scorerHits = scorerPicks.filter(({ prediction }) => prediction.scorerBonusPoints === 1)
+  const scorerHitCount = scorerHits.length
+  const scorerTotalBonus = scorerHits.reduce(
+    (sum, { prediction }) => sum + (prediction.scorerBonusPoints ?? 0),
+    0,
+  )
+
   return {
     submittedCount,
     totalAvailable,
@@ -97,6 +109,9 @@ export function computeMyStats(
     currentStreak,
     distribution,
     exactHits,
+    scorerSubmittedCount,
+    scorerHitCount,
+    scorerTotalBonus,
   }
 }
 

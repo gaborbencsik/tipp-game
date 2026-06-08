@@ -29,6 +29,22 @@
         >
           {{ prediction.pointsGlobal }} {{ pointsLabel }}
         </div>
+        <div
+          v-if="prediction.scorerPickPlayerId && prediction.scorerPlayerNameSnapshot"
+          class="text-xs mt-0.5 px-1.5 py-0.5 rounded inline-flex items-center gap-1 max-w-[180px]"
+          :class="scorerBadgeClass"
+          :title="scorerBadgeTitle"
+          data-testid="scorer-badge"
+        >
+          <span aria-hidden="true">⚽</span>
+          <span class="truncate" :class="{ 'line-through': prediction.scorerBonusPoints === 0 }">
+            {{ prediction.scorerPlayerNameSnapshot }}
+          </span>
+          <span
+            v-if="prediction.scorerBonusPoints !== null && prediction.scorerBonusPoints > 0"
+            class="font-bold shrink-0"
+          >+{{ prediction.scorerBonusPoints }}</span>
+        </div>
       </template>
       <template v-else-if="match.status === 'finished'">
         <span class="text-xs font-medium text-red-500">{{ missedLabel }}</span>
@@ -42,6 +58,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import TeamBadge from '../TeamBadge.vue'
 import type { Match, Prediction } from '../../types/index.js'
 import type { ScoringBuckets } from '../../composables/useMyStats.js'
@@ -57,6 +74,7 @@ interface Props {
 
 const props = defineProps<Props>()
 const emit = defineEmits<{ click: [] }>()
+const { t } = useI18n()
 
 const pointsClass = computed(() => {
   if (!props.prediction || props.prediction.pointsGlobal === null) return 'bg-gray-100 text-gray-500'
@@ -67,6 +85,20 @@ const pointsClass = computed(() => {
   }
   if (p > 0) return 'bg-blue-50 text-blue-700'
   return 'bg-gray-100 text-gray-500'
+})
+
+const scorerBadgeClass = computed(() => {
+  const bonus = props.prediction?.scorerBonusPoints ?? null
+  if (bonus === null) return 'bg-blue-50 text-blue-700 border border-blue-200'
+  if (bonus > 0) return 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+  return 'bg-gray-100 text-gray-500 border border-gray-200'
+})
+
+const scorerBadgeTitle = computed(() => {
+  const bonus = props.prediction?.scorerBonusPoints ?? null
+  if (bonus === null) return t('myStats.scorerPending')
+  if (bonus > 0) return t('myStats.scorerHit')
+  return t('myStats.scorerMiss')
 })
 
 const borderClass = computed(() => {
