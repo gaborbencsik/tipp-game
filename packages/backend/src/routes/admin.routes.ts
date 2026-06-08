@@ -123,13 +123,30 @@ adminRouter.delete('/matches/:id', async (ctx) => {
 })
 
 adminRouter.post('/matches/:id/result', async (ctx) => {
-  const { homeGoals, awayGoals, outcomeAfterDraw } = ctx.request.body as {
+  const { homeGoals, awayGoals, outcomeAfterDraw, scorerPlayerIds } = ctx.request.body as {
     homeGoals: number
     awayGoals: number
     outcomeAfterDraw?: MatchOutcome | null
+    scorerPlayerIds?: readonly string[]
+  }
+  if (
+    scorerPlayerIds !== undefined &&
+    (!Array.isArray(scorerPlayerIds) ||
+      !scorerPlayerIds.every((id) => typeof id === 'string' && id.length > 0))
+  ) {
+    ctx.status = 400
+    ctx.body = { error: 'scorerPlayerIds must be a string[] of UUIDs' }
+    return
   }
   const dbUser = await upsertUser(ctx.state.user)
-  ctx.body = await setResult(ctx.params['id'] as string, homeGoals, awayGoals, dbUser.id, outcomeAfterDraw)
+  ctx.body = await setResult(
+    ctx.params['id'] as string,
+    homeGoals,
+    awayGoals,
+    dbUser.id,
+    outcomeAfterDraw,
+    scorerPlayerIds,
+  )
 })
 
 // ─── Users ────────────────────────────────────────────────────────────────────

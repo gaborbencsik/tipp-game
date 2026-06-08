@@ -49,6 +49,9 @@ const PREDICTION_1: Prediction = {
   awayGoals: 1,
   outcomeAfterDraw: null,
   pointsGlobal: null,
+  scorerPickPlayerId: null,
+  scorerPlayerNameSnapshot: null,
+  scorerBonusPoints: null,
   createdAt: '2026-06-10T10:00:00.000Z',
   updatedAt: '2026-06-10T10:00:00.000Z',
 }
@@ -61,6 +64,9 @@ const PREDICTION_2: Prediction = {
   awayGoals: 0,
   outcomeAfterDraw: null,
   pointsGlobal: null,
+  scorerPickPlayerId: null,
+  scorerPlayerNameSnapshot: null,
+  scorerBonusPoints: null,
   createdAt: '2026-06-10T11:00:00.000Z',
   updatedAt: '2026-06-10T11:00:00.000Z',
 }

@@ -124,6 +124,21 @@ export async function createTeam(name: string, shortCode: string): Promise<TestT
   }) as Promise<TestTeam>
 }
 
+export interface TestPlayer {
+  readonly id: string
+  readonly name: string
+  readonly teamId: string | null
+}
+
+export async function createPlayer(input: {
+  name: string
+  teamId: string
+  position?: string
+  shirtNumber?: number
+}): Promise<TestPlayer> {
+  return post('/api/admin/players', input) as Promise<TestPlayer>
+}
+
 export async function createMatch(
   homeTeamId: string,
   awayTeamId: string,

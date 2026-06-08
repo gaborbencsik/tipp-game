@@ -1,6 +1,6 @@
 import { eq, isNull, desc, sql } from 'drizzle-orm'
 import { db } from '../db/client.js'
-import { users, matches, predictions } from '../db/schema/index.js'
+import { users, matches, predictions, players } from '../db/schema/index.js'
 import type { MatchOutcome, MatchPrediction, Prediction, PredictionInput } from '../types/index.js'
 
 class AppError extends Error {
@@ -32,9 +32,47 @@ function toApiPrediction(row: typeof predictions.$inferSelect): Prediction {
     awayGoals: row.awayGoals,
     outcomeAfterDraw: (row.outcomeAfterDraw as MatchOutcome | null) ?? null,
     pointsGlobal: row.pointsGlobal ?? null,
+    scorerPickPlayerId: row.scorerPickPlayerId ?? null,
+    scorerPlayerNameSnapshot: row.scorerPlayerNameSnapshot ?? null,
+    scorerBonusPoints: row.scorerBonusPoints ?? null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   }
+}
+
+function isValidGoal(val: unknown): val is number {
+  return typeof val === 'number' && Number.isInteger(val) && val >= 0
+}
+
+async function resolveScorerPick(
+  scorerPickPlayerId: string | null | undefined,
+  match: typeof matches.$inferSelect,
+  homeGoals: unknown,
+  awayGoals: unknown,
+): Promise<{ playerId: string | null; nameSnapshot: string | null }> {
+  if (scorerPickPlayerId === null || scorerPickPlayerId === undefined) {
+    return { playerId: null, nameSnapshot: null }
+  }
+
+  if (!isValidGoal(homeGoals) || !isValidGoal(awayGoals)) {
+    throw new AppError(400, 'scorer_requires_full_prediction')
+  }
+
+  const playerRows = await db
+    .select()
+    .from(players)
+    .where(eq(players.id, scorerPickPlayerId))
+    .limit(1)
+  const player = playerRows[0]
+  if (!player) {
+    throw new AppError(400, 'scorer_player_not_in_match')
+  }
+
+  if (player.teamId !== match.homeTeamId && player.teamId !== match.awayTeamId) {
+    throw new AppError(400, 'scorer_player_not_in_match')
+  }
+
+  return { playerId: player.id, nameSnapshot: player.name }
 }
 
 export async function upsertPrediction(
@@ -55,6 +93,13 @@ export async function upsertPrediction(
     throw new AppError(409, 'Prediction deadline has passed')
   }
 
+  const scorer = await resolveScorerPick(
+    input.scorerPickPlayerId,
+    match,
+    input.homeGoals,
+    input.awayGoals,
+  )
+
   const rows = await db
     .insert(predictions)
     .values({
@@ -63,6 +108,8 @@ export async function upsertPrediction(
       homeGoals: input.homeGoals,
       awayGoals: input.awayGoals,
       outcomeAfterDraw: input.outcomeAfterDraw ?? null,
+      scorerPickPlayerId: scorer.playerId,
+      scorerPlayerNameSnapshot: scorer.nameSnapshot,
     })
     .onConflictDoUpdate({
       target: [predictions.userId, predictions.matchId],
@@ -70,6 +117,8 @@ export async function upsertPrediction(
         homeGoals: input.homeGoals,
         awayGoals: input.awayGoals,
         outcomeAfterDraw: input.outcomeAfterDraw ?? null,
+        scorerPickPlayerId: scorer.playerId,
+        scorerPlayerNameSnapshot: scorer.nameSnapshot,
         updatedAt: new Date(),
       },
     })

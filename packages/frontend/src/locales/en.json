@@ -80,7 +80,18 @@
     "homeWin": "Home",
     "awayWin": "Away",
     "penaltyShort": "Penalties:",
-    "groupLabel": "Group {name}"
+    "groupLabel": "Group {name}",
+    "scorer": {
+      "label": "Scorer:",
+      "optional": "Optional",
+      "placeholderCompact": "Select player… (optional)",
+      "placeholderComfortable": "Search or select from list…",
+      "loadingPlayers": "Loading players…",
+      "noRoster": "Rosters not available yet",
+      "tooltipKnockout": "Shootout goals don't count. Regular time (and extra time) goals and penalties do. Own goals don't count.",
+      "delete": "Delete scorer pick",
+      "rosterRemovedWarning": "The selected player is no longer in the squad — pick another"
+    }
   },
   "matchDetail": {
     "back": "Back",
@@ -423,7 +434,8 @@
   "playerSelect": {
     "placeholder": "Search for a player...",
     "noResults": "No players found",
-    "freeTextPlaceholder": "Enter the player's name"
+    "freeTextPlaceholder": "Enter the player's name",
+    "clear": "Clear selection"
   },
   "teamSelect": {
     "placeholder": "Select a team..."

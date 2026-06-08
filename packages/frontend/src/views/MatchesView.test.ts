@@ -39,6 +39,7 @@ vi.mock('@/api/index', () => ({
     leagues: { list: mockLeaguesList },
     leagueTeams: { forLeague: vi.fn().mockResolvedValue([]) },
     users: { getLeagueFavorites: mockGetLeagueFavorites, setLeagueFavorite: vi.fn().mockResolvedValue(undefined) },
+    players: { list: vi.fn().mockResolvedValue([]) },
   },
 }))
 
@@ -131,6 +132,9 @@ const EXISTING_PREDICTION: Prediction = {
   awayGoals: 0,
   outcomeAfterDraw: null,
   pointsGlobal: null,
+  scorerPickPlayerId: null,
+  scorerPlayerNameSnapshot: null,
+  scorerBonusPoints: null,
   createdAt: '2026-06-10T10:00:00.000Z',
   updatedAt: '2026-06-10T10:00:00.000Z',
 }
@@ -332,6 +336,7 @@ describe('MatchesView', () => {
       homeGoals: 2,
       awayGoals: 1,
       outcomeAfterDraw: null,
+      scorerPickPlayerId: null,
     })
     vi.useRealTimers()
   })
@@ -494,6 +499,52 @@ describe('MatchesView', () => {
     ])
     const { wrapper } = await mountView([MATCH_SCHEDULED])
     expect(wrapper.text()).not.toContain('Állítsd be kedvenc csapatodat')
+  })
+
+  // ─── SCORER-002: scorer pick row ─────────────────────────────────────────
+
+  it('scorer pick row renders for tippable match', async () => {
+    const { wrapper } = await mountView([MATCH_SCHEDULED])
+    expect(wrapper.find('[data-testid="scorer-pick-row"]').exists()).toBe(true)
+  })
+
+  it('scorer-only change without goals does NOT trigger upsert (autosave guard)', async () => {
+    vi.useFakeTimers()
+    const { wrapper, predictionsStore } = await mountView([MATCH_SCHEDULED])
+    const upsertSpy = vi.spyOn(predictionsStore, 'upsertPrediction').mockResolvedValue()
+
+    // emulate scorer-pick selection without goals filled in
+    const view = wrapper.vm as unknown as { onScorerPickChange: (id: string, p: string) => void }
+    view.onScorerPickChange('match-sched', 'player-x')
+    vi.advanceTimersByTime(2000)
+    await flushPromises()
+
+    expect(upsertSpy).not.toHaveBeenCalled()
+    vi.useRealTimers()
+  })
+
+  it('scorer pick + goals filled → upsert with scorerPickPlayerId', async () => {
+    vi.useFakeTimers()
+    const saved: Prediction = { ...EXISTING_PREDICTION, homeGoals: 2, awayGoals: 1, scorerPickPlayerId: 'player-x' }
+    mockPredictionsUpsert.mockResolvedValue(saved)
+    const { wrapper, predictionsStore } = await mountView([MATCH_SCHEDULED])
+    const upsertSpy = vi.spyOn(predictionsStore, 'upsertPrediction').mockResolvedValue()
+
+    await wrapper.find('[data-testid="input-home"]').setValue('2')
+    await wrapper.find('[data-testid="input-away"]').setValue('1')
+    const view = wrapper.vm as unknown as { onScorerPickChange: (id: string, p: string) => void }
+    view.onScorerPickChange('match-sched', 'player-x')
+    vi.advanceTimersByTime(2000)
+    await flushPromises()
+
+    expect(upsertSpy).toHaveBeenCalledWith({
+      matchId: 'match-sched',
+      homeGoals: 2,
+      awayGoals: 1,
+      outcomeAfterDraw: null,
+      scorerPickPlayerId: 'player-x',
+    })
+    vi.useRealTimers()
   })
 
 })

@@ -3,7 +3,7 @@ import {
   timestamp, pgEnum, uniqueIndex, index,
   jsonb, smallint, doublePrecision
 } from 'drizzle-orm/pg-core'
-import { relations } from 'drizzle-orm'
+import { relations, sql } from 'drizzle-orm'
 
 // ─── ENUMS ────────────────────────────────────────────────────────────────────
 
@@ -200,8 +200,10 @@ export const matchResults = pgTable('match_results', {
   recordedAt:       timestamp('recorded_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt:        timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   pointsCalculatedAt: timestamp('points_calculated_at', { withTimezone: true }),
+  scorerPlayerIds:  uuid('scorer_player_ids').array().notNull().default(sql`'{}'::uuid[]`),
 }, (t) => ({
   matchIdIdx: uniqueIndex('match_results_match_id_idx').on(t.matchId),
+  scorerIdsIdx: index('match_results_scorer_ids_idx').using('gin', t.scorerPlayerIds),
 }))
 
 // ─── LIVE MATCH STATES ────────────────────────────────────────────────────────
@@ -319,12 +321,16 @@ export const predictions = pgTable('predictions', {
   awayGoals:        smallint('away_goals').notNull(),
   outcomeAfterDraw: text('outcome_after_draw'),
   pointsGlobal:     smallint('points_global'),
+  scorerPickPlayerId:        uuid('scorer_pick_player_id').references(() => players.id, { onDelete: 'restrict' }),
+  scorerPlayerNameSnapshot:  text('scorer_player_name_snapshot'),
+  scorerBonusPoints:         smallint('scorer_bonus_points'),
   createdAt:        timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt:        timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({
   uniquePrediction: uniqueIndex('predictions_user_match_unique').on(t.userId, t.matchId),
   userIdx:          index('predictions_user_idx').on(t.userId),
   matchIdx:         index('predictions_match_idx').on(t.matchId),
+  scorerPickIdx:    index('predictions_scorer_pick_idx').on(t.scorerPickPlayerId),
 }))
 
 // ─── INSIGHT REVEALS ──────────────────────────────────────────────────────────

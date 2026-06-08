@@ -136,7 +136,9 @@ export async function setResult(
   awayGoals: number,
   actorId: string,
   outcomeAfterDraw?: MatchOutcome | null,
+  scorerPlayerIds?: readonly string[],
 ): Promise<MatchResultRow> {
+  const scorerIds = scorerPlayerIds ?? []
   const rows = await db
     .insert(matchResults)
     .values({
@@ -145,6 +147,7 @@ export async function setResult(
       awayGoals,
       outcomeAfterDraw: outcomeAfterDraw ?? null,
       recordedBy: actorId,
+      scorerPlayerIds: [...scorerIds],
     })
     .onConflictDoUpdate({
       target: matchResults.matchId,
@@ -153,6 +156,7 @@ export async function setResult(
         awayGoals,
         outcomeAfterDraw: outcomeAfterDraw ?? null,
         recordedBy: actorId,
+        scorerPlayerIds: [...scorerIds],
         updatedAt: new Date(),
       },
     })

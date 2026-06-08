@@ -144,6 +144,7 @@ export interface PredictionInput {
   readonly homeGoals: number
   readonly awayGoals: number
   readonly outcomeAfterDraw?: MatchOutcome | null
+  readonly scorerPickPlayerId?: string | null
 }
 
 export interface Prediction {
@@ -154,6 +155,9 @@ export interface Prediction {
   readonly awayGoals: number
   readonly outcomeAfterDraw: MatchOutcome | null
   readonly pointsGlobal: number | null
+  readonly scorerPickPlayerId: string | null
+  readonly scorerPlayerNameSnapshot: string | null
+  readonly scorerBonusPoints: number | null
   readonly createdAt: string
   readonly updatedAt: string
 }

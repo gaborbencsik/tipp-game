@@ -315,6 +315,22 @@
                     <button type="button" class="text-xs px-2 py-1 rounded border transition-colors" :class="draftOutcomes[match.id] === 'penalties_away' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'" data-testid="outcome-penalties-away" @click="setOutcome(match.id, 'penalties_away')">{{ $t('matches.awayWin') }}</button>
                   </div>
                 </div>
+                <div class="mt-2 flex items-center gap-2">
+                  <span class="text-xs text-gray-500 font-medium">⚽ {{ $t('matches.scorer.label') }}</span>
+                  <div class="flex-1" :class="isScorerDirty(match.id) ? 'ring-1 ring-blue-500 rounded-md' : ''" data-testid="scorer-pick-row">
+                    <PlayerSelectCombobox
+                      :model-value="draftScorerPicks[match.id] ?? null"
+                      :restrict-to-teams="[
+                        { id: match.homeTeam.id, name: match.homeTeam.name, shortCode: match.homeTeam.shortCode, flagUrl: match.homeTeam.flagUrl },
+                        { id: match.awayTeam.id, name: match.awayTeam.name, shortCode: match.awayTeam.shortCode, flagUrl: match.awayTeam.flagUrl },
+                      ]"
+                      :allow-explicit-clear="true"
+                      :show-player-meta="true"
+                      size="compact"
+                      @update:model-value="onScorerPickChange(match.id, $event)"
+                    />
+                  </div>
+                </div>
                 <div class="text-center mt-1 text-xs">
                   <span v-if="predictionsStore.saveStatus[match.id] === 'saved'" class="text-green-600" data-testid="save-success">{{ $t('matches.tipSaved') }}</span>
                   <span v-else-if="predictionsStore.saveStatus[match.id] === 'error'" class="text-red-500">{{ predictionsStore.error }}</span>
@@ -358,6 +374,7 @@ import TeamBadge from '../components/TeamBadge.vue'
 import SpecialPendingBanner from '../components/SpecialPendingBanner.vue'
 import DayNavigator from '../components/DayNavigator.vue'
 import SegmentedControl from '../components/SegmentedControl.vue'
+import PlayerSelectCombobox from '../components/predictions/PlayerSelectCombobox.vue'
 import { usePendingSpecialTips } from '../composables/usePendingSpecialTips.js'
 import { useDayNavigation } from '../composables/useDayNavigation.js'
 import { useLeagueFilter } from '../composables/useLeagueFilter.js'
@@ -383,6 +400,7 @@ const awayInputs = ref<Record<string, HTMLInputElement>>({})
 const autosaveTimers: Record<string, ReturnType<typeof setTimeout>> = {}
 
 const draftOutcomes = ref<Record<string, MatchOutcome | null>>({})
+const draftScorerPicks = ref<Record<string, string | null>>({})
 const favBannerDismissed = ref(false)
 
 type UserLeague = { readonly id: string; readonly name: string; readonly shortName: string }
@@ -533,6 +551,7 @@ function initDrafts(): void {
     if (existing) {
       draftGoals.value[match.id] = { home: existing.homeGoals, away: existing.awayGoals }
       draftOutcomes.value[match.id] = existing.outcomeAfterDraw
+      draftScorerPicks.value[match.id] = existing.scorerPickPlayerId
     }
   }
 }
@@ -665,7 +684,21 @@ async function savePrediction(matchId: string): Promise<void> {
     homeGoals: draft.home,
     awayGoals: draft.away,
     outcomeAfterDraw: draftOutcomes.value[matchId] ?? null,
+    scorerPickPlayerId: draftScorerPicks.value[matchId] ?? null,
   })
+}
+
+function onScorerPickChange(matchId: string, playerId: string | null): void {
+  draftScorerPicks.value = { ...draftScorerPicks.value, [matchId]: playerId }
+  if (autosaveTimers[matchId]) clearTimeout(autosaveTimers[matchId])
+  autosaveTimers[matchId] = setTimeout(() => { void savePrediction(matchId) }, 2000)
+}
+
+function isScorerDirty(matchId: string): boolean {
+  const draft = draftScorerPicks.value[matchId] ?? null
+  const existing = predictionsStore.predictionByMatchId(matchId)
+  if (!existing) return draft !== null
+  return draft !== (existing.scorerPickPlayerId ?? null)
 }
 
 function statusLabel(status: MatchStatus): string {

@@ -80,9 +80,31 @@ const PREDICTION_ROW = {
   matchId: MATCH_ID,
   homeGoals: 2,
   awayGoals: 1,
+  outcomeAfterDraw: null,
   pointsGlobal: null,
+  scorerPickPlayerId: null,
+  scorerPlayerNameSnapshot: null,
+  scorerBonusPoints: null,
   createdAt: new Date('2026-06-10T10:00:00Z'),
   updatedAt: new Date('2026-06-10T10:00:00Z'),
+}
+
+const HOME_PLAYER_ID = 'player-home-uuid'
+const HOME_PLAYER_ROW = {
+  id: HOME_PLAYER_ID,
+  name: 'Szoboszlai Dominik',
+  teamId: 'ht-uuid',
+}
+const AWAY_PLAYER_ID = 'player-away-uuid'
+const AWAY_PLAYER_ROW = {
+  id: AWAY_PLAYER_ID,
+  name: 'Lionel Messi',
+  teamId: 'at-uuid',
+}
+const FOREIGN_PLAYER_ROW = {
+  id: 'player-foreign-uuid',
+  name: 'Foreign Player',
+  teamId: 'other-team-uuid',
 }
 
 const VALID_INPUT = { matchId: MATCH_ID, homeGoals: 2, awayGoals: 1 }
@@ -191,6 +213,154 @@ describe('upsertPrediction', () => {
     expect(mockOnConflictDoUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
         set: expect.objectContaining({ homeGoals: 2, awayGoals: 1 }),
+      })
+    )
+  })
+
+  // ─── Scorer pick (SCORER-002) ─────────────────────────────────────────────
+
+  it('scorerPickPlayerId without home/away goals → 400 scorer_requires_full_prediction', async () => {
+    let call = 0
+    mockLimit.mockImplementation(() => {
+      call++
+      if (call === 1) return Promise.resolve([DB_USER_ROW])
+      if (call === 2) return Promise.resolve([FUTURE_MATCH_ROW])
+      return Promise.resolve([])
+    })
+
+    await expect(
+      upsertPrediction(SUPABASE_ID, {
+        matchId: MATCH_ID,
+        homeGoals: null as unknown as number,
+        awayGoals: null as unknown as number,
+        scorerPickPlayerId: HOME_PLAYER_ID,
+      })
+    ).rejects.toMatchObject({ status: 400, message: 'scorer_requires_full_prediction' })
+  })
+
+  it('scorerPickPlayerId for player not in match → 400 scorer_player_not_in_match', async () => {
+    let call = 0
+    mockLimit.mockImplementation(() => {
+      call++
+      if (call === 1) return Promise.resolve([DB_USER_ROW])
+      if (call === 2) return Promise.resolve([FUTURE_MATCH_ROW])
+      if (call === 3) return Promise.resolve([FOREIGN_PLAYER_ROW])
+      return Promise.resolve([])
+    })
+
+    await expect(
+      upsertPrediction(SUPABASE_ID, {
+        ...VALID_INPUT,
+        scorerPickPlayerId: 'player-foreign-uuid',
+      })
+    ).rejects.toMatchObject({ status: 400, message: 'scorer_player_not_in_match' })
+  })
+
+  it('scorerPickPlayerId for unknown player → 400 scorer_player_not_in_match', async () => {
+    let call = 0
+    mockLimit.mockImplementation(() => {
+      call++
+      if (call === 1) return Promise.resolve([DB_USER_ROW])
+      if (call === 2) return Promise.resolve([FUTURE_MATCH_ROW])
+      if (call === 3) return Promise.resolve([]) // player not found
+      return Promise.resolve([])
+    })
+
+    await expect(
+      upsertPrediction(SUPABASE_ID, {
+        ...VALID_INPUT,
+        scorerPickPlayerId: 'unknown-player-uuid',
+      })
+    ).rejects.toMatchObject({ status: 400, message: 'scorer_player_not_in_match' })
+  })
+
+  it('valid scorer pick → snapshot filled, db.insert called with scorer fields', async () => {
+    let call = 0
+    mockLimit.mockImplementation(() => {
+      call++
+      if (call === 1) return Promise.resolve([DB_USER_ROW])
+      if (call === 2) return Promise.resolve([FUTURE_MATCH_ROW])
+      if (call === 3) return Promise.resolve([HOME_PLAYER_ROW])
+      return Promise.resolve([])
+    })
+    mockReturning.mockResolvedValue([{
+      ...PREDICTION_ROW,
+      scorerPickPlayerId: HOME_PLAYER_ID,
+      scorerPlayerNameSnapshot: 'Szoboszlai Dominik',
+    }])
+
+    const result = await upsertPrediction(SUPABASE_ID, {
+      ...VALID_INPUT,
+      scorerPickPlayerId: HOME_PLAYER_ID,
+    })
+
+    expect(mockValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        scorerPickPlayerId: HOME_PLAYER_ID,
+        scorerPlayerNameSnapshot: 'Szoboszlai Dominik',
+      })
+    )
+    expect(mockOnConflictDoUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        set: expect.objectContaining({
+          scorerPickPlayerId: HOME_PLAYER_ID,
+          scorerPlayerNameSnapshot: 'Szoboszlai Dominik',
+        }),
+      })
+    )
+    expect(result.scorerPickPlayerId).toBe(HOME_PLAYER_ID)
+    expect(result.scorerPlayerNameSnapshot).toBe('Szoboszlai Dominik')
+  })
+
+  it('away team player as scorer pick → accepted', async () => {
+    let call = 0
+    mockLimit.mockImplementation(() => {
+      call++
+      if (call === 1) return Promise.resolve([DB_USER_ROW])
+      if (call === 2) return Promise.resolve([FUTURE_MATCH_ROW])
+      if (call === 3) return Promise.resolve([AWAY_PLAYER_ROW])
+      return Promise.resolve([])
+    })
+    mockReturning.mockResolvedValue([{
+      ...PREDICTION_ROW,
+      scorerPickPlayerId: AWAY_PLAYER_ID,
+      scorerPlayerNameSnapshot: 'Lionel Messi',
+    }])
+
+    const result = await upsertPrediction(SUPABASE_ID, {
+      ...VALID_INPUT,
+      scorerPickPlayerId: AWAY_PLAYER_ID,
+    })
+
+    expect(result.scorerPickPlayerId).toBe(AWAY_PLAYER_ID)
+  })
+
+  it('scorerPickPlayerId = null → snapshot also nulled (clear)', async () => {
+    let call = 0
+    mockLimit.mockImplementation(() => {
+      call++
+      if (call === 1) return Promise.resolve([DB_USER_ROW])
+      if (call === 2) return Promise.resolve([FUTURE_MATCH_ROW])
+      return Promise.resolve([])
+    })
+
+    await upsertPrediction(SUPABASE_ID, {
+      ...VALID_INPUT,
+      scorerPickPlayerId: null,
+    })
+
+    expect(mockValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        scorerPickPlayerId: null,
+        scorerPlayerNameSnapshot: null,
+      })
+    )
+    expect(mockOnConflictDoUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        set: expect.objectContaining({
+          scorerPickPlayerId: null,
+          scorerPlayerNameSnapshot: null,
+        }),
       })
     )
   })

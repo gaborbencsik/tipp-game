@@ -140,6 +140,36 @@
               </div>
             </div>
 
+            <div class="mt-3 pt-3 border-t border-gray-100">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-sm font-medium text-gray-700 flex items-center gap-1">
+                  ⚽ {{ $t('matches.scorer.label').replace(':', '') }}
+                  <button
+                    v-if="isKnockoutStage"
+                    type="button"
+                    class="text-gray-400 hover:text-blue-500 ml-1"
+                    :title="$t('matches.scorer.tooltipKnockout')"
+                    aria-label="info"
+                    data-testid="scorer-knockout-info"
+                  >ⓘ</button>
+                </span>
+                <span class="text-xs text-gray-400">{{ $t('matches.scorer.optional') }}</span>
+              </div>
+              <div :class="isScorerDirty ? 'ring-1 ring-blue-500 rounded-md' : ''" data-testid="scorer-pick-row">
+                <PlayerSelectCombobox
+                  :model-value="draftScorerPick"
+                  :restrict-to-teams="[
+                    { id: match.homeTeam.id, name: match.homeTeam.name, shortCode: match.homeTeam.shortCode, flagUrl: match.homeTeam.flagUrl },
+                    { id: match.awayTeam.id, name: match.awayTeam.name, shortCode: match.awayTeam.shortCode, flagUrl: match.awayTeam.flagUrl },
+                  ]"
+                  :allow-explicit-clear="true"
+                  :show-player-meta="true"
+                  size="comfortable"
+                  @update:model-value="onScorerPickChange"
+                />
+              </div>
+            </div>
+
             <div class="text-center mt-1 text-xs">
               <span
                 v-if="predictionsStore.saveStatus[match.id] === 'saved'"
@@ -224,6 +254,7 @@ import TeamBadge from '../components/TeamBadge.vue'
 import VenueBanner from '../components/VenueBanner.vue'
 import MatchPredictionsList from '../components/MatchPredictionsList.vue'
 import MatchOddsBar from '../components/MatchOddsBar.vue'
+import PlayerSelectCombobox from '../components/predictions/PlayerSelectCombobox.vue'
 import { getDateLocale } from '../lib/dateLocale.js'
 
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
@@ -245,6 +276,7 @@ const { showToast } = useToast()
 const now = ref(new Date())
 const draftGoals = ref<{ home: number | null, away: number | null }>({ home: null, away: null })
 const draftOutcome = ref<MatchOutcome | null>(null)
+const draftScorerPick = ref<string | null>(null)
 const homeInputRef = ref<HTMLInputElement | null>(null)
 const awayInputRef = ref<HTMLInputElement | null>(null)
 const matchPredictions = ref<MatchPrediction[]>([])
@@ -289,6 +321,7 @@ onMounted(async () => {
   if (existing) {
     draftGoals.value = { home: existing.homeGoals, away: existing.awayGoals }
     draftOutcome.value = existing.outcomeAfterDraw
+    draftScorerPick.value = existing.scorerPickPlayerId
   }
   if (match.value?.status === 'finished' || match.value?.status === 'live') {
     await loadMatchPredictions()
@@ -351,8 +384,26 @@ async function savePrediction(): Promise<void> {
     homeGoals: draftGoals.value.home,
     awayGoals: draftGoals.value.away,
     outcomeAfterDraw: draftOutcome.value,
+    scorerPickPlayerId: draftScorerPick.value,
   })
 }
+
+function onScorerPickChange(playerId: string | null): void {
+  draftScorerPick.value = playerId
+  if (autosaveTimer) clearTimeout(autosaveTimer)
+  autosaveTimer = setTimeout(() => { void savePrediction() }, 2000)
+}
+
+const isScorerDirty = computed((): boolean => {
+  const existing = myPrediction.value
+  if (!existing) return draftScorerPick.value !== null
+  return draftScorerPick.value !== (existing.scorerPickPlayerId ?? null)
+})
+
+const isKnockoutStage = computed((): boolean => {
+  if (!match.value) return false
+  return KNOCKOUT_STAGES.includes(match.value.stage)
+})
 
 async function loadMatchPredictions(): Promise<void> {
   try {

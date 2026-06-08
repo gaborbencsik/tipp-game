@@ -38,10 +38,15 @@ export const api = {
       }),
   },
   players: {
-    list: (token: string, leagueId?: string) =>
-      request<Player[]>(`/players${leagueId ? `?leagueId=${encodeURIComponent(leagueId)}` : ''}`, {
+    list: (token: string, leagueId?: string, teamId?: string) => {
+      const params = new URLSearchParams()
+      if (leagueId) params.set('leagueId', leagueId)
+      if (teamId) params.set('teamId', teamId)
+      const qs = params.toString()
+      return request<Player[]>(`/players${qs ? `?${qs}` : ''}`, {
         headers: { Authorization: `Bearer ${token}` },
-      }),
+      })
+    },
   },
   leagues: {
     list: (token: string) =>

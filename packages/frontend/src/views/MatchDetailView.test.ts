@@ -34,6 +34,7 @@ vi.mock('@/api/index', () => ({
     auth: { me: vi.fn() },
     matches: { list: mockMatchesList },
     predictions: { mine: mockPredictionsMine, upsert: mockPredictionsUpsert, forMatch: mockPredictionsForMatch },
+    players: { list: vi.fn().mockResolvedValue([]) },
   },
 }))
 
@@ -99,6 +100,9 @@ const PREDICTION_FOR_FINISHED: Prediction = {
   awayGoals: 1,
   outcomeAfterDraw: null,
   pointsGlobal: 3,
+  scorerPickPlayerId: null,
+  scorerPlayerNameSnapshot: null,
+  scorerBonusPoints: null,
   createdAt: '2026-06-10T10:00:00.000Z',
   updatedAt: '2026-06-10T10:00:00.000Z',
 }
@@ -199,6 +203,22 @@ describe('MatchDetailView', () => {
     expect(wrapper.find('[data-testid="input-home"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="input-away"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="save-button"]').exists()).toBe(false)
+  })
+
+  it('SCORER-002: scheduled match → scorer pick row visible', async () => {
+    const { wrapper } = await mountView('match-sched', [MATCH_SCHEDULED])
+    expect(wrapper.find('[data-testid="scorer-pick-row"]').exists()).toBe(true)
+  })
+
+  it('SCORER-002: knockout stage → info icon (tooltip) renders', async () => {
+    const { wrapper } = await mountView('match-sched', [MATCH_SCHEDULED])
+    expect(wrapper.find('[data-testid="scorer-knockout-info"]').exists()).toBe(true)
+  })
+
+  it('SCORER-002: group stage → no info icon', async () => {
+    const GROUP_MATCH: Match = { ...MATCH_SCHEDULED, stage: 'group' as const, groupName: 'A' }
+    const { wrapper } = await mountView('match-sched', [GROUP_MATCH])
+    expect(wrapper.find('[data-testid="scorer-knockout-info"]').exists()).toBe(false)
   })
 
   it('"Vissza" link points to /matches', async () => {

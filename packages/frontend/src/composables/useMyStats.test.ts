@@ -36,6 +36,9 @@ function pred(matchId: string, points: number | null): Prediction {
     awayGoals: 0,
     outcomeAfterDraw: null,
     pointsGlobal: points,
+    scorerPickPlayerId: null,
+    scorerPlayerNameSnapshot: null,
+    scorerBonusPoints: null,
     createdAt: '2026-01-01T00:00:00Z',
     updatedAt: '2026-01-01T00:00:00Z',
   }

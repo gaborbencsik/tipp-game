@@ -19,7 +19,7 @@ function isValidOutcome(val: unknown): val is MatchOutcome {
 
 router.post('/api/predictions', authMiddleware, async (ctx) => {
   const body = ctx.request.body as Record<string, unknown>
-  const { matchId, homeGoals, awayGoals, outcomeAfterDraw } = body
+  const { matchId, homeGoals, awayGoals, outcomeAfterDraw, scorerPickPlayerId } = body
 
   if (typeof matchId !== 'string' || !matchId) {
     ctx.status = 400
@@ -36,12 +36,22 @@ router.post('/api/predictions', authMiddleware, async (ctx) => {
     ctx.body = { error: 'Invalid outcomeAfterDraw value' }
     return
   }
+  if (
+    scorerPickPlayerId !== undefined &&
+    scorerPickPlayerId !== null &&
+    (typeof scorerPickPlayerId !== 'string' || !scorerPickPlayerId)
+  ) {
+    ctx.status = 400
+    ctx.body = { error: 'scorerPickPlayerId must be a non-empty string or null' }
+    return
+  }
 
   const input: PredictionInput = {
     matchId,
     homeGoals,
     awayGoals,
     outcomeAfterDraw: outcomeAfterDraw as MatchOutcome | null | undefined,
+    scorerPickPlayerId: scorerPickPlayerId as string | null | undefined,
   }
   ctx.body = await upsertPrediction(ctx.state.user.supabaseId, input)
 })

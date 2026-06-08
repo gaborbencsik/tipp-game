@@ -80,7 +80,18 @@
     "homeWin": "← Hazai",
     "awayWin": "Vendég →",
     "penaltyShort": "Tizenegyes:",
-    "groupLabel": "{name} csoport"
+    "groupLabel": "{name} csoport",
+    "scorer": {
+      "label": "Góllövő:",
+      "optional": "Opcionális",
+      "placeholderCompact": "Válassz játékost… (opcionális)",
+      "placeholderComfortable": "Keresés vagy válassz a listából…",
+      "loadingPlayers": "Játékosok betöltése…",
+      "noRoster": "Keretek még nem érhetők el",
+      "tooltipKnockout": "A büntetőpárbaj gólok nem számítanak. A rendes játékidőben (és hosszabbításban) szerzett gólok és büntetők igen. Öngólt nem fogadunk el.",
+      "delete": "Góllövő tipp törlése",
+      "rosterRemovedWarning": "A választott játékos már nem szerepel a keretben — válassz másikat"
+    }
   },
   "matchDetail": {
     "back": "← Vissza",
@@ -423,7 +434,8 @@
   "playerSelect": {
     "placeholder": "Keresés játékosra...",
     "noResults": "Nincs ilyen játékos",
-    "freeTextPlaceholder": "Írd be a játékos nevét"
+    "freeTextPlaceholder": "Írd be a játékos nevét",
+    "clear": "Választás törlése"
   },
   "teamSelect": {
     "placeholder": "Válassz csapatot..."

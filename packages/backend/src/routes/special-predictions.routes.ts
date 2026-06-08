@@ -23,7 +23,8 @@ router.get('/api/teams', authMiddleware, async (ctx) => {
 
 router.get('/api/players', authMiddleware, async (ctx) => {
   const leagueId = typeof ctx.query['leagueId'] === 'string' ? ctx.query['leagueId'] : undefined
-  ctx.body = await getPlayers({ leagueId })
+  const teamId = typeof ctx.query['teamId'] === 'string' ? ctx.query['teamId'] : undefined
+  ctx.body = await getPlayers({ leagueId, teamId })
 })
 
 // ─── Stat prediction templates ──────────────────────────────────────────────
