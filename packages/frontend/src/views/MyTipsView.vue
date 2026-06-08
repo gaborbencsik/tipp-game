@@ -66,16 +66,9 @@
           icon="✅"
         />
         <KpiCard
-          :label="$t('myStats.exactHits')"
-          :value="exactHitsValue"
-          :hint="exactHitsHint"
-          icon="⭐"
-        />
-        <KpiCard
-          v-if="stats.scorerSubmittedCount > 0"
           :label="$t('myStats.scorerKpi')"
-          :value="`${stats.scorerHitCount} / ${stats.scorerSubmittedCount}`"
-          :hint="$t('myStats.scorerKpiHint', { hit: stats.scorerHitCount, total: stats.scorerSubmittedCount })"
+          :value="scorerKpiValue"
+          :hint="scorerKpiHint"
           :tone="stats.scorerSubmittedCount > 0 && stats.scorerHitCount * 2 >= stats.scorerSubmittedCount ? 'positive' : 'default'"
           icon="⚽"
           data-testid="scorer-kpi"
@@ -242,20 +235,16 @@ const distributionLabels = computed(() => ({
   missed: t('myStats.distMissed'),
 }))
 
-const exactHitsValue = computed<string | number>(() => {
+const scorerKpiValue = computed<string>(() => {
   const s = stats.value
-  if (s.exactHits === null) return '—'
-  if (s.evaluatedCount === 0) return '—'
-  if (s.exactHits === 0) return '—'
-  return s.exactHits
+  if (s.scorerSubmittedCount === 0) return '—'
+  return `${s.scorerHitCount} / ${s.scorerSubmittedCount}`
 })
 
-const exactHitsHint = computed<string>(() => {
+const scorerKpiHint = computed<string>(() => {
   const s = stats.value
-  if (s.exactHits === null) return ''
-  if (s.evaluatedCount === 0) return ''
-  if (s.exactHits === 0) return t('myStats.exactHitsEmpty')
-  return t('myStats.exactHitsHint', { total: s.evaluatedCount })
+  if (s.scorerSubmittedCount === 0) return t('myStats.scorerKpiEmpty')
+  return t('myStats.scorerKpiHint', { hit: s.scorerHitCount, total: s.scorerSubmittedCount })
 })
 
 interface ListItem {

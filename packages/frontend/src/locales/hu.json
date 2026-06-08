@@ -161,6 +161,7 @@
     "distMissed": "Kihagyott",
     "scorerKpi": "Gólszerző",
     "scorerKpiHint": "{hit} / {total} eltalálva",
+    "scorerKpiEmpty": "Még nincs leadva",
     "scorerPending": "Még nincs kiértékelve",
     "scorerHit": "Eltalálva",
     "scorerMiss": "Nem talált"

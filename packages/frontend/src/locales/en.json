@@ -161,6 +161,7 @@
     "distMissed": "Missed",
     "scorerKpi": "Scorer",
     "scorerKpiHint": "{hit} / {total} hit",
+    "scorerKpiEmpty": "No scorer pick yet",
     "scorerPending": "Awaiting result",
     "scorerHit": "Hit",
     "scorerMiss": "Missed"
