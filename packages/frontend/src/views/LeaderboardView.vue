@@ -48,6 +48,13 @@
                   class="w-6 h-6 md:w-7 md:h-7 rounded-full object-cover shrink-0"
                 />
                 <span class="font-medium text-gray-800 truncate">{{ entry.displayName }}</span>
+                <span
+                  v-if="entry.isPaid"
+                  :title="$t('groupDetail.memberPaidTooltip')"
+                  data-testid="leaderboard-paid-badge"
+                  aria-label="Paid"
+                  class="shrink-0"
+                >💰</span>
                 <span v-if="entry.userId === authStore.user?.id" class="text-[0.65rem] md:text-xs text-blue-600 shrink-0">{{ $t('leaderboard.you') }}</span>
               </div>
             </td>
