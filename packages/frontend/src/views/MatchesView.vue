@@ -201,6 +201,18 @@
                       <span>{{ $t('matches.missedTip') }}</span>
                     </template>
                   </div>
+                  <div
+                    v-if="predictionsStore.predictionByMatchId(match.id)?.scorerPickPlayerId"
+                    class="text-center text-xs flex items-center justify-center gap-2 mt-1"
+                    data-testid="scorer-badge"
+                  >
+                    <span class="text-gray-700">⚽ {{ scorerName(match.id) }}</span>
+                    <span
+                      v-if="predictionsStore.predictionByMatchId(match.id)!.scorerBonusPoints !== null"
+                      class="text-xs font-bold px-2 py-0.5 rounded"
+                      :class="pointsBadgeClass(predictionsStore.predictionByMatchId(match.id)!.scorerBonusPoints!)"
+                    >+{{ predictionsStore.predictionByMatchId(match.id)!.scorerBonusPoints }} {{ $t('common.points') }}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -351,6 +363,18 @@
                   <template v-else>
                     <span>{{ $t('matches.missedTip') }}</span>
                   </template>
+                </div>
+                <div
+                  v-if="predictionsStore.predictionByMatchId(match.id)?.scorerPickPlayerId"
+                  class="text-center text-xs flex items-center justify-center gap-2 mt-1"
+                  data-testid="scorer-badge"
+                >
+                  <span class="text-gray-700">⚽ {{ scorerName(match.id) }}</span>
+                  <span
+                    v-if="predictionsStore.predictionByMatchId(match.id)!.scorerBonusPoints !== null"
+                    class="text-xs font-bold px-2 py-0.5 rounded"
+                    :class="pointsBadgeClass(predictionsStore.predictionByMatchId(match.id)!.scorerBonusPoints!)"
+                  >+{{ predictionsStore.predictionByMatchId(match.id)!.scorerBonusPoints }} {{ $t('common.points') }}</span>
                 </div>
               </template>
             </div>
@@ -605,9 +629,9 @@ function cardBorderClass(match: Match): string {
 }
 
 function pointsBadgeClass(points: number): string {
-  if (points >= 5) return 'bg-green-50 text-green-700 border border-green-200'
-  if (points >= 3) return 'bg-blue-50 text-blue-700 border border-blue-200'
-  if (points >= 1) return 'bg-amber-50 text-amber-700 border border-amber-200'
+  if (points >= 6) return 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+  if (points >= 3) return 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+  if (points >= 1) return 'bg-teal-50 text-teal-700 border border-teal-200'
   return 'bg-gray-100 text-gray-500 border border-gray-200'
 }
 
@@ -699,6 +723,11 @@ function isScorerDirty(matchId: string): boolean {
   const existing = predictionsStore.predictionByMatchId(matchId)
   if (!existing) return draft !== null
   return draft !== (existing.scorerPickPlayerId ?? null)
+}
+
+function scorerName(matchId: string): string {
+  const pred = predictionsStore.predictionByMatchId(matchId)
+  return pred?.scorerPlayerNameSnapshot ?? '—'
 }
 
 function statusLabel(status: MatchStatus): string {

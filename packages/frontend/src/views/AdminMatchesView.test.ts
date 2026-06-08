@@ -42,6 +42,7 @@ vi.mock('@/api/index', () => ({
     auth: { me: vi.fn() },
     matches: { list: mockMatchesList },
     predictions: { mine: vi.fn(), upsert: vi.fn() },
+    players: { list: vi.fn().mockResolvedValue([]) },
     admin: {
       teams: { list: mockTeamsList, get: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() },
       matches: {
@@ -203,6 +204,6 @@ describe('AdminMatchesView', () => {
     await vm.submitResult()
     await flushPromises()
 
-    expect(setResultSpy).toHaveBeenCalledWith(MATCH.id, { homeGoals: 2, awayGoals: 1, outcomeAfterDraw: null })
+    expect(setResultSpy).toHaveBeenCalledWith(MATCH.id, { homeGoals: 2, awayGoals: 1, outcomeAfterDraw: null, scorerPlayerIds: [] })
   })
 })

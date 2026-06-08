@@ -1,7 +1,7 @@
 import { alias } from 'drizzle-orm/pg-core'
 import { and, eq, inArray, isNull } from 'drizzle-orm'
 import { db } from '../db/client.js'
-import { matches, teams, venues, matchResults, leagues } from '../db/schema/index.js'
+import { matches, teams, venues, matchResults, leagues, players } from '../db/schema/index.js'
 import { calculateAndSavePoints, calculateAndSaveGroupPoints } from './scoring.service.js'
 import type { Match, MatchesFilters, MatchInput, MatchOutcome, MatchRow, MatchResultRow } from '../types/index.js'
 
@@ -71,6 +71,7 @@ export async function getMatches(filters: MatchesFilters = {}): Promise<Match[]>
           homeGoals: row.match_results.homeGoals,
           awayGoals: row.match_results.awayGoals,
           outcomeAfterDraw: (row.match_results.outcomeAfterDraw as MatchOutcome | null) ?? null,
+          scorerPlayerIds: row.match_results.scorerPlayerIds ?? [],
         }
       : null,
   }))
@@ -138,7 +139,32 @@ export async function setResult(
   outcomeAfterDraw?: MatchOutcome | null,
   scorerPlayerIds?: readonly string[],
 ): Promise<MatchResultRow> {
-  const scorerIds = scorerPlayerIds ?? []
+  const dedupedScorerIds = scorerPlayerIds ? Array.from(new Set(scorerPlayerIds)) : []
+
+  if (dedupedScorerIds.length > 0) {
+    const matchRows = await db
+      .select({ homeTeamId: matches.homeTeamId, awayTeamId: matches.awayTeamId })
+      .from(matches)
+      .where(eq(matches.id, matchId))
+      .limit(1)
+    const matchRow = matchRows[0]
+    if (!matchRow) throw new AppError(404, 'Match not found')
+
+    const playerRows = await db
+      .select({ id: players.id, teamId: players.teamId })
+      .from(players)
+      .where(inArray(players.id, dedupedScorerIds))
+    if (playerRows.length !== dedupedScorerIds.length) {
+      throw new AppError(400, 'scorer_ids_player_not_found')
+    }
+    const allInMatch = playerRows.every(
+      (p) => p.teamId === matchRow.homeTeamId || p.teamId === matchRow.awayTeamId,
+    )
+    if (!allInMatch) {
+      throw new AppError(400, 'scorer_ids_invalid_team')
+    }
+  }
+
   const rows = await db
     .insert(matchResults)
     .values({
@@ -147,7 +173,7 @@ export async function setResult(
       awayGoals,
       outcomeAfterDraw: outcomeAfterDraw ?? null,
       recordedBy: actorId,
-      scorerPlayerIds: [...scorerIds],
+      scorerPlayerIds: dedupedScorerIds,
     })
     .onConflictDoUpdate({
       target: matchResults.matchId,
@@ -156,7 +182,7 @@ export async function setResult(
         awayGoals,
         outcomeAfterDraw: outcomeAfterDraw ?? null,
         recordedBy: actorId,
-        scorerPlayerIds: [...scorerIds],
+        scorerPlayerIds: dedupedScorerIds,
         updatedAt: new Date(),
       },
     })

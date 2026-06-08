@@ -41,6 +41,7 @@ export interface MatchResult {
   readonly homeGoals: number
   readonly awayGoals: number
   readonly outcomeAfterDraw?: MatchOutcome | null
+  readonly scorerPlayerIds?: ReadonlyArray<string>
 }
 
 export interface Match {
@@ -112,6 +113,7 @@ export interface MatchResultInput {
   readonly homeGoals: number
   readonly awayGoals: number
   readonly outcomeAfterDraw?: MatchOutcome | null
+  readonly scorerPlayerIds?: ReadonlyArray<string>
 }
 
 export interface MatchDateGroup {

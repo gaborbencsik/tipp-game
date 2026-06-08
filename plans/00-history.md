@@ -155,3 +155,4 @@
 | PUSH-008 | Admin toggle a kickoff reminder + daily review cron jobokra | Should Have |
 | PUSH-009 | Admin push címzettek részletes listája (modal) | Should Have |
 | SCORER-002 | Góllövő tipp – tipp leadása és tárolása | Should Have |
+| SCORER-003 | Góllövő tipp – manuális kiértékelés és pontozás integrációja | Should Have |

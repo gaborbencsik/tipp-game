@@ -1,6 +1,6 @@
 import { eq, and, or, isNotNull, isNull } from 'drizzle-orm'
 import { db } from '../db/client.js'
-import { predictions, scoringConfigs, groupMembers, groups, groupPredictionPoints, userLeagueFavorites, matches, groupLeagues } from '../db/schema/index.js'
+import { predictions, scoringConfigs, groupMembers, groups, groupPredictionPoints, userLeagueFavorites, matches, matchResults, groupLeagues } from '../db/schema/index.js'
 import type { ScoringConfig, ScoreLine, MatchOutcome } from '../types/index.js'
 
 export interface PredictionScore {
@@ -46,21 +46,56 @@ export function calculatePoints(
   return pts
 }
 
+export interface ScorerBonusContext {
+  readonly scorerPickPlayerId: string | null
+  readonly matchScorerPlayerIds: ReadonlyArray<string>
+}
+
+export function calculateScorerBonus(ctx: ScorerBonusContext): 0 | 1 {
+  if (ctx.scorerPickPlayerId === null) return 0
+  return ctx.matchScorerPlayerIds.includes(ctx.scorerPickPlayerId) ? 1 : 0
+}
+
+export interface ScoredPrediction {
+  readonly pointsGlobal: number
+  readonly scorerBonusPoints: 0 | 1
+}
+
+export function calculatePointsWithScorer(
+  prediction: PredictionScore,
+  result: ResultScore,
+  config: ScoringConfig,
+  scorer: ScorerBonusContext,
+  favCtx: FavoriteTeamContext,
+): ScoredPrediction {
+  const resultPoints = calculatePoints(prediction, result, config)
+  const scorerBonusPoints = calculateScorerBonus(scorer)
+  const subtotal = resultPoints + scorerBonusPoints
+  const pointsGlobal = applyFavoriteTeamMultiplier(subtotal, favCtx)
+  return { pointsGlobal, scorerBonusPoints }
+}
+
 export async function calculateAndSavePoints(
   matchId: string,
   result: ResultScore,
 ): Promise<void> {
-  const [matchPredictions, configs] = await Promise.all([
+  const [matchPredictions, configs, scorerRows] = await Promise.all([
     db.select().from(predictions).where(eq(predictions.matchId, matchId)),
     db.select().from(scoringConfigs).where(eq(scoringConfigs.isGlobalDefault, true)),
+    db.select({ scorerPlayerIds: matchResults.scorerPlayerIds })
+      .from(matchResults)
+      .where(eq(matchResults.matchId, matchId))
+      .limit(1),
   ])
 
   const config = configs[0]
   if (!config) throw new Error('No global scoring config found')
 
+  const matchScorerPlayerIds: ReadonlyArray<string> = scorerRows[0]?.scorerPlayerIds ?? []
+
   await Promise.all(
     matchPredictions.map((pred) => {
-      const points = calculatePoints(
+      const resultPoints = calculatePoints(
         {
           homeGoals: pred.homeGoals,
           awayGoals: pred.awayGoals,
@@ -69,9 +104,14 @@ export async function calculateAndSavePoints(
         result,
         config,
       )
+      const scorerBonusPoints = calculateScorerBonus({
+        scorerPickPlayerId: pred.scorerPickPlayerId ?? null,
+        matchScorerPlayerIds,
+      })
+      const pointsGlobal = resultPoints + scorerBonusPoints
       return db
         .update(predictions)
-        .set({ pointsGlobal: points, updatedAt: new Date() })
+        .set({ pointsGlobal, scorerBonusPoints, updatedAt: new Date() })
         .where(eq(predictions.id, pred.id))
         .returning()
     })
@@ -104,11 +144,15 @@ export async function calculateAndSaveGroupPoints(
   matchId: string,
   result: ResultScore,
 ): Promise<void> {
-  const [matchPredictions, matchRows] = await Promise.all([
+  const [matchPredictions, matchRows, scorerRows] = await Promise.all([
     db.select().from(predictions).where(eq(predictions.matchId, matchId)),
     db.select({ homeTeamId: matches.homeTeamId, awayTeamId: matches.awayTeamId, leagueId: matches.leagueId })
       .from(matches)
       .where(eq(matches.id, matchId))
+      .limit(1),
+    db.select({ scorerPlayerIds: matchResults.scorerPlayerIds })
+      .from(matchResults)
+      .where(eq(matchResults.matchId, matchId))
       .limit(1),
   ])
 
@@ -116,6 +160,8 @@ export async function calculateAndSaveGroupPoints(
 
   const matchRow = matchRows[0]
   if (!matchRow) return
+
+  const matchScorerPlayerIds: ReadonlyArray<string> = scorerRows[0]?.scorerPlayerIds ?? []
 
   const userIds = [...new Set(matchPredictions.map(p => p.userId))]
 
@@ -170,7 +216,7 @@ export async function calculateAndSaveGroupPoints(
           const scoringConfig = config ?? defaultConfig
           if (!scoringConfig) return Promise.resolve()
 
-          let points = calculatePoints(
+          const resultPoints = calculatePoints(
             {
               homeGoals: pred.homeGoals,
               awayGoals: pred.awayGoals,
@@ -180,7 +226,14 @@ export async function calculateAndSaveGroupPoints(
             scoringConfig,
           )
 
-          points = applyFavoriteTeamMultiplier(points, {
+          const scorerBonusPoints = calculateScorerBonus({
+            scorerPickPlayerId: pred.scorerPickPlayerId ?? null,
+            matchScorerPlayerIds,
+          })
+
+          const subtotal = resultPoints + scorerBonusPoints
+
+          const points = applyFavoriteTeamMultiplier(subtotal, {
             userId: pred.userId,
             groupFavoriteTeamDoublePoints: favoriteTeamDoublePoints,
             match: matchRow,

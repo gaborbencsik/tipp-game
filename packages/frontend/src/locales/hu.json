@@ -90,7 +90,11 @@
       "noRoster": "Keretek még nem érhetők el",
       "tooltipKnockout": "A büntetőpárbaj gólok nem számítanak. A rendes játékidőben (és hosszabbításban) szerzett gólok és büntetők igen. Öngólt nem fogadunk el.",
       "delete": "Góllövő tipp törlése",
-      "rosterRemovedWarning": "A választott játékos már nem szerepel a keretben — válassz másikat"
+      "rosterRemovedWarning": "A választott játékos már nem szerepel a keretben — válassz másikat",
+      "hit": "Talált: +1",
+      "miss": "Nem talált: 0",
+      "pending": "Kiértékelés alatt",
+      "favoriteDoubled": "(×2 a meccsen)"
     }
   },
   "matchDetail": {

@@ -169,6 +169,18 @@
               <option value="penalties_away">Tizenegyes – vendég nyer</option>
             </select>
           </div>
+          <div class="mb-4" v-if="resultFormMatchObj">
+            <label class="block text-xs text-gray-500 mb-1">⚽ Gólszerzők (rendes idő + hosszabbítás, büntetőpárbaj NEM)</label>
+            <PlayerMultiSelectCombobox
+              :model-value="resultForm.scorerPlayerIds"
+              :restrict-to-teams="[
+                { id: resultFormMatchObj.homeTeam.id, name: resultFormMatchObj.homeTeam.name, shortCode: resultFormMatchObj.homeTeam.shortCode, flagUrl: resultFormMatchObj.homeTeam.flagUrl },
+                { id: resultFormMatchObj.awayTeam.id, name: resultFormMatchObj.awayTeam.name, shortCode: resultFormMatchObj.awayTeam.shortCode, flagUrl: resultFormMatchObj.awayTeam.flagUrl },
+              ]"
+              data-testid="result-scorers"
+              @update:model-value="resultForm.scorerPlayerIds = $event"
+            />
+          </div>
           <div class="flex gap-2">
             <button
               type="submit"
@@ -266,6 +278,7 @@ import { useAdminTeamsStore } from '../stores/admin-teams.store.js'
 import type { Match, MatchOutcome, MatchStage, MatchStatus } from '../types/index.js'
 import AppLayout from '../components/AppLayout.vue'
 import AdminNav from '../components/admin/AdminNav.vue'
+import PlayerMultiSelectCombobox from '../components/predictions/PlayerMultiSelectCombobox.vue'
 import { getDateLocale } from '../lib/dateLocale.js'
 
 const store = useAdminMatchesStore()
@@ -335,8 +348,8 @@ async function submitForm(): Promise<void> {
 const KNOCKOUT_STAGES: readonly MatchStage[] = ['round_of_16', 'quarter_final', 'semi_final', 'third_place', 'final']
 
 const resultFormMatchId = ref<string | null>(null)
-const resultForm = ref<{ homeGoals: number; awayGoals: number; outcomeAfterDraw: MatchOutcome | null }>({
-  homeGoals: 0, awayGoals: 0, outcomeAfterDraw: null,
+const resultForm = ref<{ homeGoals: number; awayGoals: number; outcomeAfterDraw: MatchOutcome | null; scorerPlayerIds: ReadonlyArray<string> }>({
+  homeGoals: 0, awayGoals: 0, outcomeAfterDraw: null, scorerPlayerIds: [],
 })
 
 const resultFormIsKnockout = computed((): boolean => {
@@ -345,9 +358,20 @@ const resultFormIsKnockout = computed((): boolean => {
   return match ? KNOCKOUT_STAGES.includes(match.stage) : false
 })
 
+const resultFormMatchObj = computed(() => {
+  if (!resultFormMatchId.value) return null
+  return store.matches.find(m => m.id === resultFormMatchId.value) ?? null
+})
+
 function openResultForm(matchId: string): void {
   resultFormMatchId.value = matchId
-  resultForm.value = { homeGoals: 0, awayGoals: 0, outcomeAfterDraw: null }
+  const match = store.matches.find(m => m.id === matchId)
+  resultForm.value = {
+    homeGoals: match?.result?.homeGoals ?? 0,
+    awayGoals: match?.result?.awayGoals ?? 0,
+    outcomeAfterDraw: match?.result?.outcomeAfterDraw ?? null,
+    scorerPlayerIds: match?.result?.scorerPlayerIds ?? [],
+  }
 }
 
 async function submitResult(): Promise<void> {
@@ -358,6 +382,7 @@ async function submitResult(): Promise<void> {
     outcomeAfterDraw: resultFormIsKnockout.value && resultForm.value.homeGoals === resultForm.value.awayGoals
       ? resultForm.value.outcomeAfterDraw
       : null,
+    scorerPlayerIds: resultForm.value.scorerPlayerIds,
   }
   await store.setResult(resultFormMatchId.value, input)
   if (!store.error) resultFormMatchId.value = null

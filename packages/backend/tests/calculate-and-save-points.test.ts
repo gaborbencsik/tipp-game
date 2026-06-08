@@ -1,14 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 const {
-  mockSelect, mockFrom, mockWhere, mockUpdate, mockSet, mockUpdateWhere, mockUpdateReturning,
+  mockSelect, mockFrom, mockWhere, mockLimit, mockUpdate, mockSet, mockUpdateWhere, mockUpdateReturning,
   mockInsert, mockInsertValues, mockOnConflict,
 } = vi.hoisted(() => {
   const mockUpdateReturning = vi.fn().mockResolvedValue([])
   const mockUpdateWhere = vi.fn(() => ({ returning: mockUpdateReturning }))
   const mockSet = vi.fn(() => ({ where: mockUpdateWhere }))
   const mockUpdate = vi.fn(() => ({ set: mockSet }))
-  const mockWhere = vi.fn()
+  const mockLimit = vi.fn().mockResolvedValue([])
+  const mockWhere = vi.fn(() => ({ limit: mockLimit }))
   const mockFrom = vi.fn(() => ({ where: mockWhere }))
   const mockSelect = vi.fn(() => ({ from: mockFrom }))
 
@@ -17,7 +18,7 @@ const {
   const mockInsert = vi.fn(() => ({ values: mockInsertValues }))
 
   return {
-    mockSelect, mockFrom, mockWhere, mockUpdate, mockSet, mockUpdateWhere, mockUpdateReturning,
+    mockSelect, mockFrom, mockWhere, mockLimit, mockUpdate, mockSet, mockUpdateWhere, mockUpdateReturning,
     mockInsert, mockInsertValues, mockOnConflict,
   }
 })
@@ -62,12 +63,26 @@ describe('calculateAndSavePoints', () => {
     mockUpdate.mockReturnValue({ set: mockSet })
   })
 
+  function setupSelectChain(predictionsRows: unknown[], configRows: unknown[], scorerRows: unknown[] = []) {
+    // Three parallel selects: predictions, configs, matchResults.scorerPlayerIds
+    // Predictions: select().from().where()
+    const mockPredWhere = vi.fn().mockResolvedValue(predictionsRows)
+    const mockPredFrom = vi.fn().mockReturnValue({ where: mockPredWhere })
+    // Configs: select().from().where()
+    const mockConfWhere = vi.fn().mockResolvedValue(configRows)
+    const mockConfFrom = vi.fn().mockReturnValue({ where: mockConfWhere })
+    // Scorer: select().from().where().limit(1)
+    const mockScorerLimit = vi.fn().mockResolvedValue(scorerRows)
+    const mockScorerWhere = vi.fn().mockReturnValue({ limit: mockScorerLimit })
+    const mockScorerFrom = vi.fn().mockReturnValue({ where: mockScorerWhere })
+    mockSelect
+      .mockReturnValueOnce({ from: mockPredFrom })
+      .mockReturnValueOnce({ from: mockConfFrom })
+      .mockReturnValueOnce({ from: mockScorerFrom })
+  }
+
   it('fetches predictions and global config, then updates each prediction', async () => {
-    // First select: predictions
-    // Second select: scoring config
-    mockWhere
-      .mockResolvedValueOnce(PREDICTIONS)
-      .mockResolvedValueOnce([DEFAULT_CONFIG_ROW])
+    setupSelectChain(PREDICTIONS, [DEFAULT_CONFIG_ROW])
 
     await calculateAndSavePoints(MATCH_ID, RESULT)
 
@@ -75,9 +90,7 @@ describe('calculateAndSavePoints', () => {
   })
 
   it('calculates correct points per prediction', async () => {
-    mockWhere
-      .mockResolvedValueOnce(PREDICTIONS)
-      .mockResolvedValueOnce([DEFAULT_CONFIG_ROW])
+    setupSelectChain(PREDICTIONS, [DEFAULT_CONFIG_ROW])
 
     await calculateAndSavePoints(MATCH_ID, RESULT)
 
@@ -86,22 +99,17 @@ describe('calculateAndSavePoints', () => {
   })
 
   it('is idempotent — runs twice without error', async () => {
-    mockWhere
-      .mockResolvedValueOnce(PREDICTIONS)
-      .mockResolvedValueOnce([DEFAULT_CONFIG_ROW])
-      .mockResolvedValueOnce(PREDICTIONS)
-      .mockResolvedValueOnce([DEFAULT_CONFIG_ROW])
-
+    setupSelectChain(PREDICTIONS, [DEFAULT_CONFIG_ROW])
     await calculateAndSavePoints(MATCH_ID, RESULT)
+
+    setupSelectChain(PREDICTIONS, [DEFAULT_CONFIG_ROW])
     await calculateAndSavePoints(MATCH_ID, RESULT)
 
     expect(mockUpdate).toHaveBeenCalledTimes(6)
   })
 
   it('no predictions → no updates', async () => {
-    mockWhere
-      .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([DEFAULT_CONFIG_ROW])
+    setupSelectChain([], [DEFAULT_CONFIG_ROW])
 
     await calculateAndSavePoints(MATCH_ID, RESULT)
 
@@ -109,11 +117,47 @@ describe('calculateAndSavePoints', () => {
   })
 
   it('no global config → throws', async () => {
-    mockWhere
-      .mockResolvedValueOnce(PREDICTIONS)
-      .mockResolvedValueOnce([])
+    setupSelectChain(PREDICTIONS, [])
 
     await expect(calculateAndSavePoints(MATCH_ID, RESULT)).rejects.toThrow('No global scoring config found')
+  })
+
+  it('SCORER-003: scorer pick + match goal → +1 added to points_global, scorer_bonus_points=1', async () => {
+    const PREDS = [
+      { id: 'pred-1', userId: 'u1', matchId: MATCH_ID, homeGoals: 2, awayGoals: 1, scorerPickPlayerId: 'player-x' },
+    ]
+    setupSelectChain(PREDS, [DEFAULT_CONFIG_ROW], [{ scorerPlayerIds: ['player-x'] }])
+
+    await calculateAndSavePoints(MATCH_ID, RESULT)
+
+    const args = mockSet.mock.calls[0]?.[0] as { pointsGlobal: number; scorerBonusPoints: number }
+    expect(args.pointsGlobal).toBe(3)        // exact (2) + scorer (1)
+    expect(args.scorerBonusPoints).toBe(1)
+  })
+
+  it('SCORER-003: scorer pick miss → scorer_bonus_points=0, points_global unchanged', async () => {
+    const PREDS = [
+      { id: 'pred-1', userId: 'u1', matchId: MATCH_ID, homeGoals: 2, awayGoals: 1, scorerPickPlayerId: 'player-x' },
+    ]
+    setupSelectChain(PREDS, [DEFAULT_CONFIG_ROW], [{ scorerPlayerIds: ['player-y'] }])
+
+    await calculateAndSavePoints(MATCH_ID, RESULT)
+
+    const args = mockSet.mock.calls[0]?.[0] as { pointsGlobal: number; scorerBonusPoints: number }
+    expect(args.pointsGlobal).toBe(2)
+    expect(args.scorerBonusPoints).toBe(0)
+  })
+
+  it('SCORER-003: no scorer pick → scorer_bonus_points=0', async () => {
+    const PREDS = [
+      { id: 'pred-1', userId: 'u1', matchId: MATCH_ID, homeGoals: 2, awayGoals: 1, scorerPickPlayerId: null },
+    ]
+    setupSelectChain(PREDS, [DEFAULT_CONFIG_ROW], [{ scorerPlayerIds: ['player-x'] }])
+
+    await calculateAndSavePoints(MATCH_ID, RESULT)
+
+    const args = mockSet.mock.calls[0]?.[0] as { pointsGlobal: number; scorerBonusPoints: number }
+    expect(args.scorerBonusPoints).toBe(0)
   })
 })
 
@@ -125,8 +169,8 @@ describe('calculateAndSaveGroupPoints', () => {
     mockInsert.mockReturnValue({ values: mockInsertValues })
   })
 
-  function setupParallelSelect(predictions: unknown[], matchRow: unknown) {
-    // The function does Promise.all([selectPredictions, selectMatch])
+  function setupParallelSelect(predictions: unknown[], matchRow: unknown, scorerRows: unknown[] = []) {
+    // The function does Promise.all([selectPredictions, selectMatch, selectScorerIds])
     // First call to select → predictions chain
     const mockPredWhere = vi.fn().mockResolvedValue(predictions)
     const mockPredFrom = vi.fn().mockReturnValue({ where: mockPredWhere })
@@ -136,9 +180,15 @@ describe('calculateAndSaveGroupPoints', () => {
     const mockMatchWhere = vi.fn().mockReturnValue({ limit: mockMatchLimit })
     const mockMatchFrom = vi.fn().mockReturnValue({ where: mockMatchWhere })
 
+    // Third call → match_results scorer ids (.from().where().limit())
+    const mockScorerLimit = vi.fn().mockResolvedValue(scorerRows)
+    const mockScorerWhere = vi.fn().mockReturnValue({ limit: mockScorerLimit })
+    const mockScorerFrom = vi.fn().mockReturnValue({ where: mockScorerWhere })
+
     mockSelect
       .mockReturnValueOnce({ from: mockPredFrom })
       .mockReturnValueOnce({ from: mockMatchFrom })
+      .mockReturnValueOnce({ from: mockScorerFrom })
   }
 
   function setupFavoritesSelect(favorites: unknown[]) {

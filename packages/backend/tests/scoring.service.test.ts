@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { calculatePoints, applyFavoriteTeamMultiplier } from '../src/services/scoring.service.js'
+import { calculatePoints, calculateScorerBonus, calculatePointsWithScorer, applyFavoriteTeamMultiplier } from '../src/services/scoring.service.js'
 import type { ScoringConfig } from '../src/types/index.js'
 
 const cfg: ScoringConfig = {
@@ -90,5 +90,127 @@ describe('applyFavoriteTeamMultiplier', () => {
       userFavorites: [{ userId: 'u1', leagueId: 'l1', teamId: 't-home' }],
     }
     expect(applyFavoriteTeamMultiplier(3, ctx)).toBe(3)
+  })
+})
+
+
+// ─── SCORER-003: calculateScorerBonus ────────────────────────────────────────
+
+describe('calculateScorerBonus', () => {
+  it('nincs scorer pick → 0', () => {
+    expect(calculateScorerBonus({ scorerPickPlayerId: null, matchScorerPlayerIds: ['p1'] })).toBe(0)
+  })
+
+  it('scorer pick benne van a góllövő tömbben → 1', () => {
+    expect(calculateScorerBonus({ scorerPickPlayerId: 'p1', matchScorerPlayerIds: ['p1', 'p2'] })).toBe(1)
+  })
+
+  it('scorer pick nincs benne → 0', () => {
+    expect(calculateScorerBonus({ scorerPickPlayerId: 'p3', matchScorerPlayerIds: ['p1', 'p2'] })).toBe(0)
+  })
+
+  it('üres góllövő tömb → 0', () => {
+    expect(calculateScorerBonus({ scorerPickPlayerId: 'p1', matchScorerPlayerIds: [] })).toBe(0)
+  })
+
+  it('hat-trick (3 ugyanaz az id) → 1 (set semantics)', () => {
+    expect(calculateScorerBonus({ scorerPickPlayerId: 'p1', matchScorerPlayerIds: ['p1', 'p1', 'p1'] })).toBe(1)
+  })
+
+  it('null scorer + üres tömb → 0', () => {
+    expect(calculateScorerBonus({ scorerPickPlayerId: null, matchScorerPlayerIds: [] })).toBe(0)
+  })
+
+  it('case-sensitive uuid match', () => {
+    expect(calculateScorerBonus({ scorerPickPlayerId: 'P1', matchScorerPlayerIds: ['p1'] })).toBe(0)
+  })
+
+  it('több id között a végén is megtalálja', () => {
+    expect(calculateScorerBonus({ scorerPickPlayerId: 'p9', matchScorerPlayerIds: ['p1', 'p2', 'p9'] })).toBe(1)
+  })
+})
+
+// ─── SCORER-003: calculatePointsWithScorer ───────────────────────────────────
+
+describe('calculatePointsWithScorer (formula: (resultPoints + scorerBonus) * favoriteTeamMultiplier)', () => {
+  const baseCtx = {
+    userId: 'u1',
+    groupFavoriteTeamDoublePoints: false,
+    match: { homeTeamId: 't-home', awayTeamId: 't-away', leagueId: 'l1' },
+    userFavorites: [],
+  } as const
+
+  it('helyes kimenetel + pontos eredmény + scorer talált, nincs kedvenc → (1+1+1) * 1 = 3, scorerBonus=1', () => {
+    const out = calculatePointsWithScorer(
+      { homeGoals: 2, awayGoals: 1 },
+      { homeGoals: 2, awayGoals: 1 },
+      cfg,
+      { scorerPickPlayerId: 'p1', matchScorerPlayerIds: ['p1'] },
+      baseCtx,
+    )
+    expect(out).toEqual({ pointsGlobal: 3, scorerBonusPoints: 1 })
+  })
+
+  it('helyes kimenetel + scorer talált + kedvenc → (1+1) * 2 = 4, scorerBonus=1', () => {
+    const out = calculatePointsWithScorer(
+      { homeGoals: 2, awayGoals: 1 },
+      { homeGoals: 3, awayGoals: 2 },
+      cfg,
+      { scorerPickPlayerId: 'p1', matchScorerPlayerIds: ['p1'] },
+      {
+        ...baseCtx,
+        groupFavoriteTeamDoublePoints: true,
+        userFavorites: [{ userId: 'u1', leagueId: 'l1', teamId: 't-home' }],
+      },
+    )
+    expect(out).toEqual({ pointsGlobal: 4, scorerBonusPoints: 1 })
+  })
+
+  it('rossz kimenetel + scorer talált, nincs kedvenc → (0+1) * 1 = 1', () => {
+    const out = calculatePointsWithScorer(
+      { homeGoals: 2, awayGoals: 1 },
+      { homeGoals: 1, awayGoals: 2 },
+      cfg,
+      { scorerPickPlayerId: 'p1', matchScorerPlayerIds: ['p1'] },
+      baseCtx,
+    )
+    expect(out).toEqual({ pointsGlobal: 1, scorerBonusPoints: 1 })
+  })
+
+  it('helyes kimenetel + scorer NEM talált, nincs kedvenc → (1+0) * 1 = 1, scorerBonus=0', () => {
+    const out = calculatePointsWithScorer(
+      { homeGoals: 2, awayGoals: 1 },
+      { homeGoals: 3, awayGoals: 2 },
+      cfg,
+      { scorerPickPlayerId: 'p1', matchScorerPlayerIds: ['p2'] },
+      baseCtx,
+    )
+    expect(out).toEqual({ pointsGlobal: 1, scorerBonusPoints: 0 })
+  })
+
+  it('helyes kimenetel + scorer NEM talált + kedvenc → (1+0) * 2 = 2', () => {
+    const out = calculatePointsWithScorer(
+      { homeGoals: 2, awayGoals: 1 },
+      { homeGoals: 3, awayGoals: 2 },
+      cfg,
+      { scorerPickPlayerId: 'p1', matchScorerPlayerIds: ['p2'] },
+      {
+        ...baseCtx,
+        groupFavoriteTeamDoublePoints: true,
+        userFavorites: [{ userId: 'u1', leagueId: 'l1', teamId: 't-away' }],
+      },
+    )
+    expect(out).toEqual({ pointsGlobal: 2, scorerBonusPoints: 0 })
+  })
+
+  it('nincs scorer tipp → scorerBonus=0, pontok változatlanok', () => {
+    const out = calculatePointsWithScorer(
+      { homeGoals: 2, awayGoals: 1 },
+      { homeGoals: 2, awayGoals: 1 },
+      cfg,
+      { scorerPickPlayerId: null, matchScorerPlayerIds: ['p1'] },
+      baseCtx,
+    )
+    expect(out).toEqual({ pointsGlobal: 2, scorerBonusPoints: 0 })
   })
 })

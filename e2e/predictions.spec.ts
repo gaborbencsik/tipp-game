@@ -1,6 +1,9 @@
 import { test, expect } from '@playwright/test'
 import { injectSession } from './helpers/auth.js'
-import { ensureUser, createLeague, createTeam, createMatch, createPlayer } from './helpers/api.js'
+import {
+  ensureUser, createLeague, createTeam, createMatch, createPlayer,
+  createPrediction, setMatchResult,
+} from './helpers/api.js'
 
 let matchId: string
 let finishedMatchId: string

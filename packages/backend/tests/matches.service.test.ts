@@ -169,7 +169,7 @@ describe('getMatches', () => {
 
     const result = await getMatches()
 
-    expect(result[0]?.result).toEqual({ homeGoals: 2, awayGoals: 1, outcomeAfterDraw: null })
+    expect(result[0]?.result).toEqual({ homeGoals: 2, awayGoals: 1, outcomeAfterDraw: null, scorerPlayerIds: [] })
   })
 
   it('scheduled match → result: null', async () => {
@@ -349,12 +349,13 @@ describe('setResult', () => {
     mockSet.mockReturnValue({ where: mockWhere2 })
     mockUpdate.mockReturnValue({ set: mockSet })
 
-    // calculateAndSavePoints: select predictions (empty) + select config
+    // calculateAndSavePoints: select predictions (empty) + select config + select scorer ids
     // calculateAndSaveGroupPoints: select predictions (empty)
     const CONFIG_ROW = { id: 'cfg-1', exactScore: 3, correctWinnerAndDiff: 2, correctWinner: 1, correctDraw: 2, incorrect: 0, isGlobalDefault: true }
     mockWhere
       .mockResolvedValueOnce([])        // predictions for match → empty, no updates needed
       .mockResolvedValueOnce([CONFIG_ROW]) // scoring config
+      .mockReturnValueOnce({ limit: vi.fn().mockResolvedValue([]) })  // matchResults scorer ids
       .mockResolvedValueOnce([])        // calculateAndSaveGroupPoints: predictions for match → empty
 
     const result = await setResult('match-uuid-1', 2, 1, 'admin-uuid')
@@ -373,5 +374,64 @@ describe('setResult', () => {
 
     await expect(setResult('match-uuid-1', 2, 1, 'admin-uuid'))
       .rejects.toMatchObject({ status: 500 })
+  })
+
+  // ─── SCORER-003: scorerPlayerIds validation ─────────────────────────────────
+
+  it('scorerPlayerIds with player not in match teams → 400 scorer_ids_invalid_team', async () => {
+    // 1st select: match teams
+    // 2nd select: players (each must belong to home or away)
+    mockWhere
+      .mockReturnValueOnce({ limit: vi.fn().mockResolvedValue([{ homeTeamId: 'ht', awayTeamId: 'at' }]) })
+      .mockResolvedValueOnce([
+        { id: 'p1', teamId: 'ht' },
+        { id: 'p2', teamId: 'OTHER-TEAM' }, // foreign
+      ])
+
+    await expect(setResult('match-uuid-1', 2, 1, 'admin-uuid', null, ['p1', 'p2']))
+      .rejects.toMatchObject({ status: 400, message: 'scorer_ids_invalid_team' })
+  })
+
+  it('scorerPlayerIds with unknown id → 400 scorer_ids_player_not_found', async () => {
+    mockWhere
+      .mockReturnValueOnce({ limit: vi.fn().mockResolvedValue([{ homeTeamId: 'ht', awayTeamId: 'at' }]) })
+      .mockResolvedValueOnce([{ id: 'p1', teamId: 'ht' }]) // only 1 found, but 2 ids passed
+
+    await expect(setResult('match-uuid-1', 2, 1, 'admin-uuid', null, ['p1', 'unknown']))
+      .rejects.toMatchObject({ status: 400, message: 'scorer_ids_player_not_found' })
+  })
+
+  it('scorerPlayerIds dedup: duplicates collapsed before insert/validation', async () => {
+    // After dedup ['p1','p1','p2'] → ['p1','p2']; both valid
+    mockWhere
+      .mockReturnValueOnce({ limit: vi.fn().mockResolvedValue([{ homeTeamId: 'ht', awayTeamId: 'at' }]) })
+      .mockResolvedValueOnce([
+        { id: 'p1', teamId: 'ht' },
+        { id: 'p2', teamId: 'at' },
+      ])
+
+    const resultRow = {
+      id: 'r1', matchId: 'match-uuid-1', homeGoals: 2, awayGoals: 1,
+      recordedBy: 'admin-uuid', recordedAt: new Date(), updatedAt: new Date(),
+      scorerPlayerIds: ['p1', 'p2'],
+    }
+    mockReturning.mockResolvedValue([resultRow])
+    mockValues.mockReturnValue({ onConflictDoUpdate: vi.fn().mockReturnValue({ returning: mockReturning }) })
+    mockInsert.mockReturnValue({ values: mockValues })
+    const mockWhere2 = vi.fn().mockResolvedValue(undefined)
+    mockSet.mockReturnValue({ where: mockWhere2 })
+    mockUpdate.mockReturnValue({ set: mockSet })
+
+    // calculateAndSavePoints + group: predictions empty
+    mockWhere
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ id: 'cfg', isGlobalDefault: true, correctOutcomePoints: 1, exactBonusPoints: 1, extraTimeBonusPoints: 1 }])
+      .mockReturnValueOnce({ limit: vi.fn().mockResolvedValue([]) })
+      .mockResolvedValueOnce([])
+
+    await setResult('match-uuid-1', 2, 1, 'admin-uuid', null, ['p1', 'p1', 'p2'])
+
+    const valuesArg = mockValues.mock.calls[0]?.[0] as { scorerPlayerIds: string[] }
+    expect(valuesArg.scorerPlayerIds).toEqual(['p1', 'p2'])
   })
 })

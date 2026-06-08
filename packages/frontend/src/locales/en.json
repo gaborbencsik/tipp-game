@@ -90,7 +90,11 @@
       "noRoster": "Rosters not available yet",
       "tooltipKnockout": "Shootout goals don't count. Regular time (and extra time) goals and penalties do. Own goals don't count.",
       "delete": "Delete scorer pick",
-      "rosterRemovedWarning": "The selected player is no longer in the squad — pick another"
+      "rosterRemovedWarning": "The selected player is no longer in the squad — pick another",
+      "hit": "Hit: +1",
+      "miss": "Miss: 0",
+      "pending": "Awaiting evaluation",
+      "favoriteDoubled": "(×2 this match)"
     }
   },
   "matchDetail": {

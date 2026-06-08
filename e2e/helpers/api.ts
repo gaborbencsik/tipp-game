@@ -201,10 +201,25 @@ export async function createPrediction(
   matchId: string,
   homeGoals: number,
   awayGoals: number,
+  scorerPickPlayerId?: string,
 ): Promise<TestPrediction> {
   return post('/api/predictions', {
     matchId,
     homeGoals,
     awayGoals,
+    ...(scorerPickPlayerId ? { scorerPickPlayerId } : {}),
   }) as Promise<TestPrediction>
+}
+
+export async function setMatchResult(
+  matchId: string,
+  homeGoals: number,
+  awayGoals: number,
+  scorerPlayerIds?: ReadonlyArray<string>,
+): Promise<unknown> {
+  return post(`/api/admin/matches/${matchId}/result`, {
+    homeGoals,
+    awayGoals,
+    ...(scorerPlayerIds ? { scorerPlayerIds } : {}),
+  })
 }

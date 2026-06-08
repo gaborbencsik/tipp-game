@@ -203,6 +203,16 @@
                 <span>{{ $t('matchDetail.noTip') }}</span>
               </template>
             </div>
+            <div
+              v-if="myPrediction?.scorerPickPlayerId"
+              class="text-center text-sm flex items-center justify-center gap-2 mt-2"
+              data-testid="scorer-badge"
+            >
+              <span :class="lockedScorerNameClass">⚽ {{ $t('matches.scorer.label') }} {{ myPrediction.scorerPlayerNameSnapshot }}</span>
+              <span :class="lockedScorerBadgeClass" class="text-xs font-semibold px-2 py-0.5 rounded border">
+                {{ lockedScorerBadgeLabel }}
+              </span>
+            </div>
           </template>
         </div>
 
@@ -403,6 +413,34 @@ const isScorerDirty = computed((): boolean => {
 const isKnockoutStage = computed((): boolean => {
   if (!match.value) return false
   return KNOCKOUT_STAGES.includes(match.value.stage)
+})
+
+const lockedScorerStatus = computed((): 'pending' | 'hit' | 'miss' => {
+  const pred = myPrediction.value
+  if (!pred || pred.scorerBonusPoints === null || pred.scorerBonusPoints === undefined) return 'pending'
+  return pred.scorerBonusPoints > 0 ? 'hit' : 'miss'
+})
+
+const lockedScorerNameClass = computed((): string =>
+  lockedScorerStatus.value === 'miss'
+    ? 'text-gray-500 line-through decoration-gray-300'
+    : 'text-gray-700',
+)
+
+const lockedScorerBadgeClass = computed((): string => {
+  switch (lockedScorerStatus.value) {
+    case 'hit':     return 'bg-green-50 text-green-700 border-green-200'
+    case 'miss':    return 'bg-gray-50 text-gray-500 border-gray-200'
+    case 'pending': return 'bg-blue-50 text-blue-700 border-blue-200'
+  }
+})
+
+const lockedScorerBadgeLabel = computed((): string => {
+  switch (lockedScorerStatus.value) {
+    case 'hit':     return t('matches.scorer.hit')
+    case 'miss':    return t('matches.scorer.miss')
+    case 'pending': return t('matches.scorer.pending')
+  }
 })
 
 async function loadMatchPredictions(): Promise<void> {
