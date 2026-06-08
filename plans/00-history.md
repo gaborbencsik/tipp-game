@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 150 story kész (Must Have: 31/31, Should Have: 119/119)
+> 151 story kész (Must Have: 31/31, Should Have: 120/120)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -154,3 +154,4 @@
 | PUSH-004 | Push: napi review (cron + endpoint, Europe/Budapest naptári dátum scope) | Should Have |
 | PUSH-008 | Admin toggle a kickoff reminder + daily review cron jobokra | Should Have |
 | PUSH-009 | Admin push címzettek részletes listája (modal) | Should Have |
+| SCORER-002 | Góllövő tipp – tipp leadása és tárolása | Should Have |
