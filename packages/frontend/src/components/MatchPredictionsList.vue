@@ -29,7 +29,14 @@ function isCurrentUser(p: MatchPrediction): boolean {
           isCurrentUser(p) ? 'ring-2 ring-blue-300 bg-blue-50' : '',
         ]"
       >
-        <span class="font-medium text-sm truncate flex-1">{{ p.displayName }}</span>
+        <span class="font-medium text-sm truncate flex-1">
+          {{ p.displayName }}
+          <span
+            v-if="p.isPaid"
+            data-testid="match-prediction-paid-badge"
+            aria-label="Paid"
+          >💰</span>
+        </span>
         <span class="font-mono text-sm bg-gray-100 px-2 py-0.5 rounded mx-2">
           {{ p.homeGoals }} – {{ p.awayGoals }}
         </span>

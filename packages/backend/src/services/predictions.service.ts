@@ -1,6 +1,6 @@
 import { eq, isNull, desc, sql } from 'drizzle-orm'
 import { db } from '../db/client.js'
-import { users, matches, predictions, players } from '../db/schema/index.js'
+import { users, matches, predictions, players, groupMembers } from '../db/schema/index.js'
 import type { MatchOutcome, MatchPrediction, Prediction, PredictionInput } from '../types/index.js'
 
 class AppError extends Error {
@@ -157,7 +157,7 @@ export async function getPredictionsForUser(
   return rows.map(toApiPrediction)
 }
 
-export async function getMatchPredictions(matchId: string): Promise<MatchPrediction[]> {
+export async function getMatchPredictions(matchId: string, groupId?: string): Promise<MatchPrediction[]> {
   const matchRows = await db
     .select()
     .from(matches)
@@ -167,7 +167,7 @@ export async function getMatchPredictions(matchId: string): Promise<MatchPredict
   if (!match) throw new AppError(404, 'Match not found')
   if (match.status === 'scheduled') throw new AppError(403, 'Predictions not available until match starts')
 
-  return db
+  const rows = await db
     .select({
       userId: users.id,
       displayName: users.displayName,
@@ -179,4 +179,13 @@ export async function getMatchPredictions(matchId: string): Promise<MatchPredict
     .innerJoin(users, eq(predictions.userId, users.id))
     .where(eq(predictions.matchId, matchId))
     .orderBy(sql`${predictions.pointsGlobal} desc nulls last`)
+
+  if (groupId === undefined) return rows
+
+  const memberRows = await db
+    .select({ userId: groupMembers.userId, paidAt: groupMembers.paidAt })
+    .from(groupMembers)
+    .where(eq(groupMembers.groupId, groupId))
+  const paidByUser = new Map(memberRows.map(m => [m.userId, m.paidAt !== null]))
+  return rows.map(r => ({ ...r, isPaid: paidByUser.get(r.userId) ?? false }))
 }

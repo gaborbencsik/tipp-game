@@ -121,6 +121,13 @@
                   />
                   <span class="font-medium text-gray-800 truncate">{{ entry.displayName }}</span>
                   <span
+                    v-if="entry.isPaid"
+                    :title="$t('groupDetail.memberPaidTooltip')"
+                    data-testid="leaderboard-paid-badge"
+                    aria-label="Paid"
+                    class="shrink-0"
+                  >💰</span>
+                  <span
                     v-if="entry.favoriteTeam?.countryCode"
                     :class="`fi fi-${entry.favoriteTeam.countryCode}`"
                     :title="entry.favoriteTeam.name"
@@ -169,6 +176,12 @@
                     class="w-7 h-7 rounded-full object-cover shrink-0"
                   />
                   <span class="font-medium text-gray-800">{{ member.displayName }}</span>
+                  <span
+                    v-if="member.isPaid"
+                    :title="$t('groupDetail.memberPaidTooltip')"
+                    data-testid="member-paid-badge"
+                    aria-label="Paid"
+                  >💰</span>
                   <span v-if="member.userId === authStore.user?.id" class="text-xs text-blue-600">{{ $t('groupDetail.you') }}</span>
                 </div>
               </td>
@@ -181,9 +194,10 @@
                 </span>
               </td>
               <td class="px-4 py-3 text-gray-500 text-sm">{{ formatDate(member.joinedAt) }}</td>
-              <td v-if="currentUserIsGroupAdmin" class="px-4 py-3">
+              <td v-if="currentUserIsGroupAdmin || isGlobalAdmin" class="px-4 py-3">
                 <div class="flex gap-2">
                   <button
+                    v-if="currentUserIsGroupAdmin"
                     :disabled="member.userId === authStore.user?.id"
                     class="text-xs px-2 py-1 rounded border border-blue-300 text-blue-600 disabled:opacity-40 disabled:cursor-not-allowed"
                     @click="onToggleAdmin(member)"
@@ -191,11 +205,20 @@
                     {{ member.isAdmin ? $t('groupDetail.demoteAdmin') : $t('groupDetail.promoteAdmin') }}
                   </button>
                   <button
+                    v-if="currentUserIsGroupAdmin"
                     :disabled="member.userId === authStore.user?.id"
                     class="text-xs px-2 py-1 rounded border border-red-300 text-red-600 disabled:opacity-40 disabled:cursor-not-allowed"
                     @click="confirmRemoveUserId = member.userId"
                   >
                     {{ $t('groupDetail.removeMember') }}
+                  </button>
+                  <button
+                    v-if="isGlobalAdmin"
+                    :data-testid="`paid-toggle-${member.userId}`"
+                    class="text-xs px-2 py-1 rounded border border-amber-300 text-amber-700 hover:bg-amber-50"
+                    @click="onTogglePaid(member)"
+                  >
+                    {{ member.isPaid ? $t('groupDetail.memberPaidToggleOff') : $t('groupDetail.memberPaidToggleOn') }}
                   </button>
                 </div>
               </td>
@@ -1103,6 +1126,10 @@ function setCopiedInvite(type: 'code' | 'url'): void {
 
 async function onToggleAdmin(member: GroupMember): Promise<void> {
   await groupsStore.toggleMemberAdmin(groupId, member.userId, !member.isAdmin)
+}
+
+async function onTogglePaid(member: GroupMember): Promise<void> {
+  await groupsStore.setMemberPaid(groupId, member.userId, !member.isPaid)
 }
 
 async function onConfirmRemove(): Promise<void> {

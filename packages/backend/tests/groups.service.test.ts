@@ -24,7 +24,7 @@ vi.mock('../src/services/tournament-tips-replication.service.js', () => ({
   replicateUserTipsToGroup: mockReplicateUserTipsToGroup,
 }))
 
-import { getMyGroups, createGroup, joinGroup, getGroupMembers, removeMember, setMemberAdmin, regenerateInviteCode, setInviteActive, deleteGroup, setGroupLeague } from '../src/services/groups.service.js'
+import { getMyGroups, createGroup, joinGroup, getGroupMembers, removeMember, setMemberAdmin, setMemberPaidStatus, regenerateInviteCode, setInviteActive, deleteGroup, setGroupLeague } from '../src/services/groups.service.js'
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
 
@@ -106,6 +106,7 @@ const MEMBER_ROW_ADMIN = {
   displayName: 'Alice',
   avatarUrl: null,
   isAdmin: true,
+  paidAt: null,
   joinedAt: NOW,
 }
 
@@ -115,6 +116,7 @@ const MEMBER_ROW_TARGET = {
   displayName: 'Bob',
   avatarUrl: null,
   isAdmin: false,
+  paidAt: null,
   joinedAt: NOW,
 }
 
@@ -124,6 +126,7 @@ const MEMBER_ROW_ADMIN2 = {
   displayName: 'Carol',
   avatarUrl: null,
   isAdmin: true,
+  paidAt: null,
   joinedAt: NOW,
 }
 
@@ -538,6 +541,65 @@ describe('setMemberAdmin', () => {
       isAdmin: true,
       displayName: 'Bob',
     })
+  })
+})
+
+// ─── setMemberPaidStatus (ADMIN-001) ──────────────────────────────────────────
+
+describe('setMemberPaidStatus', () => {
+  beforeEach(() => { vi.resetAllMocks() })
+
+  it('group not found → AppError 404', async () => {
+    mockSelect.mockReturnValueOnce(makeSelectChain([]))
+    await expect(setMemberPaidStatus('group-uuid-1', TARGET_ID, true, REQUESTER_ID))
+      .rejects.toMatchObject({ status: 404, message: 'Group not found' })
+  })
+
+  it('target member not found → AppError 404', async () => {
+    mockSelect
+      .mockReturnValueOnce(makeSelectChain([GROUP_ROW]))
+      .mockReturnValueOnce(makeSelectChain([]))
+    await expect(setMemberPaidStatus('group-uuid-1', TARGET_ID, true, REQUESTER_ID))
+      .rejects.toMatchObject({ status: 404, message: 'Member not found' })
+  })
+
+  it('paid=true → updates paidAt to a Date, isPaid=true, audit log written', async () => {
+    mockSelect
+      .mockReturnValueOnce(makeSelectChain([GROUP_ROW]))
+      .mockReturnValueOnce(makeSelectChain([MEMBER_ROW_TARGET]))
+    const update = makeUpdateChain([{ ...MEMBER_ROW_TARGET, paidAt: NOW }])
+    mockUpdate.mockReturnValue({ set: update.setFn })
+    const insert = makeInsertChain()
+    mockInsert.mockReturnValue({ values: insert.valuesFn })
+
+    const result = await setMemberPaidStatus('group-uuid-1', TARGET_ID, true, REQUESTER_ID)
+
+    expect(result.isPaid).toBe(true)
+    expect(result.userId).toBe(TARGET_ID)
+    const setArg = update.setFn.mock.calls[0]?.[0] as { paidAt: Date | null }
+    expect(setArg.paidAt).toBeInstanceOf(Date)
+    expect(insert.valuesFn).toHaveBeenCalledOnce()
+    const auditArg = insert.valuesFn.mock.calls[0]?.[0] as { action: string; actorId: string; entityType: string }
+    expect(auditArg.action).toBe('group_member_paid_set')
+    expect(auditArg.actorId).toBe(REQUESTER_ID)
+    expect(auditArg.entityType).toBe('group_member')
+  })
+
+  it('paid=false on previously paid member → paidAt=null, isPaid=false', async () => {
+    const previouslyPaid = { ...MEMBER_ROW_TARGET, paidAt: NOW }
+    mockSelect
+      .mockReturnValueOnce(makeSelectChain([GROUP_ROW]))
+      .mockReturnValueOnce(makeSelectChain([previouslyPaid]))
+    const update = makeUpdateChain([{ ...previouslyPaid, paidAt: null }])
+    mockUpdate.mockReturnValue({ set: update.setFn })
+    const insert = makeInsertChain()
+    mockInsert.mockReturnValue({ values: insert.valuesFn })
+
+    const result = await setMemberPaidStatus('group-uuid-1', TARGET_ID, false, REQUESTER_ID)
+
+    expect(result.isPaid).toBe(false)
+    const setArg = update.setFn.mock.calls[0]?.[0] as { paidAt: Date | null }
+    expect(setArg.paidAt).toBeNull()
   })
 })
 

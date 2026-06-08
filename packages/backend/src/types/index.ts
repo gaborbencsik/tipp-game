@@ -283,6 +283,7 @@ export interface GroupMember {
   readonly displayName: string
   readonly avatarUrl: string | null
   readonly isAdmin: boolean
+  readonly isPaid: boolean
   readonly joinedAt: string
 }
 
@@ -482,6 +483,7 @@ export interface MatchPrediction {
   readonly homeGoals: number
   readonly awayGoals: number
   readonly pointsGlobal: number | null
+  readonly isPaid?: boolean
 }
 
 export interface SpecialPredictionInput {

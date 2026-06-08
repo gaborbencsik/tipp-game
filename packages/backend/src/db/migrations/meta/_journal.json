@@ -463,6 +463,13 @@
       "when": 1788000000009,
       "tag": "0065_scorer_prediction",
       "breakpoints": true
+    },
+    {
+      "idx": 66,
+      "version": "7",
+      "when": 1788000000010,
+      "tag": "0066_group_member_paid_at",
+      "breakpoints": true
     }
   ]
 }

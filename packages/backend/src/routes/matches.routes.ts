@@ -41,7 +41,8 @@ router.get('/api/leagues', authMiddleware, async (ctx) => {
 })
 
 router.get('/api/matches/:matchId/predictions', authMiddleware, async (ctx) => {
-  ctx.body = await getMatchPredictions(ctx.params.matchId)
+  const groupId = typeof ctx.query['groupId'] === 'string' ? ctx.query['groupId'] : undefined
+  ctx.body = await getMatchPredictions(ctx.params.matchId, groupId)
 })
 
 router.get('/api/leagues/:leagueId/teams', authMiddleware, async (ctx) => {

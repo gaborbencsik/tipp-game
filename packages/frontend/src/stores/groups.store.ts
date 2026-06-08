@@ -98,6 +98,14 @@ export const useGroupsStore = defineStore('groups', () => {
     )
   }
 
+  async function setMemberPaid(groupId: string, userId: string, paid: boolean): Promise<void> {
+    const token = await getAccessToken()
+    const updated = await api.admin.groups.setMemberPaid(token, groupId, userId, paid)
+    membersMap.value[groupId] = (membersMap.value[groupId] ?? []).map((m) =>
+      m.userId === userId ? updated : m,
+    )
+  }
+
   async function regenerateInvite(groupId: string): Promise<void> {
     const token = await getAccessToken()
     const updated = await api.groups.regenerateInvite(token, groupId)
@@ -320,6 +328,7 @@ export const useGroupsStore = defineStore('groups', () => {
     fetchGroupMembers,
     removeMember,
     toggleMemberAdmin,
+    setMemberPaid,
     regenerateInvite,
     setInviteActive,
     updateGroupSettings,

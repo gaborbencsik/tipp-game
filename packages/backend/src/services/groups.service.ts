@@ -1,6 +1,6 @@
 import { and, eq, isNull, sql, min } from 'drizzle-orm'
 import { db } from '../db/client.js'
-import { groups, groupMembers, users, specialPredictionTypes, groupGlobalTypeSubscriptions, groupLeagues, leagues, matches } from '../db/schema/index.js'
+import { groups, groupMembers, users, specialPredictionTypes, groupGlobalTypeSubscriptions, groupLeagues, leagues, matches, auditLogs } from '../db/schema/index.js'
 import type { Group, GroupInput, GroupMember } from '../types/index.js'
 import { getGroupLeaderboard } from './group-leaderboard.service.js'
 import { replicateUserTipsToGroup } from './tournament-tips-replication.service.js'
@@ -237,6 +237,7 @@ export async function getGroupMembers(groupId: string, requesterId: string): Pro
       displayName: users.displayName,
       avatarUrl: users.avatarUrl,
       isAdmin: groupMembers.isAdmin,
+      paidAt: groupMembers.paidAt,
       joinedAt: groupMembers.joinedAt,
     })
     .from(groupMembers)
@@ -253,6 +254,7 @@ export async function getGroupMembers(groupId: string, requesterId: string): Pro
     displayName: r.displayName,
     avatarUrl: r.avatarUrl ?? null,
     isAdmin: r.isAdmin,
+    isPaid: r.paidAt !== null,
     joinedAt: r.joinedAt.toISOString(),
   }))
 }
@@ -305,6 +307,7 @@ export async function setMemberAdmin(
       displayName: users.displayName,
       avatarUrl: users.avatarUrl,
       isAdmin: groupMembers.isAdmin,
+      paidAt: groupMembers.paidAt,
       joinedAt: groupMembers.joinedAt,
     })
     .from(groupMembers)
@@ -337,6 +340,70 @@ export async function setMemberAdmin(
     displayName: target.displayName,
     avatarUrl: target.avatarUrl ?? null,
     isAdmin: updatedRow.isAdmin,
+    isPaid: target.paidAt !== null,
+    joinedAt: target.joinedAt.toISOString(),
+  }
+}
+
+export async function setMemberPaidStatus(
+  groupId: string,
+  targetUserId: string,
+  paid: boolean,
+  actorId: string,
+): Promise<GroupMember> {
+  const groupRows = await db
+    .select()
+    .from(groups)
+    .where(and(eq(groups.id, groupId), isNull(groups.deletedAt)))
+    .limit(1)
+  if (!groupRows[0]) throw new AppError(404, 'Group not found')
+
+  const memberRows = await db
+    .select({
+      id: groupMembers.id,
+      userId: groupMembers.userId,
+      displayName: users.displayName,
+      avatarUrl: users.avatarUrl,
+      isAdmin: groupMembers.isAdmin,
+      paidAt: groupMembers.paidAt,
+      joinedAt: groupMembers.joinedAt,
+    })
+    .from(groupMembers)
+    .innerJoin(users, eq(groupMembers.userId, users.id))
+    .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, targetUserId)))
+    .limit(1)
+
+  const target = memberRows[0]
+  if (!target) throw new AppError(404, 'Member not found')
+
+  const previousPaidAt = target.paidAt
+  const newPaidAt = paid ? new Date() : null
+
+  const updated = await db
+    .update(groupMembers)
+    .set({ paidAt: newPaidAt })
+    .where(eq(groupMembers.id, target.id))
+    .returning()
+
+  const updatedRow = updated[0]
+  if (!updatedRow) throw new AppError(500, 'Failed to update member paid status')
+
+  await db.insert(auditLogs).values({
+    actorId,
+    action: 'group_member_paid_set',
+    entityType: 'group_member',
+    entityId: target.id,
+    previousValue: { paidAt: previousPaidAt?.toISOString() ?? null, groupId, userId: targetUserId },
+    newValue: { paidAt: newPaidAt?.toISOString() ?? null, groupId, userId: targetUserId },
+  })
+
+  return {
+    id: target.id,
+    userId: target.userId,
+    displayName: target.displayName,
+    avatarUrl: target.avatarUrl ?? null,
+    isAdmin: target.isAdmin,
+    isPaid: updatedRow.paidAt !== null,
     joinedAt: target.joinedAt.toISOString(),
   }
 }

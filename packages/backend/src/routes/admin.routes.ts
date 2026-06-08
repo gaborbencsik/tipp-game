@@ -40,6 +40,7 @@ import {
   banUser,
 } from '../services/admin-users.service.js'
 import { upsertUser } from '../services/user.service.js'
+import { setMemberPaidStatus } from '../services/groups.service.js'
 import { getGlobalConfigWithImpact, updateGlobalConfig, overrideGlobalConfig } from '../services/scoring-config.service.js'
 import { startRecalculation } from '../services/recalculate.service.js'
 import { getRecalcStatus } from '../services/sync-state.service.js'
@@ -456,6 +457,24 @@ adminRouter.put('/push/settings', async (ctx) => {
     await setDailyReviewEnabled(body.dailyReviewEnabled)
   }
   ctx.body = await getPushSettings()
+})
+
+// ─── ADMIN-001: group member paid status ─────────────────────────────────────
+
+adminRouter.put('/groups/:groupId/members/:userId/paid', async (ctx) => {
+  const body = ctx.request.body as { paid?: unknown }
+  if (typeof body.paid !== 'boolean') {
+    ctx.status = 400
+    ctx.body = { error: 'paid must be a boolean' }
+    return
+  }
+  const dbUser = await upsertUser(ctx.state.user)
+  ctx.body = await setMemberPaidStatus(
+    ctx.params['groupId'] as string,
+    ctx.params['userId'] as string,
+    body.paid,
+    dbUser.id,
+  )
 })
 
 export { adminRouter }

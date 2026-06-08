@@ -33,7 +33,7 @@ export const specialPredictionInputTypeEnum = pgEnum(
 )
 
 export const auditActionEnum = pgEnum('audit_action', [
-  'create', 'update', 'delete', 'result_set', 'ban', 'role_change', 'push_send'
+  'create', 'update', 'delete', 'result_set', 'ban', 'role_change', 'push_send', 'group_member_paid_set'
 ])
 
 export const pushNotificationTypeEnum = pgEnum('push_notification_type', [
@@ -305,6 +305,7 @@ export const groupMembers = pgTable('group_members', {
   userId:   uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   isAdmin:  boolean('is_admin').notNull().default(false),
   joinedAt: timestamp('joined_at', { withTimezone: true }).notNull().defaultNow(),
+  paidAt:   timestamp('paid_at',   { withTimezone: true }),
 }, (t) => ({
   uniqueMember: uniqueIndex('group_members_unique').on(t.groupId, t.userId),
   groupIdx:     index('group_members_group_idx').on(t.groupId),

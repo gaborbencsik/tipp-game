@@ -22,12 +22,13 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
   if (!group[0]) throw new AppError(404, 'Group not found')
 
   const membership = await db
-    .select({ userId: groupMembers.userId })
+    .select({ userId: groupMembers.userId, paidAt: groupMembers.paidAt })
     .from(groupMembers)
     .where(eq(groupMembers.groupId, groupId))
 
   const memberIds = membership.map(m => m.userId)
   if (!memberIds.includes(requesterId)) throw new AppError(403, 'Not a member of this group')
+  const paidByUser = new Map(membership.map(m => [m.userId, m.paidAt !== null]))
 
   const leagueRows = await db
     .select({ leagueId: groupLeagues.leagueId })
@@ -175,6 +176,7 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
       correctCount: row.correctCount,
       specialPredictionPoints: row.specialPredictionPoints,
       favoriteTeam: favoritesByUser.get(row.userId) ?? null,
+      isPaid: paidByUser.get(row.userId) ?? false,
     }
   })
 }

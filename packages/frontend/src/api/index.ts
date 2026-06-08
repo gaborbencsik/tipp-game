@@ -374,6 +374,14 @@ export const api = {
           headers: { Authorization: `Bearer ${token}` },
         }),
     },
+    groups: {
+      setMemberPaid: (token: string, groupId: string, userId: string, paid: boolean) =>
+        request<GroupMember>(`/admin/groups/${groupId}/members/${userId}/paid`, {
+          method: 'PUT',
+          body: JSON.stringify({ paid }),
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+    },
     scoringConfig: {
       get: (token: string) =>
         request<ScoringConfigWithImpact>('/admin/scoring-config', {

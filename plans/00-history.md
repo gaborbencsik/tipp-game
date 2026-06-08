@@ -156,3 +156,4 @@
 | PUSH-009 | Admin push címzettek részletes listája (modal) | Should Have |
 | SCORER-002 | Góllövő tipp – tipp leadása és tárolása | Should Have |
 | SCORER-003 | Góllövő tipp – manuális kiértékelés és pontozás integrációja | Should Have |
+| ADMIN-001 | Csoport tag fizetett státusz bejelölése (admin) | Should Have |
