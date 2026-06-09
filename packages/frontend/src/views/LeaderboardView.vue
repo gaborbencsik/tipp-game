@@ -66,13 +66,11 @@
                   aria-label="Paid"
                   class="shrink-0 inline-flex items-center justify-center bg-amber-50 ring-1 ring-amber-200 rounded-full w-5 h-5 md:w-6 md:h-6 text-xs md:text-sm leading-none"
                 >💰</span>
-                <span
+                <SupporterBadge
                   v-if="entry.isSupporter"
-                  :data-tooltip="$t('users.supporterBadgeTooltip')"
-                  data-testid="leaderboard-supporter-badge"
-                  aria-label="Supporter"
-                  class="tt supporter-badge-anim shrink-0 inline-flex items-center justify-center bg-amber-50 ring-1 ring-amber-200 rounded-full w-5 h-5 md:w-6 md:h-6 text-xs md:text-sm leading-none"
-                >🍺</span>
+                  responsive
+                  testid="leaderboard-supporter-badge"
+                />
                 <span v-if="entry.userId === authStore.user?.id" class="text-[0.65rem] md:text-xs text-blue-600 shrink-0">{{ $t('leaderboard.you') }}</span>
               </div>
             </td>
@@ -97,6 +95,7 @@ import { useGroupsStore } from '../stores/groups.store.js'
 import { useAuthStore } from '../stores/auth.store.js'
 import { api } from '../api/index.js'
 import { supabase } from '../lib/supabase.js'
+import SupporterBadge from '../components/SupporterBadge.vue'
 import type { LeaderboardEntry } from '../types/index.js'
 
 function countryCodeToFlag(code: string): string {

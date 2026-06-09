@@ -41,12 +41,11 @@
                   class="w-7 h-7 rounded-full object-cover shrink-0"
                 />
                 <span>{{ user.displayName }}</span>
-                <span
+                <SupporterBadge
                   v-if="user.isSupporter"
-                  data-testid="supporter-badge"
-                  :data-tooltip="$t('users.supporterBadgeTooltip')"
-                  class="tt supporter-badge-anim inline-flex items-center justify-center bg-amber-50 ring-1 ring-amber-200 rounded-full w-6 h-6 text-sm leading-none"
-                >🍺</span>
+                  size="sm"
+                  testid="supporter-badge"
+                />
               </div>
             </td>
             <td class="px-4 py-2">
@@ -101,6 +100,7 @@
 import { onMounted } from 'vue'
 import AppLayout from '../components/AppLayout.vue'
 import AdminNav from '../components/admin/AdminNav.vue'
+import SupporterBadge from '../components/SupporterBadge.vue'
 import { useAdminUsersStore } from '../stores/admin-users.store.js'
 import { useAuthStore } from '../stores/auth.store.js'
 import { dicebearUrl } from '../lib/avatar.js'

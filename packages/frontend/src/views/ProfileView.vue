@@ -12,12 +12,8 @@
           />
         </div>
 
-        <div v-if="authStore.user?.isSupporter" data-testid="profile-supporter-badge" class="flex items-center justify-center gap-2 text-amber-700">
-          <span
-            :data-tooltip="$t('users.supporterBadgeTooltip')"
-            aria-label="Supporter"
-            class="tt supporter-badge-anim inline-flex items-center justify-center bg-amber-50 ring-1 ring-amber-200 rounded-full w-8 h-8 text-lg leading-none"
-          >🍺</span>
+        <div v-if="authStore.user?.isSupporter" data-testid="profile-supporter-badge" class="flex items-center justify-center gap-2 text-emerald-700">
+          <SupporterBadge size="lg" />
           <span class="text-sm font-medium">{{ $t('users.supporterBadgeTooltip') }}</span>
         </div>
 
@@ -277,6 +273,7 @@ import { useLeagueFavoritesStore } from '../stores/league-favorites.store.js'
 import { useGroupsStore } from '../stores/groups.store.js'
 import AppLayout from '../components/AppLayout.vue'
 import ConfirmModal from '../components/ConfirmModal.vue'
+import SupporterBadge from '../components/SupporterBadge.vue'
 import { dicebearUrl } from '../lib/avatar.js'
 import { api } from '../api/index.js'
 import { isPushSupported, getPermissionState, ensureSubscribed, unsubscribeFromPush, getCurrentDeviceEndpoint } from '../lib/push.js'
