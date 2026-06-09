@@ -151,14 +151,14 @@
     <div v-else-if="activeTab === 'members'" data-testid="members-tab">
       <div v-if="groupsStore.membersLoading" data-testid="members-spinner" class="text-gray-500">{{ $t('common.loading') }}</div>
       <div v-else-if="groupsStore.membersError" class="text-red-600">{{ groupsStore.membersError }}</div>
-      <div v-else class="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div v-else class="bg-white rounded-xl shadow-sm overflow-x-auto">
         <table class="w-full text-sm">
           <thead>
             <tr class="border-b border-gray-200 text-gray-500 text-left">
               <th class="px-4 py-3">{{ $t('groupDetail.memberCol') }}</th>
               <th class="px-4 py-3">{{ $t('groupDetail.roleCol') }}</th>
-              <th class="px-4 py-3">{{ $t('groupDetail.joinedCol') }}</th>
-              <th v-if="currentUserIsGroupAdmin" class="px-4 py-3">{{ $t('groupDetail.actionsCol') }}</th>
+              <th class="px-4 py-3 hidden md:table-cell">{{ $t('groupDetail.joinedCol') }}</th>
+              <th v-if="currentUserIsGroupAdmin || isGlobalAdmin" class="px-4 py-3">{{ $t('groupDetail.actionsCol') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -193,9 +193,9 @@
                   {{ member.isAdmin ? $t('groupDetail.roleAdmin') : $t('groupDetail.roleUser') }}
                 </span>
               </td>
-              <td class="px-4 py-3 text-gray-500 text-sm">{{ formatDate(member.joinedAt) }}</td>
+              <td class="px-4 py-3 text-gray-500 text-sm hidden md:table-cell">{{ formatDate(member.joinedAt) }}</td>
               <td v-if="currentUserIsGroupAdmin || isGlobalAdmin" class="px-4 py-3">
-                <div class="flex gap-2">
+                <div class="flex flex-wrap gap-2">
                   <button
                     v-if="currentUserIsGroupAdmin"
                     :disabled="member.userId === authStore.user?.id"
