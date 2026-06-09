@@ -74,7 +74,6 @@
           <template v-if="isTippable(match)">
             <div class="flex items-center gap-3 justify-center">
               <input
-                ref="homeInputRef"
                 :value="draftGoals.home ?? ''"
                 inputmode="numeric"
                 pattern="[0-9]*"
@@ -287,7 +286,6 @@ const now = ref(new Date())
 const draftGoals = ref<{ home: number | null, away: number | null }>({ home: null, away: null })
 const draftOutcome = ref<MatchOutcome | null>(null)
 const draftScorerPick = ref<string | null>(null)
-const homeInputRef = ref<HTMLInputElement | null>(null)
 const awayInputRef = ref<HTMLInputElement | null>(null)
 const matchPredictions = ref<MatchPrediction[]>([])
 const matchOdds = ref<MatchOdds | null>(null)

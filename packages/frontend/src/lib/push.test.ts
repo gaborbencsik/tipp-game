@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
+declare const Buffer: {
+  from(input: string, encoding: string): { toString(encoding: string): string }
+}
+
 const { mockSubscribeApi, mockUnsubscribeApi } = vi.hoisted(() => ({
   mockSubscribeApi: vi.fn(),
   mockUnsubscribeApi: vi.fn(),

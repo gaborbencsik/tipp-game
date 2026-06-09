@@ -45,6 +45,7 @@ describe('authMiddleware', () => {
     mockGetSigningKey.mockReset()
     mockVerify.mockReset()
     mockDecode.mockReset()
+    ;(next as ReturnType<typeof vi.fn>).mockClear()
     ;(next as ReturnType<typeof vi.fn>).mockResolvedValue(undefined)
     process.env['NODE_ENV'] = 'test'
     process.env['SUPABASE_URL'] = 'https://test.supabase.co'

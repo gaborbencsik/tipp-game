@@ -24,7 +24,6 @@
         class="w-6 h-4 object-cover rounded-sm shrink-0 ml-2.5"
       />
       <input
-        ref="inputRef"
         type="text"
         :value="displayText"
         class="w-full px-2.5 py-1.5 text-sm bg-white text-slate-800 placeholder:text-slate-400 outline-none"
@@ -181,7 +180,6 @@ const loaded = ref(false)
 const dropdownOpen = ref(false)
 const searchText = ref('')
 const containerRef = ref<HTMLElement | null>(null)
-const inputRef = ref<HTMLInputElement | null>(null)
 
 async function loadPlayers(): Promise<void> {
   loaded.value = false

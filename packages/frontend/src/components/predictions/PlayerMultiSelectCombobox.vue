@@ -23,7 +23,6 @@
         >×</button>
       </span>
       <input
-        ref="inputRef"
         type="text"
         v-model="searchText"
         :placeholder="modelValue.length === 0 ? $t('playerSelect.placeholder') : ''"
@@ -137,7 +136,6 @@ const playersList = ref<Player[]>([])
 const dropdownOpen = ref(false)
 const searchText = ref('')
 const containerRef = ref<HTMLElement | null>(null)
-const inputRef = ref<HTMLInputElement | null>(null)
 
 async function loadPlayers(): Promise<void> {
   try {
