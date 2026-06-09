@@ -84,7 +84,7 @@
       </div>
 
       <!-- Filters -->
-      <div class="flex gap-2 overflow-x-auto pb-1 px-1 py-1 -mx-1" role="tablist">
+      <div class="flex flex-wrap gap-1.5 px-1 py-1 -mx-1" role="tablist">
         <button
           v-for="f in filters"
           :key="f.key"
