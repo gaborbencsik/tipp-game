@@ -33,7 +33,7 @@ export const specialPredictionInputTypeEnum = pgEnum(
 )
 
 export const auditActionEnum = pgEnum('audit_action', [
-  'create', 'update', 'delete', 'result_set', 'ban', 'role_change', 'push_send', 'group_member_paid_set'
+  'create', 'update', 'delete', 'result_set', 'ban', 'role_change', 'push_send', 'group_member_paid_set', 'user_supporter_set'
 ])
 
 export const pushNotificationTypeEnum = pgEnum('push_notification_type', [
@@ -77,6 +77,7 @@ export const users = pgTable('users', {
   onboardingCompletedAt: timestamp('onboarding_completed_at', { withTimezone: true }),
   bannedAt:    timestamp('banned_at', { withTimezone: true }),
   banReason:   text('ban_reason'),
+  supporterAt: timestamp('supporter_at', { withTimezone: true }),
   createdAt:   timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt:   timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   deletedAt:   timestamp('deleted_at', { withTimezone: true }),

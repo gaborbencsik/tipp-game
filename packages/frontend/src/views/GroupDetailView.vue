@@ -114,6 +114,13 @@
               <td class="pl-2 md:pl-4 pr-1 md:pr-2 py-2 md:py-3 text-gray-400 font-medium">{{ entry.rank }}</td>
               <td class="px-1 md:px-2 py-2 md:py-3">
                 <div class="flex items-center gap-1.5 md:gap-2 min-w-0">
+                  <span
+                    v-if="entry.favoriteTeam?.countryCode"
+                    :class="`fi fi-${entry.favoriteTeam.countryCode}`"
+                    :title="entry.favoriteTeam.name"
+                    class="shrink-0"
+                    style="width:1.2em;height:0.9em"
+                  />
                   <img
                     :src="entry.avatarUrl ?? dicebearUrl(entry.displayName)"
                     :alt="entry.displayName"
@@ -122,18 +129,17 @@
                   <span class="font-medium text-gray-800 truncate">{{ entry.displayName }}</span>
                   <span
                     v-if="entry.isPaid"
-                    :title="$t('groupDetail.memberPaidTooltip')"
                     data-testid="leaderboard-paid-badge"
                     aria-label="Paid"
-                    class="shrink-0"
+                    class="shrink-0 inline-flex items-center justify-center bg-amber-50 ring-1 ring-amber-200 rounded-full w-5 h-5 md:w-6 md:h-6 text-xs md:text-sm leading-none"
                   >💰</span>
                   <span
-                    v-if="entry.favoriteTeam?.countryCode"
-                    :class="`fi fi-${entry.favoriteTeam.countryCode}`"
-                    :title="entry.favoriteTeam.name"
-                    class="shrink-0"
-                    style="width:1.2em;height:0.9em"
-                  />
+                    v-if="entry.isSupporter"
+                    :data-tooltip="$t('users.supporterBadgeTooltip')"
+                    data-testid="leaderboard-supporter-badge"
+                    aria-label="Supporter"
+                    class="tt supporter-badge-anim shrink-0 inline-flex items-center justify-center bg-amber-50 ring-1 ring-amber-200 rounded-full w-5 h-5 md:w-6 md:h-6 text-xs md:text-sm leading-none"
+                  >🍺</span>
                   <span v-if="entry.userId === authStore.user?.id" class="text-[0.65rem] md:text-xs text-blue-600 shrink-0">{{ $t('groupDetail.you') }}</span>
                 </div>
               </td>
@@ -178,10 +184,17 @@
                   <span class="font-medium text-gray-800">{{ member.displayName }}</span>
                   <span
                     v-if="member.isPaid"
-                    :title="$t('groupDetail.memberPaidTooltip')"
                     data-testid="member-paid-badge"
                     aria-label="Paid"
+                    class="inline-flex items-center justify-center bg-amber-50 ring-1 ring-amber-200 rounded-full w-6 h-6 text-sm leading-none"
                   >💰</span>
+                  <span
+                    v-if="member.isSupporter"
+                    :data-tooltip="$t('users.supporterBadgeTooltip')"
+                    data-testid="member-supporter-badge"
+                    aria-label="Supporter"
+                    class="tt supporter-badge-anim inline-flex items-center justify-center bg-amber-50 ring-1 ring-amber-200 rounded-full w-6 h-6 text-sm leading-none"
+                  >🍺</span>
                   <span v-if="member.userId === authStore.user?.id" class="text-xs text-blue-600">{{ $t('groupDetail.you') }}</span>
                 </div>
               </td>

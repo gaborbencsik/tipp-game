@@ -1,10 +1,13 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import type { MatchPrediction } from '../types/index.js'
 
 const props = defineProps<{
   predictions: MatchPrediction[]
   currentUserId: string
 }>()
+
+const { t } = useI18n()
 
 function isExactMatch(p: MatchPrediction): boolean {
   return p.pointsGlobal === 3
@@ -29,13 +32,21 @@ function isCurrentUser(p: MatchPrediction): boolean {
           isCurrentUser(p) ? 'ring-2 ring-blue-300 bg-blue-50' : '',
         ]"
       >
-        <span class="font-medium text-sm truncate flex-1">
-          {{ p.displayName }}
+        <span class="font-medium text-sm truncate flex-1 inline-flex items-center gap-1">
+          <span class="truncate">{{ p.displayName }}</span>
           <span
             v-if="p.isPaid"
             data-testid="match-prediction-paid-badge"
             aria-label="Paid"
+            class="inline-flex items-center justify-center bg-amber-50 ring-1 ring-amber-200 rounded-full w-5 h-5 text-xs leading-none shrink-0"
           >💰</span>
+          <span
+            v-if="p.isSupporter"
+            data-testid="match-prediction-supporter-badge"
+            :data-tooltip="t('users.supporterBadgeTooltip')"
+            aria-label="Supporter"
+            class="tt supporter-badge-anim inline-flex items-center justify-center bg-amber-50 ring-1 ring-amber-200 rounded-full w-5 h-5 text-xs leading-none shrink-0"
+          >🍺</span>
         </span>
         <span class="font-mono text-sm bg-gray-100 px-2 py-0.5 rounded mx-2">
           {{ p.homeGoals }} – {{ p.awayGoals }}

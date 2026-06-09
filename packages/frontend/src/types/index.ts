@@ -7,6 +7,7 @@ export interface User {
   readonly role: 'user' | 'admin'
   readonly preferredLocale: string
   readonly onboardingCompletedAt: string | null
+  readonly isSupporter: boolean
 }
 
 export interface ApiResponse<T> {
@@ -171,6 +172,7 @@ export interface MatchPrediction {
   readonly awayGoals: number
   readonly pointsGlobal: number | null
   readonly isPaid?: boolean
+  readonly isSupporter: boolean
 }
 
 export interface GroupMatchPrediction {
@@ -198,6 +200,7 @@ export interface AdminUser {
   readonly displayName: string
   readonly role: 'user' | 'admin'
   readonly bannedAt: string | null
+  readonly isSupporter: boolean
   readonly createdAt: string
 }
 
@@ -265,6 +268,7 @@ export interface GroupMember {
   readonly avatarUrl: string | null
   readonly isAdmin: boolean
   readonly isPaid: boolean
+  readonly isSupporter: boolean
   readonly joinedAt: string
 }
 
@@ -289,6 +293,7 @@ export interface LeaderboardEntry {
   readonly specialPredictionPoints: number
   readonly favoriteTeam?: { readonly countryCode: string; readonly name: string } | null
   readonly isPaid?: boolean
+  readonly isSupporter: boolean
 }
 
 export type SpecialPredictionInputType = 'text' | 'dropdown' | 'team_select' | 'player_select' | 'multi_team_weighted' | 'multi_team_select' | 'all_groups_standing' | 'bracket_progression'

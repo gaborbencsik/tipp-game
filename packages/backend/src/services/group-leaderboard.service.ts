@@ -42,6 +42,7 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
     userId: string
     displayName: string
     avatarUrl: string | null
+    supporterAt: Date | null
     totalPoints: number
     predictionCount: number
     correctCount: number
@@ -61,6 +62,7 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
         userId: users.id,
         displayName: users.displayName,
         avatarUrl: users.avatarUrl,
+        supporterAt: users.supporterAt,
         totalPoints: sql<number>`coalesce(sum(case when ${matches.id} is not null then ${groupPredictionPoints.points} end), 0)`,
         predictionCount: sql<number>`count(case when ${matches.id} is not null then ${predictions.id} end)`,
         correctCount: sql<number>`count(case when ${matches.id} is not null and ${groupPredictionPoints.points} > 0 then 1 end)`,
@@ -74,7 +76,7 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
         sql`${groupPredictionPoints.predictionId} = ${predictions.id} AND ${groupPredictionPoints.groupId} = ${groupId}::uuid`,
       )
       .where(eq(groupMembers.groupId, groupId))
-      .groupBy(users.id, users.displayName, users.avatarUrl)
+      .groupBy(users.id, users.displayName, users.avatarUrl, users.supporterAt)
       .orderBy(sql`coalesce(sum(case when ${matches.id} is not null then ${groupPredictionPoints.points} end), 0) desc`)
   } else {
     rows = await db
@@ -82,6 +84,7 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
         userId: users.id,
         displayName: users.displayName,
         avatarUrl: users.avatarUrl,
+        supporterAt: users.supporterAt,
         totalPoints: sql<number>`coalesce(sum(case when ${matches.id} is not null then ${predictions.pointsGlobal} end), 0)`,
         predictionCount: sql<number>`count(case when ${matches.id} is not null then ${predictions.id} end)`,
         correctCount: sql<number>`count(case when ${matches.id} is not null and ${predictions.pointsGlobal} > 0 then 1 end)`,
@@ -91,7 +94,7 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
       .leftJoin(predictions, eq(predictions.userId, users.id))
       .leftJoin(matches, matchesJoinOn)
       .where(eq(groupMembers.groupId, groupId))
-      .groupBy(users.id, users.displayName, users.avatarUrl)
+      .groupBy(users.id, users.displayName, users.avatarUrl, users.supporterAt)
       .orderBy(sql`coalesce(sum(case when ${matches.id} is not null then ${predictions.pointsGlobal} end), 0) desc`)
   }
 
@@ -128,6 +131,7 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
       userId: row.userId,
       displayName: row.displayName,
       avatarUrl: row.avatarUrl ?? null,
+      supporterAt: row.supporterAt,
       matchPoints,
       specialPredictionPoints: statPoints,
       totalPoints: matchPoints + statPoints,
@@ -177,6 +181,7 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
       specialPredictionPoints: row.specialPredictionPoints,
       favoriteTeam: favoritesByUser.get(row.userId) ?? null,
       isPaid: paidByUser.get(row.userId) ?? false,
+      isSupporter: row.supporterAt !== null,
     }
   })
 }

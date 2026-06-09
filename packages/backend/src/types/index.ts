@@ -24,6 +24,7 @@ export interface DbUser {
   readonly role: 'user' | 'admin'
   readonly preferredLocale: string
   readonly onboardingCompletedAt: string | null
+  readonly isSupporter: boolean
 }
 
 export type MatchOutcome = 'extra_time_home' | 'extra_time_away' | 'penalties_home' | 'penalties_away'
@@ -217,6 +218,7 @@ export interface AdminUser {
   readonly displayName: string
   readonly role: 'user' | 'admin'
   readonly bannedAt: string | null
+  readonly isSupporter: boolean
   readonly createdAt: string
 }
 
@@ -284,6 +286,7 @@ export interface GroupMember {
   readonly avatarUrl: string | null
   readonly isAdmin: boolean
   readonly isPaid: boolean
+  readonly isSupporter: boolean
   readonly joinedAt: string
 }
 
@@ -484,6 +487,7 @@ export interface MatchPrediction {
   readonly awayGoals: number
   readonly pointsGlobal: number | null
   readonly isPaid?: boolean
+  readonly isSupporter: boolean
 }
 
 export interface SpecialPredictionInput {

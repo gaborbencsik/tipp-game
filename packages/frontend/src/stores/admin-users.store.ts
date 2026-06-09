@@ -61,5 +61,23 @@ export const useAdminUsersStore = defineStore('admin-users', () => {
     }
   }
 
-  return { users, isLoading, error, fetchUsers, updateUserRole, banUser }
+  async function setSupporter(id: string, supporter: boolean): Promise<void> {
+    error.value = null
+    const toast = useToastStore()
+    const previous = users.value.find(u => u.id === id)
+    // Optimistic update
+    users.value = users.value.map(u => (u.id === id ? { ...u, isSupporter: supporter } : u))
+    try {
+      const token = await getAccessToken()
+      const updated = await api.admin.users.setSupporter(token, id, supporter)
+      users.value = users.value.map(u => (u.id === id ? updated : u))
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Ismeretlen hiba'
+      error.value = msg
+      if (previous) users.value = users.value.map(u => (u.id === id ? previous : u))
+      toast.addToast(`Hiba: ${msg}`, 'error')
+    }
+  }
+
+  return { users, isLoading, error, fetchUsers, updateUserRole, banUser, setSupporter }
 })

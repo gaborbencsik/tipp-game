@@ -1,15 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-const { mockSelect, mockFrom, mockLeftJoin, mockWhere, mockOrderBy, mockGroupBy } = vi.hoisted(() => {
+const { mockSelect, mockFrom, mockLeftJoin, mockInnerJoin, mockWhere, mockOrderBy, mockGroupBy } = vi.hoisted(() => {
   const mockOrderBy = vi.fn().mockResolvedValue([])
   const mockGroupBy = vi.fn(() => ({ orderBy: mockOrderBy }))
   const mockWhere = vi.fn(() => ({ groupBy: mockGroupBy, orderBy: mockOrderBy }))
+  const mockInnerJoin = vi.fn(() => ({ where: mockWhere, orderBy: mockOrderBy }))
   const mockLeftJoin = vi.fn(function () {
     return { leftJoin: mockLeftJoin, where: mockWhere, groupBy: mockGroupBy }
   })
-  const mockFrom = vi.fn(() => ({ leftJoin: mockLeftJoin }))
+  const mockFrom = vi.fn(() => ({ leftJoin: mockLeftJoin, innerJoin: mockInnerJoin }))
   const mockSelect = vi.fn(() => ({ from: mockFrom }))
-  return { mockSelect, mockFrom, mockLeftJoin, mockWhere, mockOrderBy, mockGroupBy }
+  return { mockSelect, mockFrom, mockLeftJoin, mockInnerJoin, mockWhere, mockOrderBy, mockGroupBy }
 })
 
 vi.mock('../src/db/client.js', () => ({
@@ -36,9 +37,10 @@ describe('getLeaderboard', () => {
     vi.resetAllMocks()
     mockOrderBy.mockResolvedValue([])
     mockGroupBy.mockReturnValue({ orderBy: mockOrderBy })
-    mockWhere.mockReturnValue({ groupBy: mockGroupBy })
+    mockWhere.mockReturnValue({ groupBy: mockGroupBy, orderBy: mockOrderBy })
+    mockInnerJoin.mockReturnValue({ where: mockWhere, orderBy: mockOrderBy })
     mockLeftJoin.mockReturnValue({ leftJoin: mockLeftJoin, where: mockWhere, groupBy: mockGroupBy })
-    mockFrom.mockReturnValue({ leftJoin: mockLeftJoin })
+    mockFrom.mockReturnValue({ leftJoin: mockLeftJoin, innerJoin: mockInnerJoin })
     mockSelect.mockReturnValue({ from: mockFrom })
   })
 

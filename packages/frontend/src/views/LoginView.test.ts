@@ -142,6 +142,7 @@ describe('LoginView', () => {
         role: 'admin',
         preferredLocale: 'hu',
         onboardingCompletedAt: '2026-01-01T00:00:00.000Z',
+        isSupporter: false,
       }
     })
     await wrapper.find('input[type="email"]').setValue('dev@local')

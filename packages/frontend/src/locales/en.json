@@ -189,6 +189,16 @@
       "generic": "Joining the group failed."
     }
   },
+  "users": {
+    "supporterBadgeTooltip": "Supporter"
+  },
+  "admin": {
+    "users": {
+      "supporterToggle": "Supporter",
+      "supporterToggleOn": "Mark as supporter",
+      "supporterToggleOff": "Unmark as supporter"
+    }
+  },
   "groupDetail": {
     "backToGroups": "Groups",
     "tabLeaderboard": "Leaderboard",

@@ -55,6 +55,7 @@ import {
   getUsers,
   updateUserRole,
   banUser,
+  setSupporterStatus,
 } from '../src/services/admin-users.service.js'
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
@@ -70,6 +71,7 @@ const USER_ROW = {
   role: 'user' as const,
   bannedAt: null,
   banReason: null,
+  supporterAt: null,
   createdAt: NOW,
   updatedAt: NOW,
   deletedAt: null,
@@ -81,6 +83,7 @@ const USER_API: AdminUser = {
   displayName: 'Alice',
   role: 'user',
   bannedAt: null,
+  isSupporter: false,
   createdAt: NOW.toISOString(),
 }
 
@@ -236,5 +239,70 @@ describe('banUser', () => {
     expect(mockInsert).toHaveBeenCalledOnce()
     const insertArg = mockValues.mock.calls[0]?.[0] as { action: string }
     expect(insertArg.action).toBe('ban')
+  })
+})
+
+// ─── setSupporterStatus ──────────────────────────────────────────────────────
+
+describe('setSupporterStatus', () => {
+  beforeEach(() => {
+    vi.resetAllMocks()
+  })
+
+  it('non-existing user → AppError 404', async () => {
+    setupSelectChain([])
+    await expect(setSupporterStatus('nonexistent', true, ACTOR_ID)).rejects.toMatchObject({
+      status: 404,
+      message: 'User not found',
+    })
+  })
+
+  it('supporter=true → supporterAt is set, isSupporter true', async () => {
+    const updatedRow = { ...USER_ROW, supporterAt: NOW }
+    setupSelectChain([USER_ROW])
+    setupUpdateChain([updatedRow])
+    setupInsertChain()
+
+    const result = await setSupporterStatus('user-uuid-1', true, ACTOR_ID)
+    expect(result.isSupporter).toBe(true)
+  })
+
+  it('supporter=false → supporterAt is null, isSupporter false', async () => {
+    const previouslySupporter = { ...USER_ROW, supporterAt: NOW }
+    const updatedRow = { ...USER_ROW, supporterAt: null }
+    setupSelectChain([previouslySupporter])
+    setupUpdateChain([updatedRow])
+    setupInsertChain()
+
+    const result = await setSupporterStatus('user-uuid-1', false, ACTOR_ID)
+    expect(result.isSupporter).toBe(false)
+  })
+
+  it('valid call → audit_logs INSERT with user_supporter_set + previous/new boolean', async () => {
+    const updatedRow = { ...USER_ROW, supporterAt: NOW }
+    setupSelectChain([USER_ROW])
+    setupUpdateChain([updatedRow])
+    setupInsertChain()
+
+    await setSupporterStatus('user-uuid-1', true, ACTOR_ID)
+    expect(mockInsert).toHaveBeenCalledOnce()
+    const insertArg = mockValues.mock.calls[0]?.[0] as {
+      action: string
+      previousValue: { supporter: boolean }
+      newValue: { supporter: boolean }
+    }
+    expect(insertArg.action).toBe('user_supporter_set')
+    expect(insertArg.previousValue.supporter).toBe(false)
+    expect(insertArg.newValue.supporter).toBe(true)
+  })
+
+  it('idempotent: setting true twice keeps isSupporter true', async () => {
+    const alreadySupporter = { ...USER_ROW, supporterAt: NOW }
+    setupSelectChain([alreadySupporter])
+    setupUpdateChain([alreadySupporter])
+    setupInsertChain()
+
+    const result = await setSupporterStatus('user-uuid-1', true, ACTOR_ID)
+    expect(result.isSupporter).toBe(true)
   })
 })

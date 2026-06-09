@@ -12,6 +12,15 @@
           />
         </div>
 
+        <div v-if="authStore.user?.isSupporter" data-testid="profile-supporter-badge" class="flex items-center justify-center gap-2 text-amber-700">
+          <span
+            :data-tooltip="$t('users.supporterBadgeTooltip')"
+            aria-label="Supporter"
+            class="tt supporter-badge-anim inline-flex items-center justify-center bg-amber-50 ring-1 ring-amber-200 rounded-full w-8 h-8 text-lg leading-none"
+          >🍺</span>
+          <span class="text-sm font-medium">{{ $t('users.supporterBadgeTooltip') }}</span>
+        </div>
+
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">{{ $t('profile.emailLabel') }}</label>
           <p data-testid="email" class="text-gray-900">{{ authStore.user?.email }}</p>

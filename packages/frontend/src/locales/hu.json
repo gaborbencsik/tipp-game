@@ -189,6 +189,16 @@
       "generic": "A csoportba lépés sikertelen."
     }
   },
+  "users": {
+    "supporterBadgeTooltip": "Lelkes támogató"
+  },
+  "admin": {
+    "users": {
+      "supporterToggle": "Lelkes támogató",
+      "supporterToggleOn": "Támogatónak jelölés",
+      "supporterToggleOff": "Támogató jelölés visszavonása"
+    }
+  },
   "groupDetail": {
     "backToGroups": "← Csoportok",
     "tabLeaderboard": "Ranglista",

@@ -238,6 +238,7 @@ export async function getGroupMembers(groupId: string, requesterId: string): Pro
       avatarUrl: users.avatarUrl,
       isAdmin: groupMembers.isAdmin,
       paidAt: groupMembers.paidAt,
+      supporterAt: users.supporterAt,
       joinedAt: groupMembers.joinedAt,
     })
     .from(groupMembers)
@@ -255,6 +256,7 @@ export async function getGroupMembers(groupId: string, requesterId: string): Pro
     avatarUrl: r.avatarUrl ?? null,
     isAdmin: r.isAdmin,
     isPaid: r.paidAt !== null,
+    isSupporter: r.supporterAt !== null,
     joinedAt: r.joinedAt.toISOString(),
   }))
 }
@@ -308,6 +310,7 @@ export async function setMemberAdmin(
       avatarUrl: users.avatarUrl,
       isAdmin: groupMembers.isAdmin,
       paidAt: groupMembers.paidAt,
+      supporterAt: users.supporterAt,
       joinedAt: groupMembers.joinedAt,
     })
     .from(groupMembers)
@@ -341,6 +344,7 @@ export async function setMemberAdmin(
     avatarUrl: target.avatarUrl ?? null,
     isAdmin: updatedRow.isAdmin,
     isPaid: target.paidAt !== null,
+    isSupporter: target.supporterAt !== null,
     joinedAt: target.joinedAt.toISOString(),
   }
 }
@@ -366,6 +370,7 @@ export async function setMemberPaidStatus(
       avatarUrl: users.avatarUrl,
       isAdmin: groupMembers.isAdmin,
       paidAt: groupMembers.paidAt,
+      supporterAt: users.supporterAt,
       joinedAt: groupMembers.joinedAt,
     })
     .from(groupMembers)
@@ -404,6 +409,7 @@ export async function setMemberPaidStatus(
     avatarUrl: target.avatarUrl ?? null,
     isAdmin: target.isAdmin,
     isPaid: updatedRow.paidAt !== null,
+    isSupporter: target.supporterAt !== null,
     joinedAt: target.joinedAt.toISOString(),
   }
 }

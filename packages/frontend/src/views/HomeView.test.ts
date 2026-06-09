@@ -48,6 +48,7 @@ function mountWithUser() {
     role: 'admin',
     preferredLocale: 'hu',
     onboardingCompletedAt: '2026-01-01T00:00:00.000Z',
+    isSupporter: false,
   }
   return mount(HomeView, { global: { plugins: [pinia, buildRouter()] } })
 }
@@ -107,6 +108,7 @@ describe('HomeView', () => {
       role: 'user',
       preferredLocale: 'hu',
       onboardingCompletedAt: '2026-01-01T00:00:00.000Z',
+      isSupporter: false,
     }
     const wrapper = mount(HomeView, { global: { plugins: [pinia, buildRouter()] } })
     expect(wrapper.text()).not.toContain('Admin – Csapatok')

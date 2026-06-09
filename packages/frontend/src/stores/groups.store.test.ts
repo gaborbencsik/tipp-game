@@ -243,6 +243,7 @@ describe('groups.store', () => {
     avatarUrl: null,
     isAdmin: true,
     isPaid: false,
+    isSupporter: false,
     joinedAt: '2026-01-01T00:00:00.000Z',
   }
 
@@ -253,6 +254,7 @@ describe('groups.store', () => {
     avatarUrl: null,
     isAdmin: false,
     isPaid: false,
+    isSupporter: false,
     joinedAt: '2026-01-02T00:00:00.000Z',
   }
 

@@ -69,6 +69,7 @@ function mapRow(row: typeof users.$inferSelect): DbUser {
     role: row.role,
     preferredLocale: row.preferredLocale,
     onboardingCompletedAt: row.onboardingCompletedAt?.toISOString() ?? null,
+    isSupporter: row.supporterAt !== null,
   }
 }
 

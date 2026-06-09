@@ -48,6 +48,7 @@ const MOCK_USER: User = {
   role: 'user',
   preferredLocale: 'hu',
   onboardingCompletedAt: '2026-01-01T00:00:00.000Z',
+  isSupporter: false,
 }
 void MOCK_USER
 

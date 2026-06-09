@@ -41,6 +41,12 @@
                   class="w-7 h-7 rounded-full object-cover shrink-0"
                 />
                 <span>{{ user.displayName }}</span>
+                <span
+                  v-if="user.isSupporter"
+                  data-testid="supporter-badge"
+                  :data-tooltip="$t('users.supporterBadgeTooltip')"
+                  class="tt supporter-badge-anim inline-flex items-center justify-center bg-amber-50 ring-1 ring-amber-200 rounded-full w-6 h-6 text-sm leading-none"
+                >🍺</span>
               </div>
             </td>
             <td class="px-4 py-2">
@@ -73,6 +79,15 @@
                 @click="toggleBan(user)"
               >
                 {{ user.bannedAt ? 'Feloldás' : 'Tiltás' }}
+              </button>
+              <button
+                data-testid="supporter-btn"
+                :class="user.isSupporter ? 'border-amber-500 text-amber-700 hover:bg-amber-50' : 'border-gray-300 text-gray-600 hover:bg-gray-50'"
+                class="px-3 py-1 text-xs rounded border"
+                :title="user.isSupporter ? $t('admin.users.supporterToggleOff') : $t('admin.users.supporterToggleOn')"
+                @click="toggleSupporter(user)"
+              >
+                {{ user.isSupporter ? '★ ' + $t('admin.users.supporterToggleOff') : '☆ ' + $t('admin.users.supporterToggleOn') }}
               </button>
             </td>
           </tr>
@@ -107,5 +122,9 @@ async function onRoleChange(user: AdminUser, newRole: 'user' | 'admin'): Promise
 
 async function toggleBan(user: AdminUser): Promise<void> {
   await store.banUser(user.id, !user.bannedAt)
+}
+
+async function toggleSupporter(user: AdminUser): Promise<void> {
+  await store.setSupporter(user.id, !user.isSupporter)
 }
 </script>

@@ -33,6 +33,18 @@ const BASE_USER: AuthenticatedUser = {
   role: 'user',
 }
 
+const RETURNED_DB_ROW = {
+  id: 'db-uuid-123',
+  supabaseId: 'supabase-uuid-abc',
+  email: 'user@example.com',
+  displayName: 'John Doe',
+  avatarUrl: 'https://avatar.example.com/john.png',
+  role: 'user' as const,
+  preferredLocale: 'hu',
+  onboardingCompletedAt: null,
+  supporterAt: null,
+}
+
 const RETURNED_ROW: DbUser = {
   id: 'db-uuid-123',
   supabaseId: 'supabase-uuid-abc',
@@ -40,18 +52,20 @@ const RETURNED_ROW: DbUser = {
   displayName: 'John Doe',
   avatarUrl: 'https://avatar.example.com/john.png',
   role: 'user',
+  preferredLocale: 'hu',
   onboardingCompletedAt: null,
+  isSupporter: false,
 }
 
 describe('upsertUser', () => {
   beforeEach(() => {
     vi.resetAllMocks()
-    mockReturning.mockResolvedValue([RETURNED_ROW])
+    mockReturning.mockResolvedValue([RETURNED_DB_ROW])
     mockOnConflictDoUpdate.mockReturnValue({ returning: mockReturning })
     mockValues.mockReturnValue({ onConflictDoUpdate: mockOnConflictDoUpdate })
     mockInsert.mockReturnValue({ values: mockValues })
 
-    mockUpdateReturning.mockResolvedValue([RETURNED_ROW])
+    mockUpdateReturning.mockResolvedValue([RETURNED_DB_ROW])
     mockWhere.mockReturnValue({ returning: mockUpdateReturning })
     mockSet.mockReturnValue({ where: mockWhere })
     mockUpdate.mockReturnValue({ set: mockSet })
@@ -94,8 +108,8 @@ describe('upsertUser', () => {
       displayName: 'noname',
       avatarUrl: null,
     }
-    const returnedRow: DbUser = { ...RETURNED_ROW, displayName: 'noname', avatarUrl: null }
-    mockReturning.mockResolvedValue([returnedRow])
+    const returnedDbRow = { ...RETURNED_DB_ROW, displayName: 'noname', avatarUrl: null }
+    mockReturning.mockResolvedValue([returnedDbRow])
 
     await upsertUser(userEmailOnly)
     expect(mockValues).toHaveBeenCalledWith(
@@ -107,8 +121,9 @@ describe('upsertUser', () => {
     const pgError = Object.assign(new Error('duplicate key value violates unique constraint "users_email_unique"'), { code: '23505' })
     mockReturning.mockRejectedValue(pgError)
 
+    const updatedDbRow = { ...RETURNED_DB_ROW, supabaseId: 'supabase-uuid-abc' }
     const updatedRow: DbUser = { ...RETURNED_ROW, supabaseId: 'supabase-uuid-abc' }
-    mockUpdateReturning.mockResolvedValue([updatedRow])
+    mockUpdateReturning.mockResolvedValue([updatedDbRow])
 
     const result = await upsertUser(BASE_USER)
 
@@ -129,8 +144,9 @@ describe('upsertUser', () => {
     const drizzleWrapper = Object.assign(new Error('Failed query: insert into "users"...'), { cause: pgCause })
     mockReturning.mockRejectedValue(drizzleWrapper)
 
+    const updatedDbRow = { ...RETURNED_DB_ROW, supabaseId: 'supabase-uuid-abc' }
     const updatedRow: DbUser = { ...RETURNED_ROW, supabaseId: 'supabase-uuid-abc' }
-    mockUpdateReturning.mockResolvedValue([updatedRow])
+    mockUpdateReturning.mockResolvedValue([updatedDbRow])
 
     const result = await upsertUser(BASE_USER)
 
@@ -150,14 +166,14 @@ describe('upsertUser', () => {
 describe('updateProfile', () => {
   beforeEach(() => {
     vi.resetAllMocks()
-    mockUpdateReturning.mockResolvedValue([RETURNED_ROW])
+    mockUpdateReturning.mockResolvedValue([RETURNED_DB_ROW])
     mockWhere.mockReturnValue({ returning: mockUpdateReturning })
     mockSet.mockReturnValue({ where: mockWhere })
     mockUpdate.mockReturnValue({ set: mockSet })
   })
 
   it('valid userId → updates displayName and returns DbUser', async () => {
-    const updated = { ...RETURNED_ROW, displayName: 'New Name' }
+    const updated = { ...RETURNED_DB_ROW, displayName: 'New Name' }
     mockUpdateReturning.mockResolvedValue([updated])
 
     const result = await updateProfile('db-uuid-123', 'New Name')
@@ -182,14 +198,14 @@ describe('updateProfile', () => {
 describe('completeOnboarding', () => {
   beforeEach(() => {
     vi.resetAllMocks()
-    mockUpdateReturning.mockResolvedValue([RETURNED_ROW])
+    mockUpdateReturning.mockResolvedValue([RETURNED_DB_ROW])
     mockWhere.mockReturnValue({ returning: mockUpdateReturning })
     mockSet.mockReturnValue({ where: mockWhere })
     mockUpdate.mockReturnValue({ set: mockSet })
   })
 
   it('valid userId → sets onboardingCompletedAt and returns DbUser', async () => {
-    const completedRow = { ...RETURNED_ROW, onboardingCompletedAt: new Date('2026-04-23T12:00:00.000Z') }
+    const completedRow = { ...RETURNED_DB_ROW, onboardingCompletedAt: new Date('2026-04-23T12:00:00.000Z') }
     mockUpdateReturning.mockResolvedValue([completedRow])
 
     const result = await completeOnboarding('db-uuid-123')

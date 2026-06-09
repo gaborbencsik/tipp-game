@@ -16,6 +16,7 @@ const {
   mockApiUsersList,
   mockApiUsersUpdateRole,
   mockApiUsersBan,
+  mockApiUsersSetSupporter,
 } = vi.hoisted(() => ({
   mockGetSession: vi.fn().mockResolvedValue({
     data: { session: { access_token: 'mock-token' } },
@@ -23,6 +24,7 @@ const {
   mockApiUsersList: vi.fn().mockResolvedValue([]),
   mockApiUsersUpdateRole: vi.fn().mockResolvedValue(undefined),
   mockApiUsersBan: vi.fn().mockResolvedValue(undefined),
+  mockApiUsersSetSupporter: vi.fn().mockResolvedValue(undefined),
 }))
 
 vi.mock('@/lib/supabase', () => ({
@@ -47,6 +49,7 @@ vi.mock('@/api/index', () => ({
         list: mockApiUsersList,
         updateRole: mockApiUsersUpdateRole,
         ban: mockApiUsersBan,
+        setSupporter: mockApiUsersSetSupporter,
       },
     },
   },
@@ -74,6 +77,7 @@ const USER_1: AdminUser = {
   displayName: 'Alice',
   role: 'user',
   bannedAt: null,
+  isSupporter: false,
   createdAt: '2026-01-01T00:00:00.000Z',
 }
 
@@ -83,6 +87,7 @@ const USER_2: AdminUser = {
   displayName: 'Admin',
   role: 'admin',
   bannedAt: null,
+  isSupporter: false,
   createdAt: '2026-01-02T00:00:00.000Z',
 }
 
@@ -186,5 +191,29 @@ describe('AdminUsersView', () => {
       '/admin/sync',
       '/admin/push',
     ])
+  })
+
+  it('isSupporter user → supporter badge 🍺 rendered', async () => {
+    const supporter: AdminUser = { ...USER_1, isSupporter: true }
+    const { wrapper } = await mountView([supporter])
+    expect(wrapper.find('[data-testid="supporter-badge"]').exists()).toBe(true)
+  })
+
+  it('non-supporter → supporter badge not rendered', async () => {
+    const { wrapper } = await mountView([USER_1])
+    expect(wrapper.find('[data-testid="supporter-badge"]').exists()).toBe(false)
+  })
+
+  it('supporter-btn click → store.setSupporter called with !isSupporter', async () => {
+    const updated: AdminUser = { ...USER_1, isSupporter: true }
+    mockApiUsersSetSupporter.mockResolvedValue(updated)
+    const { wrapper, store } = await mountView([USER_1])
+    const supSpy = vi.spyOn(store, 'setSupporter').mockResolvedValue()
+
+    const btns = wrapper.findAll('[data-testid="supporter-btn"]')
+    await btns[0]!.trigger('click')
+    await flushPromises()
+
+    expect(supSpy).toHaveBeenCalledWith(USER_1.id, true)
   })
 })

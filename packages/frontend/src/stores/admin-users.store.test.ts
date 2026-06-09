@@ -14,6 +14,7 @@ const { mockApiUsers } = vi.hoisted(() => ({
     list: vi.fn(),
     updateRole: vi.fn(),
     ban: vi.fn(),
+    setSupporter: vi.fn(),
   },
 }))
 
@@ -29,6 +30,7 @@ const USER_1: AdminUser = {
   displayName: 'Alice',
   role: 'user',
   bannedAt: null,
+  isSupporter: false,
   createdAt: '2026-01-01T00:00:00.000Z',
 }
 
@@ -38,6 +40,7 @@ const USER_2: AdminUser = {
   displayName: 'Bob',
   role: 'admin',
   bannedAt: null,
+  isSupporter: false,
   createdAt: '2026-01-02T00:00:00.000Z',
 }
 

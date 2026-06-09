@@ -97,6 +97,7 @@ const MEMBER_SELF: GroupMember = {
   avatarUrl: null,
   isAdmin: true,
   isPaid: false,
+  isSupporter: false,
   joinedAt: '2026-01-01T00:00:00.000Z',
 }
 
@@ -107,6 +108,7 @@ const MEMBER_OTHER: GroupMember = {
   avatarUrl: null,
   isAdmin: false,
   isPaid: false,
+  isSupporter: false,
   joinedAt: '2026-01-02T00:00:00.000Z',
 }
 
@@ -119,6 +121,7 @@ const LEADERBOARD_ENTRY: LeaderboardEntry = {
   predictionCount: 5,
   correctCount: 3,
   specialPredictionPoints: 0,
+  isSupporter: false,
 }
 
 function buildRouter() {

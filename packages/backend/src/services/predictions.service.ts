@@ -171,6 +171,7 @@ export async function getMatchPredictions(matchId: string, groupId?: string): Pr
     .select({
       userId: users.id,
       displayName: users.displayName,
+      supporterAt: users.supporterAt,
       homeGoals: predictions.homeGoals,
       awayGoals: predictions.awayGoals,
       pointsGlobal: predictions.pointsGlobal,
@@ -180,12 +181,21 @@ export async function getMatchPredictions(matchId: string, groupId?: string): Pr
     .where(eq(predictions.matchId, matchId))
     .orderBy(sql`${predictions.pointsGlobal} desc nulls last`)
 
-  if (groupId === undefined) return rows
+  const baseRows: MatchPrediction[] = rows.map(r => ({
+    userId: r.userId,
+    displayName: r.displayName,
+    homeGoals: r.homeGoals,
+    awayGoals: r.awayGoals,
+    pointsGlobal: r.pointsGlobal,
+    isSupporter: r.supporterAt !== null,
+  }))
+
+  if (groupId === undefined) return baseRows
 
   const memberRows = await db
     .select({ userId: groupMembers.userId, paidAt: groupMembers.paidAt })
     .from(groupMembers)
     .where(eq(groupMembers.groupId, groupId))
   const paidByUser = new Map(memberRows.map(m => [m.userId, m.paidAt !== null]))
-  return rows.map(r => ({ ...r, isPaid: paidByUser.get(r.userId) ?? false }))
+  return baseRows.map(r => ({ ...r, isPaid: paidByUser.get(r.userId) ?? false }))
 }

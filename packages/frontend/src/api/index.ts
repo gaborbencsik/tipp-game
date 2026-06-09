@@ -373,6 +373,12 @@ export const api = {
           body: JSON.stringify({ ban }),
           headers: { Authorization: `Bearer ${token}` },
         }),
+      setSupporter: (token: string, id: string, supporter: boolean) =>
+        request<AdminUser>(`/admin/users/${id}/supporter`, {
+          method: 'PUT',
+          body: JSON.stringify({ supporter }),
+          headers: { Authorization: `Bearer ${token}` },
+        }),
     },
     groups: {
       setMemberPaid: (token: string, groupId: string, userId: string, paid: boolean) =>

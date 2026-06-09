@@ -19,6 +19,7 @@ function toApiUser(row: typeof users.$inferSelect): AdminUser {
     displayName: row.displayName,
     role: row.role,
     bannedAt: row.bannedAt?.toISOString() ?? null,
+    isSupporter: row.supporterAt !== null,
     createdAt: row.createdAt.toISOString(),
   }
 }
@@ -106,6 +107,43 @@ export async function banUser(
     entityId: userId,
     previousValue: { bannedAt: existing[0].bannedAt?.toISOString() ?? null },
     newValue: { bannedAt: bannedAt?.toISOString() ?? null },
+  })
+
+  return toApiUser(row)
+}
+
+export async function setSupporterStatus(
+  userId: string,
+  supporter: boolean,
+  actorId: string,
+): Promise<AdminUser> {
+  const existing = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1)
+
+  if (!existing[0]) throw new AppError(404, 'User not found')
+
+  const previousSupporter = existing[0].supporterAt !== null
+  const supporterAt = supporter ? new Date() : null
+
+  const rows = await db
+    .update(users)
+    .set({ supporterAt, updatedAt: new Date() })
+    .where(eq(users.id, userId))
+    .returning()
+
+  const row = rows[0]
+  if (!row) throw new AppError(500, 'Failed to update supporter status')
+
+  await db.insert(auditLogs).values({
+    actorId,
+    action: 'user_supporter_set',
+    entityType: 'user',
+    entityId: userId,
+    previousValue: { supporter: previousSupporter },
+    newValue: { supporter },
   })
 
   return toApiUser(row)

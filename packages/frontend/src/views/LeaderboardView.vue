@@ -42,7 +42,19 @@
             <td class="pl-2 md:pl-4 pr-1 md:pr-2 py-2 md:py-3 text-gray-400 font-medium">{{ entry.rank }}</td>
             <td class="px-1 md:px-2 py-2 md:py-3">
               <div class="flex items-center gap-2 min-w-0">
+                <span
+                  v-if="entry.favoriteTeam?.countryCode"
+                  class="tt-left shrink-0"
+                  :data-tooltip="countryCodeToFlag(entry.favoriteTeam.countryCode)"
+                >
+                  <img
+                    :src="entry.avatarUrl ?? dicebearUrl(entry.displayName)"
+                    :alt="entry.displayName"
+                    class="w-6 h-6 md:w-7 md:h-7 rounded-full object-cover"
+                  />
+                </span>
                 <img
+                  v-else
                   :src="entry.avatarUrl ?? dicebearUrl(entry.displayName)"
                   :alt="entry.displayName"
                   class="w-6 h-6 md:w-7 md:h-7 rounded-full object-cover shrink-0"
@@ -50,11 +62,17 @@
                 <span class="font-medium text-gray-800 truncate">{{ entry.displayName }}</span>
                 <span
                   v-if="entry.isPaid"
-                  :title="$t('groupDetail.memberPaidTooltip')"
                   data-testid="leaderboard-paid-badge"
                   aria-label="Paid"
-                  class="shrink-0"
+                  class="shrink-0 inline-flex items-center justify-center bg-amber-50 ring-1 ring-amber-200 rounded-full w-5 h-5 md:w-6 md:h-6 text-xs md:text-sm leading-none"
                 >💰</span>
+                <span
+                  v-if="entry.isSupporter"
+                  :data-tooltip="$t('users.supporterBadgeTooltip')"
+                  data-testid="leaderboard-supporter-badge"
+                  aria-label="Supporter"
+                  class="tt supporter-badge-anim shrink-0 inline-flex items-center justify-center bg-amber-50 ring-1 ring-amber-200 rounded-full w-5 h-5 md:w-6 md:h-6 text-xs md:text-sm leading-none"
+                >🍺</span>
                 <span v-if="entry.userId === authStore.user?.id" class="text-[0.65rem] md:text-xs text-blue-600 shrink-0">{{ $t('leaderboard.you') }}</span>
               </div>
             </td>
@@ -80,6 +98,12 @@ import { useAuthStore } from '../stores/auth.store.js'
 import { api } from '../api/index.js'
 import { supabase } from '../lib/supabase.js'
 import type { LeaderboardEntry } from '../types/index.js'
+
+function countryCodeToFlag(code: string): string {
+  const cc = code.toUpperCase()
+  if (cc.length !== 2) return code
+  return String.fromCodePoint(0x1f1e6 + cc.charCodeAt(0) - 65, 0x1f1e6 + cc.charCodeAt(1) - 65)
+}
 
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
 

@@ -38,6 +38,7 @@ import {
   getUsers,
   updateUserRole,
   banUser,
+  setSupporterStatus,
 } from '../services/admin-users.service.js'
 import { upsertUser } from '../services/user.service.js'
 import { setMemberPaidStatus } from '../services/groups.service.js'
@@ -166,6 +167,21 @@ adminRouter.put('/users/:id/ban', async (ctx) => {
   const { ban } = ctx.request.body as { ban: boolean }
   const dbUser = await upsertUser(ctx.state.user)
   ctx.body = await banUser(ctx.params['id'] as string, ban, dbUser.id)
+})
+
+adminRouter.put('/users/:userId/supporter', async (ctx) => {
+  const body = ctx.request.body as { supporter?: unknown }
+  if (typeof body.supporter !== 'boolean') {
+    ctx.status = 400
+    ctx.body = { error: 'supporter must be a boolean' }
+    return
+  }
+  const dbUser = await upsertUser(ctx.state.user)
+  ctx.body = await setSupporterStatus(
+    ctx.params['userId'] as string,
+    body.supporter,
+    dbUser.id,
+  )
 })
 
 // ─── Scoring config ───────────────────────────────────────────────────────────

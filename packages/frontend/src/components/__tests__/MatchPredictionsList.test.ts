@@ -4,9 +4,9 @@ import MatchPredictionsList from '../MatchPredictionsList.vue'
 import type { MatchPrediction } from '../../types/index.js'
 
 const PREDICTIONS: MatchPrediction[] = [
-  { userId: 'u1', displayName: 'Alice', homeGoals: 2, awayGoals: 1, pointsGlobal: 3 },
-  { userId: 'u2', displayName: 'Bob', homeGoals: 1, awayGoals: 0, pointsGlobal: 1 },
-  { userId: 'u3', displayName: 'Carol', homeGoals: 0, awayGoals: 2, pointsGlobal: 0 },
+  { userId: 'u1', displayName: 'Alice', homeGoals: 2, awayGoals: 1, pointsGlobal: 3, isSupporter: false },
+  { userId: 'u2', displayName: 'Bob', homeGoals: 1, awayGoals: 0, pointsGlobal: 1, isSupporter: false },
+  { userId: 'u3', displayName: 'Carol', homeGoals: 0, awayGoals: 2, pointsGlobal: 0, isSupporter: false },
 ]
 
 function mountComponent(predictions: MatchPrediction[] = PREDICTIONS, currentUserId = 'u2') {
@@ -68,7 +68,7 @@ describe('MatchPredictionsList', () => {
 
   it('displays dash for null pointsGlobal', () => {
     const preds: MatchPrediction[] = [
-      { userId: 'u4', displayName: 'Dave', homeGoals: 1, awayGoals: 1, pointsGlobal: null },
+      { userId: 'u4', displayName: 'Dave', homeGoals: 1, awayGoals: 1, pointsGlobal: null, isSupporter: false },
     ]
     const wrapper = mountComponent(preds, 'other')
     expect(wrapper.find('[data-testid="prediction-row-u4"]').text()).toContain('– pont')
