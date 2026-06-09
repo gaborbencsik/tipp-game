@@ -1,6 +1,6 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-06-08 (SCORER-005 lezárult)
+> Utoljára frissítve: 2026-06-09 (SUPPORTER-001 lezárva)
 
 ## Nyitott story-k
 
@@ -32,4 +32,4 @@
 
 ---
 
-**Haladás: 154 / 174 story kész** — Must Have: 31/32, Should Have: 123/136, Nice to Have: 0/5 (US-937, PUSH-003 won't do)
+**Haladás: 155 / 175 story kész** — Must Have: 31/32, Should Have: 124/137, Nice to Have: 0/5 (US-937, PUSH-003 won't do)

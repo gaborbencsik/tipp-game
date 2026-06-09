@@ -158,3 +158,4 @@
 | SCORER-003 | Góllövő tipp – manuális kiértékelés és pontozás integrációja | Should Have |
 | ADMIN-001 | Csoport tag fizetett státusz bejelölése (admin) | Should Have |
 | SCORER-005 | Gólszerző tippek megjelenítése a Statisztikáim oldalon | Should Have |
+| SUPPORTER-001 | Globális lelkes támogató badge beállítása | Should Have |
