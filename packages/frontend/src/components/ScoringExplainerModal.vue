@@ -6,7 +6,7 @@ import { useScoringExplainerStore } from '../stores/scoring-explainer.store.js'
 const store = useScoringExplainerStore()
 const { t } = useI18n()
 
-type MatchRuleKey = 'correctOutcome' | 'exactBonus' | 'extraTimeBonus'
+type MatchRuleKey = 'correctOutcome' | 'exactBonus' | 'extraTimeBonus' | 'scorerHit'
 type MatchRule =
   | { key: MatchRuleKey; kind: 'base' | 'bonus'; points: number }
   | { key: 'favoriteTeamMultiplier'; kind: 'multiplier'; multiplier: number }
@@ -15,6 +15,7 @@ const MATCH_RULES: ReadonlyArray<MatchRule> = [
   { key: 'correctOutcome', kind: 'base', points: 1 },
   { key: 'exactBonus', kind: 'bonus', points: 1 },
   { key: 'extraTimeBonus', kind: 'bonus', points: 1 },
+  { key: 'scorerHit', kind: 'bonus', points: 1 },
   { key: 'favoriteTeamMultiplier', kind: 'multiplier', multiplier: 2 },
 ]
 

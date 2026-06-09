@@ -698,6 +698,7 @@
       "correctOutcome": "Helyes kimenetel (1-X-2)",
       "exactBonus": "Pontos eredmény bónusz",
       "extraTimeBonus": "Hosszabbítás/tizenegyes kimenetel bónusz (egyenes kiesésben)",
+      "scorerHit": "Góllövő tipp talált",
       "favoriteTeamMultiplier": "Kedvenc csapat meccse"
     },
     "examples": {
@@ -706,6 +707,7 @@
       "correctOutcome": "Te: 2-0, Eredmény: 3-1",
       "exactBonus": "Te: 2-1, Eredmény: 2-1",
       "extraTimeBonus": "Te: hazai továbbjutás, valódi: hazai 11-esekkel",
+      "scorerHit": "Te: Szoboszlai, és gólt szerez a meccsen",
       "favoriteTeamMultiplier": "A meccsen szerzett összes pont ×2"
     },
     "columns": {

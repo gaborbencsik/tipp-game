@@ -47,7 +47,7 @@ describe('ScoringExplainerModal', () => {
     expect(wrapper.text()).toContain('Torna gólkirálya')
   })
 
-  it('match-pontozás — 3 stackelhető szabály jelenik meg', () => {
+  it('match-pontozás — 4 stackelhető szabály jelenik meg', () => {
     const store = useScoringExplainerStore()
     store.isOpen = true
     store.data = makeData()
@@ -55,6 +55,7 @@ describe('ScoringExplainerModal', () => {
     expect(wrapper.text()).toContain('Helyes kimenetel (1-X-2)')
     expect(wrapper.text()).toContain('Pontos eredmény bónusz')
     expect(wrapper.text()).toContain('Hosszabbítás/tizenegyes kimenetel bónusz')
+    expect(wrapper.text()).toContain('Góllövő tipp talált')
   })
 
   it('kedvenc csapat ×2 multiplier sor mindig megjelenik a meccs-pontozásban', () => {
@@ -91,11 +92,12 @@ describe('ScoringExplainerModal', () => {
     store.data = makeData()
     const wrapper = mount(ScoringExplainerModal)
     const cards = wrapper.findAll('[data-testid="match-rule-card"]')
-    expect(cards).toHaveLength(4)
+    expect(cards).toHaveLength(5)
     expect(cards[0]!.text()).toContain('Helyes kimenetel (1-X-2)')
     expect(cards[0]!.text()).toContain('Te: 2-0')
-    expect(cards[3]!.text()).toContain('Kedvenc csapat meccse')
-    expect(cards[3]!.text()).toContain('×2')
+    expect(cards[3]!.text()).toContain('Góllövő tipp talált')
+    expect(cards[4]!.text()).toContain('Kedvenc csapat meccse')
+    expect(cards[4]!.text()).toContain('×2')
   })
 
   it('mobil container `sm:hidden`, desktop táblázat container `hidden sm:block`', () => {

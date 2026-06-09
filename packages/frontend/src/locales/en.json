@@ -698,6 +698,7 @@
       "correctOutcome": "Correct outcome (1-X-2)",
       "exactBonus": "Exact score bonus",
       "extraTimeBonus": "Extra time / penalty outcome bonus (knockout stage)",
+      "scorerHit": "Goalscorer pick scored",
       "favoriteTeamMultiplier": "Favorite team's match"
     },
     "examples": {
@@ -706,6 +707,7 @@
       "correctOutcome": "You: 2-0, Result: 3-1",
       "exactBonus": "You: 2-1, Result: 2-1",
       "extraTimeBonus": "You: home win, actual: home on penalties",
+      "scorerHit": "You: Szoboszlai, and he scores in the match",
       "favoriteTeamMultiplier": "All points earned on that match ×2"
     },
     "columns": {
