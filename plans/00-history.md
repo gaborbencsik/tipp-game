@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 152 story kész (Must Have: 31/31, Should Have: 121/121)
+> 156 story kész (Must Have: 32/32, Should Have: 124/124)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -159,3 +159,4 @@
 | ADMIN-001 | Csoport tag fizetett státusz bejelölése (admin) | Should Have |
 | SCORER-005 | Gólszerző tippek megjelenítése a Statisztikáim oldalon | Should Have |
 | SUPPORTER-001 | Globális lelkes támogató badge beállítása | Should Have |
+| OPS-002 | Render cron service-ek konfigurálása az automatikus sync-hez | Must Have |
