@@ -1,6 +1,7 @@
 import Router from '@koa/router'
 import { authMiddleware } from '../middleware/auth.middleware.js'
 import { createRateLimit } from '../middleware/rateLimit.middleware.js'
+import { withHttpCache } from '../middleware/http-cache.middleware.js'
 import { getMatches } from '../services/matches.service.js'
 import { getLeagues } from '../services/leagues.service.js'
 import { getMatchPredictions } from '../services/predictions.service.js'
@@ -36,7 +37,7 @@ router.get('/api/matches', authMiddleware, async (ctx) => {
   ctx.body = await getMatches(filters)
 })
 
-router.get('/api/leagues', authMiddleware, async (ctx) => {
+router.get('/api/leagues', authMiddleware, withHttpCache({ maxAge: 3600, swr: 7200 }), async (ctx) => {
   ctx.body = await getLeagues()
 })
 
@@ -45,7 +46,7 @@ router.get('/api/matches/:matchId/predictions', authMiddleware, async (ctx) => {
   ctx.body = await getMatchPredictions(ctx.params.matchId, groupId)
 })
 
-router.get('/api/leagues/:leagueId/teams', authMiddleware, async (ctx) => {
+router.get('/api/leagues/:leagueId/teams', authMiddleware, withHttpCache({ maxAge: 1800, swr: 3600 }), async (ctx) => {
   ctx.body = await getTeamsForLeague(ctx.params.leagueId)
 })
 

@@ -1,5 +1,6 @@
 import Router from '@koa/router'
 import { authMiddleware } from '../middleware/auth.middleware.js'
+import { withHttpCache } from '../middleware/http-cache.middleware.js'
 import { upsertUser } from '../services/user.service.js'
 import { listActiveTypes, createType, updateType, deactivateType } from '../services/special-prediction-types.service.js'
 import { getMyPredictions, upsertPrediction } from '../services/special-predictions.service.js'
@@ -15,13 +16,13 @@ const router = new Router()
 
 // ─── Public teams list (for team_select input type) ─────────────────────────
 
-router.get('/api/teams', authMiddleware, async (ctx) => {
+router.get('/api/teams', authMiddleware, withHttpCache({ maxAge: 1800, swr: 3600 }), async (ctx) => {
   ctx.body = await getTeams()
 })
 
 // ─── Public players list (for player_select input type) ────────────────────
 
-router.get('/api/players', authMiddleware, async (ctx) => {
+router.get('/api/players', authMiddleware, withHttpCache({ maxAge: 1800, swr: 3600 }), async (ctx) => {
   const leagueId = typeof ctx.query['leagueId'] === 'string' ? ctx.query['leagueId'] : undefined
   const teamId = typeof ctx.query['teamId'] === 'string' ? ctx.query['teamId'] : undefined
   ctx.body = await getPlayers({ leagueId, teamId })
@@ -29,7 +30,7 @@ router.get('/api/players', authMiddleware, async (ctx) => {
 
 // ─── Stat prediction templates ──────────────────────────────────────────────
 
-router.get('/api/stat-prediction-templates', authMiddleware, async (ctx) => {
+router.get('/api/stat-prediction-templates', authMiddleware, withHttpCache({ maxAge: 600, swr: 1200 }), async (ctx) => {
   ctx.body = STAT_PREDICTION_TEMPLATES
 })
 

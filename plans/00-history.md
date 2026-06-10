@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 159 story kész (Must Have: 32/32, Should Have: 127/127)
+> 161 story kész (Must Have: 32/32, Should Have: 129/129)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -163,4 +163,5 @@
 | SCORER-004 | Góllövő auto-sync az api-football /fixtures/events-ből | Should Have |
 | UX-016 | Kedvenc csapat jelzés a meccs kártyán (saját + csoporttársak) | Should Have |
 | OPS-004 | Virtual points polling gate – csak élő meccs alatt, 60 mp | Should Have |
+| OPS-005 | HTTP cache headers (Cache-Control + ETag) a quasi-statikus GET endpointokon | Should Have |
 | AUTH-001 | Supabase jelszó-helyreállítás támogatása (frontend) | Should Have |

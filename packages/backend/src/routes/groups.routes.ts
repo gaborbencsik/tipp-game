@@ -1,6 +1,7 @@
 import Router from '@koa/router'
 import { authMiddleware } from '../middleware/auth.middleware.js'
 import { createRateLimit } from '../middleware/rateLimit.middleware.js'
+import { withHttpCache } from '../middleware/http-cache.middleware.js'
 import { upsertUser } from '../services/user.service.js'
 import { getMyGroups, createGroup, joinGroup, getGroupMembers, removeMember, setMemberAdmin, regenerateInviteCode, setInviteActive, deleteGroup, updateGroupSettings, setGroupLeague } from '../services/groups.service.js'
 import { getGroupLeaderboard } from '../services/group-leaderboard.service.js'
@@ -106,7 +107,7 @@ router.delete('/api/groups/:groupId', authMiddleware, async (ctx) => {
   ctx.body = null
 })
 
-router.get('/api/groups/:groupId/scoring-config', authMiddleware, async (ctx) => {
+router.get('/api/groups/:groupId/scoring-config', authMiddleware, withHttpCache({ maxAge: 60, swr: 300 }), async (ctx) => {
   const dbUser = await upsertUser(ctx.state.user)
   // getGroupMembers throws 403 if not a member
   await getGroupMembers(ctx.params.groupId, dbUser.id)

@@ -8,6 +8,9 @@
 |----------|-----|-----------|----------|
 | OPS-001 | Strukturált logolás és frontend hibakezelés (MVP) | Should Have | — |
 | OPS-003 | Auto-generált DB schema referencia agentnek és fejlesztőnek | Should Have | — |
+| OPS-006 | ETag + 304 a leaderboard és matches list endpointokon | Should Have | ~~OPS-005~~ |
+| OPS-007 | Polymarket raw_payload tárolás kivezetése | Should Have | — |
+| OPS-008 | SSE-alapú live update – polling kiváltása élő meccs adatokra | Should Have | ~~OPS-004~~ |
 | PWA-003 | PWA telepítés smart banner + onboarding integráció | Should Have | ~~PWA-002~~ |
 | US-1204 | NB II liga szinkronizáció támogatás | Nice to Have | ~~US-1202~~, ~~US-1203~~ |
 | US-1303 | Match Pulse – automatikus insight generálás cron jobban | Should Have | ~~US-1302~~, ~~US-1203~~ |
@@ -29,4 +32,4 @@
 
 ---
 
-**Haladás: 160 / 177 story kész** — Must Have: 32/32, Should Have: 128/139, Nice to Have: 0/5 (US-937, PUSH-003 won't do)
+**Haladás: 161 / 181 story kész** — Must Have: 32/32, Should Have: 128/139, Nice to Have: 0/5 (US-937, PUSH-003 won't do)
