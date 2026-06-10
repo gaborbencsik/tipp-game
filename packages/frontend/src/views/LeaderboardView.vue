@@ -93,6 +93,7 @@ import { dicebearUrl } from '../lib/avatar.js'
 import { useLeaderboardStore } from '../stores/leaderboard.store.js'
 import { useGroupsStore } from '../stores/groups.store.js'
 import { useAuthStore } from '../stores/auth.store.js'
+import { useMatchEvents } from '../composables/useMatchEvents.js'
 import { api } from '../api/index.js'
 import { supabase } from '../lib/supabase.js'
 import SupporterBadge from '../components/SupporterBadge.vue'
@@ -182,5 +183,17 @@ watch(selectedScope, (val) => {
   } catch {
     // ignore
   }
+})
+
+useMatchEvents({
+  onMatchUpdate: () => {
+    // A match status / score change can shift the standings — refetch the
+    // currently visible scope so the user sees the new ranking immediately.
+    if (selectedScope.value === 'global') {
+      void leaderboardStore.fetchLeaderboard()
+    } else {
+      void loadGroupLeaderboard(selectedScope.value)
+    }
+  },
 })
 </script>

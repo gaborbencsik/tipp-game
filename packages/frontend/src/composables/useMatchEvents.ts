@@ -1,4 +1,5 @@
-import { ref, watch, onUnmounted, type Ref } from 'vue'
+import { ref, onMounted, onUnmounted, type Ref } from 'vue'
+import { supabase } from '../lib/supabase.js'
 
 export interface MatchUpdateEvent {
   readonly matchId: string
@@ -10,6 +11,10 @@ export interface MatchUpdateEvent {
 
 export interface MatchEventsOptions {
   readonly onMatchUpdate: (event: MatchUpdateEvent) => void
+  /** Test seam: override how the JWT is fetched (defaults to Supabase session). */
+  readonly tokenResolver?: () => Promise<string | null>
+  /** Test seam: override the feature flag (defaults to VITE_USE_SSE_EVENTS). */
+  readonly enabled?: boolean
 }
 
 export interface MatchEventsHandle {
@@ -18,7 +23,14 @@ export interface MatchEventsHandle {
 }
 
 const SSE_ENABLED = import.meta.env['VITE_USE_SSE_EVENTS'] === 'true'
+const DEV_AUTH_BYPASS = import.meta.env['VITE_DEV_AUTH_BYPASS'] === 'true'
 const API_BASE = (import.meta.env['VITE_API_URL'] ?? '') as string
+
+async function defaultTokenResolver(): Promise<string | null> {
+  if (DEV_AUTH_BYPASS) return 'dev-bypass-token'
+  const { data } = await supabase.auth.getSession()
+  return data.session?.access_token ?? null
+}
 
 /**
  * Opens a Server-Sent Events connection to /api/events and forwards
@@ -28,12 +40,11 @@ const API_BASE = (import.meta.env['VITE_API_URL'] ?? '') as string
  * The connection is gated behind VITE_USE_SSE_EVENTS so the legacy polling
  * path stays the default until SSE is verified in production.
  */
-export function useMatchEvents(
-  token: Ref<string | null>,
-  options: MatchEventsOptions,
-): MatchEventsHandle {
+export function useMatchEvents(options: MatchEventsOptions): MatchEventsHandle {
   const isConnected = ref(false)
   let source: EventSource | null = null
+  const enabled = options.enabled ?? SSE_ENABLED
+  const resolver = options.tokenResolver ?? defaultTokenResolver
 
   function disconnect(): void {
     if (source) {
@@ -68,16 +79,11 @@ export function useMatchEvents(
     })
   }
 
-  if (SSE_ENABLED) {
-    watch(
-      token,
-      (next) => {
-        if (next) connect(next)
-        else disconnect()
-      },
-      { immediate: true },
-    )
-  }
+  onMounted(async () => {
+    if (!enabled) return
+    const token = await resolver()
+    if (token) connect(token)
+  })
 
   onUnmounted(() => {
     disconnect()
@@ -85,3 +91,5 @@ export function useMatchEvents(
 
   return { isConnected, disconnect }
 }
+
+

@@ -1363,13 +1363,7 @@ const VIRTUAL_POINTS_POLL_INTERVAL_MS = 60_000
 
 const hasLiveMatch = computed(() => hasAnyLiveMatch(matchesStore.matches))
 
-const accessTokenRef = ref<string | null>(null)
-async function refreshAccessToken(): Promise<void> {
-  accessTokenRef.value = await getAccessToken()
-}
-void refreshAccessToken()
-
-const matchEvents = useMatchEvents(accessTokenRef, {
+const matchEvents = useMatchEvents({
   onMatchUpdate: (event: MatchUpdateEvent) => {
     matchesStore.applyMatchUpdate(event)
     if (activeTab.value === 'my-predictions') {

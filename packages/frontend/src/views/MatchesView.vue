@@ -425,6 +425,7 @@ import PlayerSelectCombobox from '../components/predictions/PlayerSelectCombobox
 import { usePendingSpecialTips } from '../composables/usePendingSpecialTips.js'
 import { useDayNavigation } from '../composables/useDayNavigation.js'
 import { useLeagueFilter } from '../composables/useLeagueFilter.js'
+import { useMatchEvents, type MatchUpdateEvent } from '../composables/useMatchEvents.js'
 import { getDateLocale } from '../lib/dateLocale.js'
 
 const { t } = useI18n()
@@ -435,6 +436,12 @@ const favStore = useLeagueFavoritesStore()
 const groupFavStore = useGroupFavoritesStore()
 const authStore = useAuthStore()
 const { pendingGroups, totalPendingCount, now: pendingNow } = usePendingSpecialTips()
+
+useMatchEvents({
+  onMatchUpdate: (event: MatchUpdateEvent) => {
+    matchesStore.applyMatchUpdate(event)
+  },
+})
 
 const stageFilterOptions = computed(() => [
   { label: t('matches.allStages'), value: null },
