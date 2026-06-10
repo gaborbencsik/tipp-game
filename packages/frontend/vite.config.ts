@@ -16,7 +16,27 @@ export default defineConfig({
       injectRegister: false,
       manifest: false,
       injectManifest: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
+        // Precache only the shell: index.html, manifest, CSS, the entry/main JS
+        // chunks and the small icon set. Lazy route chunks, vendor chunks and
+        // the 48 hashed flag SVGs are fetched on demand by the browser cache,
+        // not eagerly precached on first visit. (OPS-010)
+        globPatterns: [
+          'index.html',
+          'manifest.webmanifest',
+          'offline.html',
+          'icons/icon-*.png',
+          'icons/apple-touch-icon*.png',
+          'favicon.ico',
+          'assets/index-*.js',
+          'assets/index-*.css',
+        ],
+        globIgnores: [
+          '**/flag-icons/**',
+          'assets/*.svg',
+          'assets/*.png',
+          'assets/*.jpg',
+          'assets/*.webp',
+        ],
       },
       devOptions: {
         enabled: true,
@@ -26,6 +46,21 @@ export default defineConfig({
     }),
   ],
   envDir: path.resolve(__dirname, '../..'),
+  build: {
+    rollupOptions: {
+      output: {
+        // Stable vendor chunks let returning visitors cache them across deploys
+        // even when our app code changes. (OPS-010)
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined
+          if (/\/node_modules\/(vue|vue-router|pinia|@vue)\//.test(id)) return 'vue'
+          if (/\/node_modules\/(@intlify\/|vue-i18n)/.test(id)) return 'i18n'
+          if (/\/node_modules\/@supabase\//.test(id)) return 'supabase'
+          return undefined
+        },
+      },
+    },
+  },
   server: {
     allowedHosts: true,
     proxy: {

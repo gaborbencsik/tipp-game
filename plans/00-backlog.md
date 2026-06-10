@@ -1,6 +1,6 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-06-10 (OPS-008 lezárva)
+> Utoljára frissítve: 2026-06-10 (OPS-010 lezárva)
 
 ## Nyitott story-k
 
@@ -15,7 +15,6 @@
 | US-1304 | Match Pulse – insight megjelenítése a meccs kártyán | Should Have | ~~US-1302~~, ~~US-1310~~ |
 | US-1305 | Match Pulse – in-tournament statisztikák integrálása | Should Have | US-1303, US-1304 |
 | US-1306 | Match Pulse – insight felfedése felhasználónként és admin reveal statisztika | Should Have | ~~US-1302~~, US-1304, ~~US-1309~~ |
-| US-1307 | Match Pulse – csapat-piaci értékek megjelenítése | Should Have | US-1304, US-1306, ~~US-1406~~ |
 | US-934 | Mások tippjeinek megjelenítése (speciális) | Should Have | — |
 | UX-004 | Focilabda kurzor ikon | Nice to Have | — |
 | UX-005 | Optimista törlés az admin listákon | Should Have | — |
@@ -27,7 +26,8 @@
 | SEC-002 | HMAC-aláírt meghívó URL-ek | Nice to Have | — |
 
 > UX-019 felülírva — UX-020 implementálja a frissített, mockup-alapú 5 lépéses onboardingot.
+> US-1307 felülírva — UX-030 a Match Detail oldalon (insights alatt) jeleníti meg a Transfermarkt csapatértékeket, nem a Match Pulse-ban.
 
 ---
 
-**Haladás: 164 / 181 story kész** — Must Have: 32/32, Should Have: 130/139, Nice to Have: 0/5 (US-937, PUSH-003 won't do)
+**Haladás: 166 / 182 story kész** — Must Have: 32/32, Should Have: 132/140, Nice to Have: 0/5 (US-937, PUSH-003 won't do)

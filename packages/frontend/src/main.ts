@@ -6,6 +6,7 @@ import { i18n } from './i18n/index.js'
 import { useAuthStore } from './stores/auth.store.js'
 import './lib/install-prompt.js'
 import './style.css'
+import './styles/flags.js'
 
 const bootstrap = async (): Promise<void> => {
   const app = createApp(App)

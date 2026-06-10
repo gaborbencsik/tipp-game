@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 164 story kész (Must Have: 32/32, Should Have: 132/132)
+> 166 story kész (Must Have: 32/32, Should Have: 134/134)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -168,3 +168,5 @@
 | AUTH-001 | Supabase jelszó-helyreállítás támogatása (frontend) | Should Have |
 | OPS-009 | JWKS client singleton — Supabase egress és auth latency csökkentés | Should Have |
 | OPS-008 | SSE-alapú live update – polling kiváltása élő meccs adatokra (env-flag opt-in) | Should Have |
+| OPS-010 | Frontend bundle + asset optimalizáció (initial load 8 MB → ~1-2 MB) | Should Have |
+| UX-030 | Match Detail – Transfermarkt csapatértékek blokk | Should Have |

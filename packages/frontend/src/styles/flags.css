@@ -1,0 +1,26 @@
+/* Lean replacement for flag-icons/css/flag-icons.min.css.
+   Carries only the base `.fi` / `.fib` rules; per-country `.fi-xx`
+   selectors are injected by ./flags.ts for the 48 countries the
+   tournament actually uses, instead of all 271 from the package. */
+
+.fib,
+.fi {
+  background-size: contain;
+  background-position: 50%;
+  background-repeat: no-repeat;
+}
+
+.fi {
+  position: relative;
+  display: inline-block;
+  width: 1.333333em;
+  line-height: 1em;
+}
+
+.fi::before {
+  content: '\00a0';
+}
+
+.fi.fis {
+  width: 1em;
+}

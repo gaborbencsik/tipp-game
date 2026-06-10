@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "flag-icons/css/flag-icons.min.css";
 
 /* Supporter badge: short attention-grabbing wobble + amber glow on first paint,
    then settles into the static badge. ~3s total, runs once per mount. */
