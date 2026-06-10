@@ -58,6 +58,8 @@ const TEAM_HOME = {
   group: 'A',
   teamType: 'national' as const,
   countryCode: 'de',
+  squadMarketValue: null as number | null,
+  transfermarktId: null as number | null,
   createdAt: new Date(),
   updatedAt: new Date(),
 }
@@ -70,6 +72,8 @@ const TEAM_AWAY = {
   group: 'A',
   teamType: 'national' as const,
   countryCode: 'fr',
+  squadMarketValue: null as number | null,
+  transfermarktId: null as number | null,
   createdAt: new Date(),
   updatedAt: new Date(),
 }
@@ -223,6 +227,62 @@ describe('getMatches', () => {
     const result = await getMatches()
 
     expect(result[0]?.venue).toBeNull()
+  })
+
+  // ─── UX-030: Transfermarkt market values ─────────────────────────────────
+  describe('UX-030 marketValueEur + transfermarktId', () => {
+    it('both teams have market value → both marketValueEur populated (eur passthrough)', async () => {
+      const row = makeRow()
+      row.home_team = { ...TEAM_HOME, squadMarketValue: 850_000_000, transfermarktId: 3262 }
+      row.away_team = { ...TEAM_AWAY, squadMarketValue: 1_200_000_000, transfermarktId: 3377 }
+      mockOrderBy.mockResolvedValue([row])
+
+      const result = await getMatches()
+
+      expect(result[0]?.homeTeam.marketValueEur).toBe(850_000_000)
+      expect(result[0]?.homeTeam.transfermarktId).toBe(3262)
+      expect(result[0]?.awayTeam.marketValueEur).toBe(1_200_000_000)
+      expect(result[0]?.awayTeam.transfermarktId).toBe(3377)
+    })
+
+    it('only home has market value → home set, away null', async () => {
+      const row = makeRow()
+      row.home_team = { ...TEAM_HOME, squadMarketValue: 500_000_000, transfermarktId: 100 }
+      row.away_team = { ...TEAM_AWAY, squadMarketValue: null, transfermarktId: null }
+      mockOrderBy.mockResolvedValue([row])
+
+      const result = await getMatches()
+
+      expect(result[0]?.homeTeam.marketValueEur).toBe(500_000_000)
+      expect(result[0]?.awayTeam.marketValueEur).toBeNull()
+      expect(result[0]?.awayTeam.transfermarktId).toBeNull()
+    })
+
+    it('only away has market value → away set, home null', async () => {
+      const row = makeRow()
+      row.home_team = { ...TEAM_HOME, squadMarketValue: null, transfermarktId: null }
+      row.away_team = { ...TEAM_AWAY, squadMarketValue: 300_000_000, transfermarktId: 200 }
+      mockOrderBy.mockResolvedValue([row])
+
+      const result = await getMatches()
+
+      expect(result[0]?.homeTeam.marketValueEur).toBeNull()
+      expect(result[0]?.homeTeam.transfermarktId).toBeNull()
+      expect(result[0]?.awayTeam.marketValueEur).toBe(300_000_000)
+      expect(result[0]?.awayTeam.transfermarktId).toBe(200)
+    })
+
+    it('neither team has market value → both marketValueEur null', async () => {
+      const row = makeRow()
+      row.home_team = { ...TEAM_HOME, squadMarketValue: null, transfermarktId: null }
+      row.away_team = { ...TEAM_AWAY, squadMarketValue: null, transfermarktId: null }
+      mockOrderBy.mockResolvedValue([row])
+
+      const result = await getMatches()
+
+      expect(result[0]?.homeTeam.marketValueEur).toBeNull()
+      expect(result[0]?.awayTeam.marketValueEur).toBeNull()
+    })
   })
 })
 

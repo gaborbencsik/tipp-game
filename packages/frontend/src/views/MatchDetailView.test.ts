@@ -54,8 +54,8 @@ vi.mock('@/stores/auth.store', async (importOriginal) => {
 
 const MATCH_FINISHED: Match = {
   id: 'match-finished',
-  homeTeam: { id: 'ht1', name: 'Spain', shortCode: 'ESP', flagUrl: null, teamType: 'national' as const, countryCode: 'es' },
-  awayTeam: { id: 'at1', name: 'Italy', shortCode: 'ITA', flagUrl: null, teamType: 'national' as const, countryCode: 'it' },
+  homeTeam: { id: 'ht1', name: 'Spain', shortCode: 'ESP', flagUrl: null, teamType: 'national' as const, countryCode: 'es', marketValueEur: null, transfermarktId: null },
+  awayTeam: { id: 'at1', name: 'Italy', shortCode: 'ITA', flagUrl: null, teamType: 'national' as const, countryCode: 'it', marketValueEur: null, transfermarktId: null },
   venue: { name: 'Estadio Nacional', city: 'Madrid', imageUrl: null },
   league: null,
   stage: 'group',
@@ -68,8 +68,8 @@ const MATCH_FINISHED: Match = {
 
 const MATCH_SCHEDULED: Match = {
   id: 'match-sched',
-  homeTeam: { id: 'ht2', name: 'Brazil', shortCode: 'BRA', flagUrl: null, teamType: 'national' as const, countryCode: 'br' },
-  awayTeam: { id: 'at2', name: 'Argentina', shortCode: 'ARG', flagUrl: null, teamType: 'national' as const, countryCode: 'ar' },
+  homeTeam: { id: 'ht2', name: 'Brazil', shortCode: 'BRA', flagUrl: null, teamType: 'national' as const, countryCode: 'br', marketValueEur: null, transfermarktId: null },
+  awayTeam: { id: 'at2', name: 'Argentina', shortCode: 'ARG', flagUrl: null, teamType: 'national' as const, countryCode: 'ar', marketValueEur: null, transfermarktId: null },
   venue: { name: 'Maracanã', city: 'Rio de Janeiro', imageUrl: null },
   league: null,
   stage: 'final',
@@ -82,8 +82,8 @@ const MATCH_SCHEDULED: Match = {
 
 const MATCH_LIVE: Match = {
   id: 'match-live',
-  homeTeam: { id: 'ht3', name: 'France', shortCode: 'FRA', flagUrl: null, teamType: 'national' as const, countryCode: 'fr' },
-  awayTeam: { id: 'at3', name: 'Germany', shortCode: 'GER', flagUrl: null, teamType: 'national' as const, countryCode: 'de' },
+  homeTeam: { id: 'ht3', name: 'France', shortCode: 'FRA', flagUrl: null, teamType: 'national' as const, countryCode: 'fr', marketValueEur: null, transfermarktId: null },
+  awayTeam: { id: 'at3', name: 'Germany', shortCode: 'GER', flagUrl: null, teamType: 'national' as const, countryCode: 'de', marketValueEur: null, transfermarktId: null },
   venue: { name: 'Stade de France', city: 'Paris', imageUrl: null },
   league: null,
   stage: 'group',
@@ -309,6 +309,35 @@ describe('MatchDetailView', () => {
       const indicator = wrapper.find('[data-testid="favorite-indicator"]')
       expect(indicator.exists()).toBe(true)
       expect(indicator.text()).toContain('4 tag')
+    })
+  })
+
+  // ─── UX-030: Transfermarkt market values ─────────────────────────────────
+  describe('UX-030 market values block', () => {
+    const MATCH_WITH_VALUES: Match = {
+      ...MATCH_SCHEDULED,
+      homeTeam: { ...MATCH_SCHEDULED.homeTeam, marketValueEur: 300_000_000, transfermarktId: 100 },
+      awayTeam: { ...MATCH_SCHEDULED.awayTeam, marketValueEur: 700_000_000, transfermarktId: 200 },
+    }
+
+    it('renders market values block when market values present (insights section + market-values-section)', async () => {
+      const { wrapper } = await mountView('match-sched', [MATCH_WITH_VALUES])
+      expect(wrapper.find('[data-testid="insights-section"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="market-values-section"]').exists()).toBe(true)
+    })
+
+    it('omits market values block entirely when both values are null', async () => {
+      const { wrapper } = await mountView('match-sched', [MATCH_SCHEDULED])
+      expect(wrapper.find('[data-testid="market-values-section"]').exists()).toBe(false)
+    })
+
+    it('reveal-gate covers both odds + market values blocks (single button)', async () => {
+      const { wrapper } = await mountView('match-sched', [MATCH_WITH_VALUES])
+      // Only one reveal button — covers everything
+      const buttons = wrapper.findAll('[data-testid="insights-reveal-btn"]')
+      expect(buttons).toHaveLength(1)
+      // market values inside the (blurred) wrapper
+      expect(wrapper.find('[data-testid="market-values-section"]').exists()).toBe(true)
     })
   })
 })

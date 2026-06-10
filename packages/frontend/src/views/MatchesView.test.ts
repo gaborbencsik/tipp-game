@@ -70,8 +70,8 @@ const DEFAULT_LEAGUE = { id: 'l-default', name: 'Default League', shortName: 'DE
 // scheduled match with future kickoff (tomorrow = within 7 days)
 const MATCH_SCHEDULED: Match = {
   id: 'match-sched',
-  homeTeam: { id: 'ht3', name: 'Brazil', shortCode: 'BRA', flagUrl: null, teamType: 'national' as const, countryCode: 'br' },
-  awayTeam: { id: 'at3', name: 'Argentina', shortCode: 'ARG', flagUrl: null, teamType: 'national' as const, countryCode: 'ar' },
+  homeTeam: { id: 'ht3', name: 'Brazil', shortCode: 'BRA', flagUrl: null, teamType: 'national' as const, countryCode: 'br', marketValueEur: null, transfermarktId: null },
+  awayTeam: { id: 'at3', name: 'Argentina', shortCode: 'ARG', flagUrl: null, teamType: 'national' as const, countryCode: 'ar', marketValueEur: null, transfermarktId: null },
   venue: { name: 'Stadium', city: 'Sao Paulo', imageUrl: null },
   league: DEFAULT_LEAGUE,
   stage: 'final',
@@ -85,8 +85,8 @@ const MATCH_SCHEDULED: Match = {
 // scheduled match far in the future (> 7 days)
 const MATCH_FAR_FUTURE: Match = {
   id: 'match-far',
-  homeTeam: { id: 'ht5', name: 'Portugal', shortCode: 'POR', flagUrl: null, teamType: 'national' as const, countryCode: 'pt' },
-  awayTeam: { id: 'at5', name: 'Belgium', shortCode: 'BEL', flagUrl: null, teamType: 'national' as const, countryCode: 'be' },
+  homeTeam: { id: 'ht5', name: 'Portugal', shortCode: 'POR', flagUrl: null, teamType: 'national' as const, countryCode: 'pt', marketValueEur: null, transfermarktId: null },
+  awayTeam: { id: 'at5', name: 'Belgium', shortCode: 'BEL', flagUrl: null, teamType: 'national' as const, countryCode: 'be', marketValueEur: null, transfermarktId: null },
   venue: null,
   league: DEFAULT_LEAGUE,
   stage: 'group',
@@ -99,8 +99,8 @@ const MATCH_FAR_FUTURE: Match = {
 
 const MATCH_LIVE: Match = {
   id: 'match-live',
-  homeTeam: { id: 'ht1', name: 'Germany', shortCode: 'GER', flagUrl: null, teamType: 'national' as const, countryCode: 'de' },
-  awayTeam: { id: 'at1', name: 'France', shortCode: 'FRA', flagUrl: null, teamType: 'national' as const, countryCode: 'fr' },
+  homeTeam: { id: 'ht1', name: 'Germany', shortCode: 'GER', flagUrl: null, teamType: 'national' as const, countryCode: 'de', marketValueEur: null, transfermarktId: null },
+  awayTeam: { id: 'at1', name: 'France', shortCode: 'FRA', flagUrl: null, teamType: 'national' as const, countryCode: 'fr', marketValueEur: null, transfermarktId: null },
   venue: { name: 'Arena', city: 'Munich', imageUrl: null },
   league: DEFAULT_LEAGUE,
   stage: 'group',
@@ -113,8 +113,8 @@ const MATCH_LIVE: Match = {
 
 const MATCH_FINISHED: Match = {
   id: 'match-finished',
-  homeTeam: { id: 'ht2', name: 'Spain', shortCode: 'ESP', flagUrl: null, teamType: 'national' as const, countryCode: 'es' },
-  awayTeam: { id: 'at2', name: 'Italy', shortCode: 'ITA', flagUrl: null, teamType: 'national' as const, countryCode: 'it' },
+  homeTeam: { id: 'ht2', name: 'Spain', shortCode: 'ESP', flagUrl: null, teamType: 'national' as const, countryCode: 'es', marketValueEur: null, transfermarktId: null },
+  awayTeam: { id: 'at2', name: 'Italy', shortCode: 'ITA', flagUrl: null, teamType: 'national' as const, countryCode: 'it', marketValueEur: null, transfermarktId: null },
   venue: null,
   league: DEFAULT_LEAGUE,
   stage: 'group',

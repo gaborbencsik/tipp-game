@@ -142,7 +142,10 @@
     "oddsComingSoon": "Hamarosan elérhető",
     "insightsTitle": "Elemzések",
     "insightsRevealCta": "Elemzés felfedése",
-    "insightsRevealError": "Nem sikerült felfedni, próbáld újra"
+    "insightsRevealError": "Nem sikerült felfedni, próbáld újra",
+    "marketValuesTitle": "Csapatértékek",
+    "marketValuesAriaLabel": "{team} piaci értéke {value}",
+    "marketValuesSource": "Forrás: Transfermarkt"
   },
   "myTips": {
     "title": "Tippjeim",

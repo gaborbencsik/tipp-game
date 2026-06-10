@@ -46,6 +46,8 @@ export async function getMatches(filters: MatchesFilters = {}): Promise<Match[]>
       flagUrl: row.home_team?.flagUrl ?? null,
       teamType: row.home_team?.teamType ?? 'national',
       countryCode: row.home_team?.countryCode ?? null,
+      marketValueEur: row.home_team?.squadMarketValue ?? null,
+      transfermarktId: row.home_team?.transfermarktId ?? null,
     },
     awayTeam: {
       id: row.away_team?.id ?? '',
@@ -54,6 +56,8 @@ export async function getMatches(filters: MatchesFilters = {}): Promise<Match[]>
       flagUrl: row.away_team?.flagUrl ?? null,
       teamType: row.away_team?.teamType ?? 'national',
       countryCode: row.away_team?.countryCode ?? null,
+      marketValueEur: row.away_team?.squadMarketValue ?? null,
+      transfermarktId: row.away_team?.transfermarktId ?? null,
     },
     venue: row.venues
       ? { name: row.venues.name, city: row.venues.city, imageUrl: row.venues.imageUrl ?? null }

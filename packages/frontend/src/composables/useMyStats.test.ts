@@ -9,6 +9,8 @@ const baseTeam = (id: string, name: string) => ({
   flagUrl: null,
   teamType: 'national' as const,
   countryCode: null,
+  marketValueEur: null,
+  transfermarktId: null,
 })
 
 function match(id: string, scheduledAt: string, status: Match['status'] = 'finished'): Match {

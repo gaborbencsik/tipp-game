@@ -142,7 +142,10 @@
     "oddsComingSoon": "Coming soon",
     "insightsTitle": "Insights",
     "insightsRevealCta": "Reveal insights",
-    "insightsRevealError": "Could not reveal, please try again"
+    "insightsRevealError": "Could not reveal, please try again",
+    "marketValuesTitle": "Squad market values",
+    "marketValuesAriaLabel": "{team} market value {value}",
+    "marketValuesSource": "Source: Transfermarkt"
   },
   "myTips": {
     "title": "My Predictions",

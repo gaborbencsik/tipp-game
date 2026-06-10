@@ -34,8 +34,8 @@ import { useMatchesStore } from '@/stores/matches.store'
 
 const MATCH_SCHEDULED: Match = {
   id: 'match-1',
-  homeTeam: { id: 'ht1', name: 'Germany', shortCode: 'GER', flagUrl: null, teamType: 'national' as const, countryCode: 'de' },
-  awayTeam: { id: 'at1', name: 'France', shortCode: 'FRA', flagUrl: null, teamType: 'national' as const, countryCode: 'fr' },
+  homeTeam: { id: 'ht1', name: 'Germany', shortCode: 'GER', flagUrl: null, teamType: 'national' as const, countryCode: 'de', marketValueEur: null, transfermarktId: null },
+  awayTeam: { id: 'at1', name: 'France', shortCode: 'FRA', flagUrl: null, teamType: 'national' as const, countryCode: 'fr', marketValueEur: null, transfermarktId: null },
   venue: { name: 'Arena', city: 'Munich', imageUrl: null },
   league: { id: 'league-1', name: 'World Cup 2026', shortName: 'WC26' },
   stage: 'group',
@@ -48,8 +48,8 @@ const MATCH_SCHEDULED: Match = {
 
 const MATCH_LIVE: Match = {
   id: 'match-2',
-  homeTeam: { id: 'ht2', name: 'Spain', shortCode: 'ESP', flagUrl: null, teamType: 'national' as const, countryCode: 'es' },
-  awayTeam: { id: 'at2', name: 'Italy', shortCode: 'ITA', flagUrl: null, teamType: 'national' as const, countryCode: 'it' },
+  homeTeam: { id: 'ht2', name: 'Spain', shortCode: 'ESP', flagUrl: null, teamType: 'national' as const, countryCode: 'es', marketValueEur: null, transfermarktId: null },
+  awayTeam: { id: 'at2', name: 'Italy', shortCode: 'ITA', flagUrl: null, teamType: 'national' as const, countryCode: 'it', marketValueEur: null, transfermarktId: null },
   venue: null,
   league: { id: 'league-2', name: 'Euro 2026', shortName: 'EU26' },
   stage: 'group',
@@ -62,8 +62,8 @@ const MATCH_LIVE: Match = {
 
 const MATCH_FINISHED: Match = {
   id: 'match-3',
-  homeTeam: { id: 'ht3', name: 'Brazil', shortCode: 'BRA', flagUrl: null, teamType: 'national' as const, countryCode: 'br' },
-  awayTeam: { id: 'at3', name: 'Argentina', shortCode: 'ARG', flagUrl: null, teamType: 'national' as const, countryCode: 'ar' },
+  homeTeam: { id: 'ht3', name: 'Brazil', shortCode: 'BRA', flagUrl: null, teamType: 'national' as const, countryCode: 'br', marketValueEur: null, transfermarktId: null },
+  awayTeam: { id: 'at3', name: 'Argentina', shortCode: 'ARG', flagUrl: null, teamType: 'national' as const, countryCode: 'ar', marketValueEur: null, transfermarktId: null },
   venue: { name: 'Stadium', city: 'Sao Paulo', imageUrl: null },
   league: { id: 'league-1', name: 'World Cup 2026', shortName: 'WC26' },
   stage: 'final',

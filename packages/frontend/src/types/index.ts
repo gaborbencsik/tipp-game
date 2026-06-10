@@ -28,6 +28,8 @@ export interface MatchTeam {
   readonly flagUrl: string | null
   readonly teamType: 'national' | 'club'
   readonly countryCode: string | null
+  readonly marketValueEur: number | null
+  readonly transfermarktId: number | null
 }
 
 export interface MatchVenue {
