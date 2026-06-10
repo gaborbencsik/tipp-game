@@ -35,7 +35,7 @@ export async function getMatches(filters: MatchesFilters = {}): Promise<Match[]>
     .leftJoin(leagues, eq(matches.leagueId, leagues.id))
     .leftJoin(matchResults, eq(matchResults.matchId, matches.id))
     .where(and(...conditions))
-    .orderBy(matches.scheduledAt)
+    .orderBy(matches.scheduledAt, matches.id)
 
   return rows.map((row): Match => ({
     id: row.matches.id,

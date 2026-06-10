@@ -20,7 +20,7 @@ const router = new Router()
 
 const revealRateLimit = createRateLimit({ windowMs: 60_000, max: 10 })
 
-router.get('/api/matches', authMiddleware, async (ctx) => {
+router.get('/api/matches', authMiddleware, withHttpCache({ maxAge: 0, swr: 15 }), async (ctx) => {
   const { stage, status, leagueId } = ctx.query as Record<string, string | undefined>
   const rawLeagueIds = ctx.query['leagueIds']
   const leagueIds = Array.isArray(rawLeagueIds)

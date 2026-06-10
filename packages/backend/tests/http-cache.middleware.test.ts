@@ -120,6 +120,15 @@ describe('withHttpCache middleware', () => {
       await middleware(ctx as unknown as Context, makeNextThatSets(ctx, { ok: true }))
       expect(ctx.headers['cache-control']).not.toContain('stale-while-revalidate')
     })
+
+    it('supports max-age=0 for always-revalidate ETag-only caching', async () => {
+      const middleware = withHttpCache({ maxAge: 0, swr: 30 })
+      const ctx = makeCtx()
+      await middleware(ctx as unknown as Context, makeNextThatSets(ctx, { ok: true }))
+      expect(ctx.headers['cache-control']).toContain('max-age=0')
+      expect(ctx.headers['cache-control']).toContain('stale-while-revalidate=30')
+      expect(ctx.headers['etag']).toBeDefined()
+    })
   })
 
   describe('If-None-Match → 304', () => {

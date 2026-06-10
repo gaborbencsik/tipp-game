@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 161 story kész (Must Have: 32/32, Should Have: 129/129)
+> 162 story kész (Must Have: 32/32, Should Have: 130/130)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -164,4 +164,5 @@
 | UX-016 | Kedvenc csapat jelzés a meccs kártyán (saját + csoporttársak) | Should Have |
 | OPS-004 | Virtual points polling gate – csak élő meccs alatt, 60 mp | Should Have |
 | OPS-005 | HTTP cache headers (Cache-Control + ETag) a quasi-statikus GET endpointokon | Should Have |
+| OPS-006 | ETag + 304 a leaderboard és matches list endpointokon | Should Have |
 | AUTH-001 | Supabase jelszó-helyreállítás támogatása (frontend) | Should Have |

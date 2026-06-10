@@ -51,12 +51,12 @@ router.post('/api/groups/join', joinRateLimit, authMiddleware, async (ctx) => {
   ctx.body = await joinGroup(input.inviteCode, dbUser.id)
 })
 
-router.get('/api/groups/:groupId/leaderboard', authMiddleware, async (ctx) => {
+router.get('/api/groups/:groupId/leaderboard', authMiddleware, withHttpCache({ maxAge: 0, swr: 30 }), async (ctx) => {
   const dbUser = await upsertUser(ctx.state.user)
   ctx.body = await getGroupLeaderboard(ctx.params.groupId, dbUser.id)
 })
 
-router.get('/api/groups/:groupId/my-predictions', authMiddleware, async (ctx) => {
+router.get('/api/groups/:groupId/my-predictions', authMiddleware, withHttpCache({ maxAge: 0, swr: 30 }), async (ctx) => {
   const dbUser = await upsertUser(ctx.state.user)
   ctx.body = await getMyGroupPredictions(ctx.params.groupId, dbUser.id)
 })

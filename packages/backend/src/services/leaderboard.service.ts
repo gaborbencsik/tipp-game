@@ -35,7 +35,7 @@ export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
       sql`(${predictions.id} IS NULL OR ${matches.deletedAt} IS NULL)`,
     ))
     .groupBy(users.id, users.displayName, users.avatarUrl, users.supporterAt)
-    .orderBy(sql`coalesce(sum(${predictions.pointsGlobal}), 0) desc`)
+    .orderBy(sql`coalesce(sum(${predictions.pointsGlobal}), 0) desc, ${users.id} asc`)
 
   // Pick each user's earliest favorite team (stable across requests).
   const userIds = rows.map(r => r.userId)

@@ -77,7 +77,7 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
       )
       .where(eq(groupMembers.groupId, groupId))
       .groupBy(users.id, users.displayName, users.avatarUrl, users.supporterAt)
-      .orderBy(sql`coalesce(sum(case when ${matches.id} is not null then ${groupPredictionPoints.points} end), 0) desc`)
+      .orderBy(sql`coalesce(sum(case when ${matches.id} is not null then ${groupPredictionPoints.points} end), 0) desc, ${users.id} asc`)
   } else {
     rows = await db
       .select({
@@ -95,7 +95,7 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
       .leftJoin(matches, matchesJoinOn)
       .where(eq(groupMembers.groupId, groupId))
       .groupBy(users.id, users.displayName, users.avatarUrl, users.supporterAt)
-      .orderBy(sql`coalesce(sum(case when ${matches.id} is not null then ${predictions.pointsGlobal} end), 0) desc`)
+      .orderBy(sql`coalesce(sum(case when ${matches.id} is not null then ${predictions.pointsGlobal} end), 0) desc, ${users.id} asc`)
   }
 
   // Fetch stat prediction points per user for this group
@@ -140,8 +140,9 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
     }
   })
 
-  // Sort by total (match + stat) descending
-  merged.sort((a, b) => b.totalPoints - a.totalPoints)
+  // Sort by total (match + stat) descending; userId asc as a stable tie-breaker
+  // so the response is deterministic across requests (required for ETag stability).
+  merged.sort((a, b) => b.totalPoints - a.totalPoints || a.userId.localeCompare(b.userId))
 
   // Fetch favorite teams if feature is enabled
   let favoritesByUser = new Map<string, { countryCode: string; name: string }>()
