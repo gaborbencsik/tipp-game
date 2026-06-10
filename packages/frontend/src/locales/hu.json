@@ -45,7 +45,29 @@
     "noAccount": "Nincs fiókod?",
     "register": "Regisztrálj",
     "hasAccount": "Már van fiókod?",
-    "signIn": "Belépés"
+    "signIn": "Belépés",
+    "forgotPassword": {
+      "label": "Elfelejtett jelszó?",
+      "hint": "Vedd fel a kapcsolatot az adminnal a helyreállítási linkért."
+    }
+  },
+  "resetPassword": {
+    "title": "Jelszó helyreállítása",
+    "subtitle": "Adj meg egy új jelszót a fiókod helyreállításához.",
+    "newPasswordLabel": "Új jelszó",
+    "newPasswordPlaceholder": "Új jelszó",
+    "confirmLabel": "Jelszó megerősítése",
+    "confirmPlaceholder": "Jelszó megerősítése",
+    "submit": "Jelszó beállítása",
+    "submitting": "Beállítás folyamatban...",
+    "successMessage": "Jelszó sikeresen beállítva!",
+    "errors": {
+      "linkExpired": "A helyreállítási link lejárt vagy nem érvényes. Kérj egy új linket az adminisztrátortól.",
+      "weakPassword": "Az új jelszó nem felel meg a biztonsági követelményeknek.",
+      "tooShort": "Legalább 8 karakternek kell lennie.",
+      "mismatch": "A jelszavak nem egyeznek.",
+      "generic": "Hiba történt. Kérj egy új helyreállítási linket az adminisztrátortól."
+    }
   },
   "authCallback": {
     "loading": "Bejelentkezés folyamatban..."

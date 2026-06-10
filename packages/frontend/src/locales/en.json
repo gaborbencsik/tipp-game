@@ -45,7 +45,29 @@
     "noAccount": "Don't have an account?",
     "register": "Sign up",
     "hasAccount": "Already have an account?",
-    "signIn": "Sign in"
+    "signIn": "Sign in",
+    "forgotPassword": {
+      "label": "Forgot password?",
+      "hint": "Ask an administrator for a recovery link."
+    }
+  },
+  "resetPassword": {
+    "title": "Reset password",
+    "subtitle": "Enter a new password to recover your account.",
+    "newPasswordLabel": "New password",
+    "newPasswordPlaceholder": "New password",
+    "confirmLabel": "Confirm password",
+    "confirmPlaceholder": "Confirm password",
+    "submit": "Set password",
+    "submitting": "Setting password...",
+    "successMessage": "Password successfully set!",
+    "errors": {
+      "linkExpired": "The recovery link has expired or is invalid. Request a new link from an administrator.",
+      "weakPassword": "The new password does not meet security requirements.",
+      "tooShort": "Password must be at least 8 characters.",
+      "mismatch": "Passwords do not match.",
+      "generic": "An error occurred. Request a new recovery link from an administrator."
+    }
   },
   "authCallback": {
     "loading": "Signing you in..."

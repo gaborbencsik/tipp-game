@@ -61,6 +61,11 @@
           <a href="#" class="text-blue-600 hover:underline" @click.prevent="mode = 'login'">{{ $t('login.signIn') }}</a>
         </span>
       </p>
+
+      <p v-if="mode === 'login'" class="mt-3 text-center text-xs text-gray-400">
+        <span class="font-medium">{{ $t('login.forgotPassword.label') }}</span>
+        {{ ' ' }}{{ $t('login.forgotPassword.hint') }}
+      </p>
     </div>
   </div>
 </template>

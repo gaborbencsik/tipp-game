@@ -1,12 +1,11 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-06-10 (OPS-004 lezárva)
+> Utoljára frissítve: 2026-06-10 (AUTH-001 lezárva)
 
 ## Nyitott story-k
 
 | Story ID | Cím | Prioritás | Függőség |
 |----------|-----|-----------|----------|
-| AUTH-001 | Supabase jelszó-helyreállítás támogatása (frontend) | Should Have | — |
 | OPS-001 | Strukturált logolás és frontend hibakezelés (MVP) | Should Have | — |
 | OPS-003 | Auto-generált DB schema referencia agentnek és fejlesztőnek | Should Have | — |
 | PWA-003 | PWA telepítés smart banner + onboarding integráció | Should Have | ~~PWA-002~~ |
@@ -30,4 +29,4 @@
 
 ---
 
-**Haladás: 159 / 177 story kész** — Must Have: 32/32, Should Have: 127/139, Nice to Have: 0/5 (US-937, PUSH-003 won't do)
+**Haladás: 160 / 177 story kész** — Must Have: 32/32, Should Have: 128/139, Nice to Have: 0/5 (US-937, PUSH-003 won't do)

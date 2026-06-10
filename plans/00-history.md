@@ -163,3 +163,4 @@
 | SCORER-004 | Góllövő auto-sync az api-football /fixtures/events-ből | Should Have |
 | UX-016 | Kedvenc csapat jelzés a meccs kártyán (saját + csoporttársak) | Should Have |
 | OPS-004 | Virtual points polling gate – csak élő meccs alatt, 60 mp | Should Have |
+| AUTH-001 | Supabase jelszó-helyreállítás támogatása (frontend) | Should Have |

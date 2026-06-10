@@ -20,6 +20,11 @@ export const router = createRouter({
       component: () => import('../views/AuthCallbackView.vue'),
     },
     {
+      path: '/auth/reset-password',
+      name: 'reset-password',
+      component: () => import('../views/ResetPasswordView.vue'),
+    },
+    {
       path: '/app/matches',
       name: 'home',
       component: () => import('../views/MatchesView.vue'),
