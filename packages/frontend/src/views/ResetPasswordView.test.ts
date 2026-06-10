@@ -15,12 +15,14 @@ vi.mock('vue-router', async (importOriginal) => {
 
 const mockGetSession = vi.fn()
 const mockUpdateUser = vi.fn()
+const mockVerifyOtp = vi.fn()
 
 vi.mock('@/lib/supabase', () => ({
   supabase: {
     auth: {
       getSession: (...args: unknown[]) => mockGetSession(...args),
       updateUser: (...args: unknown[]) => mockUpdateUser(...args),
+      verifyOtp: (...args: unknown[]) => mockVerifyOtp(...args),
       onAuthStateChange: vi.fn().mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } }),
     },
   },
@@ -36,12 +38,23 @@ function mountView() {
   })
 }
 
+async function mountViewWithQuery(query: Record<string, string>) {
+  const router = buildRouter()
+  router.addRoute({ path: '/auth/reset-password', component: ResetPasswordView })
+  await router.push({ path: '/auth/reset-password', query })
+  await router.isReady()
+  return mount(ResetPasswordView, {
+    global: { plugins: [createPinia(), router] },
+  })
+}
+
 describe('ResetPasswordView', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     mockPush.mockClear()
     mockGetSession.mockReset().mockResolvedValue({ data: { session: { access_token: 'tok' } } })
     mockUpdateUser.mockReset().mockResolvedValue({ data: { user: { id: 'u1' } }, error: null })
+    mockVerifyOtp.mockReset().mockResolvedValue({ data: { session: { access_token: 'tok' } }, error: null })
     vi.useFakeTimers()
   })
 
@@ -144,5 +157,23 @@ describe('ResetPasswordView', () => {
     await flushPromises()
     expect(wrapper.text()).toContain('Hiba történt')
     expect(mockPush).not.toHaveBeenCalled()
+  })
+
+  it('?token_hash + type=recovery → calls verifyOtp and enables form on success', async () => {
+    const wrapper = await mountViewWithQuery({ token_hash: 'abc123', type: 'recovery' })
+    await flushPromises()
+    expect(mockVerifyOtp).toHaveBeenCalledWith({ token_hash: 'abc123', type: 'recovery' })
+    expect(mockGetSession).not.toHaveBeenCalled()
+    const button = wrapper.find('button[type="submit"]')
+    expect(button.attributes('disabled')).toBeUndefined()
+  })
+
+  it('?token_hash + type=recovery with verifyOtp error → link expired and form disabled', async () => {
+    mockVerifyOtp.mockResolvedValue({ data: { session: null }, error: { message: 'token expired', name: 'AuthError' } })
+    const wrapper = await mountViewWithQuery({ token_hash: 'expired', type: 'recovery' })
+    await flushPromises()
+    expect(wrapper.text()).toContain('helyreállítási link lejárt')
+    const button = wrapper.find('button[type="submit"]')
+    expect(button.attributes('disabled')).toBeDefined()
   })
 })

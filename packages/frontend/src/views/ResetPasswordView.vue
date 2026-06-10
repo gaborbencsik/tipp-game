@@ -65,12 +65,13 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { supabase } from '../lib/supabase.js'
 import LocaleToggle from '../components/LocaleToggle.vue'
 
 const { t } = useI18n()
 const router = useRouter()
+const route = useRoute()
 
 const MIN_PASSWORD_LENGTH = 8
 const SUCCESS_REDIRECT_DELAY_MS = 2000
@@ -85,8 +86,15 @@ const sessionChecking = ref(true)
 
 onMounted(async () => {
   try {
-    const { data } = await supabase.auth.getSession()
-    sessionReady.value = data.session !== null && data.session !== undefined
+    const tokenHash = typeof route.query.token_hash === 'string' ? route.query.token_hash : null
+    const type = typeof route.query.type === 'string' ? route.query.type : null
+    if (tokenHash && type === 'recovery') {
+      const { data, error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' })
+      sessionReady.value = !error && data.session !== null && data.session !== undefined
+    } else {
+      const { data } = await supabase.auth.getSession()
+      sessionReady.value = data.session !== null && data.session !== undefined
+    }
   } catch {
     sessionReady.value = false
   } finally {
