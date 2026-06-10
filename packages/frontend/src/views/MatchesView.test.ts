@@ -208,6 +208,23 @@ describe('MatchesView', () => {
     resolveFavs([])
   })
 
+  it('does not flicker the "missed tip" state before predictions are loaded', async () => {
+    // Hold predictions fetch open: matches resolve immediately, predictions are pending
+    let resolvePreds!: (v: Prediction[]) => void
+    mockMatchesList.mockResolvedValue([MATCH_FINISHED])
+    mockPredictionsMine.mockReturnValue(new Promise<Prediction[]>(res => { resolvePreds = res }))
+    mockGroupsGroups.push(DEFAULT_GROUP_WITH_LEAGUE)
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    const wrapper = mount(MatchesView, { global: { plugins: [pinia, buildRouter()] } })
+    await flushPromises()
+    // Spinner still up while predictions are pending; the "missed tip" copy must not leak through
+    expect(wrapper.find('[data-testid="spinner"]').exists()).toBe(true)
+    expect(wrapper.text()).not.toContain('Nem tippeltél erre a meccsre')
+    expect(wrapper.text()).not.toContain('Még nem tippeltél')
+    resolvePreds([])
+  })
+
   it('matches loaded → live and scheduled groups rendered, finished shows last day only', async () => {
     // MATCH_FINISHED is on a different day from MATCH_LIVE so it forms its own all-finished group
     const finishedOnOwnDay: Match = {

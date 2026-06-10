@@ -572,8 +572,6 @@ onMounted(async () => {
     // silent — fav banner simply won't show
   }
 
-  initialDataLoaded.value = true
-
   const userLeagueIdSet = new Set(
     groupsStore.groups.map(g => g.league?.id).filter((id): id is string => Boolean(id)),
   )
@@ -581,12 +579,22 @@ onMounted(async () => {
 
   if (userLeagueIds.length === 0) {
     matchesStore.matches = []
+    initialDataLoaded.value = true
     return
   }
 
-  await matchesStore.fetchMatches(userLeagueIds)
-  await predictionsStore.fetchMyPredictions()
+  // Gate the page on both matches and predictions, so cards don't briefly
+  // render the "missed tip" / no-prediction state before predictions hydrate.
+  try {
+    await Promise.all([
+      matchesStore.fetchMatches(userLeagueIds),
+      predictionsStore.fetchMyPredictions(),
+    ])
+  } catch {
+    // tolerate — error states handled by stores
+  }
   initDrafts()
+  initialDataLoaded.value = true
 
   // UX-016: load favorites of group-mates per league for the indicator on match cards
   void Promise.all(
