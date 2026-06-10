@@ -1,5 +1,13 @@
-import { describe, it, expect } from 'vitest'
-import { parseMoneylineOdds } from '../src/services/polymarket.service.js'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+
+vi.mock('../src/db/client.js', () => ({
+  db: {
+    execute: vi.fn().mockResolvedValue(undefined),
+  },
+}))
+
+import { parseMoneylineOdds, pruneOldSnapshots, SNAPSHOT_RETENTION_LIMIT } from '../src/services/polymarket.service.js'
+import { db } from '../src/db/client.js'
 
 const makeEvent = (markets: unknown[], competitive = 0.75, eventMetadata?: string) => ({
   id: 'test-id',
@@ -138,5 +146,45 @@ describe('parseMoneylineOdds', () => {
         expect(result!.awayWin).toBe(0.20)
       })
     }
+  })
+})
+
+describe('pruneOldSnapshots', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('exposes a default retention limit of 5', () => {
+    expect(SNAPSHOT_RETENTION_LIMIT).toBe(5)
+  })
+
+  it('deletes snapshots beyond the retention limit for the given match', async () => {
+    await pruneOldSnapshots('match-uuid-1')
+
+    expect(db.execute).toHaveBeenCalledTimes(1)
+    const sqlObj = (db.execute as ReturnType<typeof vi.fn>).mock.calls[0][0]
+    // Drizzle SQL objects expose queryChunks/values; serialize for content checks
+    const serialized = JSON.stringify(sqlObj)
+    expect(serialized).toContain('DELETE FROM match_market_data')
+    expect(serialized).toContain('match-uuid-1')
+    expect(serialized).toContain('ORDER BY fetched_at DESC')
+    expect(serialized).toContain('5')
+  })
+
+  it('honors a custom limit override', async () => {
+    await pruneOldSnapshots('match-uuid-2', 10)
+
+    const sqlObj = (db.execute as ReturnType<typeof vi.fn>).mock.calls[0][0]
+    expect(JSON.stringify(sqlObj)).toContain('10')
+  })
+
+  it('scopes deletion to a single match (match_id appears in WHERE and subquery)', async () => {
+    await pruneOldSnapshots('match-uuid-3')
+
+    const sqlObj = (db.execute as ReturnType<typeof vi.fn>).mock.calls[0][0]
+    const serialized = JSON.stringify(sqlObj)
+    // The match id must appear at least twice: outer WHERE + inner subquery
+    const occurrences = serialized.split('match-uuid-3').length - 1
+    expect(occurrences).toBeGreaterThanOrEqual(2)
   })
 })

@@ -214,6 +214,25 @@ export function parseMoneylineOdds(
   }
 }
 
+export const SNAPSHOT_RETENTION_LIMIT = 5
+
+/**
+ * Keeps only the SNAPSHOT_RETENTION_LIMIT most recent match_market_data rows for a match.
+ * Older snapshots are deleted. Exported for testability.
+ */
+export async function pruneOldSnapshots(matchId: string, limit: number = SNAPSHOT_RETENTION_LIMIT): Promise<void> {
+  await db.execute(sql`
+    DELETE FROM match_market_data
+    WHERE match_id = ${matchId}
+      AND id NOT IN (
+        SELECT id FROM match_market_data
+        WHERE match_id = ${matchId}
+        ORDER BY fetched_at DESC
+        LIMIT ${limit}
+      )
+  `)
+}
+
 export async function syncAllMatchOdds(): Promise<{ synced: number; failed: number; errors: string[] }> {
   const homeTeam = alias(teams, 'home_team')
   const awayTeam = alias(teams, 'away_team')
@@ -282,6 +301,9 @@ export async function syncAllMatchOdds(): Promise<{ synced: number; failed: numb
         contextDescription: odds.contextDescription,
         rawPayload: event,
       })
+
+      await pruneOldSnapshots(match.id)
+
       synced++
       logger.info('match synced', { ...matchScope, homeWin: odds.homeWin, draw: odds.draw, awayWin: odds.awayWin })
     } catch (err) {
