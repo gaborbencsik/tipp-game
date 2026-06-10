@@ -10,6 +10,7 @@ import { matchesRouter } from './routes/matches.routes.js'
 import { predictionsRouter } from './routes/predictions.routes.js'
 import { adminRouter } from './routes/admin.routes.js'
 import { groupsRouter } from './routes/groups.routes.js'
+import { leaguesRouter } from './routes/leagues.routes.js'
 import { leaderboardRouter } from './routes/leaderboard.routes.js'
 import { waitlistRouter } from './routes/waitlist.routes.js'
 import { specialPredictionsRouter } from './routes/special-predictions.routes.js'
@@ -47,6 +48,8 @@ app.use(adminRouter.routes())
 app.use(adminRouter.allowedMethods())
 app.use(groupsRouter.routes())
 app.use(groupsRouter.allowedMethods())
+app.use(leaguesRouter.routes())
+app.use(leaguesRouter.allowedMethods())
 app.use(leaderboardRouter.routes())
 app.use(leaderboardRouter.allowedMethods())
 app.use(waitlistRouter.routes())

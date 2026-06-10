@@ -12,12 +12,13 @@ vi.mock('vue-router', async (importOriginal) => {
   return { ...actual, useRouter: () => ({ push: vi.fn() }) }
 })
 
-const { mockMatchesList, mockPredictionsMine, mockPredictionsUpsert, mockLeaguesList, mockGetLeagueFavorites, mockGroupsGroups } = vi.hoisted(() => ({
+const { mockMatchesList, mockPredictionsMine, mockPredictionsUpsert, mockLeaguesList, mockGetLeagueFavorites, mockFavoritesSummary, mockGroupsGroups } = vi.hoisted(() => ({
   mockMatchesList: vi.fn().mockResolvedValue([]),
   mockPredictionsMine: vi.fn().mockResolvedValue([]),
   mockPredictionsUpsert: vi.fn().mockResolvedValue(undefined),
   mockLeaguesList: vi.fn().mockResolvedValue([]),
   mockGetLeagueFavorites: vi.fn().mockResolvedValue([]),
+  mockFavoritesSummary: vi.fn().mockResolvedValue({ members: [] }),
   mockGroupsGroups: [] as import('@/types/index').Group[],
 }))
 
@@ -36,7 +37,7 @@ vi.mock('@/api/index', () => ({
     auth: { me: vi.fn() },
     matches: { list: mockMatchesList },
     predictions: { mine: mockPredictionsMine, upsert: mockPredictionsUpsert },
-    leagues: { list: mockLeaguesList },
+    leagues: { list: mockLeaguesList, favoritesSummary: mockFavoritesSummary },
     leagueTeams: { forLeague: vi.fn().mockResolvedValue([]) },
     users: { getLeagueFavorites: mockGetLeagueFavorites, setLeagueFavorite: vi.fn().mockResolvedValue(undefined) },
     players: { list: vi.fn().mockResolvedValue([]) },
@@ -173,6 +174,8 @@ describe('MatchesView', () => {
     mockPredictionsMine.mockResolvedValue([])
     mockPredictionsUpsert.mockReset()
     mockGroupsGroups.length = 0
+    mockFavoritesSummary.mockReset()
+    mockFavoritesSummary.mockResolvedValue({ members: [] })
     setActivePinia(createPinia())
     localStorage.clear()
   })
@@ -545,6 +548,69 @@ describe('MatchesView', () => {
       scorerPickPlayerId: 'player-x',
     })
     vi.useRealTimers()
+  })
+
+  // ─── UX-016: favorite team indicator on match cards ───────────────────────────
+
+  describe('UX-016 favorite indicator', () => {
+    it('does not render the indicator when no group-mate favors either team', async () => {
+      mockFavoritesSummary.mockResolvedValue({ members: [] })
+      const { wrapper } = await mountView([MATCH_SCHEDULED])
+      expect(wrapper.find('[data-testid="favorite-indicator"]').exists()).toBe(false)
+    })
+
+    it('renders other group-mates names when 1-3 favor a participating team (no own favorite)', async () => {
+      mockFavoritesSummary.mockResolvedValue({
+        members: [
+          { userId: 'alice', displayName: 'Alice', teamId: MATCH_SCHEDULED.homeTeam.id },
+          { userId: 'bob', displayName: 'Bob', teamId: MATCH_SCHEDULED.awayTeam.id },
+        ],
+      })
+      const { wrapper } = await mountView([MATCH_SCHEDULED])
+      const indicator = wrapper.find('[data-testid="favorite-indicator"]')
+      expect(indicator.exists()).toBe(true)
+      expect(indicator.text()).toContain('Alice')
+      expect(indicator.text()).toContain('Bob')
+      // no own favorite → no yellow ring on the card
+      const card = indicator.element.closest('.bg-white')
+      expect(card?.className ?? '').not.toContain('ring-yellow-300')
+    })
+
+    it('shows "{count} tag" summary text when 4+ group-mates favor', async () => {
+      mockFavoritesSummary.mockResolvedValue({
+        members: [
+          { userId: 'a', displayName: 'A', teamId: MATCH_SCHEDULED.homeTeam.id },
+          { userId: 'b', displayName: 'B', teamId: MATCH_SCHEDULED.homeTeam.id },
+          { userId: 'c', displayName: 'C', teamId: MATCH_SCHEDULED.awayTeam.id },
+          { userId: 'd', displayName: 'D', teamId: MATCH_SCHEDULED.awayTeam.id },
+        ],
+      })
+      const { wrapper } = await mountView([MATCH_SCHEDULED])
+      const indicator = wrapper.find('[data-testid="favorite-indicator"]')
+      expect(indicator.exists()).toBe(true)
+      expect(indicator.text()).toContain('4 tag')
+    })
+
+    it('highlights own favorite (yellow ring + bold name) when current user favors a participating team', async () => {
+      mockFavoritesSummary.mockResolvedValue({
+        members: [
+          { userId: 'db-user-uuid-001', displayName: 'Self', teamId: MATCH_SCHEDULED.homeTeam.id },
+          { userId: 'alice', displayName: 'Alice', teamId: MATCH_SCHEDULED.awayTeam.id },
+        ],
+      })
+      const { wrapper } = await mountView([MATCH_SCHEDULED])
+      const indicator = wrapper.find('[data-testid="favorite-indicator"]')
+      expect(indicator.exists()).toBe(true)
+      expect(indicator.text()).toContain('Self')
+      expect(indicator.text()).toContain('Alice')
+
+      const card = indicator.element.closest('.bg-white') as HTMLElement | null
+      expect(card?.className ?? '').toContain('ring-yellow-300')
+
+      // own name uses font-semibold
+      const selfSpan = indicator.findAll('span').find(s => s.text() === 'Self')
+      expect(selfSpan?.classes()).toContain('font-semibold')
+    })
   })
 
 })

@@ -53,6 +53,11 @@ export const api = {
       request<League[]>('/leagues', {
         headers: { Authorization: `Bearer ${token}` },
       }),
+    favoritesSummary: (token: string, leagueId: string) =>
+      request<{ members: { userId: string; displayName: string; teamId: string }[] }>(
+        `/leagues/${leagueId}/favorites-summary`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      ),
   },
   statPredictionTemplates: {
     list: (token: string) =>

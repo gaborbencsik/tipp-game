@@ -34,7 +34,7 @@
           </span>
         </div>
 
-        <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6 mb-4">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6 mb-4" :class="ownFavoriteClass">
           <div class="flex items-center justify-center gap-4">
             <div class="flex-1 text-right">
               <span class="font-semibold text-gray-800 text-lg">
@@ -60,6 +60,17 @@
 
           <div v-if="match.venue" class="text-sm text-gray-400 text-center mt-3">
             {{ match.venue.name }}, {{ match.venue.city }}
+          </div>
+
+          <div
+            v-if="favoriteIndicator"
+            class="text-center text-xs flex items-center justify-center gap-1 mt-3"
+            data-testid="favorite-indicator"
+          >
+            <span class="text-yellow-500">⭐</span>
+            <span v-if="favoriteIndicator.self" class="font-semibold text-gray-700">{{ favoriteIndicator.self }}</span>
+            <span v-if="favoriteIndicator.self && favoriteIndicator.othersText" class="text-gray-500">,&nbsp;</span>
+            <span v-if="favoriteIndicator.othersText" class="text-gray-500">{{ favoriteIndicator.othersText }}</span>
           </div>
         </div>
 
@@ -252,6 +263,7 @@ import { useRoute } from 'vue-router'
 import { useMatchesStore } from '../stores/matches.store.js'
 import { usePredictionsStore } from '../stores/predictions.store.js'
 import { useAuthStore } from '../stores/auth.store.js'
+import { useGroupFavoritesStore, type FavoriteMember } from '../stores/group-favorites.store.js'
 import { useInsightsRevealStore } from '../stores/insights-reveal.store.js'
 import { useToast } from '../composables/useToast.js'
 import { api } from '../api/index.js'
@@ -279,6 +291,7 @@ const route = useRoute()
 const matchesStore = useMatchesStore()
 const predictionsStore = usePredictionsStore()
 const authStore = useAuthStore()
+const groupFavStore = useGroupFavoritesStore()
 const insightsRevealStore = useInsightsRevealStore()
 const { showToast } = useToast()
 
@@ -320,6 +333,31 @@ const match = computed((): Match | undefined =>
 
 const myPrediction = computed(() => predictionsStore.predictionByMatchId(matchId.value))
 
+interface FavoriteIndicator {
+  readonly self: string | null
+  readonly othersText: string
+}
+
+const favoriteIndicator = computed<FavoriteIndicator | null>(() => {
+  if (!match.value) return null
+  const { self, others } = groupFavStore.membersForMatch(match.value, authStore.user?.id ?? null)
+  if (!self && others.length === 0) return null
+  let othersText = ''
+  if (others.length > 0 && others.length <= 3) {
+    othersText = others.map((o: FavoriteMember) => o.displayName).join(', ')
+  } else if (others.length >= 4) {
+    othersText = t('matches.favoriteCount', { count: others.length })
+  }
+  return { self: self?.displayName ?? null, othersText }
+})
+
+const ownFavoriteClass = computed<string>(() => {
+  if (!match.value) return ''
+  return groupFavStore.hasOwnFavorite(match.value, authStore.user?.id ?? null)
+    ? 'ring-2 ring-yellow-300 bg-yellow-50/40'
+    : ''
+})
+
 onMounted(async () => {
   if (matchesStore.matches.length === 0) {
     await matchesStore.fetchMatches()
@@ -335,6 +373,12 @@ onMounted(async () => {
     await loadMatchPredictions()
   }
   loadMatchOdds()
+
+  // UX-016: load favorites for this match's league
+  const leagueId = match.value?.league?.id
+  if (leagueId) {
+    void groupFavStore.ensureLoaded(leagueId).catch(() => undefined)
+  }
 })
 
 onUnmounted(() => {

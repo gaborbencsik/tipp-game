@@ -76,6 +76,7 @@
     "missedTip": "You didn't predict this match",
     "favBanner": "Set your favorite team in your profile!",
     "favBannerLink": "Set up",
+    "favoriteCount": "{count} members",
     "extraTimeShort": "ET:",
     "homeWin": "Home",
     "awayWin": "Away",

@@ -161,3 +161,4 @@
 | SUPPORTER-001 | Globális lelkes támogató badge beállítása | Should Have |
 | OPS-002 | Render cron service-ek konfigurálása az automatikus sync-hez | Must Have |
 | SCORER-004 | Góllövő auto-sync az api-football /fixtures/events-ből | Should Have |
+| UX-016 | Kedvenc csapat jelzés a meccs kártyán (saját + csoporttársak) | Should Have |

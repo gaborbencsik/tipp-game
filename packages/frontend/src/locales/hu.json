@@ -76,6 +76,7 @@
     "missedTip": "❌ Nem tippeltél erre a meccsre",
     "favBanner": "Állítsd be kedvenc csapatodat a profilodban!",
     "favBannerLink": "Beállítás",
+    "favoriteCount": "{count} tag",
     "extraTimeShort": "Hossz.:",
     "homeWin": "← Hazai",
     "awayWin": "Vendég →",

@@ -153,7 +153,7 @@
                 v-for="match in group.matches"
                 :key="match.id"
                 class="bg-white rounded-lg shadow-sm border p-4 mb-3"
-                :class="cardBorderClass(match)"
+                :class="[cardBorderClass(match), ownFavoriteClass(match)]"
               >
                 <router-link :to="`/app/matches/${match.id}`" class="block">
                   <div class="flex items-center justify-between mb-2">
@@ -213,6 +213,16 @@
                       :class="pointsBadgeClass(predictionsStore.predictionByMatchId(match.id)!.scorerBonusPoints!)"
                     >+{{ predictionsStore.predictionByMatchId(match.id)!.scorerBonusPoints }} {{ $t('common.points') }}</span>
                   </div>
+                  <div
+                    v-if="favoriteIndicator(match)"
+                    class="text-center text-xs flex items-center justify-center gap-1 mt-1"
+                    data-testid="favorite-indicator"
+                  >
+                    <span class="text-yellow-500">⭐</span>
+                    <span v-if="favoriteIndicator(match)!.self" class="font-semibold text-gray-700">{{ favoriteIndicator(match)!.self }}</span>
+                    <span v-if="favoriteIndicator(match)!.self && favoriteIndicator(match)!.othersText" class="text-gray-500">,&nbsp;</span>
+                    <span v-if="favoriteIndicator(match)!.othersText" class="text-gray-500">{{ favoriteIndicator(match)!.othersText }}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -247,7 +257,7 @@
             v-for="match in group.matches"
             :key="match.id"
             class="bg-white rounded-lg shadow-sm border p-4 mb-3"
-            :class="cardBorderClass(match)"
+            :class="[cardBorderClass(match), ownFavoriteClass(match)]"
           >
             <router-link :to="`/app/matches/${match.id}`" class="block">
               <div class="flex items-center justify-between mb-2">
@@ -377,6 +387,17 @@
                   >+{{ predictionsStore.predictionByMatchId(match.id)!.scorerBonusPoints }} {{ $t('common.points') }}</span>
                 </div>
               </template>
+
+              <div
+                v-if="favoriteIndicator(match)"
+                class="text-center text-xs flex items-center justify-center gap-1 mt-2"
+                data-testid="favorite-indicator"
+              >
+                <span class="text-yellow-500">⭐</span>
+                <span v-if="favoriteIndicator(match)!.self" class="font-semibold text-gray-700">{{ favoriteIndicator(match)!.self }}</span>
+                <span v-if="favoriteIndicator(match)!.self && favoriteIndicator(match)!.othersText" class="text-gray-500">,&nbsp;</span>
+                <span v-if="favoriteIndicator(match)!.othersText" class="text-gray-500">{{ favoriteIndicator(match)!.othersText }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -392,6 +413,8 @@ import { useMatchesStore } from '../stores/matches.store.js'
 import { usePredictionsStore } from '../stores/predictions.store.js'
 import { useGroupsStore } from '../stores/groups.store.js'
 import { useLeagueFavoritesStore } from '../stores/league-favorites.store.js'
+import { useGroupFavoritesStore, type FavoriteMember } from '../stores/group-favorites.store.js'
+import { useAuthStore } from '../stores/auth.store.js'
 import type { Match, MatchDateGroup, MatchOutcome, MatchStage, MatchStatus } from '../types/index.js'
 import AppLayout from '../components/AppLayout.vue'
 import TeamBadge from '../components/TeamBadge.vue'
@@ -409,6 +432,8 @@ const matchesStore = useMatchesStore()
 const predictionsStore = usePredictionsStore()
 const groupsStore = useGroupsStore()
 const favStore = useLeagueFavoritesStore()
+const groupFavStore = useGroupFavoritesStore()
+const authStore = useAuthStore()
 const { pendingGroups, totalPendingCount, now: pendingNow } = usePendingSpecialTips()
 
 const stageFilterOptions = computed(() => [
@@ -552,6 +577,11 @@ onMounted(async () => {
   await predictionsStore.fetchMyPredictions()
   initDrafts()
 
+  // UX-016: load favorites of group-mates per league for the indicator on match cards
+  void Promise.all(
+    userLeagueIds.map(id => groupFavStore.ensureLoaded(id).catch(() => undefined)),
+  )
+
   try {
     await Promise.all(
       groupsStore.groups.map(g => groupsStore.fetchSpecialPredictions(g.id))
@@ -626,6 +656,29 @@ function cardBorderClass(match: Match): string {
   if (isTippable(match) && prediction) return 'border-blue-200'
   if (match.status === 'finished' && !prediction) return 'border-l-4 border-l-gray-300 border-gray-100'
   return 'border-gray-100'
+}
+
+function ownFavoriteClass(match: Match): string {
+  return groupFavStore.hasOwnFavorite(match, authStore.user?.id ?? null)
+    ? 'ring-2 ring-yellow-300 bg-yellow-50/40'
+    : ''
+}
+
+interface FavoriteIndicator {
+  readonly self: string | null
+  readonly othersText: string
+}
+
+function favoriteIndicator(match: Match): FavoriteIndicator | null {
+  const { self, others } = groupFavStore.membersForMatch(match, authStore.user?.id ?? null)
+  if (!self && others.length === 0) return null
+  let othersText = ''
+  if (others.length > 0 && others.length <= 3) {
+    othersText = others.map((o: FavoriteMember) => o.displayName).join(', ')
+  } else if (others.length >= 4) {
+    othersText = t('matches.favoriteCount', { count: others.length })
+  }
+  return { self: self?.displayName ?? null, othersText }
 }
 
 function pointsBadgeClass(points: number): string {

@@ -12,11 +12,12 @@ vi.mock('vue-router', async (importOriginal) => {
   return { ...actual, useRouter: () => ({ push: vi.fn() }) }
 })
 
-const { mockMatchesList, mockPredictionsMine, mockPredictionsUpsert, mockPredictionsForMatch } = vi.hoisted(() => ({
+const { mockMatchesList, mockPredictionsMine, mockPredictionsUpsert, mockPredictionsForMatch, mockFavoritesSummary } = vi.hoisted(() => ({
   mockMatchesList: vi.fn().mockResolvedValue([]),
   mockPredictionsMine: vi.fn().mockResolvedValue([]),
   mockPredictionsUpsert: vi.fn().mockResolvedValue(undefined),
   mockPredictionsForMatch: vi.fn().mockResolvedValue([]),
+  mockFavoritesSummary: vi.fn().mockResolvedValue({ members: [] }),
 }))
 
 vi.mock('@/lib/supabase', () => ({
@@ -35,6 +36,7 @@ vi.mock('@/api/index', () => ({
     matches: { list: mockMatchesList },
     predictions: { mine: mockPredictionsMine, upsert: mockPredictionsUpsert, forMatch: mockPredictionsForMatch },
     players: { list: vi.fn().mockResolvedValue([]) },
+    leagues: { favoritesSummary: mockFavoritesSummary },
   },
 }))
 
@@ -149,6 +151,8 @@ describe('MatchDetailView', () => {
     mockPredictionsUpsert.mockReset()
     mockPredictionsForMatch.mockReset()
     mockPredictionsForMatch.mockResolvedValue([])
+    mockFavoritesSummary.mockReset()
+    mockFavoritesSummary.mockResolvedValue({ members: [] })
     setActivePinia(createPinia())
   })
 
@@ -259,5 +263,52 @@ describe('MatchDetailView', () => {
     const { wrapper } = await mountView('match-live', [MATCH_LIVE], [], [])
     expect(wrapper.find('[data-testid="match-predictions-list"]').exists()).toBe(true)
     expect(wrapper.text()).toContain('Alice')
+  })
+
+  // ─── UX-016: favorite indicator ─────────────────────────────────────────────
+  describe('UX-016 favorite indicator', () => {
+    const MATCH_WITH_LEAGUE: Match = {
+      ...MATCH_SCHEDULED,
+      league: { id: 'league-wc', name: 'World Cup', shortName: 'WC' },
+    }
+
+    it('does not render the indicator when nobody favors either team', async () => {
+      mockFavoritesSummary.mockResolvedValue({ members: [] })
+      const { wrapper } = await mountView('match-sched', [MATCH_WITH_LEAGUE])
+      expect(wrapper.find('[data-testid="favorite-indicator"]').exists()).toBe(false)
+    })
+
+    it('renders names of group-mates and adds yellow ring when own favorite plays', async () => {
+      mockFavoritesSummary.mockResolvedValue({
+        members: [
+          { userId: 'db-user-uuid-001', displayName: 'Self', teamId: MATCH_WITH_LEAGUE.homeTeam.id },
+          { userId: 'alice', displayName: 'Alice', teamId: MATCH_WITH_LEAGUE.awayTeam.id },
+        ],
+      })
+      const { wrapper } = await mountView('match-sched', [MATCH_WITH_LEAGUE])
+      const indicator = wrapper.find('[data-testid="favorite-indicator"]')
+      expect(indicator.exists()).toBe(true)
+      expect(indicator.text()).toContain('Self')
+      expect(indicator.text()).toContain('Alice')
+
+      // scoreboard card has the yellow ring class
+      const card = wrapper.find('.bg-white.rounded-lg.shadow-sm.border.border-gray-100.p-6')
+      expect(card.classes().join(' ')).toContain('ring-yellow-300')
+    })
+
+    it('renders "{count} tag" summary when 4+ group-mates favor', async () => {
+      mockFavoritesSummary.mockResolvedValue({
+        members: [
+          { userId: 'a', displayName: 'A', teamId: MATCH_WITH_LEAGUE.homeTeam.id },
+          { userId: 'b', displayName: 'B', teamId: MATCH_WITH_LEAGUE.homeTeam.id },
+          { userId: 'c', displayName: 'C', teamId: MATCH_WITH_LEAGUE.awayTeam.id },
+          { userId: 'd', displayName: 'D', teamId: MATCH_WITH_LEAGUE.awayTeam.id },
+        ],
+      })
+      const { wrapper } = await mountView('match-sched', [MATCH_WITH_LEAGUE])
+      const indicator = wrapper.find('[data-testid="favorite-indicator"]')
+      expect(indicator.exists()).toBe(true)
+      expect(indicator.text()).toContain('4 tag')
+    })
   })
 })
