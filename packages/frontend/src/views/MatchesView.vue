@@ -13,7 +13,7 @@
       />
 
       <div
-        v-if="showFavBanner"
+        v-if="initialDataLoaded && showFavBanner"
         class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded flex items-center justify-between"
       >
         <div class="flex items-center gap-2">
@@ -29,7 +29,7 @@
       </div>
 
       <!-- Desktop: segmented control + league select -->
-      <div v-if="!hasNoUserLeague" class="hidden md:flex items-center gap-3 mb-6">
+      <div v-if="initialDataLoaded && !hasNoUserLeague" class="hidden md:flex items-center gap-3 mb-6">
         <SegmentedControl
           :options="stageFilterOptions"
           :model-value="matchesStore.stageFilter"
@@ -51,7 +51,7 @@
       </div>
 
       <!-- Mobile: compact selects -->
-      <div v-if="!hasNoUserLeague" class="flex md:hidden gap-2 mb-4">
+      <div v-if="initialDataLoaded && !hasNoUserLeague" class="flex md:hidden gap-2 mb-4">
         <select
           :value="matchesStore.stageFilter ?? ''"
           class="flex-1 h-10 px-3 text-sm text-gray-900 bg-gray-50 border border-gray-300 rounded-lg transition-all duration-150 focus:border-blue-500 focus:bg-white focus:ring-3 focus:ring-blue-500/10 focus:outline-none"
@@ -82,7 +82,11 @@
         <button class="ml-auto text-amber-400 hover:text-amber-600 text-lg leading-none" @click="dismissAlertBanner">&times;</button>
       </div>
 
-      <div v-if="hasNoUserLeague" class="text-center py-16" data-testid="no-group-league-cta">
+      <div v-if="!initialDataLoaded || matchesStore.isLoading" class="flex justify-center py-16">
+        <div data-testid="spinner" class="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+
+      <div v-else-if="hasNoUserLeague" class="text-center py-16" data-testid="no-group-league-cta">
         <p class="text-gray-700 font-medium mb-2">{{ $t('matches.noGroupLeagueTitle') }}</p>
         <p class="text-gray-500 mb-4">{{ $t('matches.noGroupLeagueCta') }}</p>
         <router-link
@@ -91,10 +95,6 @@
         >
           {{ $t('matches.noGroupLeagueLink') }}
         </router-link>
-      </div>
-
-      <div v-else-if="matchesStore.isLoading" class="flex justify-center py-16">
-        <div data-testid="spinner" class="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
       </div>
 
       <div v-else-if="matchesStore.error" class="bg-red-50 border border-red-200 text-red-700 rounded p-4">
@@ -451,6 +451,7 @@ const autosaveTimers: Record<string, ReturnType<typeof setTimeout>> = {}
 const draftOutcomes = ref<Record<string, MatchOutcome | null>>({})
 const draftScorerPicks = ref<Record<string, string | null>>({})
 const favBannerDismissed = ref(false)
+const initialDataLoaded = ref(false)
 
 type UserLeague = { readonly id: string; readonly name: string; readonly shortName: string }
 
@@ -563,6 +564,16 @@ onMounted(async () => {
     // tolerate — userLeagues will be empty, empty state CTA handles it
   }
 
+  // Ensure favorites are loaded before we render bannerek/CTA so the page
+  // doesn't flicker the "no group" / "no favorite" states first.
+  try {
+    await Promise.all([favStore.fetchLeagues(), favStore.fetchFavorites()])
+  } catch {
+    // silent — fav banner simply won't show
+  }
+
+  initialDataLoaded.value = true
+
   const userLeagueIdSet = new Set(
     groupsStore.groups.map(g => g.league?.id).filter((id): id is string => Boolean(id)),
   )
@@ -588,12 +599,6 @@ onMounted(async () => {
     )
   } catch {
     // silent — banner simply won't show
-  }
-
-  try {
-    await Promise.all([favStore.fetchLeagues(), favStore.fetchFavorites()])
-  } catch {
-    // silent — fav banner simply won't show
   }
 
   initLeagueFilterFromStorage()

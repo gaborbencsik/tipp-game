@@ -194,6 +194,20 @@ describe('MatchesView', () => {
     resolveList([])
   })
 
+  it('does not flicker the no-group CTA before initial data is loaded', async () => {
+    // Hold the favorites fetch open so initial data never finishes loading during this assertion
+    let resolveFavs!: (v: unknown[]) => void
+    mockGetLeagueFavorites.mockReturnValue(new Promise<unknown[]>(res => { resolveFavs = res }))
+    // Empty groups: would normally trigger the no-group CTA
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    const wrapper = mount(MatchesView, { global: { plugins: [pinia, buildRouter()] } })
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find('[data-testid="spinner"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="no-group-league-cta"]').exists()).toBe(false)
+    resolveFavs([])
+  })
+
   it('matches loaded → live and scheduled groups rendered, finished shows last day only', async () => {
     // MATCH_FINISHED is on a different day from MATCH_LIVE so it forms its own all-finished group
     const finishedOnOwnDay: Match = {
