@@ -20,6 +20,7 @@ import { internalCronRouter } from './routes/internal-cron.routes.js'
 import { scoringConfigRouter } from './routes/scoring-config.routes.js'
 import { scoringRouter } from './routes/scoring.routes.js'
 import { pushRouter } from './routes/push.routes.js'
+import { eventsRouter } from './routes/events.routes.js'
 
 const allowedOrigins = (process.env.CORS_ORIGIN ?? 'http://localhost:5173').split(',').map(o => o.trim())
 
@@ -68,6 +69,8 @@ app.use(scoringRouter.routes())
 app.use(scoringRouter.allowedMethods())
 app.use(pushRouter.routes())
 app.use(pushRouter.allowedMethods())
+app.use(eventsRouter.routes())
+app.use(eventsRouter.allowedMethods())
 
 app.on('error', (err: Error, ctx: Koa.Context) => {
   const entry: Record<string, unknown> = {

@@ -932,6 +932,7 @@ import { useAuthStore } from '../stores/auth.store.js'
 import { useLeagueFavoritesStore } from '../stores/league-favorites.store.js'
 import { useMatchesStore } from '../stores/matches.store.js'
 import { hasAnyLiveMatch } from '../composables/useLiveMatchPolling.js'
+import { useMatchEvents, type MatchUpdateEvent } from '../composables/useMatchEvents.js'
 import { api } from '../api/index.js'
 import { supabase } from '../lib/supabase.js'
 import type { GroupMember, LeaderboardEntry, ScoringConfigInput, SpecialPredictionOptions, SpecialTypeInput, StatPredictionTemplate, GlobalTypeWithSubscription, VirtualPointEntry } from '../types/index.js'
@@ -1362,6 +1363,21 @@ const VIRTUAL_POINTS_POLL_INTERVAL_MS = 60_000
 
 const hasLiveMatch = computed(() => hasAnyLiveMatch(matchesStore.matches))
 
+const accessTokenRef = ref<string | null>(null)
+async function refreshAccessToken(): Promise<void> {
+  accessTokenRef.value = await getAccessToken()
+}
+void refreshAccessToken()
+
+const matchEvents = useMatchEvents(accessTokenRef, {
+  onMatchUpdate: (event: MatchUpdateEvent) => {
+    matchesStore.applyMatchUpdate(event)
+    if (activeTab.value === 'my-predictions') {
+      void fetchVirtualPoints()
+    }
+  },
+})
+
 async function fetchVirtualPoints(): Promise<void> {
   try {
     const token = await getAccessToken()
@@ -1372,6 +1388,11 @@ async function fetchVirtualPoints(): Promise<void> {
 }
 
 function startVirtualPointsPolling(): void {
+  // SSE takes over when connected — no polling fallback needed.
+  if (matchEvents.isConnected.value) {
+    stopVirtualPointsPolling()
+    return
+  }
   stopVirtualPointsPolling()
   virtualPointsTimer = setInterval(() => {
     if (activeTab.value !== 'my-predictions' || !hasLiveMatch.value || document.hidden) {
@@ -1390,6 +1411,11 @@ function stopVirtualPointsPolling(): void {
 }
 
 function evaluatePollingState(): void {
+  // When SSE is healthy, push delivers updates — no polling needed.
+  if (matchEvents.isConnected.value) {
+    stopVirtualPointsPolling()
+    return
+  }
   const shouldPoll =
     activeTab.value === 'my-predictions' && hasLiveMatch.value && !document.hidden
   if (shouldPoll) startVirtualPointsPolling()
@@ -1405,7 +1431,7 @@ function onVisibilityChange(): void {
   }
 }
 
-watch([activeTab, hasLiveMatch], () => {
+watch([activeTab, hasLiveMatch, matchEvents.isConnected], () => {
   evaluatePollingState()
 })
 

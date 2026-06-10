@@ -55,6 +55,37 @@ async function verifyToken(token: string): Promise<SupabaseUserClaims> {
   return jwt.verify(token, publicKey, { algorithms: ['RS256', 'ES256'] }) as SupabaseUserClaims
 }
 
+function claimsToUser(claims: SupabaseUserClaims): AuthenticatedUser {
+  return {
+    supabaseId: claims.sub,
+    email: claims.email,
+    displayName: claims.user_metadata?.full_name ?? claims.email.split('@')[0],
+    avatarUrl: claims.user_metadata?.avatar_url ?? null,
+    role: resolveRole(claims.email),
+  }
+}
+
+/**
+ * Resolves a raw bearer token to an AuthenticatedUser, or returns null when
+ * the token is missing or invalid. Used by transports that cannot send
+ * Authorization headers (e.g. SSE / EventSource), which pass the JWT in the
+ * query string instead.
+ */
+export async function resolveTokenToUser(token: string | null | undefined): Promise<AuthenticatedUser | null> {
+  if (!token) return null
+
+  if (token === 'dev-bypass-token' && process.env['NODE_ENV'] !== 'production') {
+    return DEV_BYPASS_USER
+  }
+
+  try {
+    const claims = await verifyToken(token)
+    return claimsToUser(claims)
+  } catch {
+    return null
+  }
+}
+
 export async function authMiddleware(ctx: Context, next: Next): Promise<void> {
   const authHeader = ctx.headers['authorization']
 
@@ -82,13 +113,7 @@ export async function authMiddleware(ctx: Context, next: Next): Promise<void> {
     return
   }
 
-  ctx.state.user = {
-    supabaseId: claims.sub,
-    email: claims.email,
-    displayName: claims.user_metadata?.full_name ?? claims.email.split('@')[0],
-    avatarUrl: claims.user_metadata?.avatar_url ?? null,
-    role: resolveRole(claims.email),
-  }
+  ctx.state.user = claimsToUser(claims)
 
   await next()
 }

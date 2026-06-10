@@ -1,6 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { liveMatchStates, matchResults } from '../db/schema/index.js'
+import { eventBus } from './event-bus.service.js'
 
 export interface LiveStateInput {
   readonly matchId: string
@@ -44,6 +45,14 @@ export async function upsertLiveState(input: LiveStateInput): Promise<void> {
       updatedAt: new Date(),
     },
   })
+
+  eventBus.emit('match.update', {
+    matchId: input.matchId,
+    status: 'live',
+    homeScore: input.homeScore,
+    awayScore: input.awayScore,
+    updatedAt: new Date().toISOString(),
+  })
 }
 
 export async function getLiveStateByMatchId(matchId: string): Promise<LiveState | null> {
@@ -62,7 +71,7 @@ export interface FinalizeResult {
 }
 
 export async function finalizeLiveToResult(input: FinalizeInput): Promise<FinalizeResult> {
-  return db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     await tx.delete(liveMatchStates).where(eq(liveMatchStates.matchId, input.matchId))
 
     const existingRows = await tx
@@ -102,4 +111,14 @@ export async function finalizeLiveToResult(input: FinalizeInput): Promise<Finali
 
     return { wasInserted, scoreChanged }
   })
+
+  eventBus.emit('match.update', {
+    matchId: input.matchId,
+    status: 'finished',
+    homeScore: input.homeGoals,
+    awayScore: input.awayGoals,
+    updatedAt: new Date().toISOString(),
+  })
+
+  return result
 }

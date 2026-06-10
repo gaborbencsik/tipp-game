@@ -70,6 +70,28 @@ export const useMatchesStore = defineStore('matches', () => {
     }
   }
 
+  /**
+   * Patches a single match's status and live score from a push event so we
+   * don't have to refetch the whole list on every score change.
+   */
+  function applyMatchUpdate(update: {
+    matchId: string
+    status: MatchStatus
+    homeScore: number | null
+    awayScore: number | null
+  }): void {
+    const idx = matches.value.findIndex(m => m.id === update.matchId)
+    if (idx === -1) return
+    const target = matches.value[idx]!
+    matches.value[idx] = {
+      ...target,
+      status: update.status,
+      result: target.result
+        ? { ...target.result, homeGoals: update.homeScore ?? target.result.homeGoals, awayGoals: update.awayScore ?? target.result.awayGoals }
+        : target.result,
+    }
+  }
+
   return {
     matches,
     isLoading,
@@ -80,5 +102,6 @@ export const useMatchesStore = defineStore('matches', () => {
     filteredMatches,
     matchesByDate,
     fetchMatches,
+    applyMatchUpdate,
   }
 })

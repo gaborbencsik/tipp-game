@@ -1,6 +1,6 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-06-10 (OPS-009 lezárva)
+> Utoljára frissítve: 2026-06-10 (OPS-008 lezárva)
 
 ## Nyitott story-k
 
@@ -9,7 +9,6 @@
 | OPS-001 | Strukturált logolás és frontend hibakezelés (MVP) | Should Have | — |
 | OPS-003 | Auto-generált DB schema referencia agentnek és fejlesztőnek | Should Have | — |
 | OPS-007 | Polymarket raw_payload tárolás kivezetése | Nice to Have | — |
-| OPS-008 | SSE-alapú live update – polling kiváltása élő meccs adatokra | Should Have | ~~OPS-004~~ |
 | PWA-003 | PWA telepítés smart banner + onboarding integráció | Should Have | ~~PWA-002~~ |
 | US-1204 | NB II liga szinkronizáció támogatás | Nice to Have | ~~US-1202~~, ~~US-1203~~ |
 | US-1303 | Match Pulse – automatikus insight generálás cron jobban | Should Have | ~~US-1302~~, ~~US-1203~~ |
@@ -31,4 +30,4 @@
 
 ---
 
-**Haladás: 163 / 181 story kész** — Must Have: 32/32, Should Have: 129/139, Nice to Have: 0/5 (US-937, PUSH-003 won't do)
+**Haladás: 164 / 181 story kész** — Must Have: 32/32, Should Have: 130/139, Nice to Have: 0/5 (US-937, PUSH-003 won't do)

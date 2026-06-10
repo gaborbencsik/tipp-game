@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 162 story kész (Must Have: 32/32, Should Have: 130/130)
+> 164 story kész (Must Have: 32/32, Should Have: 132/132)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -167,3 +167,4 @@
 | OPS-006 | ETag + 304 a leaderboard és matches list endpointokon | Should Have |
 | AUTH-001 | Supabase jelszó-helyreállítás támogatása (frontend) | Should Have |
 | OPS-009 | JWKS client singleton — Supabase egress és auth latency csökkentés | Should Have |
+| OPS-008 | SSE-alapú live update – polling kiváltása élő meccs adatokra (env-flag opt-in) | Should Have |
