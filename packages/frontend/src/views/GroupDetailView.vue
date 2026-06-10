@@ -930,6 +930,8 @@ import { dicebearUrl } from '../lib/avatar.js'
 import { useGroupsStore } from '../stores/groups.store.js'
 import { useAuthStore } from '../stores/auth.store.js'
 import { useLeagueFavoritesStore } from '../stores/league-favorites.store.js'
+import { useMatchesStore } from '../stores/matches.store.js'
+import { hasAnyLiveMatch } from '../composables/useLiveMatchPolling.js'
 import { api } from '../api/index.js'
 import { supabase } from '../lib/supabase.js'
 import type { GroupMember, LeaderboardEntry, ScoringConfigInput, SpecialPredictionOptions, SpecialTypeInput, StatPredictionTemplate, GlobalTypeWithSubscription, VirtualPointEntry } from '../types/index.js'
@@ -957,6 +959,7 @@ const { t } = useI18n()
 const groupsStore = useGroupsStore()
 const authStore = useAuthStore()
 const leagueStore = useLeagueFavoritesStore()
+const matchesStore = useMatchesStore()
 
 const groupId = route.params.id as string
 
@@ -1347,13 +1350,17 @@ async function switchToMyPredictionsTab(): Promise<void> {
     await groupsStore.fetchMyGroupPredictions(groupId)
   }
   await fetchVirtualPoints()
-  startVirtualPointsPolling()
+  evaluatePollingState()
 }
 
 const myGroupPredictions = computed(() => groupsStore.myGroupPredictionsMap[groupId] ?? null)
 
 const virtualPoints = ref<VirtualPointEntry[]>([])
 let virtualPointsTimer: ReturnType<typeof setInterval> | null = null
+
+const VIRTUAL_POINTS_POLL_INTERVAL_MS = 60_000
+
+const hasLiveMatch = computed(() => hasAnyLiveMatch(matchesStore.matches))
 
 async function fetchVirtualPoints(): Promise<void> {
   try {
@@ -1367,12 +1374,12 @@ async function fetchVirtualPoints(): Promise<void> {
 function startVirtualPointsPolling(): void {
   stopVirtualPointsPolling()
   virtualPointsTimer = setInterval(() => {
-    if (activeTab.value !== 'my-predictions') {
+    if (activeTab.value !== 'my-predictions' || !hasLiveMatch.value || document.hidden) {
       stopVirtualPointsPolling()
       return
     }
     void fetchVirtualPoints()
-  }, 30_000)
+  }, VIRTUAL_POINTS_POLL_INTERVAL_MS)
 }
 
 function stopVirtualPointsPolling(): void {
@@ -1382,11 +1389,34 @@ function stopVirtualPointsPolling(): void {
   }
 }
 
-watch(() => activeTab.value, tab => {
-  if (tab !== 'my-predictions') stopVirtualPointsPolling()
+function evaluatePollingState(): void {
+  const shouldPoll =
+    activeTab.value === 'my-predictions' && hasLiveMatch.value && !document.hidden
+  if (shouldPoll) startVirtualPointsPolling()
+  else stopVirtualPointsPolling()
+}
+
+function onVisibilityChange(): void {
+  if (document.hidden) {
+    stopVirtualPointsPolling()
+  } else if (activeTab.value === 'my-predictions') {
+    void fetchVirtualPoints()
+    if (hasLiveMatch.value) startVirtualPointsPolling()
+  }
+}
+
+watch([activeTab, hasLiveMatch], () => {
+  evaluatePollingState()
 })
 
-onUnmounted(() => stopVirtualPointsPolling())
+onMounted(() => {
+  document.addEventListener('visibilitychange', onVisibilityChange)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('visibilitychange', onVisibilityChange)
+  stopVirtualPointsPolling()
+})
 
 onMounted(async () => {
   isLoading.value = true

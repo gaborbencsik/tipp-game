@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 156 story kész (Must Have: 32/32, Should Have: 124/124)
+> 159 story kész (Must Have: 32/32, Should Have: 127/127)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -162,3 +162,4 @@
 | OPS-002 | Render cron service-ek konfigurálása az automatikus sync-hez | Must Have |
 | SCORER-004 | Góllövő auto-sync az api-football /fixtures/events-ből | Should Have |
 | UX-016 | Kedvenc csapat jelzés a meccs kártyán (saját + csoporttársak) | Should Have |
+| OPS-004 | Virtual points polling gate – csak élő meccs alatt, 60 mp | Should Have |
