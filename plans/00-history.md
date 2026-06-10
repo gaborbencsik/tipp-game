@@ -160,3 +160,4 @@
 | SCORER-005 | Gólszerző tippek megjelenítése a Statisztikáim oldalon | Should Have |
 | SUPPORTER-001 | Globális lelkes támogató badge beállítása | Should Have |
 | OPS-002 | Render cron service-ek konfigurálása az automatikus sync-hez | Must Have |
+| SCORER-004 | Góllövő auto-sync az api-football /fixtures/events-ből | Should Have |

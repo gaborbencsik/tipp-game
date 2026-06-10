@@ -1,4 +1,4 @@
-import type { ApiFootballFixture, ApiFootballTeam, ApiFootballSquad, ApiFootballPlayerEntry, ApiFootballResponse } from '../types/index.js'
+import type { ApiFootballFixture, ApiFootballTeam, ApiFootballSquad, ApiFootballPlayerEntry, ApiFootballResponse, ApiFootballFixtureEvent } from '../types/index.js'
 
 export interface FootballApiConfig {
   readonly apiKey: string
@@ -41,6 +41,10 @@ export interface TeamFixturesByDateRangeParams {
   readonly to: string
 }
 
+export interface FixtureEventsParams {
+  readonly fixtureId: number
+}
+
 export interface FootballApiClient {
   fetchFixtures(params: FixtureParams): Promise<ApiFootballResponse<ApiFootballFixture>>
   fetchTeams(params: TeamParams): Promise<ApiFootballResponse<ApiFootballTeam>>
@@ -48,6 +52,7 @@ export interface FootballApiClient {
   fetchPlayers(params: PlayerParams): Promise<ApiFootballResponse<ApiFootballPlayerEntry>>
   fetchTeamFixtures(params: TeamFixturesParams): Promise<ApiFootballResponse<ApiFootballFixture>>
   fetchTeamFixturesByDateRange(params: TeamFixturesByDateRangeParams): Promise<ApiFootballResponse<ApiFootballFixture>>
+  fetchFixtureEvents(params: FixtureEventsParams): Promise<ApiFootballResponse<ApiFootballFixtureEvent>>
 }
 
 export class FootballApiError extends Error {
@@ -170,6 +175,12 @@ export function createFootballApiClient(config: FootballApiConfig): FootballApiC
       url.searchParams.set('team', String(params.teamId))
       url.searchParams.set('from', params.from)
       url.searchParams.set('to', params.to)
+      return fetchWithRetry(url)
+    },
+
+    async fetchFixtureEvents(params: FixtureEventsParams): Promise<ApiFootballResponse<ApiFootballFixtureEvent>> {
+      const url = new URL(`${config.baseUrl}/fixtures/events`)
+      url.searchParams.set('fixture', String(params.fixtureId))
       return fetchWithRetry(url)
     },
   }

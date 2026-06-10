@@ -5,8 +5,9 @@ import {
   derivePenaltyOutcome,
   filterFixturesByAllowlist,
   teamsFromFixtures,
+  mapEventsToScorerPlayerIds,
 } from '../src/services/sync.service.js'
-import type { ApiFootballFixture, ApiFootballTeamEntry } from '../src/types/index.js'
+import type { ApiFootballFixture, ApiFootballTeamEntry, ApiFootballFixtureEvent } from '../src/types/index.js'
 
 function makeTeam(id: number, name: string, code: string | null = null): ApiFootballTeamEntry {
   return { id, name, code, logo: '', national: true }
@@ -168,6 +169,129 @@ describe('sync.service – pure functions', () => {
       const result = teamsFromFixtures(fixtures)
 
       expect(result.every((t) => t.venue === null)).toBe(true)
+    })
+  })
+
+  describe('mapEventsToScorerPlayerIds', () => {
+    function makeEvent(overrides: Partial<ApiFootballFixtureEvent>): ApiFootballFixtureEvent {
+      return {
+        time: { elapsed: 30, extra: null },
+        team: { id: 1, name: 'Team', logo: '' },
+        player: { id: 100, name: 'Player' },
+        assist: { id: null, name: null },
+        type: 'Goal',
+        detail: 'Normal Goal',
+        comments: null,
+        ...overrides,
+      }
+    }
+
+    const playerIdMap = new Map<number, string>([
+      [100, 'uuid-100'],
+      [101, 'uuid-101'],
+      [102, 'uuid-102'],
+    ])
+
+    it('includes regular normal-time goal', () => {
+      const events = [makeEvent({ player: { id: 100, name: 'A' } })]
+      expect(mapEventsToScorerPlayerIds(events, playerIdMap)).toEqual(['uuid-100'])
+    })
+
+    it('includes extra-time goal (elapsed: 110)', () => {
+      const events = [makeEvent({ time: { elapsed: 110, extra: null }, player: { id: 100, name: 'A' } })]
+      expect(mapEventsToScorerPlayerIds(events, playerIdMap)).toEqual(['uuid-100'])
+    })
+
+    it('includes ET penalty (elapsed: 118, comments: null) — not a shootout', () => {
+      const events = [makeEvent({
+        time: { elapsed: 118, extra: null },
+        detail: 'Penalty',
+        comments: null,
+        player: { id: 101, name: 'B' },
+      })]
+      expect(mapEventsToScorerPlayerIds(events, playerIdMap)).toEqual(['uuid-101'])
+    })
+
+    it('excludes shootout scored goal (comments = "Penalty Shootout")', () => {
+      const events = [makeEvent({
+        detail: 'Penalty',
+        comments: 'Penalty Shootout',
+        player: { id: 100, name: 'A' },
+      })]
+      expect(mapEventsToScorerPlayerIds(events, playerIdMap)).toEqual([])
+    })
+
+    it('excludes shootout missed penalty', () => {
+      const events = [makeEvent({
+        detail: 'Missed Penalty',
+        comments: 'Penalty Shootout',
+        player: { id: 100, name: 'A' },
+      })]
+      expect(mapEventsToScorerPlayerIds(events, playerIdMap)).toEqual([])
+    })
+
+    it('excludes own goal', () => {
+      const events = [makeEvent({ detail: 'Own Goal', player: { id: 100, name: 'A' } })]
+      expect(mapEventsToScorerPlayerIds(events, playerIdMap)).toEqual([])
+    })
+
+    it('excludes missed normal-time penalty', () => {
+      const events = [makeEvent({ detail: 'Missed Penalty', player: { id: 100, name: 'A' } })]
+      expect(mapEventsToScorerPlayerIds(events, playerIdMap)).toEqual([])
+    })
+
+    it('excludes a goal cancelled by VAR (Goal Cancelled with same time+player)', () => {
+      const events = [
+        makeEvent({
+          time: { elapsed: 50, extra: null },
+          player: { id: 100, name: 'A' },
+        }),
+        makeEvent({
+          time: { elapsed: 50, extra: null },
+          type: 'Var',
+          detail: 'Goal cancelled',
+          player: { id: 100, name: 'A' },
+        }),
+      ]
+      expect(mapEventsToScorerPlayerIds(events, playerIdMap)).toEqual([])
+    })
+
+    it('hat-trick (3 goals from same player) deduplicates to one entry', () => {
+      const events = [
+        makeEvent({ time: { elapsed: 12, extra: null }, player: { id: 100, name: 'A' } }),
+        makeEvent({ time: { elapsed: 38, extra: null }, player: { id: 100, name: 'A' } }),
+        makeEvent({ time: { elapsed: 67, extra: null }, player: { id: 100, name: 'A' } }),
+      ]
+      expect(mapEventsToScorerPlayerIds(events, playerIdMap)).toEqual(['uuid-100'])
+    })
+
+    it('skips unknown player.id (not in playerIdMap)', () => {
+      const events = [makeEvent({ player: { id: 9999, name: 'Unknown' } })]
+      expect(mapEventsToScorerPlayerIds(events, playerIdMap)).toEqual([])
+    })
+
+    it('skips events with player.id = null', () => {
+      const events = [makeEvent({ player: { id: null, name: null } })]
+      expect(mapEventsToScorerPlayerIds(events, playerIdMap)).toEqual([])
+    })
+
+    it('skips events with time.elapsed = null', () => {
+      const events = [makeEvent({ time: { elapsed: null, extra: null }, player: { id: 100, name: 'A' } })]
+      expect(mapEventsToScorerPlayerIds(events, playerIdMap)).toEqual([])
+    })
+
+    it('returns empty array for empty events list', () => {
+      expect(mapEventsToScorerPlayerIds([], playerIdMap)).toEqual([])
+    })
+
+    it('handles multiple distinct scorers in order', () => {
+      const events = [
+        makeEvent({ time: { elapsed: 10, extra: null }, player: { id: 100, name: 'A' } }),
+        makeEvent({ time: { elapsed: 22, extra: null }, type: 'Card', detail: 'Yellow Card', player: { id: 101, name: 'B' } }),
+        makeEvent({ time: { elapsed: 55, extra: null }, player: { id: 102, name: 'C' } }),
+      ]
+      const result = mapEventsToScorerPlayerIds(events, playerIdMap)
+      expect(result).toEqual(['uuid-100', 'uuid-102'])
     })
   })
 })

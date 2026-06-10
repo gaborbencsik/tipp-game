@@ -120,6 +120,42 @@ describe('football-api.service', () => {
     })
   })
 
+  describe('fetchFixtureEvents', () => {
+    it('builds /fixtures/events URL with fixture param', async () => {
+      mockFetch.mockResolvedValueOnce(new Response(JSON.stringify({ results: 0, response: [] }), { status: 200 }))
+
+      const client = createFootballApiClient({ apiKey: 'key', baseUrl: 'https://api.test', timeoutMs: 5000 })
+      await client.fetchFixtureEvents({ fixtureId: 215662 })
+
+      const [url] = mockFetch.mock.calls[0]
+      expect(url.toString()).toContain('/fixtures/events?fixture=215662')
+    })
+
+    it('returns parsed event response', async () => {
+      const payload = {
+        results: 1,
+        response: [
+          {
+            time: { elapsed: 35, extra: null },
+            team: { id: 26, name: 'Argentina', logo: '' },
+            player: { id: 5544, name: 'Messi' },
+            assist: { id: null, name: null },
+            type: 'Goal',
+            detail: 'Normal Goal',
+            comments: null,
+          },
+        ],
+      }
+      mockFetch.mockResolvedValueOnce(new Response(JSON.stringify(payload), { status: 200 }))
+
+      const client = createFootballApiClient({ apiKey: 'key', baseUrl: 'https://api.test', timeoutMs: 5000 })
+      const result = await client.fetchFixtureEvents({ fixtureId: 1 })
+
+      expect(result.response).toHaveLength(1)
+      expect(result.response[0].type).toBe('Goal')
+    })
+  })
+
   describe('error handling', () => {
     it('retries on 429 and succeeds', async () => {
       mockFetch

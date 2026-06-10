@@ -1,11 +1,13 @@
-import { sql, eq } from 'drizzle-orm'
+import { sql, eq, inArray } from 'drizzle-orm'
 import { db } from '../db/client.js'
-import { teams, matches, matchResults, venues, auditLogs } from '../db/schema/index.js'
+import { teams, matches, matchResults, venues, players, auditLogs } from '../db/schema/index.js'
 import { calculateAndSavePoints, calculateAndSaveGroupPoints } from './scoring.service.js'
 import { upsertLiveState, deleteLiveState, finalizeLiveToResult } from './live-match-state.service.js'
+import { createLogger } from './logger.service.js'
 import type {
   ApiFootballFixture,
   ApiFootballTeam,
+  ApiFootballFixtureEvent,
   SyncMode,
   SyncRunResult,
   MatchStage,
@@ -14,6 +16,8 @@ import type {
 } from '../types/index.js'
 import type { FootballApiClient } from './football-api.service.js'
 import { lookupVenueImage, normalizeVenueName } from './venue-images.js'
+
+const log = createLogger('sync.service')
 
 // ─── PURE HELPERS ────────────────────────────────────────────────────────────
 
@@ -103,6 +107,51 @@ export function teamsFromFixtures(
     teamMap.set(fixture.teams.away.id, { team: fixture.teams.away, venue: null })
   }
   return [...teamMap.values()]
+}
+
+/**
+ * Pure helper: filters api-football /fixtures/events output down to a deduplicated
+ * array of internal player UUIDs who legitimately scored in regulation/extra time.
+ *
+ * Filter rules (validated 2026-06-08 on ARG–FRA WC2022 final and NED–ARG QF):
+ *   1. type === 'Goal'
+ *   2. detail !== 'Missed Penalty'
+ *   3. detail !== 'Own Goal'
+ *   4. comments !== 'Penalty Shootout'   ← single-source-of-truth for shootouts
+ *
+ * VAR-cancelled goals: a 'Var' event with detail === 'Goal cancelled' on the same
+ * (elapsed, extra, player.id) key removes the corresponding goal.
+ *
+ * Unknown player.id (not in playerIdMap), null player.id, and null elapsed are dropped.
+ */
+export function mapEventsToScorerPlayerIds(
+  events: readonly ApiFootballFixtureEvent[],
+  playerIdMap: ReadonlyMap<number, string>,
+): readonly string[] {
+  const cancelledKeys = new Set<string>()
+  for (const e of events) {
+    if (e.type === 'Var' && e.detail === 'Goal cancelled' && e.player.id !== null && e.time.elapsed !== null) {
+      cancelledKeys.add(`${e.time.elapsed}|${e.time.extra ?? ''}|${e.player.id}`)
+    }
+  }
+
+  const scorerIds = new Set<string>()
+  for (const e of events) {
+    if (e.type !== 'Goal') continue
+    if (e.detail === 'Missed Penalty') continue
+    if (e.detail === 'Own Goal') continue
+    if (e.comments === 'Penalty Shootout') continue
+    if (e.player.id === null) continue
+    if (e.time.elapsed === null) continue
+
+    const key = `${e.time.elapsed}|${e.time.extra ?? ''}|${e.player.id}`
+    if (cancelledKeys.has(key)) continue
+
+    const internalId = playerIdMap.get(e.player.id)
+    if (!internalId) continue
+    scorerIds.add(internalId)
+  }
+  return [...scorerIds]
 }
 
 // ─── DB FUNCTIONS ────────────────────────────────────────────────────────────
@@ -285,7 +334,8 @@ export async function upsertFixtures(
 }
 
 export async function upsertResults(
-  apiFixtures: readonly ApiFootballFixture[]
+  apiFixtures: readonly ApiFootballFixture[],
+  client?: FootballApiClient,
 ): Promise<number> {
   let count = 0
 
@@ -339,6 +389,9 @@ export async function upsertResults(
     })
 
     if (finalizeResult.wasInserted || finalizeResult.scoreChanged) {
+      if (client) {
+        await syncScorerPlayerIds({ matchId: match.id, externalFixtureId: fixture.fixture.id, client })
+      }
       await calculateAndSavePoints(match.id, { homeGoals, awayGoals, outcomeAfterDraw: outcomeAfterDraw ?? null })
       await calculateAndSaveGroupPoints(match.id, { homeGoals, awayGoals, outcomeAfterDraw: outcomeAfterDraw ?? null })
       await db
@@ -351,6 +404,68 @@ export async function upsertResults(
   }
 
   return count
+}
+
+// ─── SCORER AUTO-SYNC ────────────────────────────────────────────────────────
+
+async function loadPlayerIdMap(externalIds: readonly number[]): Promise<Map<number, string>> {
+  const map = new Map<number, string>()
+  if (externalIds.length === 0) return map
+  const rows = await db
+    .select({ id: players.id, externalId: players.externalId })
+    .from(players)
+    .where(inArray(players.externalId, externalIds as number[]))
+  for (const row of rows) {
+    if (row.externalId !== null) map.set(row.externalId, row.id)
+  }
+  return map
+}
+
+interface SyncScorerOpts {
+  readonly matchId: string
+  readonly externalFixtureId: number
+  readonly client: FootballApiClient
+}
+
+/**
+ * Fetches /fixtures/events for a finalized match, maps the goal events to internal
+ * player UUIDs, and overwrites match_results.scorer_player_ids.
+ *
+ * Failure-tolerant: any error here is logged and swallowed so the surrounding
+ * upsertResults pipeline (calculateAndSavePoints) still runs. The admin UI
+ * (SCORER-003) remains the manual fallback.
+ */
+export async function syncScorerPlayerIds(opts: SyncScorerOpts): Promise<void> {
+  const { matchId, externalFixtureId, client } = opts
+  try {
+    const eventsResponse = await client.fetchFixtureEvents({ fixtureId: externalFixtureId })
+    const goalEvents = eventsResponse.response.filter((e) => e.type === 'Goal')
+    const externalPlayerIds = goalEvents
+      .map((e) => e.player.id)
+      .filter((id): id is number => id !== null)
+    const playerIdMap = await loadPlayerIdMap(externalPlayerIds)
+
+    const known = new Set(playerIdMap.keys())
+    for (const e of goalEvents) {
+      if (e.player.id !== null && !known.has(e.player.id)) {
+        log.warn('scorer_sync_unknown_player', {
+          matchId,
+          externalFixtureId,
+          externalPlayerId: e.player.id,
+          playerName: e.player.name,
+        })
+      }
+    }
+
+    const scorerPlayerIds = mapEventsToScorerPlayerIds(eventsResponse.response, playerIdMap)
+    await db
+      .update(matchResults)
+      .set({ scorerPlayerIds: [...scorerPlayerIds] })
+      .where(eq(matchResults.matchId, matchId))
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Unknown error'
+    log.warn('scorer_sync_failed', { matchId, externalFixtureId, error: message })
+  }
 }
 
 // ─── ORCHESTRATOR ────────────────────────────────────────────────────────────
@@ -422,7 +537,7 @@ export async function runSync(opts: RunSyncOptions): Promise<SyncRunResult> {
     fixturesUpserted = await upsertFixtures(filteredFixtures, leagueInternalId)
 
     try {
-      resultsUpserted = await upsertResults(filteredFixtures)
+      resultsUpserted = await upsertResults(filteredFixtures, client)
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown error upserting results'
       errors.push(`results: ${message}`)

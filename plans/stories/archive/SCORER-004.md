@@ -111,6 +111,7 @@ SCORER-002 és SCORER-003 kész: a felhasználó góllövő tippet ad le, az adm
 - **Nem** tartalmaznak raw API events JSONB-ben tárolást — a szűrt UUID-k tömbje az egész pipeline-nak elég
 - **Nem** tartalmaz csoport-szintű scorer override — hardcoded `+1` pont, v1-re
 - **Nem** tartalmaz player foto / statisztika — az autosync csak a gólszerzésre fókuszál
+- **Nem** tartalmaz dedikált E2E spec-et (`e2e/scorer-auto-sync.spec.ts`) — a teljes flow-t a backend integrációs tesztek (`tests/sync-scorer-auto.test.ts`, mock klienssel és DB mockkal) + a pure helper unit tesztek (`tests/sync.service.test.ts: mapEventsToScorerPlayerIds`) + az API kliens tesztek (`tests/football-api.service.test.ts: fetchFixtureEvents`) együtt lefedik. Egy valós Playwright spec dedikált api-football mock szervert + dev-only trigger endpointot igényelne, ami a feature kockázatához képest aránytalan költség. A SCORER-002/003 manuális UI E2E továbbra is futnak.
 
 ## Cleanup a 3 slice (SCORER-002 + SCORER-003 + SCORER-004) lezárása után
 

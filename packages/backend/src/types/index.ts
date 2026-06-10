@@ -595,6 +595,18 @@ export interface ApiFootballResponse<T> {
   readonly response: readonly T[]
 }
 
+// ─── FIXTURE EVENTS (api-football.com /fixtures/events) ─────────────────────
+
+export interface ApiFootballFixtureEvent {
+  readonly time: { readonly elapsed: number | null; readonly extra: number | null }
+  readonly team: { readonly id: number; readonly name: string; readonly logo: string }
+  readonly player: { readonly id: number | null; readonly name: string | null }
+  readonly assist: { readonly id: number | null; readonly name: string | null }
+  readonly type: string
+  readonly detail: string
+  readonly comments: string | null
+}
+
 // ─── PLAYER SYNC (api-football.com) ──────────────────────────────────────────
 
 export interface ApiFootballSquadPlayer {
