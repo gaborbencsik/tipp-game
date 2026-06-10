@@ -32,9 +32,17 @@ function makeJwksClient(): jwksClient.JwksClient {
   })
 }
 
+let jwksClientInstance: jwksClient.JwksClient | null = null
+
+function getJwksClient(): jwksClient.JwksClient {
+  if (!jwksClientInstance) {
+    jwksClientInstance = makeJwksClient()
+  }
+  return jwksClientInstance
+}
+
 async function getSigningKey(kid: string): Promise<string> {
-  const client = makeJwksClient()
-  const key = await client.getSigningKey(kid)
+  const key = await getJwksClient().getSigningKey(kid)
   return key.getPublicKey()
 }
 

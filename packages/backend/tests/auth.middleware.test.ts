@@ -2,16 +2,15 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import type { Context, Next } from 'koa'
 import type { AuthenticatedUser } from '../src/types/index.js'
 
-const { mockGetSigningKey, mockVerify, mockDecode } = vi.hoisted(() => ({
+const { mockGetSigningKey, mockVerify, mockDecode, mockJwksFactory } = vi.hoisted(() => ({
   mockGetSigningKey: vi.fn(),
   mockVerify: vi.fn(),
   mockDecode: vi.fn(),
+  mockJwksFactory: vi.fn(),
 }))
 
 vi.mock('jwks-rsa', () => ({
-  default: vi.fn(() => ({
-    getSigningKey: mockGetSigningKey,
-  })),
+  default: mockJwksFactory,
 }))
 
 vi.mock('jsonwebtoken', () => ({
@@ -45,6 +44,8 @@ describe('authMiddleware', () => {
     mockGetSigningKey.mockReset()
     mockVerify.mockReset()
     mockDecode.mockReset()
+    mockJwksFactory.mockReset()
+    mockJwksFactory.mockImplementation(() => ({ getSigningKey: mockGetSigningKey }))
     ;(next as ReturnType<typeof vi.fn>).mockClear()
     ;(next as ReturnType<typeof vi.fn>).mockResolvedValue(undefined)
     process.env['NODE_ENV'] = 'test'
@@ -160,5 +161,31 @@ describe('authMiddleware', () => {
     await authMiddleware(ctx, next)
     const user = ctx.state['user'] as AuthenticatedUser
     expect(user.role).toBe('admin')
+  })
+
+  it('JWKS client is created only once across multiple authenticated requests (singleton)', async () => {
+    vi.resetModules()
+    mockJwksFactory.mockClear()
+    const { authMiddleware: freshAuth } = await import('../src/middleware/auth.middleware.js')
+    mockVerify.mockReturnValue(MOCK_CLAIMS)
+    for (let i = 0; i < 5; i++) {
+      await freshAuth(makeCtx('Bearer valid-token'), next)
+    }
+    expect(mockJwksFactory).toHaveBeenCalledOnce()
+  })
+
+  it('JWKS client reused even when different kids are signed (cache lookups, not factory calls)', async () => {
+    vi.resetModules()
+    mockJwksFactory.mockClear()
+    const { authMiddleware: freshAuth } = await import('../src/middleware/auth.middleware.js')
+    mockVerify.mockReturnValue(MOCK_CLAIMS)
+    mockDecode.mockReturnValueOnce({ header: { kid: 'kid-a' }, payload: MOCK_CLAIMS })
+    mockDecode.mockReturnValueOnce({ header: { kid: 'kid-b' }, payload: MOCK_CLAIMS })
+    await freshAuth(makeCtx('Bearer token-a'), next)
+    await freshAuth(makeCtx('Bearer token-b'), next)
+    expect(mockJwksFactory).toHaveBeenCalledOnce()
+    expect(mockGetSigningKey).toHaveBeenCalledTimes(2)
+    expect(mockGetSigningKey).toHaveBeenNthCalledWith(1, 'kid-a')
+    expect(mockGetSigningKey).toHaveBeenNthCalledWith(2, 'kid-b')
   })
 })
