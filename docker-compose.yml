@@ -67,6 +67,7 @@ services:
       VITE_DEV_AUTH_BYPASS: "true"
       VITE_ODDS_ENABLED: "false"
       VITE_API_URL: http://localhost:3000
+      VITE_USE_SSE_EVENTS: ${VITE_USE_SSE_EVENTS:-false}
       VITE_VAPID_PUBLIC_KEY: ${VITE_VAPID_PUBLIC_KEY:-}
       VITE_DONATION_URL: https://revolut.me/gaborbencsik?currency={currency}&amount={amount}&note={note}
     volumes:
@@ -149,6 +150,7 @@ services:
     environment:
       VITE_DEV_AUTH_BYPASS: "true"
       VITE_API_URL: http://backend-e2e:3000
+      VITE_USE_SSE_EVENTS: "false"
       VITE_DONATION_URL: https://revolut.me/gaborbencsik?currency={currency}&amount={amount}&note={note}
     depends_on:
       backend-e2e:
