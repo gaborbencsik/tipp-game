@@ -139,6 +139,7 @@
                 <GroupStandingsPicker
                   :options="sp.options"
                   :answer="sp.answer ?? null"
+                  :read-only="isLockedReadOnly(sp)"
                   @submit="v => onAnswerChange(sp, v)"
                 />
               </div>

@@ -74,6 +74,7 @@ import type {
 const props = defineProps<{
   options: AllGroupsStandingOptions
   answer: string | null
+  readOnly?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -239,6 +240,9 @@ const expandedGroup = ref<string | null>(null)
 watch(
   () => props.options.groups,
   groups => {
+    // UX-032: read-only (post-deadline) lock — start with everything collapsed so the user
+    // sees a clean overview, not the auto-opened group A.
+    if (props.readOnly) return
     if (expandedGroup.value === null) {
       const firstUnfilled = groups.find(code => {
         const positions = state.groups[code] ?? []
