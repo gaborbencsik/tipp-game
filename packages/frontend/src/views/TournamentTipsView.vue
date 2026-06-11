@@ -108,7 +108,7 @@
             </p>
 
             <div
-              :class="isLockedReadOnly(sp) ? 'pointer-events-none opacity-60' : ''"
+              :class="isLockedReadOnly(sp) ? 'opacity-70' : ''"
               :aria-disabled="isLockedReadOnly(sp) ? 'true' : undefined"
               :data-testid="isLockedReadOnly(sp) ? 'tip-locked-wrapper' : undefined"
             >
@@ -117,6 +117,7 @@
                   :model-value="sp.answer ?? null"
                   :league-id="wcLeagueId"
                   :answer-label="sp.answerLabel ?? null"
+                  :disabled="isLockedReadOnly(sp)"
                   @update:model-value="v => onAnswerChange(sp, v)"
                 />
               </div>
@@ -125,6 +126,7 @@
                   :model-value="sp.answer ?? null"
                   :league-id="wcLeagueId"
                   :answer-label="sp.answerLabel ?? null"
+                  :disabled="isLockedReadOnly(sp)"
                   @update:model-value="v => onAnswerChange(sp, v)"
                 />
               </div>
@@ -132,6 +134,7 @@
                 <UpsetSpecialPicker
                   :options="sp.options"
                   :answer="sp.answer ?? null"
+                  :read-only="isLockedReadOnly(sp)"
                   @submit="v => onAnswerChange(sp, v)"
                 />
               </div>
@@ -148,6 +151,7 @@
                   :options="sp.options"
                   :answer="sp.answer ?? null"
                   :group-standings-answer="parsedGroupStandingsAnswer"
+                  :read-only="isLockedReadOnly(sp)"
                   @submit="v => onAnswerChange(sp, v)"
                   @open-group-standings="scrollToGroupStandings"
                 />
@@ -155,7 +159,8 @@
               <div v-else-if="sp.inputType === 'dropdown' && Array.isArray(sp.options) && sp.options.length">
                 <select
                   :value="sp.answer ?? ''"
-                  class="w-full border rounded px-2 py-1.5 text-sm mb-2"
+                  :disabled="isLockedReadOnly(sp)"
+                  class="w-full border rounded px-2 py-1.5 text-sm mb-2 disabled:bg-gray-100 disabled:cursor-not-allowed"
                   @change="onAnswerChange(sp, ($event.target as HTMLSelectElement).value)"
                 >
                   <option value="" disabled>{{ $t('tournamentTips.placeholder') }}</option>
@@ -167,7 +172,8 @@
                   :value="textDraft[sp.typeId] ?? sp.answer ?? ''"
                   type="text"
                   maxlength="500"
-                  class="w-full border rounded px-2 py-1.5 text-sm mb-2"
+                  :disabled="isLockedReadOnly(sp)"
+                  class="w-full border rounded px-2 py-1.5 text-sm mb-2 disabled:bg-gray-100 disabled:cursor-not-allowed"
                   :placeholder="$t('tournamentTips.inputPlaceholder')"
                   @input="textDraft[sp.typeId] = ($event.target as HTMLInputElement).value"
                   @blur="onAnswerChange(sp, textDraft[sp.typeId] ?? '')"

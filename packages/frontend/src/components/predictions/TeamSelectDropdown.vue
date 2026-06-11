@@ -2,8 +2,9 @@
   <div ref="rootRef" class="relative">
     <button
       type="button"
-      class="w-full flex items-center gap-2 border border-slate-300 rounded-md px-2.5 py-1.5 text-sm bg-white text-left focus:ring-2 focus:ring-blue-300 outline-none"
+      class="w-full flex items-center gap-2 border border-slate-300 rounded-md px-2.5 py-1.5 text-sm bg-white text-left focus:ring-2 focus:ring-blue-300 outline-none disabled:bg-slate-50 disabled:cursor-not-allowed"
       :aria-expanded="open"
+      :disabled="disabled"
       aria-haspopup="listbox"
       data-testid="team-select-dropdown"
       @click="toggle"
@@ -78,7 +79,7 @@ import { supabase } from '../../lib/supabase.js'
 import { api } from '../../api/index.js'
 import type { Team, LeagueTeam } from '../../types/index.js'
 
-const props = defineProps<{ modelValue: string | null; leagueId?: string | null; answerLabel?: string | null }>()
+const props = defineProps<{ modelValue: string | null; leagueId?: string | null; answerLabel?: string | null; disabled?: boolean }>()
 const emit = defineEmits<{ 'update:modelValue': [value: string | null] }>()
 
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
@@ -113,10 +114,12 @@ function teamFlagUrl(t: Team | LeagueTeam): string | null {
 }
 
 function toggle(): void {
+  if (props.disabled) return
   open.value = !open.value
 }
 
 function select(teamId: string): void {
+  if (props.disabled) return
   emit('update:modelValue', teamId)
   open.value = false
 }

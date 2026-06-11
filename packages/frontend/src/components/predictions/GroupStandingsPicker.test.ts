@@ -134,4 +134,51 @@ describe('GroupStandingsPicker', () => {
     const payload = JSON.parse(events[events.length - 1][0] as string)
     expect(payload.best3rds).toEqual([])
   })
+
+  // UX-032: read-only mode — expand/collapse still works, but mutations are blocked.
+  describe('readOnly mode', () => {
+    it('does not auto-expand any group when readOnly', async () => {
+      const answer = JSON.stringify({
+        groups: { A: ['a1', null, null, null], B: [null, null, null, null] },
+        best3rds: [],
+      })
+      const wrapper = mount(GroupStandingsPicker, {
+        props: { options: OPTIONS, answer, readOnly: true },
+      })
+      await flushPromises()
+      expect(wrapper.find('[data-testid="position-dropdown-A-1"]').exists()).toBe(false)
+    })
+
+    it('user can still toggle a group open/closed in readOnly', async () => {
+      const wrapper = mount(GroupStandingsPicker, {
+        props: { options: OPTIONS, answer: null, readOnly: true },
+      })
+      await flushPromises()
+      // Toggle group A open via the card header.
+      const cardA = wrapper.find('[data-testid="group-standing-card-A"]')
+      await cardA.find('button').trigger('click')
+      await flushPromises()
+      expect(wrapper.find('[data-testid="position-dropdown-A-1"]').exists()).toBe(true)
+    })
+
+    it('clearGroup is a no-op in readOnly', async () => {
+      const answer = JSON.stringify({
+        groups: { A: ['a1', 'a2', 'a3', 'a4'], B: [null, null, null, null] },
+        best3rds: [],
+      })
+      const wrapper = mount(GroupStandingsPicker, {
+        props: { options: OPTIONS, answer, readOnly: true },
+      })
+      await flushPromises()
+      const cardA = wrapper.find('[data-testid="group-standing-card-A"]')
+      await cardA.find('button').trigger('click')
+      await flushPromises()
+
+      await wrapper.find('[data-testid="group-standing-clear-A"]').trigger('click')
+      vi.advanceTimersByTime(500)
+      await flushPromises()
+
+      expect(wrapper.emitted('submit')).toBeUndefined()
+    })
+  })
 })

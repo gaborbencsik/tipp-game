@@ -82,6 +82,7 @@ const props = defineProps<{
   options: BracketProgressionOptions
   answer: string | null
   groupStandingsAnswer: AllGroupsStandingAnswer | null
+  readOnly?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -235,6 +236,7 @@ watch(() => props.groupStandingsAnswer, () => {
 }, { deep: true })
 
 function onPick(matchId: string, teamId: string): void {
+  if (props.readOnly) return
   const oldWinner = state.winners[matchId]
   state.winners[matchId] = teamId
 

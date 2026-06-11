@@ -243,11 +243,14 @@ describe('TournamentTipsView', () => {
       expect(card.find('[data-testid="tip-locked-banner"]').exists()).toBe(true)
       const lockWrapper = card.find('[data-testid="tip-locked-wrapper"]')
       expect(lockWrapper.exists()).toBe(true)
-      expect(lockWrapper.classes()).toContain('pointer-events-none')
-      expect(lockWrapper.classes()).toContain('opacity-60')
+      // Wrapper is dimmed (opacity), but pointer events stay enabled so the user can
+      // still expand/collapse picker sub-cards. Mutation is blocked at the input level.
+      expect(lockWrapper.classes()).toContain('opacity-70')
       expect(lockWrapper.attributes('aria-disabled')).toBe('true')
-      // Picker (the dropdown <select>) is still rendered inside the lock wrapper.
-      expect(card.find('select').exists()).toBe(true)
+      // Picker (the dropdown <select>) is still rendered inside the lock wrapper, but disabled.
+      const select = card.find('select')
+      expect(select.exists()).toBe(true)
+      expect(select.attributes('disabled')).toBeDefined()
       // Existing answer surfaced as an explicit summary line for simple tips.
       expect(card.find('[data-testid="tip-locked-answer"]').text()).toContain('4-6')
     })

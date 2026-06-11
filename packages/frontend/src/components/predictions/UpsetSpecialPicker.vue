@@ -58,6 +58,7 @@ import type { MultiTeamWeightedOptions, Team } from '../../types/index.js'
 const props = defineProps<{
   options: MultiTeamWeightedOptions
   answer: string | null
+  readOnly?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -117,6 +118,7 @@ function isSelected(teamId: string): boolean {
 }
 
 function toggle(teamId: string): void {
+  if (props.readOnly) return
   const idx = currentPicks.value.indexOf(teamId)
   if (idx >= 0) {
     currentPicks.value.splice(idx, 1)

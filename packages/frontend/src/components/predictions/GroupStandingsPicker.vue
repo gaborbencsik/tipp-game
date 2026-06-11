@@ -1,5 +1,8 @@
 <template>
-  <div data-testid="group-standings-picker">
+  <div
+    data-testid="group-standings-picker"
+    :class="readOnly ? 'pointer-events-auto' : ''"
+  >
     <div class="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2.5 flex gap-2 mb-3">
       <span class="text-blue-600" aria-hidden="true">💡</span>
       <p class="text-xs text-blue-900 leading-snug">{{ $t('groupStandings.infoCard') }}</p>
@@ -259,6 +262,7 @@ function toggleExpanded(code: string): void {
 }
 
 function updatePosition(code: string, position: 1 | 2 | 3 | 4, teamId: string | null): void {
+  if (props.readOnly) return
   const arr = state.groups[code]
   if (!arr) return
   arr[position - 1] = teamId
@@ -266,6 +270,7 @@ function updatePosition(code: string, position: 1 | 2 | 3 | 4, teamId: string | 
 }
 
 function clearGroup(code: string): void {
+  if (props.readOnly) return
   const arr = state.groups[code]
   if (!arr) return
   for (let i = 0; i < arr.length; i++) arr[i] = null
@@ -273,6 +278,7 @@ function clearGroup(code: string): void {
 }
 
 function toggleBest3rd(teamId: string): void {
+  if (props.readOnly) return
   const idx = state.best3rds.indexOf(teamId)
   if (idx >= 0) {
     state.best3rds.splice(idx, 1)

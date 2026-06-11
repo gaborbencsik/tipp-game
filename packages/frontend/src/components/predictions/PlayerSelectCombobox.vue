@@ -4,7 +4,8 @@
       type="text"
       :value="modelValue ?? ''"
       maxlength="200"
-      class="w-full border border-slate-300 rounded-md px-2.5 py-1.5 text-sm bg-white text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-300 outline-none"
+      :disabled="disabled"
+      class="w-full border border-slate-300 rounded-md px-2.5 py-1.5 text-sm bg-white text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-300 outline-none disabled:bg-slate-50 disabled:cursor-not-allowed"
       :placeholder="$t('playerSelect.freeTextPlaceholder')"
       @input="onFreeTextInput"
     />
@@ -26,7 +27,8 @@
       <input
         type="text"
         :value="displayText"
-        class="w-full px-2.5 py-1.5 text-sm bg-white text-slate-800 placeholder:text-slate-400 outline-none"
+        :disabled="disabled"
+        class="w-full px-2.5 py-1.5 text-sm bg-white text-slate-800 placeholder:text-slate-400 outline-none disabled:bg-slate-50 disabled:cursor-not-allowed"
         :placeholder="selectedPlayer ? '' : $t('playerSelect.placeholder')"
         @focus="onFocus"
         @input="onInput"
@@ -155,6 +157,7 @@ const props = withDefaults(
     allowExplicitClear?: boolean
     showPlayerMeta?: boolean
     size?: 'compact' | 'comfortable'
+    disabled?: boolean
   }>(),
   {
     leagueId: null,
@@ -163,6 +166,7 @@ const props = withDefaults(
     allowExplicitClear: false,
     showPlayerMeta: false,
     size: 'comfortable',
+    disabled: false,
   },
 )
 const emit = defineEmits<{ 'update:modelValue': [value: string | null] }>()
@@ -259,27 +263,32 @@ function positionTone(position: string | null | undefined): string {
 }
 
 function onFocus(): void {
+  if (props.disabled) return
   dropdownOpen.value = true
   searchText.value = ''
 }
 
 function onInput(e: Event): void {
+  if (props.disabled) return
   searchText.value = (e.target as HTMLInputElement).value
   dropdownOpen.value = true
 }
 
 function onFreeTextInput(e: Event): void {
+  if (props.disabled) return
   const value = (e.target as HTMLInputElement).value
   emit('update:modelValue', value.length > 0 ? value : null)
 }
 
 function selectPlayer(p: Player): void {
+  if (props.disabled) return
   emit('update:modelValue', p.id)
   dropdownOpen.value = false
   searchText.value = ''
 }
 
 function clear(): void {
+  if (props.disabled) return
   emit('update:modelValue', null)
   searchText.value = ''
   dropdownOpen.value = false
