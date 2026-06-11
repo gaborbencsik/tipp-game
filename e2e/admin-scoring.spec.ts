@@ -55,9 +55,21 @@ test.describe('Admin scoring config', () => {
     await expect(page.getByTestId('field-exactBonusPoints')).toBeVisible()
     await expect(page.getByTestId('field-extraTimeBonusPoints')).toBeVisible()
 
+    // Wait until the watch(store.config → draft) has settled with the loaded values,
+    // so our subsequent fill() isn't races against a late watch flush that would
+    // overwrite the draft back to the server-side value.
+    await expect(page.getByTestId('field-correctOutcomePoints')).toHaveValue(String(before.correctOutcomePoints))
+    await expect(page.getByTestId('field-exactBonusPoints')).toHaveValue(String(before.exactBonusPoints))
+    await expect(page.getByTestId('field-extraTimeBonusPoints')).toHaveValue(String(before.extraTimeBonusPoints))
+
     await page.getByTestId('field-correctOutcomePoints').fill(String(nextOutcome))
     await page.getByTestId('field-exactBonusPoints').fill(String(nextExact))
     await page.getByTestId('field-extraTimeBonusPoints').fill(String(nextET))
+
+    // Confirm the fills landed in the DOM (and therefore in v-model.draft) before submitting.
+    await expect(page.getByTestId('field-correctOutcomePoints')).toHaveValue(String(nextOutcome))
+    await expect(page.getByTestId('field-exactBonusPoints')).toHaveValue(String(nextExact))
+    await expect(page.getByTestId('field-extraTimeBonusPoints')).toHaveValue(String(nextET))
 
     await page.getByTestId('submit-btn').click()
 
