@@ -44,7 +44,7 @@
               <div class="flex items-center gap-2 min-w-0">
                 <span
                   v-if="entry.favoriteTeam?.countryCode"
-                  class="tt-left shrink-0"
+                  class="tt-left shrink-0 inline-flex items-center"
                   :data-tooltip="countryCodeToFlag(entry.favoriteTeam.countryCode)"
                 >
                   <img
