@@ -67,6 +67,10 @@ test.describe('Admin scoring config', () => {
 
     await injectSession(page)
     await page.goto('/admin/scoring')
+    // Wait for the initial fetchConfig (and any other in-flight requests) to settle
+    // before we touch the form. Otherwise the watch(store.config → draft) flush can
+    // race our fill() and overwrite it back to the server-side value.
+    await page.waitForLoadState('networkidle')
 
     await expect(page.getByTestId('scoring-form')).toBeVisible()
     await expect(page.getByTestId('field-correctOutcomePoints')).toBeVisible()
@@ -81,8 +85,11 @@ test.describe('Admin scoring config', () => {
     await expect(page.getByTestId('field-extraTimeBonusPoints')).toHaveValue(String(before.extraTimeBonusPoints))
 
     await page.getByTestId('field-correctOutcomePoints').fill(String(nextOutcome))
+    await page.getByTestId('field-correctOutcomePoints').press('Tab')
     await page.getByTestId('field-exactBonusPoints').fill(String(nextExact))
+    await page.getByTestId('field-exactBonusPoints').press('Tab')
     await page.getByTestId('field-extraTimeBonusPoints').fill(String(nextET))
+    await page.getByTestId('field-extraTimeBonusPoints').press('Tab')
 
     // Confirm the fills landed in the DOM (and therefore in v-model.draft) before submitting.
     await expect(page.getByTestId('field-correctOutcomePoints')).toHaveValue(String(nextOutcome))
@@ -98,10 +105,20 @@ test.describe('Admin scoring config', () => {
       await expect(page.getByTestId('override-modal')).toBeVisible()
       await page.getByTestId('override-reason').selectOption('rule_change')
       await page.getByTestId('override-recalc').uncheck()
+      // Wait for the override POST to actually finish (and the row to be written)
+      // before we GET the config back, so we don't race the toast-rendering tick.
+      const overrideResponse = page.waitForResponse(
+        (r) => r.url().includes('/api/admin/scoring-config/override') && r.request().method() === 'POST' && r.status() === 200,
+      )
       await page.getByTestId('override-confirm').click()
+      await overrideResponse
       await expect(page.getByText('Override mentve')).toBeVisible()
     } else {
+      const updateResponse = page.waitForResponse(
+        (r) => r.url().endsWith('/api/admin/scoring-config') && r.request().method() === 'PUT' && r.status() === 200,
+      )
       await page.getByTestId('submit-btn').click()
+      await updateResponse
       await expect(page.getByText('Pontrendszer frissítve')).toBeVisible()
     }
     await expect(page.getByTestId('save-status')).toHaveText('Elmentve!')
