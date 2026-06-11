@@ -1,11 +1,13 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-06-10 (OPS-010 lezárva)
+> Utoljára frissítve: 2026-06-11 (UX-031 lezárva)
 
 ## Nyitott story-k
 
 | Story ID | Cím | Prioritás | Függőség |
 |----------|-----|-----------|----------|
+| PLAN-001 | Torna-tipp pontozási terv (globális speciális tippek kiértékelése) | Should Have | UX-021 |
+| US-1310 | Match Detail – AI-generált összefoglaló a legeredményesebb játékosokról (player_stats) | Should Have | — |
 | OPS-001 | Strukturált logolás és frontend hibakezelés (MVP) | Should Have | — |
 | OPS-003 | Auto-generált DB schema referencia agentnek és fejlesztőnek | Should Have | — |
 | OPS-007 | Polymarket raw_payload tárolás kivezetése | Nice to Have | — |
@@ -30,4 +32,4 @@
 
 ---
 
-**Haladás: 166 / 182 story kész** — Must Have: 32/32, Should Have: 132/140, Nice to Have: 0/5 (US-937, PUSH-003 won't do)
+**Haladás: 167 / 185 story kész** — Must Have: 32/32, Should Have: 133/143, Nice to Have: 0/5 (US-937, PUSH-003 won't do)

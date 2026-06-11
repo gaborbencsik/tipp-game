@@ -56,7 +56,7 @@ const MATCH_FINISHED: Match = {
   id: 'match-finished',
   homeTeam: { id: 'ht1', name: 'Spain', shortCode: 'ESP', flagUrl: null, teamType: 'national' as const, countryCode: 'es', marketValueEur: null, transfermarktId: null },
   awayTeam: { id: 'at1', name: 'Italy', shortCode: 'ITA', flagUrl: null, teamType: 'national' as const, countryCode: 'it', marketValueEur: null, transfermarktId: null },
-  venue: { name: 'Estadio Nacional', city: 'Madrid', imageUrl: null },
+  venue: { name: 'Estadio Nacional', city: 'Madrid', country: null, imageUrl: null },
   league: null,
   stage: 'group',
   groupName: 'B',
@@ -70,7 +70,7 @@ const MATCH_SCHEDULED: Match = {
   id: 'match-sched',
   homeTeam: { id: 'ht2', name: 'Brazil', shortCode: 'BRA', flagUrl: null, teamType: 'national' as const, countryCode: 'br', marketValueEur: null, transfermarktId: null },
   awayTeam: { id: 'at2', name: 'Argentina', shortCode: 'ARG', flagUrl: null, teamType: 'national' as const, countryCode: 'ar', marketValueEur: null, transfermarktId: null },
-  venue: { name: 'Maracanã', city: 'Rio de Janeiro', imageUrl: null },
+  venue: { name: 'Maracanã', city: 'Rio de Janeiro', country: 'Brazil', imageUrl: null },
   league: null,
   stage: 'final',
   groupName: null,
@@ -84,7 +84,7 @@ const MATCH_LIVE: Match = {
   id: 'match-live',
   homeTeam: { id: 'ht3', name: 'France', shortCode: 'FRA', flagUrl: null, teamType: 'national' as const, countryCode: 'fr', marketValueEur: null, transfermarktId: null },
   awayTeam: { id: 'at3', name: 'Germany', shortCode: 'GER', flagUrl: null, teamType: 'national' as const, countryCode: 'de', marketValueEur: null, transfermarktId: null },
-  venue: { name: 'Stade de France', city: 'Paris', imageUrl: null },
+  venue: { name: 'Stade de France', city: 'Paris', country: null, imageUrl: null },
   league: null,
   stage: 'group',
   groupName: 'A',
@@ -177,6 +177,20 @@ describe('MatchDetailView', () => {
     expect(wrapper.text()).toContain('Estadio Nacional')
     expect(wrapper.text()).toContain('Madrid')
     expect(wrapper.text()).toContain('Csoportkör')
+  })
+
+  it('UX-031: venue with country → name, city, country displayed', async () => {
+    const { wrapper } = await mountView('match-sched', [MATCH_SCHEDULED])
+    const loc = wrapper.find('[data-testid="venue-location"]')
+    expect(loc.exists()).toBe(true)
+    expect(loc.text()).toBe('Maracanã, Rio de Janeiro, Brazil')
+  })
+
+  it('UX-031: venue with country=null → only name + city displayed', async () => {
+    const { wrapper } = await mountView('match-finished', [MATCH_FINISHED])
+    const loc = wrapper.find('[data-testid="venue-location"]')
+    expect(loc.exists()).toBe(true)
+    expect(loc.text()).toBe('Estadio Nacional, Madrid')
   })
 
   it('finished match → result score visible', async () => {

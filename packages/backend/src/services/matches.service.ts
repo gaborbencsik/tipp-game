@@ -60,7 +60,12 @@ export async function getMatches(filters: MatchesFilters = {}): Promise<Match[]>
       transfermarktId: row.away_team?.transfermarktId ?? null,
     },
     venue: row.venues
-      ? { name: row.venues.name, city: row.venues.city, imageUrl: row.venues.imageUrl ?? null }
+      ? {
+          name: row.venues.name,
+          city: row.venues.city,
+          country: row.venues.country && row.venues.country.length > 0 ? row.venues.country : null,
+          imageUrl: row.venues.imageUrl ?? null,
+        }
       : null,
     league: row.leagues
       ? { id: row.leagues.id, name: row.leagues.name, shortName: row.leagues.shortName }

@@ -10,7 +10,7 @@ describe('VenueBanner', () => {
 
   it('renders with fallback gradient when imageUrl is null', () => {
     const wrapper = mount(VenueBanner, {
-      props: { venue: { name: 'MetLife Stadium', city: 'East Rutherford', imageUrl: null } },
+      props: { venue: { name: 'MetLife Stadium', city: 'East Rutherford', country: null, imageUrl: null } },
     })
     expect(wrapper.find('[data-testid="venue-banner"]').exists()).toBe(true)
     expect(wrapper.find('img').exists()).toBe(false)
@@ -20,7 +20,7 @@ describe('VenueBanner', () => {
 
   it('renders img element when imageUrl is provided', () => {
     const wrapper = mount(VenueBanner, {
-      props: { venue: { name: 'SoFi Stadium', city: 'Inglewood', imageUrl: '/venues/sofi-stadium.jpg' } },
+      props: { venue: { name: 'SoFi Stadium', city: 'Inglewood', country: null, imageUrl: '/venues/sofi-stadium.jpg' } },
     })
     const img = wrapper.find('img')
     expect(img.exists()).toBe(true)
@@ -32,7 +32,7 @@ describe('VenueBanner', () => {
 
   it('displays venue name and city text', () => {
     const wrapper = mount(VenueBanner, {
-      props: { venue: { name: 'BC Place', city: 'Vancouver', imageUrl: '/venues/bc-place.jpg' } },
+      props: { venue: { name: 'BC Place', city: 'Vancouver', country: null, imageUrl: '/venues/bc-place.jpg' } },
     })
     expect(wrapper.find('[data-testid="venue-name"]').text()).toBe('BC Place')
     expect(wrapper.find('[data-testid="venue-city"]').text()).toBe('Vancouver')
@@ -40,7 +40,7 @@ describe('VenueBanner', () => {
 
   it('hides image and shows fallback on image error', async () => {
     const wrapper = mount(VenueBanner, {
-      props: { venue: { name: 'Test', city: 'City', imageUrl: '/venues/broken.jpg' } },
+      props: { venue: { name: 'Test', city: 'City', country: null, imageUrl: '/venues/broken.jpg' } },
     })
     expect(wrapper.find('img').exists()).toBe(true)
     await wrapper.find('img').trigger('error')
@@ -49,7 +49,7 @@ describe('VenueBanner', () => {
 
   it('applies fade-in class on image load', async () => {
     const wrapper = mount(VenueBanner, {
-      props: { venue: { name: 'Test', city: 'City', imageUrl: '/venues/test.jpg' } },
+      props: { venue: { name: 'Test', city: 'City', country: null, imageUrl: '/venues/test.jpg' } },
     })
     const img = wrapper.find('img')
     expect(img.classes()).toContain('opacity-0')
@@ -59,7 +59,7 @@ describe('VenueBanner', () => {
 
   it('has correct aria-label for accessibility', () => {
     const wrapper = mount(VenueBanner, {
-      props: { venue: { name: 'Estadio Banorte', city: 'Mexico City', imageUrl: null } },
+      props: { venue: { name: 'Estadio Banorte', city: 'Mexico City', country: null, imageUrl: null } },
     })
     const banner = wrapper.find('[data-testid="venue-banner"]')
     expect(banner.attributes('role')).toBe('img')
@@ -68,7 +68,7 @@ describe('VenueBanner', () => {
 
   it('expand icon is visible when venue exists', () => {
     const wrapper = mount(VenueBanner, {
-      props: { venue: { name: 'MetLife Stadium', city: 'East Rutherford', imageUrl: '/venues/metlife.webp' } },
+      props: { venue: { name: 'MetLife Stadium', city: 'East Rutherford', country: null, imageUrl: '/venues/metlife.webp' } },
     })
     const icon = wrapper.find('[data-testid="expand-icon"]')
     expect(icon.exists()).toBe(true)
@@ -81,7 +81,7 @@ describe('VenueBanner', () => {
 
   it('clicking banner opens lightbox', async () => {
     const wrapper = mount(VenueBanner, {
-      props: { venue: { name: 'SoFi Stadium', city: 'Inglewood', imageUrl: '/venues/sofi.webp' } },
+      props: { venue: { name: 'SoFi Stadium', city: 'Inglewood', country: null, imageUrl: '/venues/sofi.webp' } },
       global: { stubs: { Teleport: true } },
     })
     expect(wrapper.find('[data-testid="venue-lightbox"]').exists()).toBe(false)
@@ -91,7 +91,7 @@ describe('VenueBanner', () => {
 
   it('clicking lightbox backdrop closes it', async () => {
     const wrapper = mount(VenueBanner, {
-      props: { venue: { name: 'SoFi Stadium', city: 'Inglewood', imageUrl: '/venues/sofi.webp' } },
+      props: { venue: { name: 'SoFi Stadium', city: 'Inglewood', country: null, imageUrl: '/venues/sofi.webp' } },
       global: { stubs: { Teleport: true } },
     })
     await wrapper.find('[data-testid="venue-banner"]').trigger('click')

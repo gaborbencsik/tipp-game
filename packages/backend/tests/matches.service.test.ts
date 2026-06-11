@@ -229,6 +229,39 @@ describe('getMatches', () => {
     expect(result[0]?.venue).toBeNull()
   })
 
+  // ─── UX-031: venue.country mapping ─────────────────────────────────────────
+  describe('UX-031 venue.country', () => {
+    it('country populated → mapped through', async () => {
+      const row = makeRow()
+      row.venues = { ...VENUE, country: 'Germany' }
+      mockOrderBy.mockResolvedValue([row])
+
+      const result = await getMatches()
+
+      expect(result[0]?.venue?.country).toBe('Germany')
+    })
+
+    it('country empty string → normalized to null', async () => {
+      const row = makeRow()
+      row.venues = { ...VENUE, country: '' }
+      mockOrderBy.mockResolvedValue([row])
+
+      const result = await getMatches()
+
+      expect(result[0]?.venue?.country).toBeNull()
+    })
+
+    it('venue null → no country field surfaces (venue itself null)', async () => {
+      const row = makeRow()
+      row.venues = null as unknown as typeof VENUE
+      mockOrderBy.mockResolvedValue([row])
+
+      const result = await getMatches()
+
+      expect(result[0]?.venue).toBeNull()
+    })
+  })
+
   // ─── UX-030: Transfermarkt market values ─────────────────────────────────
   describe('UX-030 marketValueEur + transfermarktId', () => {
     it('both teams have market value → both marketValueEur populated (eur passthrough)', async () => {

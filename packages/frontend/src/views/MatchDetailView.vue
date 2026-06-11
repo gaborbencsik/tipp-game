@@ -58,8 +58,8 @@
             </div>
           </div>
 
-          <div v-if="match.venue" class="text-sm text-gray-400 text-center mt-3">
-            {{ match.venue.name }}, {{ match.venue.city }}
+          <div v-if="match.venue" class="text-sm text-gray-400 text-center mt-3" data-testid="venue-location">
+            {{ match.venue.name }}, {{ match.venue.city }}<template v-if="match.venue.country">, {{ match.venue.country }}</template>
           </div>
 
           <div
