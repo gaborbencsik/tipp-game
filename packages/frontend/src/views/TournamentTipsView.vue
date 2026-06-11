@@ -87,77 +87,98 @@
             </p>
           </div>
 
-          <div v-else-if="!isDeadlinePassed(sp.deadline)">
-            <div v-if="sp.inputType === 'team_select'" class="mb-2">
-              <TeamSelectDropdown
-                :model-value="sp.answer ?? null"
-                :league-id="wcLeagueId"
-                :answer-label="sp.answerLabel ?? null"
-                @update:model-value="v => onAnswerChange(sp, v)"
-              />
+          <div v-else>
+            <!-- UX-032: deadline lejárt + még nincs pont → read-only lock banner + halvány picker -->
+            <div
+              v-if="isLockedReadOnly(sp)"
+              class="mb-3 flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900"
+              data-testid="tip-locked-banner"
+            >
+              <span aria-hidden="true">🔒</span>
+              <span class="font-medium">{{ $t('tournamentTips.lockedBanner') }}</span>
             </div>
-            <div v-else-if="sp.inputType === 'player_select'" class="mb-2">
-              <PlayerSelectCombobox
-                :model-value="sp.answer ?? null"
-                :league-id="wcLeagueId"
-                :answer-label="sp.answerLabel ?? null"
-                @update:model-value="v => onAnswerChange(sp, v)"
-              />
+
+            <!-- Saját tipp egysoros összegzése — egyszerű (text/dropdown) tippeknél is látsszon a beadott válasz lock után. -->
+            <p
+              v-if="isLockedReadOnly(sp)"
+              class="text-sm text-gray-600 mb-2"
+              data-testid="tip-locked-answer"
+            >
+              {{ $t('tournamentTips.yourTip', { answer: sp.answerLabel ?? sp.answer ?? $t('tournamentTips.noTip') }) }}
+            </p>
+
+            <div
+              :class="isLockedReadOnly(sp) ? 'pointer-events-none opacity-60' : ''"
+              :aria-disabled="isLockedReadOnly(sp) ? 'true' : undefined"
+              :data-testid="isLockedReadOnly(sp) ? 'tip-locked-wrapper' : undefined"
+            >
+              <div v-if="sp.inputType === 'team_select'" class="mb-2">
+                <TeamSelectDropdown
+                  :model-value="sp.answer ?? null"
+                  :league-id="wcLeagueId"
+                  :answer-label="sp.answerLabel ?? null"
+                  @update:model-value="v => onAnswerChange(sp, v)"
+                />
+              </div>
+              <div v-else-if="sp.inputType === 'player_select'" class="mb-2">
+                <PlayerSelectCombobox
+                  :model-value="sp.answer ?? null"
+                  :league-id="wcLeagueId"
+                  :answer-label="sp.answerLabel ?? null"
+                  @update:model-value="v => onAnswerChange(sp, v)"
+                />
+              </div>
+              <div v-else-if="sp.inputType === 'multi_team_weighted' && isMultiTeamWeightedOptions(sp.options)" class="mb-2">
+                <UpsetSpecialPicker
+                  :options="sp.options"
+                  :answer="sp.answer ?? null"
+                  @submit="v => onAnswerChange(sp, v)"
+                />
+              </div>
+              <div v-else-if="sp.inputType === 'all_groups_standing' && isAllGroupsStandingOptions(sp.options)" class="mb-2">
+                <GroupStandingsPicker
+                  :options="sp.options"
+                  :answer="sp.answer ?? null"
+                  @submit="v => onAnswerChange(sp, v)"
+                />
+              </div>
+              <div v-else-if="sp.inputType === 'bracket_progression' && isBracketProgressionOptions(sp.options)" class="mb-2">
+                <BracketProgressionPicker
+                  :options="sp.options"
+                  :answer="sp.answer ?? null"
+                  :group-standings-answer="parsedGroupStandingsAnswer"
+                  @submit="v => onAnswerChange(sp, v)"
+                  @open-group-standings="scrollToGroupStandings"
+                />
+              </div>
+              <div v-else-if="sp.inputType === 'dropdown' && Array.isArray(sp.options) && sp.options.length">
+                <select
+                  :value="sp.answer ?? ''"
+                  class="w-full border rounded px-2 py-1.5 text-sm mb-2"
+                  @change="onAnswerChange(sp, ($event.target as HTMLSelectElement).value)"
+                >
+                  <option value="" disabled>{{ $t('tournamentTips.placeholder') }}</option>
+                  <option v-for="opt in sp.options" :key="opt" :value="opt">{{ opt }}</option>
+                </select>
+              </div>
+              <div v-else>
+                <input
+                  :value="textDraft[sp.typeId] ?? sp.answer ?? ''"
+                  type="text"
+                  maxlength="500"
+                  class="w-full border rounded px-2 py-1.5 text-sm mb-2"
+                  :placeholder="$t('tournamentTips.inputPlaceholder')"
+                  @input="textDraft[sp.typeId] = ($event.target as HTMLInputElement).value"
+                  @blur="onAnswerChange(sp, textDraft[sp.typeId] ?? '')"
+                />
+              </div>
             </div>
-            <div v-else-if="sp.inputType === 'multi_team_weighted' && isMultiTeamWeightedOptions(sp.options)" class="mb-2">
-              <UpsetSpecialPicker
-                :options="sp.options"
-                :answer="sp.answer ?? null"
-                @submit="v => onAnswerChange(sp, v)"
-              />
-            </div>
-            <div v-else-if="sp.inputType === 'all_groups_standing' && isAllGroupsStandingOptions(sp.options)" class="mb-2">
-              <GroupStandingsPicker
-                :options="sp.options"
-                :answer="sp.answer ?? null"
-                @submit="v => onAnswerChange(sp, v)"
-              />
-            </div>
-            <div v-else-if="sp.inputType === 'bracket_progression' && isBracketProgressionOptions(sp.options)" class="mb-2">
-              <BracketProgressionPicker
-                :options="sp.options"
-                :answer="sp.answer ?? null"
-                :group-standings-answer="parsedGroupStandingsAnswer"
-                @submit="v => onAnswerChange(sp, v)"
-                @open-group-standings="scrollToGroupStandings"
-              />
-            </div>
-            <div v-else-if="sp.inputType === 'dropdown' && Array.isArray(sp.options) && sp.options.length">
-              <select
-                :value="sp.answer ?? ''"
-                class="w-full border rounded px-2 py-1.5 text-sm mb-2"
-                @change="onAnswerChange(sp, ($event.target as HTMLSelectElement).value)"
-              >
-                <option value="" disabled>{{ $t('tournamentTips.placeholder') }}</option>
-                <option v-for="opt in sp.options" :key="opt" :value="opt">{{ opt }}</option>
-              </select>
-            </div>
-            <div v-else>
-              <input
-                :value="textDraft[sp.typeId] ?? sp.answer ?? ''"
-                type="text"
-                maxlength="500"
-                class="w-full border rounded px-2 py-1.5 text-sm mb-2"
-                :placeholder="$t('tournamentTips.inputPlaceholder')"
-                @input="textDraft[sp.typeId] = ($event.target as HTMLInputElement).value"
-                @blur="onAnswerChange(sp, textDraft[sp.typeId] ?? '')"
-              />
-            </div>
-            <div class="flex items-center gap-2 min-h-[1.25rem]">
+
+            <div v-if="!isLockedReadOnly(sp)" class="flex items-center gap-2 min-h-[1.25rem]">
               <span v-if="store.saveStatusByTypeId[sp.typeId] === 'saving'" class="text-xs text-gray-500">{{ $t('tournamentTips.saving') }}</span>
               <span v-else-if="store.saveStatusByTypeId[sp.typeId] === 'saved'" class="text-xs text-green-600">{{ $t('tournamentTips.saved') }}</span>
               <span v-else-if="store.saveStatusByTypeId[sp.typeId] === 'error'" class="text-xs text-red-600">{{ $t('tournamentTips.errorSaving') }}</span>
             </div>
-          </div>
-
-          <div v-else class="text-sm">
-            <p class="text-gray-600">{{ $t('tournamentTips.yourTip', { answer: sp.answerLabel ?? sp.answer ?? $t('tournamentTips.noTip') }) }}</p>
-            <p class="text-xs text-gray-400 mt-1">{{ $t('tournamentTips.expired') }}</p>
           </div>
         </div>
         </div>
@@ -256,6 +277,13 @@ onUnmounted(() => {
 
 function isDeadlinePassed(deadline: string): boolean {
   return new Date(deadline).getTime() < Date.now()
+}
+
+// UX-032: a tipp lockolt read-only állapotban van, ha a deadline lejárt, de a pontszám
+// még nincs kiértékelve. Ilyenkor a megszokott picker UI-t renderelik, csak halványítva +
+// pointer-events-none, hogy a felhasználó még lássa a saját tippjét.
+function isLockedReadOnly(sp: SpecialPredictionWithType): boolean {
+  return sp.points === null && isDeadlinePassed(sp.deadline)
 }
 
 function isMultiTeamWeightedOptions(options: SpecialPredictionOptions): options is MultiTeamWeightedOptions {

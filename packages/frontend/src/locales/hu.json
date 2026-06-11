@@ -625,6 +625,7 @@
     "pointsResult": "+{n} pont",
     "zeroPoints": "0 pont",
     "expired": "A határidő lejárt.",
+    "lockedBanner": "A határidő lejárt — a tipped zárolva van.",
     "placeholder": "Válassz egy lehetőséget",
     "inputPlaceholder": "Add meg a tipped",
     "saving": "Mentés…",

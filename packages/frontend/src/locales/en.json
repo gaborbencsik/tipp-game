@@ -625,6 +625,7 @@
     "pointsResult": "+{n} pts",
     "zeroPoints": "0 pts",
     "expired": "The deadline has passed.",
+    "lockedBanner": "Deadline passed — your tip is locked.",
     "placeholder": "Pick an option",
     "inputPlaceholder": "Enter your tip",
     "saving": "Saving…",

@@ -107,6 +107,16 @@ const TIP_SCORED: SpecialPredictionWithType = {
   updatedAt: '2026-06-10T10:00:00.000Z',
 }
 
+// UX-032: deadline lejárt, de pont nincs kiértékelve → read-only lock.
+const TIP_LOCKED_DROPDOWN: SpecialPredictionWithType = {
+  ...TIP_OPEN_DROPDOWN,
+  typeId: 'type-locked-dd',
+  deadline: PAST_DEADLINE,
+  answer: '4-6',
+  answerLabel: '4-6',
+  points: null,
+}
+
 function buildRouter() {
   return buildTestRouter({ '/app/tournament-tips': TournamentTipsView })
 }
@@ -215,5 +225,42 @@ describe('TournamentTipsView', () => {
     await select.setValue('4-6')
     await flushPromises()
     expect(mockTournamentTipsUpsert).toHaveBeenCalledWith('tok', { typeId: 'type-dd', answer: '4-6' })
+  })
+
+  // UX-032: read-only lock state
+  describe('UX-032 read-only lock when deadline passed and points unscored', () => {
+    it('open + future deadline → no lock banner, no lock wrapper', async () => {
+      mockTournamentTipsList.mockResolvedValueOnce([TIP_OPEN_DROPDOWN])
+      const { wrapper } = await mountView()
+      expect(wrapper.find('[data-testid="tip-locked-banner"]').exists()).toBe(false)
+      expect(wrapper.find('[data-testid="tip-locked-wrapper"]').exists()).toBe(false)
+    })
+
+    it('past deadline + points: null → lock banner + dimmed wrapper, picker still rendered', async () => {
+      mockTournamentTipsList.mockResolvedValueOnce([TIP_LOCKED_DROPDOWN])
+      const { wrapper } = await mountView()
+      const card = wrapper.find('[data-testid="tournament-tip-type-locked-dd"]')
+      expect(card.find('[data-testid="tip-locked-banner"]').exists()).toBe(true)
+      const lockWrapper = card.find('[data-testid="tip-locked-wrapper"]')
+      expect(lockWrapper.exists()).toBe(true)
+      expect(lockWrapper.classes()).toContain('pointer-events-none')
+      expect(lockWrapper.classes()).toContain('opacity-60')
+      expect(lockWrapper.attributes('aria-disabled')).toBe('true')
+      // Picker (the dropdown <select>) is still rendered inside the lock wrapper.
+      expect(card.find('select').exists()).toBe(true)
+      // Existing answer surfaced as an explicit summary line for simple tips.
+      expect(card.find('[data-testid="tip-locked-answer"]').text()).toContain('4-6')
+    })
+
+    it('past deadline + points scored → result block, no lock banner, no picker', async () => {
+      mockTournamentTipsList.mockResolvedValueOnce([TIP_SCORED])
+      const { wrapper } = await mountView()
+      const card = wrapper.find('[data-testid="tournament-tip-type-scored"]')
+      expect(card.find('[data-testid="tip-locked-banner"]').exists()).toBe(false)
+      expect(card.find('[data-testid="tip-locked-wrapper"]').exists()).toBe(false)
+      expect(card.find('input[type="text"]').exists()).toBe(false)
+      expect(card.text()).toContain('Argentina')
+      expect(card.text()).toContain('25')
+    })
   })
 })

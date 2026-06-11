@@ -1,11 +1,12 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-06-11 (UX-031 lezárva)
+> Utoljára frissítve: 2026-06-11 (US-1311 megnyitva)
 
 ## Nyitott story-k
 
 | Story ID | Cím | Prioritás | Függőség |
 |----------|-----|-----------|----------|
+| US-1311 | Admin-vezérelt torna-tipp kiértékelés (lightweight MVP) | Should Have | — |
 | PLAN-001 | Torna-tipp pontozási terv (globális speciális tippek kiértékelése) | Should Have | UX-021 |
 | US-1310 | Match Detail – AI-generált összefoglaló a legeredményesebb játékosokról (player_stats) | Should Have | — |
 | OPS-001 | Strukturált logolás és frontend hibakezelés (MVP) | Should Have | — |
@@ -25,6 +26,7 @@
 | UX-021 | Döntés a speciális tippek tab sorsáról (törlés vagy újra-aktiválás) | Should Have | — |
 | UX-022 | Torna tippek kitöltöttsége az admin statisztikákban | Should Have | UX-021 |
 | UX-029 | Pontozási szabályzat modal – polished error state | Nice to Have | ~~UX-028~~ |
+| UX-032 | Torna tippek – lejárt deadline után is mutassa a tippet (read-only lock) | Should Have | — |
 | SEC-002 | HMAC-aláírt meghívó URL-ek | Nice to Have | — |
 
 > UX-019 felülírva — UX-020 implementálja a frissített, mockup-alapú 5 lépéses onboardingot.
@@ -32,4 +34,4 @@
 
 ---
 
-**Haladás: 167 / 185 story kész** — Must Have: 32/32, Should Have: 133/143, Nice to Have: 0/5 (US-937, PUSH-003 won't do)
+**Haladás: 167 / 186 story kész** — Must Have: 32/32, Should Have: 133/144, Nice to Have: 0/5 (US-937, PUSH-003 won't do)
