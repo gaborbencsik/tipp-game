@@ -36,7 +36,6 @@
           min="0"
           max="10"
           required
-          :disabled="store.isFrozen"
           class="w-20 border rounded px-2 py-1 text-center disabled:bg-gray-100"
         />
       </div>
