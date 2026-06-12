@@ -489,6 +489,9 @@ export interface MatchPrediction {
   readonly homeGoals: number
   readonly awayGoals: number
   readonly pointsGlobal: number | null
+  readonly scorerPickPlayerId: string | null
+  readonly scorerPlayerNameSnapshot: string | null
+  readonly scorerBonusPoints: number | null
   readonly isPaid?: boolean
   readonly isSupporter: boolean
 }

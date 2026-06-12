@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 167 story kész (Must Have: 32/32, Should Have: 135/135)
+> 168 story kész (Must Have: 32/32, Should Have: 136/136)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -171,3 +171,4 @@
 | OPS-010 | Frontend bundle + asset optimalizáció (initial load 8 MB → ~1-2 MB) | Should Have |
 | UX-030 | Match Detail – Transfermarkt csapatértékek blokk | Should Have |
 | UX-031 | Match Detail – ország megjelenítése a város mellett | Should Have |
+| US-1312 | Mások meccs-tippjeinek megjelenítése kickoff után + góllövő tipp + csoport-szűrés | Should Have |

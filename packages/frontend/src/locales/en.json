@@ -479,7 +479,9 @@
   },
   "matchPredictions": {
     "title": "Others' predictions",
-    "points": "{n} pts"
+    "points": "{n} pts",
+    "scorerLabel": "Scorer pick",
+    "scorerHit": "Hit!"
   },
   "playerSelect": {
     "placeholder": "Search for a player...",

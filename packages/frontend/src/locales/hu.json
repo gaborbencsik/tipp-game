@@ -479,7 +479,9 @@
   },
   "matchPredictions": {
     "title": "Mások tippjei",
-    "points": "{n} pont"
+    "points": "{n} pont",
+    "scorerLabel": "Góllövő tipp",
+    "scorerHit": "Találat!"
   },
   "playerSelect": {
     "placeholder": "Keresés játékosra...",

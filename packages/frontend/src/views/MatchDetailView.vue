@@ -255,7 +255,7 @@
         </div>
 
         <MatchPredictionsList
-          v-if="(match.status === 'finished' || match.status === 'live') && matchPredictions.length > 0"
+          v-if="isPredictionsRevealable && matchPredictions.length > 0"
           :predictions="matchPredictions"
           :current-user-id="authStore.user?.id ?? ''"
           class="mt-4"
@@ -349,6 +349,13 @@ const hasMarketValues = computed((): boolean => {
 
 const myPrediction = computed(() => predictionsStore.predictionByMatchId(matchId.value))
 
+const isPredictionsRevealable = computed((): boolean => {
+  if (!match.value) return false
+  if (match.value.status === 'finished' || match.value.status === 'live') return true
+  if (match.value.status === 'scheduled' && new Date(match.value.scheduledAt) <= now.value) return true
+  return false
+})
+
 interface FavoriteIndicator {
   readonly self: string | null
   readonly othersText: string
@@ -385,7 +392,7 @@ onMounted(async () => {
     draftOutcome.value = existing.outcomeAfterDraw
     draftScorerPick.value = existing.scorerPickPlayerId
   }
-  if (match.value?.status === 'finished' || match.value?.status === 'live') {
+  if (isPredictionsRevealable.value) {
     await loadMatchPredictions()
   }
   loadMatchOdds()

@@ -1,6 +1,6 @@
-import { eq, isNull, desc, sql } from 'drizzle-orm'
+import { eq, isNull, desc, sql, and, inArray } from 'drizzle-orm'
 import { db } from '../db/client.js'
-import { users, matches, predictions, players, groupMembers } from '../db/schema/index.js'
+import { users, matches, predictions, players, groupMembers, groups } from '../db/schema/index.js'
 import type { MatchOutcome, MatchPrediction, Prediction, PredictionInput } from '../types/index.js'
 
 class AppError extends Error {
@@ -157,7 +157,11 @@ export async function getPredictionsForUser(
   return rows.map(toApiPrediction)
 }
 
-export async function getMatchPredictions(matchId: string, groupId?: string): Promise<MatchPrediction[]> {
+export async function getMatchPredictions(
+  matchId: string,
+  requesterUserId: string,
+  groupId?: string,
+): Promise<MatchPrediction[]> {
   const matchRows = await db
     .select()
     .from(matches)
@@ -165,7 +169,28 @@ export async function getMatchPredictions(matchId: string, groupId?: string): Pr
     .limit(1)
   const match = matchRows[0]
   if (!match) throw new AppError(404, 'Match not found')
-  if (match.status === 'scheduled') throw new AppError(403, 'Predictions not available until match starts')
+  if (match.status === 'scheduled' && match.scheduledAt > new Date()) {
+    throw new AppError(403, 'Predictions not available until match starts')
+  }
+
+  // Csoporttagok kigyűjtése: a kérelmezővel közös aktív csoportokban lévő userek.
+  // Saját maga mindig benne van a végén egy fallback OR-ral, így ha a kérelmezőnek
+  // nincs egyetlen csoportja sem, a saját tippje akkor is megjelenik.
+  const requesterGroupRows = await db
+    .select({ groupId: groupMembers.groupId })
+    .from(groupMembers)
+    .innerJoin(groups, eq(groups.id, groupMembers.groupId))
+    .where(and(eq(groupMembers.userId, requesterUserId), isNull(groups.deletedAt)))
+  const requesterGroupIds = requesterGroupRows.map(r => r.groupId)
+
+  const visibleUserIds = new Set<string>([requesterUserId])
+  if (requesterGroupIds.length > 0) {
+    const peerRows = await db
+      .select({ userId: groupMembers.userId })
+      .from(groupMembers)
+      .where(inArray(groupMembers.groupId, requesterGroupIds))
+    for (const r of peerRows) visibleUserIds.add(r.userId)
+  }
 
   const rows = await db
     .select({
@@ -175,10 +200,18 @@ export async function getMatchPredictions(matchId: string, groupId?: string): Pr
       homeGoals: predictions.homeGoals,
       awayGoals: predictions.awayGoals,
       pointsGlobal: predictions.pointsGlobal,
+      scorerPickPlayerId: predictions.scorerPickPlayerId,
+      scorerPlayerNameSnapshot: predictions.scorerPlayerNameSnapshot,
+      scorerBonusPoints: predictions.scorerBonusPoints,
     })
     .from(predictions)
     .innerJoin(users, eq(predictions.userId, users.id))
-    .where(eq(predictions.matchId, matchId))
+    .where(
+      and(
+        eq(predictions.matchId, matchId),
+        inArray(predictions.userId, Array.from(visibleUserIds)),
+      ),
+    )
     .orderBy(sql`${predictions.pointsGlobal} desc nulls last`)
 
   const baseRows: MatchPrediction[] = rows.map(r => ({
@@ -187,6 +220,9 @@ export async function getMatchPredictions(matchId: string, groupId?: string): Pr
     homeGoals: r.homeGoals,
     awayGoals: r.awayGoals,
     pointsGlobal: r.pointsGlobal,
+    scorerPickPlayerId: r.scorerPickPlayerId,
+    scorerPlayerNameSnapshot: r.scorerPlayerNameSnapshot,
+    scorerBonusPoints: r.scorerBonusPoints,
     isSupporter: r.supporterAt !== null,
   }))
 

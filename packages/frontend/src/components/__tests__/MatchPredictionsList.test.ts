@@ -3,10 +3,16 @@ import { mount } from '@vue/test-utils'
 import MatchPredictionsList from '../MatchPredictionsList.vue'
 import type { MatchPrediction } from '../../types/index.js'
 
+const SCORER_DEFAULTS = {
+  scorerPickPlayerId: null,
+  scorerPlayerNameSnapshot: null,
+  scorerBonusPoints: null,
+} as const
+
 const PREDICTIONS: MatchPrediction[] = [
-  { userId: 'u1', displayName: 'Alice', homeGoals: 2, awayGoals: 1, pointsGlobal: 3, isSupporter: false },
-  { userId: 'u2', displayName: 'Bob', homeGoals: 1, awayGoals: 0, pointsGlobal: 1, isSupporter: false },
-  { userId: 'u3', displayName: 'Carol', homeGoals: 0, awayGoals: 2, pointsGlobal: 0, isSupporter: false },
+  { userId: 'u1', displayName: 'Alice', homeGoals: 2, awayGoals: 1, pointsGlobal: 3, isSupporter: false, ...SCORER_DEFAULTS },
+  { userId: 'u2', displayName: 'Bob', homeGoals: 1, awayGoals: 0, pointsGlobal: 1, isSupporter: false, ...SCORER_DEFAULTS },
+  { userId: 'u3', displayName: 'Carol', homeGoals: 0, awayGoals: 2, pointsGlobal: 0, isSupporter: false, ...SCORER_DEFAULTS },
 ]
 
 function mountComponent(predictions: MatchPrediction[] = PREDICTIONS, currentUserId = 'u2') {
@@ -68,7 +74,7 @@ describe('MatchPredictionsList', () => {
 
   it('displays dash for null pointsGlobal', () => {
     const preds: MatchPrediction[] = [
-      { userId: 'u4', displayName: 'Dave', homeGoals: 1, awayGoals: 1, pointsGlobal: null, isSupporter: false },
+      { userId: 'u4', displayName: 'Dave', homeGoals: 1, awayGoals: 1, pointsGlobal: null, isSupporter: false, ...SCORER_DEFAULTS },
     ]
     const wrapper = mountComponent(preds, 'other')
     expect(wrapper.find('[data-testid="prediction-row-u4"]').text()).toContain('– pont')
@@ -77,5 +83,62 @@ describe('MatchPredictionsList', () => {
   it('shows section header', () => {
     const wrapper = mountComponent()
     expect(wrapper.text()).toContain('Mások tippjei')
+  })
+
+  it('renders scorer chip when scorerPlayerNameSnapshot is set', () => {
+    const preds: MatchPrediction[] = [
+      {
+        userId: 'u5', displayName: 'Eve', homeGoals: 1, awayGoals: 1, pointsGlobal: null, isSupporter: false,
+        scorerPickPlayerId: 'p-1', scorerPlayerNameSnapshot: 'Mbappé', scorerBonusPoints: null,
+      },
+    ]
+    const wrapper = mountComponent(preds, 'other')
+    const chip = wrapper.find('[data-testid="prediction-row-scorer-u5"]')
+    expect(chip.exists()).toBe(true)
+    expect(chip.text()).toContain('Mbappé')
+  })
+
+  it('does not render scorer chip when scorerPlayerNameSnapshot is null', () => {
+    const wrapper = mountComponent()
+    expect(wrapper.find('[data-testid="prediction-row-scorer-u1"]').exists()).toBe(false)
+  })
+
+  it('applies green class when scorerBonusPoints > 0 (hit)', () => {
+    const preds: MatchPrediction[] = [
+      {
+        userId: 'u6', displayName: 'Frank', homeGoals: 2, awayGoals: 0, pointsGlobal: 3, isSupporter: false,
+        scorerPickPlayerId: 'p-1', scorerPlayerNameSnapshot: 'Haaland', scorerBonusPoints: 2,
+      },
+    ]
+    const wrapper = mountComponent(preds, 'other')
+    const chip = wrapper.find('[data-testid="prediction-row-scorer-u6"]')
+    expect(chip.classes()).toContain('text-green-700')
+    expect(chip.classes()).toContain('bg-green-50')
+  })
+
+  it('applies neutral gray class when scorerBonusPoints is 0 (miss)', () => {
+    const preds: MatchPrediction[] = [
+      {
+        userId: 'u7', displayName: 'Grace', homeGoals: 1, awayGoals: 0, pointsGlobal: 1, isSupporter: false,
+        scorerPickPlayerId: 'p-1', scorerPlayerNameSnapshot: 'Vinicius', scorerBonusPoints: 0,
+      },
+    ]
+    const wrapper = mountComponent(preds, 'other')
+    const chip = wrapper.find('[data-testid="prediction-row-scorer-u7"]')
+    expect(chip.classes()).toContain('text-gray-600')
+    expect(chip.classes()).not.toContain('text-green-700')
+  })
+
+  it('applies neutral gray class when scorerBonusPoints is null (pending)', () => {
+    const preds: MatchPrediction[] = [
+      {
+        userId: 'u8', displayName: 'Henry', homeGoals: 1, awayGoals: 1, pointsGlobal: null, isSupporter: false,
+        scorerPickPlayerId: 'p-1', scorerPlayerNameSnapshot: 'Salah', scorerBonusPoints: null,
+      },
+    ]
+    const wrapper = mountComponent(preds, 'other')
+    const chip = wrapper.find('[data-testid="prediction-row-scorer-u8"]')
+    expect(chip.classes()).toContain('text-gray-600')
+    expect(chip.classes()).not.toContain('text-green-700')
   })
 })

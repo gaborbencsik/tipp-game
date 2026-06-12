@@ -43,7 +43,8 @@ router.get('/api/leagues', authMiddleware, withHttpCache({ maxAge: 3600, swr: 72
 
 router.get('/api/matches/:matchId/predictions', authMiddleware, async (ctx) => {
   const groupId = typeof ctx.query['groupId'] === 'string' ? ctx.query['groupId'] : undefined
-  ctx.body = await getMatchPredictions(ctx.params.matchId, groupId)
+  const dbUser = await upsertUser(ctx.state.user)
+  ctx.body = await getMatchPredictions(ctx.params.matchId, dbUser.id, groupId)
 })
 
 router.get('/api/leagues/:leagueId/teams', authMiddleware, withHttpCache({ maxAge: 1800, swr: 3600 }), async (ctx) => {

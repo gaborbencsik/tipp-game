@@ -31,7 +31,7 @@ vi.mock('../src/db/client.js', () => ({
   db: { select: mockSelect, insert: mockInsert },
 }))
 
-import { upsertPrediction, getPredictionsForUser } from '../src/services/predictions.service.js'
+import { upsertPrediction, getPredictionsForUser, getMatchPredictions } from '../src/services/predictions.service.js'
 import * as schema from '../src/db/schema/index.js'
 
 // ─── Fixture data ─────────────────────────────────────────────────────────────
@@ -452,5 +452,192 @@ describe('getPredictionsForUser', () => {
 
     const result = await getPredictionsForUser(SUPABASE_ID, DB_USER_ID)
     expect(result).toEqual([])
+  })
+})
+
+// ─── getMatchPredictions ──────────────────────────────────────────────────────
+
+describe('getMatchPredictions', () => {
+  // A service 5 különálló select chain-t hív egymás után. Azokat egy egyszerű,
+  // szekvenciális thenable-stack-kel mockoljuk: minden chain egy thenable
+  // (.then) lekérésnél vesz ki egy értéket a stack tetejéről.
+  function setupQueryStack(stack: unknown[][]): void {
+    const queue = [...stack]
+    const makeChain = (): {
+      from: () => ReturnType<typeof makeChain>
+      where: () => ReturnType<typeof makeChain>
+      innerJoin: () => ReturnType<typeof makeChain>
+      orderBy: () => ReturnType<typeof makeChain>
+      limit: () => ReturnType<typeof makeChain>
+      then: (resolve: (v: unknown[]) => unknown) => Promise<unknown>
+    } => {
+      const chain = {
+        from: () => chain,
+        where: () => chain,
+        innerJoin: () => chain,
+        orderBy: () => chain,
+        limit: () => chain,
+        then: (resolve: (v: unknown[]) => unknown) => Promise.resolve(queue.shift() ?? []).then(resolve),
+      }
+      return chain
+    }
+    mockSelect.mockImplementation(() => makeChain())
+  }
+
+  beforeEach(() => {
+    vi.resetAllMocks()
+  })
+
+  const REQUESTER_ID = 'requester-uuid'
+  const PEER_A_ID = 'peer-a-uuid'
+  const PEER_B_ID = 'peer-b-uuid'
+  const STRANGER_ID = 'stranger-uuid'
+  const GROUP_1_ID = 'group-1-uuid'
+  const GROUP_2_ID = 'group-2-uuid'
+
+  function predictionRow(userId: string, displayName: string, overrides: Partial<{
+    homeGoals: number
+    awayGoals: number
+    pointsGlobal: number | null
+    scorerPickPlayerId: string | null
+    scorerPlayerNameSnapshot: string | null
+    scorerBonusPoints: number | null
+    supporterAt: Date | null
+  }> = {}): Record<string, unknown> {
+    return {
+      userId,
+      displayName,
+      supporterAt: overrides.supporterAt ?? null,
+      homeGoals: overrides.homeGoals ?? 1,
+      awayGoals: overrides.awayGoals ?? 0,
+      pointsGlobal: overrides.pointsGlobal ?? null,
+      scorerPickPlayerId: overrides.scorerPickPlayerId ?? null,
+      scorerPlayerNameSnapshot: overrides.scorerPlayerNameSnapshot ?? null,
+      scorerBonusPoints: overrides.scorerBonusPoints ?? null,
+    }
+  }
+
+  it('match nem létezik → AppError 404', async () => {
+    setupQueryStack([[]])
+    await expect(getMatchPredictions(MATCH_ID, REQUESTER_ID)).rejects.toMatchObject({ status: 404 })
+  })
+
+  it('kickoff előtt (status=scheduled, scheduledAt jövőben) → AppError 403', async () => {
+    setupQueryStack([[FUTURE_MATCH_ROW]])
+    await expect(getMatchPredictions(MATCH_ID, REQUESTER_ID)).rejects.toMatchObject({ status: 403 })
+  })
+
+  it('kickoff után (status=scheduled, scheduledAt múltban) → tippek vissza scorer mezőkkel', async () => {
+    setupQueryStack([
+      [PAST_MATCH_ROW],
+      [{ groupId: GROUP_1_ID }],
+      [{ userId: REQUESTER_ID }, { userId: PEER_A_ID }],
+      [
+        predictionRow(REQUESTER_ID, 'Me', { homeGoals: 2, awayGoals: 1 }),
+        predictionRow(PEER_A_ID, 'Peer A', {
+          homeGoals: 0,
+          awayGoals: 0,
+          scorerPickPlayerId: HOME_PLAYER_ID,
+          scorerPlayerNameSnapshot: 'Szoboszlai Dominik',
+          scorerBonusPoints: 2,
+        }),
+      ],
+    ])
+    const result = await getMatchPredictions(MATCH_ID, REQUESTER_ID)
+    expect(result).toHaveLength(2)
+    expect(result[0]).toMatchObject({ userId: REQUESTER_ID, scorerPlayerNameSnapshot: null })
+    expect(result[1]).toMatchObject({
+      userId: PEER_A_ID,
+      scorerPlayerNameSnapshot: 'Szoboszlai Dominik',
+      scorerBonusPoints: 2,
+    })
+  })
+
+  it('status=live → tippek vissza', async () => {
+    const LIVE_MATCH = { ...PAST_MATCH_ROW, status: 'live' as const }
+    setupQueryStack([
+      [LIVE_MATCH],
+      [{ groupId: GROUP_1_ID }],
+      [{ userId: REQUESTER_ID }, { userId: PEER_A_ID }],
+      [predictionRow(PEER_A_ID, 'Peer A')],
+    ])
+    const result = await getMatchPredictions(MATCH_ID, REQUESTER_ID)
+    expect(result).toHaveLength(1)
+    expect(result[0]?.userId).toBe(PEER_A_ID)
+  })
+
+  it('status=finished → tippek vissza', async () => {
+    const FINISHED_MATCH = { ...PAST_MATCH_ROW, status: 'finished' as const }
+    setupQueryStack([
+      [FINISHED_MATCH],
+      [{ groupId: GROUP_1_ID }],
+      [{ userId: REQUESTER_ID }, { userId: PEER_A_ID }],
+      [predictionRow(PEER_A_ID, 'Peer A')],
+    ])
+    const result = await getMatchPredictions(MATCH_ID, REQUESTER_ID)
+    expect(result).toHaveLength(1)
+  })
+
+  it('kérelmező nincs egy csoportban sem, csak saját tippje van → 1 tipp (own)', async () => {
+    setupQueryStack([
+      [PAST_MATCH_ROW],
+      [],            // requester groups: empty
+      // peerRows lekérdezés ki van hagyva (a service skipeli, ha nincs csoport)
+      [predictionRow(REQUESTER_ID, 'Me')],
+    ])
+    const result = await getMatchPredictions(MATCH_ID, REQUESTER_ID)
+    expect(result).toHaveLength(1)
+    expect(result[0]?.userId).toBe(REQUESTER_ID)
+  })
+
+  it('idegen tippje (nincs közös csoport) → szűrve, nem jelenik meg', async () => {
+    setupQueryStack([
+      [PAST_MATCH_ROW],
+      [{ groupId: GROUP_1_ID }],
+      [{ userId: REQUESTER_ID }, { userId: PEER_A_ID }],
+      // A predictions select már a service Set-jével szűr, így a STRANGER soha
+      // nem kerül a result-listába. Itt a "DB" sem ad vissza idegen rows-t,
+      // mert az inArray szűr — szimuláljuk csak a peer rows-t.
+      [predictionRow(REQUESTER_ID, 'Me'), predictionRow(PEER_A_ID, 'Peer A')],
+    ])
+    const result = await getMatchPredictions(MATCH_ID, REQUESTER_ID)
+    expect(result.map(r => r.userId)).not.toContain(STRANGER_ID)
+    expect(result).toHaveLength(2)
+  })
+
+  it('két közös csoport, peer mindkettőben → DISTINCT user, csak egyszer', async () => {
+    setupQueryStack([
+      [PAST_MATCH_ROW],
+      [{ groupId: GROUP_1_ID }, { groupId: GROUP_2_ID }],
+      // peerRows: PEER_B mindkét csoportban → kétszer szerepel a raw rowsban,
+      // de a Set-tel deduplikáljuk
+      [
+        { userId: REQUESTER_ID }, { userId: PEER_A_ID }, { userId: PEER_B_ID },
+        { userId: REQUESTER_ID }, { userId: PEER_B_ID },
+      ],
+      [
+        predictionRow(REQUESTER_ID, 'Me'),
+        predictionRow(PEER_A_ID, 'Peer A'),
+        predictionRow(PEER_B_ID, 'Peer B'),
+      ],
+    ])
+    const result = await getMatchPredictions(MATCH_ID, REQUESTER_ID)
+    expect(result).toHaveLength(3)
+    const peerBOccurrences = result.filter(r => r.userId === PEER_B_ID)
+    expect(peerBOccurrences).toHaveLength(1)
+  })
+
+  it('groupId megadva → isPaid flag hozzádúsítva a tagsági lekérdezésből', async () => {
+    setupQueryStack([
+      [PAST_MATCH_ROW],
+      [{ groupId: GROUP_1_ID }],
+      [{ userId: REQUESTER_ID }, { userId: PEER_A_ID }],
+      [predictionRow(REQUESTER_ID, 'Me'), predictionRow(PEER_A_ID, 'Peer A')],
+      // groupId-specifikus tagsági lekérdezés
+      [{ userId: REQUESTER_ID, paidAt: new Date() }, { userId: PEER_A_ID, paidAt: null }],
+    ])
+    const result = await getMatchPredictions(MATCH_ID, REQUESTER_ID, GROUP_1_ID)
+    expect(result.find(r => r.userId === REQUESTER_ID)?.isPaid).toBe(true)
+    expect(result.find(r => r.userId === PEER_A_ID)?.isPaid).toBe(false)
   })
 })
