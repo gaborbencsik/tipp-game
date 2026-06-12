@@ -14,6 +14,7 @@
  */
 
 import './flags.css'
+import { buildFlagCss } from './flags-css.js'
 
 import ar from 'flag-icons/flags/4x3/ar.svg?url'
 import at from 'flag-icons/flags/4x3/at.svg?url'
@@ -71,9 +72,7 @@ const FLAGS: Readonly<Record<string, string>> = {
   tn, tr, us, uy, uz, za,
 }
 
-const css = Object.entries(FLAGS)
-  .map(([code, url]) => `.fi-${code}{background-image:url(${url})}`)
-  .join('\n')
+const css = buildFlagCss(FLAGS)
 
 const styleEl = document.createElement('style')
 styleEl.dataset.source = 'flag-icons-tournament'
