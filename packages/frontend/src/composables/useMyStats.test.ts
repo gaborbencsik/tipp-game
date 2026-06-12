@@ -345,5 +345,21 @@ describe('computeMyStats', () => {
       expect(stats.scorerSubmittedCount).toBe(1)
       expect(stats.scorerHitCount).toBe(1)
     })
+
+    it('finishedMatchCount counts matches with status=finished', () => {
+      const matches = [
+        match('m1', '2026-06-01T18:00:00Z', 'finished'),
+        match('m2', '2026-06-02T18:00:00Z', 'finished'),
+        match('m3', '2026-06-03T18:00:00Z', 'live'),
+        match('m4', '2026-06-04T18:00:00Z', 'scheduled'),
+      ]
+      const stats = computeMyStats([], matches, config)
+      expect(stats.finishedMatchCount).toBe(2)
+    })
+
+    it('finishedMatchCount = 0 when no matches', () => {
+      const stats = computeMyStats([], [], config)
+      expect(stats.finishedMatchCount).toBe(0)
+    })
   })
 })

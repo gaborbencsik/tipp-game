@@ -69,7 +69,7 @@
           :label="$t('myStats.scorerKpi')"
           :value="scorerKpiValue"
           :hint="scorerKpiHint"
-          :tone="stats.scorerSubmittedCount > 0 && stats.scorerHitCount * 2 >= stats.scorerSubmittedCount ? 'positive' : 'default'"
+          :tone="stats.finishedMatchCount > 0 && stats.scorerHitCount * 2 >= stats.finishedMatchCount ? 'positive' : 'default'"
           icon="⚽"
           data-testid="scorer-kpi"
         />
@@ -237,14 +237,14 @@ const distributionLabels = computed(() => ({
 
 const scorerKpiValue = computed<string>(() => {
   const s = stats.value
-  if (s.scorerSubmittedCount === 0) return '—'
-  return `${s.scorerHitCount} / ${s.scorerSubmittedCount}`
+  if (s.finishedMatchCount === 0) return '—'
+  return `${s.scorerHitCount} / ${s.finishedMatchCount}`
 })
 
 const scorerKpiHint = computed<string>(() => {
   const s = stats.value
-  if (s.scorerSubmittedCount === 0) return t('myStats.scorerKpiEmpty')
-  return t('myStats.scorerKpiHint', { hit: s.scorerHitCount, total: s.scorerSubmittedCount })
+  if (s.finishedMatchCount === 0) return t('myStats.scorerKpiEmpty')
+  return t('myStats.scorerKpiHint', { hit: s.scorerHitCount, total: s.finishedMatchCount })
 })
 
 interface ListItem {

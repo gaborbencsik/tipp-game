@@ -28,6 +28,7 @@ export interface MyStats {
   readonly scorerSubmittedCount: number
   readonly scorerHitCount: number
   readonly scorerTotalBonus: number
+  readonly finishedMatchCount: number
 }
 
 const AVAILABLE_STATUSES: ReadonlyArray<Match['status']> = ['scheduled', 'live', 'finished']
@@ -97,6 +98,7 @@ export function computeMyStats(
     (sum, { prediction }) => sum + (prediction.scorerBonusPoints ?? 0),
     0,
   )
+  const finishedMatchCount = matches.filter(m => m.status === 'finished').length
 
   return {
     submittedCount,
@@ -112,6 +114,7 @@ export function computeMyStats(
     scorerSubmittedCount,
     scorerHitCount,
     scorerTotalBonus,
+    finishedMatchCount,
   }
 }
 
