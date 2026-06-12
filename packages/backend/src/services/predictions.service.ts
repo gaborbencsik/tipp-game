@@ -2,6 +2,7 @@ import { eq, isNull, desc, sql, and, inArray } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { users, matches, predictions, players, groupMembers, groups } from '../db/schema/index.js'
 import type { MatchOutcome, MatchPrediction, Prediction, PredictionInput } from '../types/index.js'
+import { derivePointsResult } from './scoring.service.js'
 
 class AppError extends Error {
   readonly status: number
@@ -24,6 +25,8 @@ async function findUserBySupabaseId(supabaseId: string) {
 }
 
 function toApiPrediction(row: typeof predictions.$inferSelect): Prediction {
+  const pointsGlobal = row.pointsGlobal ?? null
+  const scorerBonusPoints = row.scorerBonusPoints ?? null
   return {
     id: row.id,
     userId: row.userId,
@@ -31,10 +34,11 @@ function toApiPrediction(row: typeof predictions.$inferSelect): Prediction {
     homeGoals: row.homeGoals,
     awayGoals: row.awayGoals,
     outcomeAfterDraw: (row.outcomeAfterDraw as MatchOutcome | null) ?? null,
-    pointsGlobal: row.pointsGlobal ?? null,
+    pointsGlobal,
+    pointsResult: derivePointsResult(pointsGlobal, scorerBonusPoints),
     scorerPickPlayerId: row.scorerPickPlayerId ?? null,
     scorerPlayerNameSnapshot: row.scorerPlayerNameSnapshot ?? null,
-    scorerBonusPoints: row.scorerBonusPoints ?? null,
+    scorerBonusPoints,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   }
@@ -220,6 +224,7 @@ export async function getMatchPredictions(
     homeGoals: r.homeGoals,
     awayGoals: r.awayGoals,
     pointsGlobal: r.pointsGlobal,
+    pointsResult: derivePointsResult(r.pointsGlobal, r.scorerBonusPoints),
     scorerPickPlayerId: r.scorerPickPlayerId,
     scorerPlayerNameSnapshot: r.scorerPlayerNameSnapshot,
     scorerBonusPoints: r.scorerBonusPoints,

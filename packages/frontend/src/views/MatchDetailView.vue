@@ -205,8 +205,8 @@
                   {{ $t('matchDetail.myTip') }}
                   <strong class="text-gray-700">{{ myPrediction.homeGoals }} – {{ myPrediction.awayGoals }}</strong>
                 </span>
-                <span v-if="myPrediction.pointsGlobal !== null" class="ml-3">
-                  {{ $t('matchDetail.pointsLabel') }} <strong class="text-blue-700">{{ myPrediction.pointsGlobal }}</strong>
+                <span v-if="myPrediction.pointsResult !== null" class="ml-3">
+                  {{ $t('matchDetail.pointsLabel') }} <strong class="text-blue-700">{{ myPrediction.pointsResult }}</strong>
                 </span>
               </template>
               <template v-else>

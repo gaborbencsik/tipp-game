@@ -102,6 +102,7 @@ const PREDICTION_FOR_FINISHED: Prediction = {
   awayGoals: 1,
   outcomeAfterDraw: null,
   pointsGlobal: 3,
+  pointsResult: 3,
   scorerPickPlayerId: null,
   scorerPlayerNameSnapshot: null,
   scorerBonusPoints: null,

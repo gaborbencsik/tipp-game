@@ -56,6 +56,17 @@ export function calculateScorerBonus(ctx: ScorerBonusContext): 0 | 1 {
   return ctx.matchScorerPlayerIds.includes(ctx.scorerPickPlayerId) ? 1 : 0
 }
 
+/**
+ * UX-033: Az eredménytippből származó pont, scorer bonus nélkül.
+ * A `predictions.pointsGlobal` mező a (resultPoints + scorerBonusPoints) értéket tárolja
+ * (favorite-team multiplier nélkül — az csak a `groupPredictionPoints` táblába kerül),
+ * ezért egyszerű kivonás visszaadja a tiszta eredmény-pontot a UI-nak.
+ */
+export function derivePointsResult(pointsGlobal: number | null, scorerBonusPoints: number | null): number | null {
+  if (pointsGlobal === null) return null
+  return pointsGlobal - (scorerBonusPoints ?? 0)
+}
+
 export interface ScoredPrediction {
   readonly pointsGlobal: number
   readonly scorerBonusPoints: 0 | 1

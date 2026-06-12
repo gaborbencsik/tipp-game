@@ -192,10 +192,10 @@
                     <template v-if="predictionsStore.predictionByMatchId(match.id)">
                       <span>🔒 {{ $t('matches.myTip') }} <strong class="text-gray-600">{{ predictionsStore.predictionByMatchId(match.id)!.homeGoals }} – {{ predictionsStore.predictionByMatchId(match.id)!.awayGoals }}</strong></span>
                       <span
-                        v-if="predictionsStore.predictionByMatchId(match.id)!.pointsGlobal !== null"
+                        v-if="predictionsStore.predictionByMatchId(match.id)!.pointsResult !== null"
                         class="text-xs font-bold px-2 py-0.5 rounded"
-                        :class="pointsBadgeClass(predictionsStore.predictionByMatchId(match.id)!.pointsGlobal!)"
-                      >+{{ predictionsStore.predictionByMatchId(match.id)!.pointsGlobal }} {{ $t('common.points') }}</span>
+                        :class="pointsBadgeClass(predictionsStore.predictionByMatchId(match.id)!.pointsResult!)"
+                      >+{{ predictionsStore.predictionByMatchId(match.id)!.pointsResult }} {{ $t('common.points') }}</span>
                     </template>
                     <template v-else>
                       <span>{{ $t('matches.missedTip') }}</span>
@@ -365,10 +365,10 @@
                   <template v-if="predictionsStore.predictionByMatchId(match.id)">
                     <span>🔒 {{ $t('matches.myTip') }} <strong class="text-gray-600">{{ predictionsStore.predictionByMatchId(match.id)!.homeGoals }} – {{ predictionsStore.predictionByMatchId(match.id)!.awayGoals }}</strong></span>
                     <span
-                      v-if="predictionsStore.predictionByMatchId(match.id)!.pointsGlobal !== null"
+                      v-if="predictionsStore.predictionByMatchId(match.id)!.pointsResult !== null"
                       class="text-xs font-bold px-2 py-0.5 rounded"
-                      :class="pointsBadgeClass(predictionsStore.predictionByMatchId(match.id)!.pointsGlobal!)"
-                    >+{{ predictionsStore.predictionByMatchId(match.id)!.pointsGlobal }} {{ $t('common.points') }}</span>
+                      :class="pointsBadgeClass(predictionsStore.predictionByMatchId(match.id)!.pointsResult!)"
+                    >+{{ predictionsStore.predictionByMatchId(match.id)!.pointsResult }} {{ $t('common.points') }}</span>
                   </template>
                   <template v-else>
                     <span>{{ $t('matches.missedTip') }}</span>

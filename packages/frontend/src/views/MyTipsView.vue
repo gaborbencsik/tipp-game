@@ -271,17 +271,17 @@ function matchesFilter(item: ListItem, key: FilterKey): boolean {
     case 'all':
       return true
     case 'correct':
-      return !!p && p.pointsGlobal !== null && p.pointsGlobal > 0
+      return !!p && p.pointsResult !== null && p.pointsResult > 0
     case 'exact':
-      if (!p || p.pointsGlobal === null) return false
+      if (!p || p.pointsResult === null) return false
       if (scoringConfig.value) {
         const exactThreshold = scoringConfig.value.correctOutcomePoints + scoringConfig.value.exactBonusPoints
-        return p.pointsGlobal >= exactThreshold
+        return p.pointsResult >= exactThreshold
       }
-      const max = Math.max(...predictionsStore.predictions.map(x => x.pointsGlobal ?? 0))
-      return p.pointsGlobal === max && max > 0
+      const max = Math.max(...predictionsStore.predictions.map(x => x.pointsResult ?? 0))
+      return p.pointsResult === max && max > 0
     case 'zero':
-      return !!p && p.pointsGlobal === 0
+      return !!p && p.pointsResult === 0
     case 'missed':
       return !p && item.match.status === 'finished'
   }

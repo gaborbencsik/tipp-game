@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { calculatePoints, calculateScorerBonus, calculatePointsWithScorer, applyFavoriteTeamMultiplier } from '../src/services/scoring.service.js'
+import { calculatePoints, calculateScorerBonus, calculatePointsWithScorer, applyFavoriteTeamMultiplier, derivePointsResult } from '../src/services/scoring.service.js'
 import type { ScoringConfig } from '../src/types/index.js'
 
 const cfg: ScoringConfig = {
@@ -212,5 +212,26 @@ describe('calculatePointsWithScorer (formula: (resultPoints + scorerBonus) * fav
       baseCtx,
     )
     expect(out).toEqual({ pointsGlobal: 2, scorerBonusPoints: 0 })
+  })
+})
+
+// ─── UX-033: derivePointsResult ──────────────────────────────────────────────
+
+describe('derivePointsResult (eredmény-pont scorer bonus nélkül)', () => {
+  it('null pointsGlobal → null', () => {
+    expect(derivePointsResult(null, null)).toBeNull()
+    expect(derivePointsResult(null, 0)).toBeNull()
+    expect(derivePointsResult(null, 1)).toBeNull()
+  })
+
+  it('scorerBonus=0 vagy null → pointsResult = pointsGlobal', () => {
+    expect(derivePointsResult(2, 0)).toBe(2)
+    expect(derivePointsResult(2, null)).toBe(2)
+    expect(derivePointsResult(0, 0)).toBe(0)
+  })
+
+  it('scorerBonus=1 → pointsResult = pointsGlobal − 1', () => {
+    expect(derivePointsResult(3, 1)).toBe(2)
+    expect(derivePointsResult(1, 1)).toBe(0)
   })
 })

@@ -8,7 +8,7 @@ const props = defineProps<{
 }>()
 
 function isExactMatch(p: MatchPrediction): boolean {
-  return p.pointsGlobal === 3
+  return p.pointsResult === 3
 }
 
 function isCurrentUser(p: MatchPrediction): boolean {
@@ -65,7 +65,7 @@ function scorerChipClass(p: MatchPrediction): string {
             class="text-sm font-semibold min-w-[4rem] text-right shrink-0"
             :class="isExactMatch(p) ? 'text-green-700' : 'text-gray-600'"
           >
-            {{ $t('matchPredictions.points', { n: p.pointsGlobal ?? '–' }) }}
+            {{ $t('matchPredictions.points', { n: p.pointsResult ?? '–' }) }}
           </span>
         </div>
         <div

@@ -23,11 +23,11 @@
           {{ prediction.homeGoals }}–{{ prediction.awayGoals }}
         </div>
         <div
-          v-if="prediction.pointsGlobal !== null"
+          v-if="prediction.pointsResult !== null"
           class="text-xs font-bold mt-0.5 px-1.5 py-0.5 rounded inline-block"
           :class="pointsClass"
         >
-          {{ prediction.pointsGlobal }} {{ pointsLabel }}
+          {{ prediction.pointsResult }} {{ pointsLabel }}
         </div>
         <div
           v-if="prediction.scorerPickPlayerId && prediction.scorerPlayerNameSnapshot"
@@ -77,8 +77,8 @@ const emit = defineEmits<{ click: [] }>()
 const { t } = useI18n()
 
 const pointsClass = computed(() => {
-  if (!props.prediction || props.prediction.pointsGlobal === null) return 'bg-gray-100 text-gray-500'
-  const p = props.prediction.pointsGlobal
+  if (!props.prediction || props.prediction.pointsResult === null) return 'bg-gray-100 text-gray-500'
+  const p = props.prediction.pointsResult
   if (props.scoringConfig) {
     const exactThreshold = props.scoringConfig.correctOutcomePoints + props.scoringConfig.exactBonusPoints
     if (p >= exactThreshold) return 'bg-green-50 text-green-700'

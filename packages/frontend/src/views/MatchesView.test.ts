@@ -133,6 +133,7 @@ const EXISTING_PREDICTION: Prediction = {
   awayGoals: 0,
   outcomeAfterDraw: null,
   pointsGlobal: null,
+  pointsResult: null,
   scorerPickPlayerId: null,
   scorerPlayerNameSnapshot: null,
   scorerBonusPoints: null,
