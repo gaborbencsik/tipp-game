@@ -228,13 +228,13 @@
 
         <!-- Insights + market values section (shared reveal-gate) -->
         <div
-          v-if="matchOdds || hasMarketValues"
+          v-if="shouldShowOdds || hasMarketValues"
           class="mt-4 relative"
           data-testid="insights-section"
         >
           <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">{{ $t('matchDetail.insightsTitle') }}</h3>
           <div :class="{ 'blur-sm select-none pointer-events-none transition-[filter] duration-300': !isRevealed }">
-            <MatchOddsBar v-if="matchOdds" :odds="isRevealed ? matchOdds : blurredOdds" />
+            <MatchOddsBar v-if="shouldShowOdds" :odds="isRevealed ? matchOdds : blurredOdds" />
             <MarketValuesBar
               v-if="hasMarketValues && match"
               :home-team="match.homeTeam"
@@ -345,6 +345,14 @@ const hasMarketValues = computed((): boolean => {
   const m = match.value
   if (!m) return false
   return m.homeTeam.marketValueEur !== null || m.awayTeam.marketValueEur !== null
+})
+
+// UX-031: hide Polymarket odds when match has finished or was cancelled
+// (the market locks at 100% post-match, so the data becomes meaningless).
+const shouldShowOdds = computed((): boolean => {
+  if (!matchOdds.value) return false
+  const status = match.value?.status
+  return status !== 'finished' && status !== 'cancelled'
 })
 
 const myPrediction = computed(() => predictionsStore.predictionByMatchId(matchId.value))

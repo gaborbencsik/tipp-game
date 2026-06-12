@@ -12,8 +12,9 @@ vi.mock('vue-router', async (importOriginal) => {
   return { ...actual, useRouter: () => ({ push: vi.fn() }) }
 })
 
-const { mockMatchesList, mockPredictionsMine, mockPredictionsUpsert, mockPredictionsForMatch, mockFavoritesSummary } = vi.hoisted(() => ({
+const { mockMatchesList, mockMatchesOdds, mockPredictionsMine, mockPredictionsUpsert, mockPredictionsForMatch, mockFavoritesSummary } = vi.hoisted(() => ({
   mockMatchesList: vi.fn().mockResolvedValue([]),
+  mockMatchesOdds: vi.fn().mockResolvedValue({ odds: null, revealed: false }),
   mockPredictionsMine: vi.fn().mockResolvedValue([]),
   mockPredictionsUpsert: vi.fn().mockResolvedValue(undefined),
   mockPredictionsForMatch: vi.fn().mockResolvedValue([]),
@@ -33,7 +34,7 @@ vi.mock('@/api/index', () => ({
   api: {
     health: vi.fn(),
     auth: { me: vi.fn() },
-    matches: { list: mockMatchesList },
+    matches: { list: mockMatchesList, odds: mockMatchesOdds },
     predictions: { mine: mockPredictionsMine, upsert: mockPredictionsUpsert, forMatch: mockPredictionsForMatch },
     players: { list: vi.fn().mockResolvedValue([]) },
     leagues: { favoritesSummary: mockFavoritesSummary },
@@ -147,6 +148,8 @@ describe('MatchDetailView', () => {
   beforeEach(() => {
     mockMatchesList.mockReset()
     mockMatchesList.mockResolvedValue([])
+    mockMatchesOdds.mockReset()
+    mockMatchesOdds.mockResolvedValue({ odds: null, revealed: false })
     mockPredictionsMine.mockReset()
     mockPredictionsMine.mockResolvedValue([])
     mockPredictionsUpsert.mockReset()
@@ -353,6 +356,50 @@ describe('MatchDetailView', () => {
       expect(buttons).toHaveLength(1)
       // market values inside the (blurred) wrapper
       expect(wrapper.find('[data-testid="market-values-section"]').exists()).toBe(true)
+    })
+  })
+
+  // ─── UX-031: Polymarket odds hidden after match finished ──────────────────
+  describe('UX-031 odds hidden when match finished', () => {
+    const SAMPLE_ODDS = {
+      odds: {
+        homeTeam: { name: 'Spain', odds: 0.55 },
+        draw: 0.25,
+        awayTeam: { name: 'Italy', odds: 0.20 },
+        oneDayChange: { home: 0, draw: 0, away: 0 },
+        volume: 12000,
+        avgVolume: 240,
+        competitive: 0.8,
+        contextDescription: null,
+        source: 'polymarket',
+        sourceUrl: null,
+        updatedAt: '2026-06-15T10:00:00Z',
+      },
+      revealed: true,
+    }
+
+    it('finished match → MatchOddsBar NOT rendered even if odds present', async () => {
+      mockMatchesOdds.mockResolvedValue(SAMPLE_ODDS)
+      const { wrapper } = await mountView('match-finished', [MATCH_FINISHED])
+      expect(wrapper.find('[data-testid="match-odds-bar"]').exists()).toBe(false)
+    })
+
+    it('scheduled match → MatchOddsBar rendered when odds present', async () => {
+      mockMatchesOdds.mockResolvedValue(SAMPLE_ODDS)
+      const { wrapper } = await mountView('match-sched', [MATCH_SCHEDULED])
+      expect(wrapper.find('[data-testid="match-odds-bar"]').exists()).toBe(true)
+    })
+
+    it('live match → MatchOddsBar rendered when odds present', async () => {
+      mockMatchesOdds.mockResolvedValue(SAMPLE_ODDS)
+      const { wrapper } = await mountView('match-live', [MATCH_LIVE])
+      expect(wrapper.find('[data-testid="match-odds-bar"]').exists()).toBe(true)
+    })
+
+    it('finished match with odds + no market values → insights section hidden entirely', async () => {
+      mockMatchesOdds.mockResolvedValue(SAMPLE_ODDS)
+      const { wrapper } = await mountView('match-finished', [MATCH_FINISHED])
+      expect(wrapper.find('[data-testid="insights-section"]').exists()).toBe(false)
     })
   })
 })

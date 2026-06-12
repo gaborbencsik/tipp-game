@@ -1,12 +1,11 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-06-12 (UX-033 implementálva és lezárva)
+> Utoljára frissítve: 2026-06-12 (UX-031 implementálva és lezárva)
 
 ## Nyitott story-k
 
 | Story ID | Cím | Prioritás | Függőség |
 |----------|-----|-----------|----------|
-| UX-031 | Match Detail – Polymarket widget elrejtése befejezett mérkőzések után | Should Have | — |
 | US-1311 | Admin-vezérelt torna-tipp kiértékelés (lightweight MVP) | Should Have | — |
 | PLAN-001 | Torna-tipp pontozási terv (globális speciális tippek kiértékelése) | Should Have | UX-021 |
 | US-1310 | Match Detail – AI-generált összefoglaló a legeredményesebb játékosokról (player_stats) | Should Have | — |
@@ -35,4 +34,4 @@
 
 ---
 
-**Haladás: 169 / 188 story kész** — Must Have: 32/32, Should Have: 136/146, Nice to Have: 0/5 (US-937, PUSH-003 won't do)
+**Haladás: 170 / 188 story kész** — Must Have: 32/32, Should Have: 137/146, Nice to Have: 0/5 (US-937, PUSH-003 won't do)

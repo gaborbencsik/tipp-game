@@ -173,3 +173,4 @@
 | UX-031 | Match Detail – ország megjelenítése a város mellett | Should Have |
 | US-1312 | Mások meccs-tippjeinek megjelenítése kickoff után + góllövő tipp + csoport-szűrés | Should Have |
 | UX-033 | Pontozási badge duplikáció eltávolítása – eredmény és gólszerző szétbontása | Should Have |
+| UX-031b | Match Detail – Polymarket widget elrejtése befejezett mérkőzések után | Should Have |
