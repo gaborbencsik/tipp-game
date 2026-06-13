@@ -1,4 +1,11 @@
-import type { MultiTeamWeightedChoice, MultiTeamWeightedOptions } from '../types/index.js'
+import type {
+  AllGroupsStandingAnswer,
+  BracketMatch,
+  BracketProgressionAnswer,
+  MultiTeamWeightedChoice,
+  MultiTeamWeightedOptions,
+} from '../types/index.js'
+import { deriveBracket } from './bracket-progression.service.js'
 
 export function scoreUpsetSpecial(
   picks: readonly string[],
@@ -64,4 +71,44 @@ export function resolveUpsetMaxPoints(options: MultiTeamWeightedOptions): number
   const sorted = [...options.choices].sort((a, b) => b.points - a.points)
   const top = sorted.slice(0, options.maxPicks)
   return top.reduce((sum, choice) => sum + choice.points, 0)
+}
+
+/**
+ * US-1311 follow-up: derive the eliminated-team set from the correct bracket answer.
+ *
+ * "Eliminated" = teams from `options.choices` (the favourite-pool the user could pick from)
+ *   that did NOT make it to the last_32 round of the correct bracket. Equivalently:
+ *
+ *   eliminated = choices ∖ derivedBracket(template, correctGroupStandings).last_32_participants
+ *
+ * Returns null when the inputs are insufficient: missing template, missing group standings,
+ * or the last_32 round can't be fully resolved (e.g. some 3rd-place slots couldn't be
+ * mapped because best3rds aren't populated yet). The caller then either keeps the manual
+ * `correctAnswer` or rejects the run.
+ */
+export function deriveEliminatedFromBracket(
+  options: MultiTeamWeightedOptions,
+  template: readonly BracketMatch[] | null,
+  correctGroupStandings: AllGroupsStandingAnswer | null,
+  correctBracket: BracketProgressionAnswer | null,
+): string[] | null {
+  if (!template || template.length === 0) return null
+  if (!correctGroupStandings) return null
+  const winners = correctBracket?.winners ?? {}
+  const derived = deriveBracket(template, correctGroupStandings, winners)
+  const last32Participants = new Set<string>()
+  let last32MatchCount = 0
+  let unresolvedSlotCount = 0
+  for (const m of derived.matches) {
+    if (m.round !== 'last_32') continue
+    last32MatchCount += 1
+    if (m.teamA) last32Participants.add(m.teamA); else unresolvedSlotCount += 1
+    if (m.teamB) last32Participants.add(m.teamB); else unresolvedSlotCount += 1
+  }
+  if (last32MatchCount === 0) return null
+  // Every slot must resolve — otherwise the "32-be jutottak" set is incomplete.
+  if (unresolvedSlotCount > 0) return null
+  return options.choices
+    .map(c => c.teamId)
+    .filter(teamId => !last32Participants.has(teamId))
 }

@@ -2,16 +2,22 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // ─── DB mock ──────────────────────────────────────────────────────────────────
 
-const { mockSelect, mockUpdate } = vi.hoisted(() => ({
+const { mockSelect, mockUpdate, mockInsert } = vi.hoisted(() => ({
   mockSelect: vi.fn(),
   mockUpdate: vi.fn(),
+  mockInsert: vi.fn(),
 }))
 
 vi.mock('../src/db/client.js', () => ({
-  db: { select: mockSelect, update: mockUpdate },
+  db: { select: mockSelect, update: mockUpdate, insert: mockInsert },
 }))
 
-import { evaluateSpecialPrediction, setCorrectAnswer } from '../src/services/special-prediction-evaluation.service.js'
+import {
+  evaluateSpecialPrediction,
+  setCorrectAnswer,
+  setGlobalCorrectAnswer,
+  evaluateGlobalTypeSlice,
+} from '../src/services/special-prediction-evaluation.service.js'
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
 
@@ -68,6 +74,8 @@ function makeSelectChain(result: unknown) {
   ;(chain as Record<string, unknown>)['catch'] = terminal.catch.bind(terminal)
   ;(chain as Record<string, unknown>)['finally'] = terminal.finally.bind(terminal)
   chain['from'] = vi.fn().mockReturnValue(chain)
+  chain['innerJoin'] = vi.fn().mockReturnValue(chain)
+  chain['leftJoin'] = vi.fn().mockReturnValue(chain)
   chain['where'] = vi.fn().mockReturnValue(chain)
   chain['orderBy'] = vi.fn().mockReturnValue(terminal)
   chain['limit'] = vi.fn().mockReturnValue(terminal)
@@ -214,5 +222,140 @@ describe('setCorrectAnswer', () => {
 
     expect(result.correctAnswer).toBe('Messi')
     expect(mockUpdate).toHaveBeenCalledTimes(2)
+  })
+})
+
+// ─── setGlobalCorrectAnswer (US-1311) ────────────────────────────────────────
+
+const GLOBAL_TYPE_ROW = {
+  id: TYPE_ID,
+  groupId: null,
+  name: 'Torna gólkirály',
+  description: null,
+  inputType: 'text',
+  options: null,
+  deadline: FUTURE,
+  points: 5,
+  correctAnswer: null,
+  isGlobal: true,
+  isActive: true,
+  createdAt: NOW,
+  updatedAt: NOW,
+}
+
+describe('setGlobalCorrectAnswer', () => {
+  beforeEach(() => { vi.resetAllMocks() })
+
+  it('persists correctAnswer without recomputing predictions', async () => {
+    setupSelectSequence([[GLOBAL_TYPE_ROW]])
+    const updatedRow = { ...GLOBAL_TYPE_ROW, correctAnswer: 'Messi' }
+    const { setFn } = makeUpdateChain([updatedRow])
+    mockUpdate.mockReturnValueOnce({ set: setFn })
+
+    const result = await setGlobalCorrectAnswer(TYPE_ID, 'Messi')
+
+    expect(result.correctAnswer).toBe('Messi')
+    expect(result.isGlobal).toBe(true)
+    expect(mockUpdate).toHaveBeenCalledTimes(1) // only the type, no predictions recomputed
+  })
+
+  it('throws 404 when type does not exist or is not global', async () => {
+    setupSelectSequence([[]])
+    await expect(setGlobalCorrectAnswer('missing', 'x'))
+      .rejects.toMatchObject({ status: 404 })
+  })
+})
+
+// ─── evaluateGlobalTypeSlice (US-1311) ───────────────────────────────────────
+
+describe('evaluateGlobalTypeSlice', () => {
+  beforeEach(() => { vi.resetAllMocks() })
+
+  function setupInsertSpy(): { calls: unknown[] } {
+    const calls: unknown[] = []
+    mockInsert.mockImplementation(() => ({
+      values: vi.fn().mockImplementation((v: unknown) => {
+        calls.push(v)
+        return Promise.resolve(undefined)
+      }),
+    }))
+    return { calls }
+  }
+
+  it('throws 404 when type does not exist', async () => {
+    setupSelectSequence([[]])
+    await expect(evaluateGlobalTypeSlice('missing', null, USER_ID))
+      .rejects.toMatchObject({ status: 404 })
+  })
+
+  it('throws 400 when correctAnswer is empty', async () => {
+    setupSelectSequence([[{ ...GLOBAL_TYPE_ROW, correctAnswer: '' }]])
+    await expect(evaluateGlobalTypeSlice(TYPE_ID, null, USER_ID))
+      .rejects.toMatchObject({ status: 400 })
+  })
+
+  it('throws 400 when type is inactive', async () => {
+    setupSelectSequence([[{ ...GLOBAL_TYPE_ROW, isActive: false, correctAnswer: 'Messi' }]])
+    await expect(evaluateGlobalTypeSlice(TYPE_ID, null, USER_ID))
+      .rejects.toMatchObject({ status: 400 })
+  })
+
+  it('recomputes points for every active user and writes an audit log', async () => {
+    const typeRow = { ...GLOBAL_TYPE_ROW, correctAnswer: 'Messi' }
+    const userPreds = [
+      { id: 'p1', userId: 'u1', answer: 'Messi' },     // matches → 5p
+      { id: 'p2', userId: 'u2', answer: 'Ronaldo' },  // no match → 0p
+    ]
+    setupSelectSequence([
+      [typeRow],     // 1: load type
+      userPreds,     // 2: load active users' predictions (joined with users, isNull deletedAt)
+    ])
+    const { setFn: predUpdateSetFn1 } = makeSimpleUpdateChain()
+    const { setFn: predUpdateSetFn2 } = makeSimpleUpdateChain()
+    let updateCallIdx = 0
+    mockUpdate.mockImplementation(() => {
+      const fns = [{ set: predUpdateSetFn1 }, { set: predUpdateSetFn2 }]
+      const fn = fns[updateCallIdx]
+      updateCallIdx++
+      return fn
+    })
+    const { calls: insertCalls } = setupInsertSpy()
+
+    const result = await evaluateGlobalTypeSlice(TYPE_ID, 'group_A', USER_ID, '127.0.0.1')
+
+    expect(result.evaluatedCount).toBe(2)
+    expect(result.totalPoints).toBe(5) // only Messi matches
+    expect(result.lastRunAt).toMatch(/^\d{4}-\d{2}-\d{2}T/)
+    expect(insertCalls).toHaveLength(1)
+    expect(insertCalls[0]).toMatchObject({
+      action: 'result_set',
+      entityType: 'special_prediction_type',
+      entityId: TYPE_ID,
+      actorId: USER_ID,
+      ipAddress: '127.0.0.1',
+      newValue: { slice: 'group_A', evaluatedCount: 2, totalPoints: 5 },
+    })
+  })
+
+  it('is idempotent — re-running yields the same totals', async () => {
+    const typeRow = { ...GLOBAL_TYPE_ROW, correctAnswer: 'Messi' }
+    const userPreds = [{ id: 'p1', userId: 'u1', answer: 'Messi' }]
+
+    // First run.
+    setupSelectSequence([[typeRow], userPreds])
+    mockUpdate.mockImplementation(() => {
+      const { setFn } = makeSimpleUpdateChain()
+      return { set: setFn }
+    })
+    setupInsertSpy()
+    const r1 = await evaluateGlobalTypeSlice(TYPE_ID, null, USER_ID)
+
+    // Second run with same fixtures — must produce identical result.
+    setupSelectSequence([[typeRow], userPreds])
+    setupInsertSpy()
+    const r2 = await evaluateGlobalTypeSlice(TYPE_ID, null, USER_ID)
+
+    expect(r1.totalPoints).toBe(r2.totalPoints)
+    expect(r1.evaluatedCount).toBe(r2.evaluatedCount)
   })
 })

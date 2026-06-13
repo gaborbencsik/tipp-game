@@ -238,11 +238,151 @@ describe('findDownstreamMatches', () => {
 })
 
 describe('scoreBracketProgression', () => {
-  it('returns 0 (placeholder until pointing story)', () => {
+  // Use a deterministic mini-template that does NOT rely on Annex C 3rd-place resolution
+  // (the production template references `3rd_<COMBO>` slots which require all 8 best3rds
+  // for slot resolution). For scoring tests, plain W_/RU_ slot codes are sufficient.
+  const SCORE_TEMPLATE: readonly BracketMatch[] = [
+    { id: 'l32_m1', round: 'last_32', slotA: 'W_A1', slotB: 'RU_B1', winnerTo: 'l16_m1' },
+    { id: 'l32_m2', round: 'last_32', slotA: 'W_C1', slotB: 'RU_D1', winnerTo: 'l16_m1' },
+    { id: 'l16_m1', round: 'last_16', slotA: '<l32_m1>', slotB: '<l32_m2>', winnerTo: 'final' },
+    { id: 'final', round: 'final', slotA: '<l16_m1>', slotB: '<l16_m1>', winnerTo: null },
+  ]
+  // Score-side standings (no best3rds needed since SCORE_TEMPLATE has no `3rd_` slots).
+  const SCORE_STANDINGS: AllGroupsStandingAnswer = {
+    groups: {
+      A: [teamId('A', 1), teamId('A', 2), teamId('A', 3), teamId('A', 4)],
+      B: [teamId('B', 1), teamId('B', 2), teamId('B', 3), teamId('B', 4)],
+      C: [teamId('C', 1), teamId('C', 2), teamId('C', 3), teamId('C', 4)],
+      D: [teamId('D', 1), teamId('D', 2), teamId('D', 3), teamId('D', 4)],
+    },
+    best3rds: [],
+  }
+
+  it('returns 0 when both standings are null', () => {
     expect(scoreBracketProgression(
-      { winners: { l32_m1: teamId('A', 1) } },
-      { winners: { l32_m1: teamId('A', 1) } },
-      0,
+      { winners: {} },
+      { winners: {} },
+      SCORE_TEMPLATE,
+      null,
+      null,
     )).toBe(0)
+  })
+
+  it('awards full points for an exact match across every round', () => {
+    const winners = {
+      l32_m1: teamId('A', 1),
+      l32_m2: teamId('C', 1),
+      l16_m1: teamId('A', 1),
+      final: teamId('A', 1),
+    }
+    // last_32 participants (slotA+slotB, 4 teams): {A1, B2, C1, D2} → 4 × 2 = 8
+    // last_16 participants (last_32 winners): {A1, C1} → 2 × 3 = 6
+    // last_8  participants (last_16 winners): {A1}     → 1 × 4 = 4
+    // last_4  participants (qf winners):       {}      → 0
+    // final   participants (sf winners):       {}      → 0
+    // champion (final-match winner):           A1      → +10
+    // total: 8 + 6 + 4 + 0 + 0 + 10 = 28
+    const result = scoreBracketProgression(
+      { winners },
+      { winners },
+      SCORE_TEMPLATE,
+      SCORE_STANDINGS,
+      SCORE_STANDINGS,
+    )
+    expect(result).toBe(28)
+  })
+
+  it('scores set-wise — order does not matter, only membership', () => {
+    // User picks B2 in m1 instead of A1, but both pick C1 in m2.
+    // last_32 participant set is identical on both sides (derived from group standings).
+    // last_16 winners differ: user {B2, C1}, correct {A1, C1} → intersect = {C1} → 1 × 3 = 3.
+    const userWinners = {
+      l32_m1: teamId('B', 2),
+      l32_m2: teamId('C', 1),
+    }
+    const correctWinners = {
+      l32_m1: teamId('A', 1),
+      l32_m2: teamId('C', 1),
+    }
+    const result = scoreBracketProgression(
+      { winners: userWinners },
+      { winners: correctWinners },
+      SCORE_TEMPLATE,
+      SCORE_STANDINGS,
+      SCORE_STANDINGS,
+    )
+    // last_32 set: 4 × 2 = 8
+    // last_16 set (= last_32 winners): {B2, C1} ∩ {A1, C1} = {C1} → 1 × 3 = 3
+    // last_8  set (= last_16 winners, but no l16 winners picked): 0
+    // total: 8 + 3 = 11
+    expect(result).toBe(11)
+  })
+
+  it('returns 0 when no team in any round matches', () => {
+    const fullyDifferent: AllGroupsStandingAnswer = {
+      groups: {
+        A: [teamId('Z', 1), teamId('Z', 2), teamId('Z', 3), teamId('Z', 4)],
+        B: [teamId('Y', 1), teamId('Y', 2), teamId('Y', 3), teamId('Y', 4)],
+        C: [teamId('X', 1), teamId('X', 2), teamId('X', 3), teamId('X', 4)],
+        D: [teamId('W', 1), teamId('W', 2), teamId('W', 3), teamId('W', 4)],
+      },
+      best3rds: [],
+    }
+    const result = scoreBracketProgression(
+      { winners: { l32_m1: teamId('Z', 1) } },
+      { winners: { l32_m1: teamId('A', 1) } },
+      SCORE_TEMPLATE,
+      fullyDifferent,
+      SCORE_STANDINGS,
+    )
+    expect(result).toBe(0)
+  })
+
+  it('scores partial last_32 hits proportionally (3/4 → 6p)', () => {
+    // User changes only W_A1 to Z1 → last_32 set differs by exactly 1 team.
+    const userStandings: AllGroupsStandingAnswer = {
+      ...SCORE_STANDINGS,
+      groups: {
+        ...SCORE_STANDINGS.groups,
+        A: [teamId('Z', 1), teamId('A', 2), teamId('A', 3), teamId('A', 4)],
+      },
+    }
+    const result = scoreBracketProgression(
+      { winners: {} },
+      { winners: {} },
+      SCORE_TEMPLATE,
+      userStandings,
+      SCORE_STANDINGS,
+    )
+    // user last_32 set = {Z1, B2, C1, D2}, correct = {A1, B2, C1, D2}, intersect = 3 → 6
+    expect(result).toBe(6)
+  })
+
+  it('awards champion 10 only when final winner exactly matches', () => {
+    const winners = {
+      l32_m1: teamId('A', 1),
+      l32_m2: teamId('C', 1),
+      l16_m1: teamId('A', 1),
+      final: teamId('A', 1),
+    }
+    const wrongFinal = { ...winners, final: teamId('C', 1) }
+    const right = scoreBracketProgression(
+      { winners },
+      { winners },
+      SCORE_TEMPLATE,
+      SCORE_STANDINGS,
+      SCORE_STANDINGS,
+    )
+    const wrong = scoreBracketProgression(
+      { winners: wrongFinal },
+      { winners },
+      SCORE_TEMPLATE,
+      SCORE_STANDINGS,
+      SCORE_STANDINGS,
+    )
+    // final-match-WINNER (champion): right = A1 (matches correct), wrong = C1 (no match).
+    // The `final` round participant SET is the same for both (same l16 winner → A1) → cancels out.
+    // Net: right gets +10 champion bonus, wrong does not.
+    expect(right - wrong).toBe(10)
   })
 })

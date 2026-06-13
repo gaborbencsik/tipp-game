@@ -27,6 +27,7 @@ const links: ReadonlyArray<AdminNavLink> = [
   { to: '/admin/scoring', label: 'Pontrendszer' },
   { to: '/admin/waitlist', label: 'Waitlist' },
   { to: '/admin/global-types', label: 'Speciális tippek' },
+  { to: '/admin/tournament-evaluation', label: 'Torna-tipp kiértékelés' },
   { to: '/admin/sync', label: 'Szinkron' },
   { to: '/admin/push', label: 'Push' },
 ] as const

@@ -103,6 +103,12 @@ export const router = createRouter({
       meta: { requiresAuth: true, requiresAdmin: true },
     },
     {
+      path: '/admin/tournament-evaluation',
+      name: 'admin-tournament-evaluation',
+      component: () => import('../views/AdminTournamentEvaluationView.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true },
+    },
+    {
       path: '/admin/sync',
       name: 'admin-sync',
       component: () => import('../views/AdminSyncView.vue'),

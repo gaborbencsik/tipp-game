@@ -504,6 +504,22 @@ export const api = {
           body: JSON.stringify({ correctAnswer }),
           headers: { Authorization: `Bearer ${token}` },
         }),
+      // US-1311: split set-correct-answer + evaluate (per-slice).
+      setCorrectAnswer: (token: string, typeId: string, correctAnswer: string) =>
+        request<SpecialPredictionType>(`/admin/global-special-types/${typeId}/correct-answer`, {
+          method: 'PATCH',
+          body: JSON.stringify({ correctAnswer }),
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      evaluate: (token: string, typeId: string, slice: string | null) =>
+        request<{ evaluatedCount: number; totalPoints: number; lastRunAt: string }>(
+          `/admin/global-special-types/${typeId}/evaluate`,
+          {
+            method: 'POST',
+            body: JSON.stringify(slice ? { slice } : {}),
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        ),
     },
     waitlist: {
       list: (token: string, filters?: WaitlistFilters) => {

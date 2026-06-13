@@ -27,7 +27,7 @@ import {
   updateGlobalType,
   deactivateGlobalType,
 } from '../services/global-special-types.service.js'
-import { evaluateGlobalType } from '../services/special-prediction-evaluation.service.js'
+import { evaluateGlobalType, setGlobalCorrectAnswer, evaluateGlobalTypeSlice } from '../services/special-prediction-evaluation.service.js'
 import {
   createMatch,
   updateMatch,
@@ -336,6 +336,37 @@ adminRouter.put('/global-special-types/:typeId/answer', async (ctx) => {
     return
   }
   ctx.body = await evaluateGlobalType(ctx.params['typeId'] as string, body.correctAnswer.trim())
+})
+
+// US-1311: split set-correct-answer (PATCH) and evaluate (POST) for per-slice flow.
+adminRouter.patch('/global-special-types/:typeId/correct-answer', async (ctx) => {
+  const body = ctx.request.body as Record<string, unknown>
+  if (typeof body.correctAnswer !== 'string') {
+    ctx.status = 400
+    ctx.body = { error: 'correctAnswer is required' }
+    return
+  }
+  const trimmed = body.correctAnswer.trim()
+  if (trimmed.length === 0) {
+    ctx.status = 400
+    ctx.body = { error: 'correctAnswer must not be empty' }
+    return
+  }
+  ctx.body = await setGlobalCorrectAnswer(ctx.params['typeId'] as string, trimmed)
+})
+
+adminRouter.post('/global-special-types/:typeId/evaluate', async (ctx) => {
+  const body = (ctx.request.body ?? {}) as Record<string, unknown>
+  const slice = typeof body.slice === 'string' && body.slice.trim().length > 0
+    ? body.slice.trim()
+    : null
+  const dbUser = await upsertUser(ctx.state.user)
+  ctx.body = await evaluateGlobalTypeSlice(
+    ctx.params['typeId'] as string,
+    slice,
+    dbUser.id,
+    ctx.ip,
+  )
 })
 
 // ─── Waitlist ────────────────────────────────────────────────────────────────

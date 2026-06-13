@@ -12,6 +12,7 @@ const ADMIN_ROUTES: ReadonlyArray<{ readonly to: string; readonly label: string 
   { to: '/admin/scoring', label: 'Pontrendszer' },
   { to: '/admin/waitlist', label: 'Waitlist' },
   { to: '/admin/global-types', label: 'Speciális tippek' },
+  { to: '/admin/tournament-evaluation', label: 'Torna-tipp kiértékelés' },
   { to: '/admin/sync', label: 'Szinkron' },
   { to: '/admin/push', label: 'Push' },
 ]
@@ -24,7 +25,7 @@ async function mountNav(): Promise<ReturnType<typeof mount>> {
 }
 
 describe('AdminNav', () => {
-  it('renders all 10 admin links with correct labels and targets', async () => {
+  it('renders all admin links with correct labels and targets', async () => {
     const wrapper = await mountNav()
     const links = wrapper.findAll('a')
     expect(links.length).toBe(ADMIN_ROUTES.length)

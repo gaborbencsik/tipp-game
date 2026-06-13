@@ -174,3 +174,5 @@
 | US-1312 | Mások meccs-tippjeinek megjelenítése kickoff után + góllövő tipp + csoport-szűrés | Should Have |
 | UX-033 | Pontozási badge duplikáció eltávolítása – eredmény és gólszerző szétbontása | Should Have |
 | UX-031b | Match Detail – Polymarket widget elrejtése befejezett mérkőzések után | Should Have |
+| PLAN-001 | Torna-tipp pontozási terv (globális speciális tippek kiértékelése) | Should Have |
+| US-1311 | Admin-vezérelt torna-tipp kiértékelés (lightweight MVP) | Should Have |

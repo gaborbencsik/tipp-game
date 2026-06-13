@@ -8,6 +8,7 @@ import type {
   BracketRound,
 } from '../types/index.js'
 import { FIFA_WC2026_ANNEX_C } from './wc2026-annex-c.js'
+import { TOURNAMENT_POINTS } from './tournament-scoring.constants.js'
 
 export interface BracketContext {
   readonly groupStandings: AllGroupsStandingAnswer | null
@@ -323,13 +324,97 @@ export function findDownstreamMatches(matchId: string, template: readonly Bracke
 }
 
 /**
- * Score the prediction. Placeholder until the dedicated scoring story is implemented;
- * always returns 0 so admin reveal does not error.
+ * Set-based per-round scoring for a bracket prediction.
+ *
+ * Algorithm (US-1311 / PLAN-001 §4):
+ *   1. Derive both brackets fully (using each side's group standings + winners).
+ *   2. last_32 team set = union of slotA + slotB across last_32 matches → 2p per intersection team.
+ *   3. last_16 team set = winners of last_32 matches (round winners) → 3p per intersection team.
+ *   4. last_8  (qf)     = winners of last_16 matches → 4p per intersection team.
+ *   5. last_4  (sf)     = winners of qf matches    → 6p per intersection team.
+ *   6. final            = winners of sf matches    → 8p per intersection team.
+ *   7. champion         = winner of the `final` match → 10p if exact match.
+ *
+ * Order does not matter — pure set membership. Bronze match awards no extra points.
+ * The `pointsPerMatch` legacy parameter has been replaced by central constants
+ * (`tournament-scoring.constants.ts`).
  */
 export function scoreBracketProgression(
-  _predicted: BracketProgressionAnswer,
-  _correct: BracketProgressionAnswer,
-  _pointsPerMatch: number,
+  predicted: BracketProgressionAnswer,
+  correct: BracketProgressionAnswer,
+  template: readonly BracketMatch[],
+  predictedGroupStandings: AllGroupsStandingAnswer | null,
+  correctGroupStandings: AllGroupsStandingAnswer | null,
 ): number {
-  return 0
+  const userBracket = deriveBracket(template, predictedGroupStandings, predicted.winners)
+  const correctBracket = deriveBracket(template, correctGroupStandings, correct.winners)
+
+  let total = 0
+
+  // last_32 participants (slotA + slotB across last_32 matches).
+  total += scoreRoundParticipants(userBracket, correctBracket, 'last_32', TOURNAMENT_POINTS.perTeam.last_32)
+
+  // Round-winners cascade: each round's "team set" is the previous round's match winners.
+  total += scoreRoundWinners(userBracket, correctBracket, 'last_32', TOURNAMENT_POINTS.perTeam.last_16)
+  total += scoreRoundWinners(userBracket, correctBracket, 'last_16', TOURNAMENT_POINTS.perTeam.qf)
+  total += scoreRoundWinners(userBracket, correctBracket, 'qf', TOURNAMENT_POINTS.perTeam.sf)
+  total += scoreRoundWinners(userBracket, correctBracket, 'sf', TOURNAMENT_POINTS.perTeam.final)
+
+  // Champion: exact final-match-winner match.
+  const userFinalWinner = userBracket.matches.find(m => m.round === 'final')?.winnerId ?? null
+  const correctFinalWinner = correctBracket.matches.find(m => m.round === 'final')?.winnerId ?? null
+  if (userFinalWinner !== null && userFinalWinner === correctFinalWinner) {
+    total += TOURNAMENT_POINTS.perTeam.champion
+  }
+
+  return total
+}
+
+/** Set of teams participating in a given round (slotA ∪ slotB across that round's matches). */
+function roundParticipantSet(bracket: DerivedBracket, round: BracketRound): Set<string> {
+  const set = new Set<string>()
+  for (const m of bracket.matches) {
+    if (m.round !== round) continue
+    if (m.teamA) set.add(m.teamA)
+    if (m.teamB) set.add(m.teamB)
+  }
+  return set
+}
+
+/** Set of round winners (the teams advancing past a given round). */
+function roundWinnerSet(bracket: DerivedBracket, round: BracketRound): Set<string> {
+  const set = new Set<string>()
+  for (const m of bracket.matches) {
+    if (m.round !== round) continue
+    if (m.winnerId) set.add(m.winnerId)
+  }
+  return set
+}
+
+function scoreRoundParticipants(
+  user: DerivedBracket,
+  correct: DerivedBracket,
+  round: BracketRound,
+  pointsPerTeam: number,
+): number {
+  const userSet = roundParticipantSet(user, round)
+  const correctSet = roundParticipantSet(correct, round)
+  return setIntersectSize(userSet, correctSet) * pointsPerTeam
+}
+
+function scoreRoundWinners(
+  user: DerivedBracket,
+  correct: DerivedBracket,
+  round: BracketRound,
+  pointsPerTeam: number,
+): number {
+  const userSet = roundWinnerSet(user, round)
+  const correctSet = roundWinnerSet(correct, round)
+  return setIntersectSize(userSet, correctSet) * pointsPerTeam
+}
+
+function setIntersectSize(a: ReadonlySet<string>, b: ReadonlySet<string>): number {
+  let n = 0
+  for (const x of a) if (b.has(x)) n++
+  return n
 }

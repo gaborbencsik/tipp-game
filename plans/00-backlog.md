@@ -1,13 +1,11 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-06-12 (UX-031 implementálva és lezárva)
+> Utoljára frissítve: 2026-06-13 (US-1311 finomítások: search dropdown-ok + multi_team_weighted auto-derive)
 
 ## Nyitott story-k
 
 | Story ID | Cím | Prioritás | Függőség |
 |----------|-----|-----------|----------|
-| US-1311 | Admin-vezérelt torna-tipp kiértékelés (lightweight MVP) | Should Have | — |
-| PLAN-001 | Torna-tipp pontozási terv (globális speciális tippek kiértékelése) | Should Have | UX-021 |
 | US-1310 | Match Detail – AI-generált összefoglaló a legeredményesebb játékosokról (player_stats) | Should Have | — |
 | OPS-001 | Strukturált logolás és frontend hibakezelés (MVP) | Should Have | — |
 | OPS-003 | Auto-generált DB schema referencia agentnek és fejlesztőnek | Should Have | — |
@@ -34,4 +32,4 @@
 
 ---
 
-**Haladás: 170 / 188 story kész** — Must Have: 32/32, Should Have: 137/146, Nice to Have: 0/5 (US-937, PUSH-003 won't do)
+**Haladás: 172 / 188 story kész** — Must Have: 32/32, Should Have: 139/146, Nice to Have: 0/5 (US-937, PUSH-003 won't do)
