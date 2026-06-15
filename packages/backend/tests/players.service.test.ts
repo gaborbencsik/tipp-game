@@ -90,6 +90,16 @@ describe('getPlayers', () => {
     expect(result[0]?.name).toBe('Vinícius Júnior')
   })
 
+  it('keeps full name when it has 3 or fewer words even if short_name is set', async () => {
+    const SHORT_FULL_NAME = {
+      ...PLAYER_ROW,
+      players: { ...PLAYER_ROW.players, name: 'Alexis Mac Allister', shortName: 'A. Mac Allister' },
+    }
+    setupSequence([[SHORT_FULL_NAME]])
+    const result = await getPlayers()
+    expect(result[0]?.name).toBe('Alexis Mac Allister')
+  })
+
   it('falls back to name when short_name is null', async () => {
     setupSequence([[PLAYER_ROW]])
     const result = await getPlayers()

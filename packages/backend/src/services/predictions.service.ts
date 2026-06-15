@@ -3,6 +3,7 @@ import { db } from '../db/client.js'
 import { users, matches, predictions, players, groupMembers, groups } from '../db/schema/index.js'
 import type { MatchOutcome, MatchPrediction, Prediction, PredictionInput } from '../types/index.js'
 import { derivePointsResult } from './scoring.service.js'
+import { resolvePlayerDisplayName } from './player-display-name.js'
 
 class AppError extends Error {
   readonly status: number
@@ -76,7 +77,7 @@ async function resolveScorerPick(
     throw new AppError(400, 'scorer_player_not_in_match')
   }
 
-  return { playerId: player.id, nameSnapshot: player.shortName ?? player.name }
+  return { playerId: player.id, nameSnapshot: resolvePlayerDisplayName({ name: player.name, shortName: player.shortName ?? null }) }
 }
 
 export async function upsertPrediction(

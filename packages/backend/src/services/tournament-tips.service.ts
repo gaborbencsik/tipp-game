@@ -1,6 +1,7 @@
 import { and, eq, inArray, isNull } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { specialPredictionTypes, specialPredictions, teams, players, groupMembers, groups, groupLeagues, groupGlobalTypeSubscriptions, leagues } from '../db/schema/index.js'
+import { resolvePlayerDisplayName } from './player-display-name.js'
 import type { AllGroupsStandingCompletion, BracketProgressionCompletion, SpecialPredictionInputType, SpecialPredictionOptions, SpecialPredictionWithType } from '../types/index.js'
 import { parseUpsetPicks, resolveUpsetMaxPoints, validateUpsetOptions } from './upset-special.service.js'
 import {
@@ -131,7 +132,7 @@ export async function listGlobalTypesWithPredictions(
   const playerNameMap = new Map<string, string>()
   if (playerIds.length > 0) {
     const playerRows = await db.select({ id: players.id, name: players.name, shortName: players.shortName }).from(players).where(inArray(players.id, playerIds))
-    for (const r of playerRows) playerNameMap.set(r.id, r.shortName ?? r.name)
+    for (const r of playerRows) playerNameMap.set(r.id, resolvePlayerDisplayName({ name: r.name, shortName: r.shortName ?? null }))
   }
 
   const now = new Date()
@@ -281,7 +282,7 @@ export async function upsertGlobalPrediction(
       .where(eq(players.id, answer))
       .limit(1)
     if (!playerRows[0]) throw new AppError(400, 'Invalid player id')
-    resolvedAnswerLabel = playerRows[0].shortName ?? playerRows[0].name
+    resolvedAnswerLabel = resolvePlayerDisplayName({ name: playerRows[0].name, shortName: playerRows[0].shortName ?? null })
   }
 
   if (type.inputType === 'multi_team_weighted') {

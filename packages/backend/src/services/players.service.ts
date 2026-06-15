@@ -1,6 +1,7 @@
 import { and, eq, inArray, sql } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { players, teams, matches } from '../db/schema/index.js'
+import { resolvePlayerDisplayName } from './player-display-name.js'
 import type { Player, PlayerInput } from '../types/index.js'
 
 class AppError extends Error {
@@ -12,6 +13,17 @@ class AppError extends Error {
   }
 }
 
+// Display-name expression: keep `name` when it has 3 or fewer words,
+// otherwise use `short_name` (with `name` fallback). Mirrors
+// resolvePlayerDisplayName() so sorting matches what the UI shows.
+const DISPLAY_NAME_SQL = sql`
+  CASE
+    WHEN array_length(regexp_split_to_array(trim(${players.name}), '\\s+'), 1) <= 3
+    THEN ${players.name}
+    ELSE coalesce(${players.shortName}, ${players.name})
+  END
+`
+
 interface PlayerRow {
   players: typeof players.$inferSelect
   teams: typeof teams.$inferSelect | null
@@ -20,7 +32,7 @@ interface PlayerRow {
 function toApiPlayer(row: PlayerRow): Player {
   return {
     id: row.players.id,
-    name: row.players.shortName ?? row.players.name,
+    name: resolvePlayerDisplayName({ name: row.players.name, shortName: row.players.shortName ?? null }),
     teamId: row.players.teamId ?? null,
     teamName: row.teams?.name ?? null,
     teamShortCode: row.teams?.shortCode ?? null,
@@ -60,7 +72,7 @@ export async function getPlayers(opts: GetPlayersOptions = {}): Promise<Player[]
       .from(players)
       .leftJoin(teams, eq(players.teamId, teams.id))
       .where(filter)
-      .orderBy(sql`coalesce(${players.shortName}, ${players.name})`)
+      .orderBy(DISPLAY_NAME_SQL)
     return rows.map(toApiPlayer)
   }
 
@@ -68,7 +80,7 @@ export async function getPlayers(opts: GetPlayersOptions = {}): Promise<Player[]
     .select()
     .from(players)
     .leftJoin(teams, eq(players.teamId, teams.id))
-    .orderBy(sql`coalesce(${players.shortName}, ${players.name})`)
+    .orderBy(DISPLAY_NAME_SQL)
 
   const rows = teamId
     ? await baseQuery.where(eq(players.teamId, teamId))

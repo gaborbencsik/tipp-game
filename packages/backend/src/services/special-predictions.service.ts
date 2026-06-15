@@ -2,6 +2,7 @@ import { and, eq, isNull, inArray } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { groups, groupMembers, specialPredictionTypes, specialPredictions, teams, players, groupGlobalTypeSubscriptions, groupLeagues } from '../db/schema/index.js'
 import { countPlayersForLeague } from './players.service.js'
+import { resolvePlayerDisplayName } from './player-display-name.js'
 import type { SpecialPredictionInput, SpecialPredictionInputType, SpecialPredictionWithType } from '../types/index.js'
 
 class AppError extends Error {
@@ -98,7 +99,7 @@ export async function getMyPredictions(
   const playerNameMap = new Map<string, string>()
   if (playerIds.length > 0) {
     const playerRows = await db.select({ id: players.id, name: players.name, shortName: players.shortName, teamId: players.teamId }).from(players).where(inArray(players.id, playerIds))
-    for (const r of playerRows) playerNameMap.set(r.id, r.shortName ?? r.name)
+    for (const r of playerRows) playerNameMap.set(r.id, resolvePlayerDisplayName({ name: r.name, shortName: r.shortName ?? null }))
   }
 
   return allTypes.map(t => {
@@ -241,7 +242,7 @@ export async function upsertPrediction(
       if (!playerRows[0]) {
         throw new AppError(400, 'Invalid player id')
       }
-      resolvedAnswerLabel = playerRows[0].shortName ?? playerRows[0].name
+      resolvedAnswerLabel = resolvePlayerDisplayName({ name: playerRows[0].name, shortName: playerRows[0].shortName ?? null })
     } else {
       if (answer.length > 200) {
         throw new AppError(400, 'Player name must be at most 200 characters')
