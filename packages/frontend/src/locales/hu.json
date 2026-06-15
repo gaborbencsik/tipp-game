@@ -344,7 +344,7 @@
     "rank": "#",
     "player": "Játékos",
     "scoredFraction": "Sikeres tippek",
-    "scoredFractionTooltip": "Pontot ért tippek / összes leadott tipp",
+    "scoredFractionTooltip": "Pontot ért tippek / lejátszott meccsekre leadott tippek",
     "successRate": "%",
     "matchPoints": "Meccs pont",
     "scorerBonusPoints": "Gólszerző pont",

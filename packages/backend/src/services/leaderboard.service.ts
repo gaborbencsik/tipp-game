@@ -1,4 +1,4 @@
-import { eq, sum, count, isNull, isNotNull, sql, and, inArray } from 'drizzle-orm'
+import { eq, sum, isNull, isNotNull, sql, and, inArray } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { users, predictions, matches, userLeagueFavorites, teams, specialPredictions, specialPredictionTypes } from '../db/schema/index.js'
 
@@ -29,7 +29,9 @@ export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
       avatarUrl: users.avatarUrl,
       supporterAt: users.supporterAt,
       totalPoints: sql<number>`coalesce(sum(${predictions.pointsGlobal}), 0)`,
-      predictionCount: count(predictions.id),
+      // UX-034: predictionCount is the denominator for all ratio columns and
+      // counts only predictions on FINISHED matches (already-evaluated games).
+      predictionCount: sql<number>`count(case when ${matches.status} = 'finished' then ${predictions.id} end)`,
       correctCount: sql<number>`count(case when ${predictions.pointsGlobal} > 0 then 1 end)`,
       scorerBonusPoints: sql<number>`coalesce(sum(${predictions.scorerBonusPoints}), 0)`,
       matchCorrectCount: sql<number>`count(case when (coalesce(${predictions.pointsGlobal}, 0) - coalesce(${predictions.scorerBonusPoints}, 0)) > 0 then 1 end)`,

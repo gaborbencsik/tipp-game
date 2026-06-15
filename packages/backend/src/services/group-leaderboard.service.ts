@@ -67,7 +67,9 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
         avatarUrl: users.avatarUrl,
         supporterAt: users.supporterAt,
         totalPoints: sql<number>`coalesce(sum(case when ${matches.id} is not null then ${groupPredictionPoints.points} end), 0)`,
-        predictionCount: sql<number>`count(case when ${matches.id} is not null then ${predictions.id} end)`,
+        // UX-034: predictionCount is the denominator for all ratio columns and
+        // counts only predictions on FINISHED matches (already-evaluated games).
+        predictionCount: sql<number>`count(case when ${matches.id} is not null and ${matches.status} = 'finished' then ${predictions.id} end)`,
         correctCount: sql<number>`count(case when ${matches.id} is not null and ${groupPredictionPoints.points} > 0 then 1 end)`,
         scorerBonusPoints: sql<number>`coalesce(sum(case when ${matches.id} is not null then ${predictions.scorerBonusPoints} end), 0)`,
         matchCorrectCount: sql<number>`count(case when ${matches.id} is not null and (coalesce(${predictions.pointsGlobal}, 0) - coalesce(${predictions.scorerBonusPoints}, 0)) > 0 then 1 end)`,
@@ -92,7 +94,9 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
         avatarUrl: users.avatarUrl,
         supporterAt: users.supporterAt,
         totalPoints: sql<number>`coalesce(sum(case when ${matches.id} is not null then ${predictions.pointsGlobal} end), 0)`,
-        predictionCount: sql<number>`count(case when ${matches.id} is not null then ${predictions.id} end)`,
+        // UX-034: predictionCount is the denominator for all ratio columns and
+        // counts only predictions on FINISHED matches (already-evaluated games).
+        predictionCount: sql<number>`count(case when ${matches.id} is not null and ${matches.status} = 'finished' then ${predictions.id} end)`,
         correctCount: sql<number>`count(case when ${matches.id} is not null and ${predictions.pointsGlobal} > 0 then 1 end)`,
         scorerBonusPoints: sql<number>`coalesce(sum(case when ${matches.id} is not null then ${predictions.scorerBonusPoints} end), 0)`,
         matchCorrectCount: sql<number>`count(case when ${matches.id} is not null and (coalesce(${predictions.pointsGlobal}, 0) - coalesce(${predictions.scorerBonusPoints}, 0)) > 0 then 1 end)`,

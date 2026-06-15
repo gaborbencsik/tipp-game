@@ -344,7 +344,7 @@
     "rank": "#",
     "player": "Player",
     "scoredFraction": "Successful tips",
-    "scoredFractionTooltip": "Tips that scored points / total tips submitted",
+    "scoredFractionTooltip": "Tips that scored points / tips on finished matches",
     "successRate": "%",
     "matchPoints": "Match pts",
     "scorerBonusPoints": "Scorer pts",
