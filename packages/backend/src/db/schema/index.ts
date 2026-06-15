@@ -108,6 +108,7 @@ export const teams = pgTable('teams', {
 export const players = pgTable('players', {
   id:          uuid('id').primaryKey().defaultRandom(),
   name:        varchar('name', { length: 100 }).notNull(),
+  shortName:   varchar('short_name', { length: 100 }),
   teamId:      uuid('team_id').references(() => teams.id),
   position:    varchar('position', { length: 30 }),
   shirtNumber: smallint('shirt_number'),

@@ -88,13 +88,24 @@ async function upsertPlayerFromSquad(
     .limit(1)
 
   if (existing) {
+    const squadShortName = player.name && player.name.trim().length > 0 ? player.name : null
+    const updateSet: {
+      position?: string
+      shirtNumber?: number
+      teamId: string
+      shortName?: string
+      updatedAt: ReturnType<typeof sql>
+    } = {
+      position: player.position ?? undefined,
+      shirtNumber: player.number ?? undefined,
+      teamId: teamInternalId,
+      updatedAt: sql`now()`,
+    }
+    if (squadShortName !== null) {
+      updateSet.shortName = squadShortName
+    }
     await db.update(players)
-      .set({
-        position: player.position ?? undefined,
-        shirtNumber: player.number ?? undefined,
-        teamId: teamInternalId,
-        updatedAt: sql`now()`,
-      })
+      .set(updateSet)
       .where(eq(players.id, existing.id))
     return 'updated'
   }
@@ -102,6 +113,7 @@ async function upsertPlayerFromSquad(
   await db.insert(players).values({
     id: crypto.randomUUID(),
     name: player.name,
+    shortName: player.name,
     externalId: player.id,
     position: player.position,
     shirtNumber: player.number,
@@ -150,8 +162,16 @@ async function updatePlayerName(entry: ApiFootballPlayerEntry): Promise<void> {
     .limit(1)
 
   if (existing) {
+    const shortName = player.name && player.name.trim().length > 0 ? player.name : null
+    const updateSet: { name: string; shortName?: string; updatedAt: ReturnType<typeof sql> } = {
+      name: fullName,
+      updatedAt: sql`now()`,
+    }
+    if (shortName !== null) {
+      updateSet.shortName = shortName
+    }
     await db.update(players)
-      .set({ name: fullName, updatedAt: sql`now()` })
+      .set(updateSet)
       .where(eq(players.id, existing.id))
   }
 }

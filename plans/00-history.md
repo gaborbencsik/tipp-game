@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 169 story kész (Must Have: 32/32, Should Have: 137/137)
+> 173 story kész (Must Have: 32/32, Should Have: 140/140)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -176,3 +176,4 @@
 | UX-031b | Match Detail – Polymarket widget elrejtése befejezett mérkőzések után | Should Have |
 | PLAN-001 | Torna-tipp pontozási terv (globális speciális tippek kiértékelése) | Should Have |
 | US-1311 | Admin-vezérelt torna-tipp kiértékelés (lightweight MVP) | Should Have |
+| US-1313 | Játékosok rövid neve – `players.short_name` oszlop | Should Have |

@@ -1,12 +1,13 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-06-13 (US-1311 finomítások: search dropdown-ok + multi_team_weighted auto-derive)
+> Utoljára frissítve: 2026-06-15 (US-1314 nyitva: `short_name` használata a UI megjelenítésnél)
 
 ## Nyitott story-k
 
 | Story ID | Cím | Prioritás | Függőség |
 |----------|-----|-----------|----------|
 | US-1310 | Match Detail – AI-generált összefoglaló a legeredményesebb játékosokról (player_stats) | Should Have | — |
+| US-1314 | Játékos rövid név megjelenítése a UI-on (`short_name` használata) | Should Have | ~~US-1313~~ |
 | OPS-001 | Strukturált logolás és frontend hibakezelés (MVP) | Should Have | — |
 | OPS-003 | Auto-generált DB schema referencia agentnek és fejlesztőnek | Should Have | — |
 | OPS-007 | Polymarket raw_payload tárolás kivezetése | Nice to Have | — |
@@ -32,4 +33,4 @@
 
 ---
 
-**Haladás: 172 / 188 story kész** — Must Have: 32/32, Should Have: 139/146, Nice to Have: 0/5 (US-937, PUSH-003 won't do)
+**Haladás: 173 / 190 story kész** — Must Have: 32/32, Should Have: 140/148, Nice to Have: 0/5 (US-937, PUSH-003 won't do)
