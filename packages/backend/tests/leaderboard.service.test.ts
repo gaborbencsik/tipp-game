@@ -2,7 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 const { mockSelect, mockFrom, mockLeftJoin, mockInnerJoin, mockWhere, mockOrderBy, mockGroupBy } = vi.hoisted(() => {
   const mockOrderBy = vi.fn().mockResolvedValue([])
-  const mockGroupBy = vi.fn(() => ({ orderBy: mockOrderBy }))
+  // groupBy must be both chainable (.orderBy(...)) AND thenable (terminal in
+  // the tournament-points query that ends with .groupBy()).
+  const makeGroupByResult = () => Object.assign(Promise.resolve([]), { orderBy: mockOrderBy })
+  const mockGroupBy = vi.fn(makeGroupByResult)
   const mockWhere = vi.fn(() => ({ groupBy: mockGroupBy, orderBy: mockOrderBy }))
   const mockInnerJoin = vi.fn(() => ({ where: mockWhere, orderBy: mockOrderBy }))
   const mockLeftJoin = vi.fn(function () {
@@ -21,7 +24,8 @@ import { getLeaderboard } from '../src/services/leaderboard.service.js'
 
 const ROW = (overrides: Partial<{
   userId: string; displayName: string; avatarUrl: string | null;
-  totalPoints: number; predictionCount: number; correctCount: number
+  totalPoints: number; predictionCount: number; correctCount: number;
+  scorerBonusPoints: number; matchCorrectCount: number; scorerCorrectCount: number;
 }> = {}) => ({
   userId: 'user-1',
   displayName: 'Alice',
@@ -29,6 +33,9 @@ const ROW = (overrides: Partial<{
   totalPoints: 9,
   predictionCount: 3,
   correctCount: 1,
+  scorerBonusPoints: 0,
+  matchCorrectCount: 1,
+  scorerCorrectCount: 0,
   ...overrides,
 })
 
@@ -36,7 +43,9 @@ describe('getLeaderboard', () => {
   beforeEach(() => {
     vi.resetAllMocks()
     mockOrderBy.mockResolvedValue([])
-    mockGroupBy.mockReturnValue({ orderBy: mockOrderBy })
+    // groupBy result is both awaitable (terminal — used by tournament query)
+    // and chainable (.orderBy(...) for the main aggregation query).
+    mockGroupBy.mockImplementation(() => Object.assign(Promise.resolve([]), { orderBy: mockOrderBy }))
     mockWhere.mockReturnValue({ groupBy: mockGroupBy, orderBy: mockOrderBy })
     mockInnerJoin.mockReturnValue({ where: mockWhere, orderBy: mockOrderBy })
     mockLeftJoin.mockReturnValue({ leftJoin: mockLeftJoin, where: mockWhere, groupBy: mockGroupBy })
@@ -97,5 +106,66 @@ describe('getLeaderboard', () => {
     ])
     const result = await getLeaderboard()
     expect(result[0].totalPoints).toBe(0)
+  })
+
+  // ─── UX-034: matchPoints / scorerBonusPoints / successRate ─────────────────
+
+  it('matchPoints = totalPoints - scorerBonusPoints', async () => {
+    mockOrderBy.mockResolvedValue([
+      ROW({ userId: 'user-1', totalPoints: 10, scorerBonusPoints: 3 }),
+    ])
+    const result = await getLeaderboard()
+    expect(result[0].matchPoints).toBe(7)
+    expect(result[0].scorerBonusPoints).toBe(3)
+  })
+
+  it('successRate = round(correctCount / predictionCount * 100)', async () => {
+    mockOrderBy.mockResolvedValue([
+      ROW({ userId: 'user-1', predictionCount: 3, correctCount: 2 }),
+    ])
+    const result = await getLeaderboard()
+    expect(result[0].successRate).toBe(67)
+  })
+
+  it('successRate = 0 when no correct predictions', async () => {
+    mockOrderBy.mockResolvedValue([
+      ROW({ userId: 'user-1', predictionCount: 5, correctCount: 0 }),
+    ])
+    const result = await getLeaderboard()
+    expect(result[0].successRate).toBe(0)
+  })
+
+  it('successRate = 100 when all correct', async () => {
+    mockOrderBy.mockResolvedValue([
+      ROW({ userId: 'user-1', predictionCount: 4, correctCount: 4 }),
+    ])
+    const result = await getLeaderboard()
+    expect(result[0].successRate).toBe(100)
+  })
+
+  it('successRate = null when predictionCount = 0', async () => {
+    mockOrderBy.mockResolvedValue([
+      ROW({ userId: 'user-1', predictionCount: 0, correctCount: 0 }),
+    ])
+    const result = await getLeaderboard()
+    expect(result[0].successRate).toBeNull()
+  })
+
+  it('matchSuccessRate / scorerSuccessRate computed from per-category counts', async () => {
+    mockOrderBy.mockResolvedValue([
+      ROW({ userId: 'user-1', predictionCount: 6, matchCorrectCount: 2, scorerCorrectCount: 4 }),
+    ])
+    const result = await getLeaderboard()
+    expect(result[0].matchSuccessRate).toBe(33)
+    expect(result[0].scorerSuccessRate).toBe(67)
+  })
+
+  it('matchSuccessRate / scorerSuccessRate are null when predictionCount = 0', async () => {
+    mockOrderBy.mockResolvedValue([
+      ROW({ userId: 'user-1', predictionCount: 0, matchCorrectCount: 0, scorerCorrectCount: 0 }),
+    ])
+    const result = await getLeaderboard()
+    expect(result[0].matchSuccessRate).toBeNull()
+    expect(result[0].scorerSuccessRate).toBeNull()
   })
 })

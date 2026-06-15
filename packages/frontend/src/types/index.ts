@@ -298,6 +298,11 @@ export interface LeaderboardEntry {
   readonly totalPoints: number
   readonly predictionCount: number
   readonly correctCount: number
+  readonly matchPoints: number
+  readonly scorerBonusPoints: number
+  readonly successRate: number | null
+  readonly matchSuccessRate: number | null
+  readonly scorerSuccessRate: number | null
   readonly specialPredictionPoints: number
   readonly favoriteTeam?: { readonly countryCode: string; readonly name: string } | null
   readonly isPaid?: boolean

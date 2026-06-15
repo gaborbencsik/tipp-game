@@ -120,6 +120,11 @@ const LEADERBOARD_ENTRY: LeaderboardEntry = {
   totalPoints: 10,
   predictionCount: 5,
   correctCount: 3,
+  matchPoints: 10,
+  scorerBonusPoints: 0,
+  successRate: 60,
+  matchSuccessRate: 60,
+  scorerSuccessRate: 0,
   specialPredictionPoints: 0,
   isSupporter: false,
 }

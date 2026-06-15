@@ -178,3 +178,4 @@
 | US-1311 | Admin-vezérelt torna-tipp kiértékelés (lightweight MVP) | Should Have |
 | US-1313 | Játékosok rövid neve – `players.short_name` oszlop | Should Have |
 | US-1314 | Játékos rövid név megjelenítése a UI-on (`short_name` használata) | Should Have |
+| UX-034 | Ranglista oszlopok újrarendezése – Arány, bontások, Torna pont | Should Have |

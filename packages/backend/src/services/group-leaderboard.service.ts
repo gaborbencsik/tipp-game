@@ -46,6 +46,9 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
     totalPoints: number
     predictionCount: number
     correctCount: number
+    scorerBonusPoints: number
+    matchCorrectCount: number
+    scorerCorrectCount: number
   }>
 
   // League / soft-delete filter goes into the matches JOIN ON clause — keeping it
@@ -66,6 +69,9 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
         totalPoints: sql<number>`coalesce(sum(case when ${matches.id} is not null then ${groupPredictionPoints.points} end), 0)`,
         predictionCount: sql<number>`count(case when ${matches.id} is not null then ${predictions.id} end)`,
         correctCount: sql<number>`count(case when ${matches.id} is not null and ${groupPredictionPoints.points} > 0 then 1 end)`,
+        scorerBonusPoints: sql<number>`coalesce(sum(case when ${matches.id} is not null then ${predictions.scorerBonusPoints} end), 0)`,
+        matchCorrectCount: sql<number>`count(case when ${matches.id} is not null and (coalesce(${predictions.pointsGlobal}, 0) - coalesce(${predictions.scorerBonusPoints}, 0)) > 0 then 1 end)`,
+        scorerCorrectCount: sql<number>`count(case when ${matches.id} is not null and ${predictions.scorerBonusPoints} > 0 then 1 end)`,
       })
       .from(groupMembers)
       .innerJoin(users, and(eq(users.id, groupMembers.userId), isNull(users.deletedAt)))
@@ -88,6 +94,9 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
         totalPoints: sql<number>`coalesce(sum(case when ${matches.id} is not null then ${predictions.pointsGlobal} end), 0)`,
         predictionCount: sql<number>`count(case when ${matches.id} is not null then ${predictions.id} end)`,
         correctCount: sql<number>`count(case when ${matches.id} is not null and ${predictions.pointsGlobal} > 0 then 1 end)`,
+        scorerBonusPoints: sql<number>`coalesce(sum(case when ${matches.id} is not null then ${predictions.scorerBonusPoints} end), 0)`,
+        matchCorrectCount: sql<number>`count(case when ${matches.id} is not null and (coalesce(${predictions.pointsGlobal}, 0) - coalesce(${predictions.scorerBonusPoints}, 0)) > 0 then 1 end)`,
+        scorerCorrectCount: sql<number>`count(case when ${matches.id} is not null and ${predictions.scorerBonusPoints} > 0 then 1 end)`,
       })
       .from(groupMembers)
       .innerJoin(users, and(eq(users.id, groupMembers.userId), isNull(users.deletedAt)))
@@ -125,18 +134,31 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
 
   // Merge stat points and compute total
   const merged = rows.map(row => {
-    const matchPoints = Number(row.totalPoints)
+    const matchAndScorer = Number(row.totalPoints)
     const statPoints = statPointsByUser.get(row.userId) ?? 0
+    const scorerBonusPoints = Number(row.scorerBonusPoints)
+    const predictionCount = Number(row.predictionCount)
+    const correctCount = Number(row.correctCount)
+    const matchCorrectCount = Number(row.matchCorrectCount)
+    const scorerCorrectCount = Number(row.scorerCorrectCount)
     return {
       userId: row.userId,
       displayName: row.displayName,
       avatarUrl: row.avatarUrl ?? null,
       supporterAt: row.supporterAt,
-      matchPoints,
+      // matchPoints is the result-only contribution (favorite-team multiplier
+      // is included in totalPoints when useGroupPoints=true; in that case
+      // matchPoints + scorerBonusPoints !== totalPoints by design — the doubled
+      // amount is reflected in totalPoints, not in the bare match cell).
+      matchPoints: matchAndScorer - scorerBonusPoints,
+      scorerBonusPoints,
       specialPredictionPoints: statPoints,
-      totalPoints: matchPoints + statPoints,
-      predictionCount: Number(row.predictionCount),
-      correctCount: Number(row.correctCount),
+      totalPoints: matchAndScorer + statPoints,
+      predictionCount,
+      correctCount,
+      successRate: predictionCount > 0 ? Math.round((correctCount / predictionCount) * 100) : null,
+      matchSuccessRate: predictionCount > 0 ? Math.round((matchCorrectCount / predictionCount) * 100) : null,
+      scorerSuccessRate: predictionCount > 0 ? Math.round((scorerCorrectCount / predictionCount) * 100) : null,
     }
   })
 
@@ -179,6 +201,11 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
       totalPoints: row.totalPoints,
       predictionCount: row.predictionCount,
       correctCount: row.correctCount,
+      matchPoints: row.matchPoints,
+      scorerBonusPoints: row.scorerBonusPoints,
+      successRate: row.successRate,
+      matchSuccessRate: row.matchSuccessRate,
+      scorerSuccessRate: row.scorerSuccessRate,
       specialPredictionPoints: row.specialPredictionPoints,
       favoriteTeam: favoritesByUser.get(row.userId) ?? null,
       isPaid: paidByUser.get(row.userId) ?? false,

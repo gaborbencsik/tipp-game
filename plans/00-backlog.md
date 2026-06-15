@@ -25,7 +25,6 @@
 | UX-022 | Torna tippek kitöltöttsége az admin statisztikákban | Should Have | UX-021 |
 | UX-029 | Pontozási szabályzat modal – polished error state | Nice to Have | ~~UX-028~~ |
 | UX-032 | Torna tippek – lejárt deadline után is mutassa a tippet (read-only lock) | Should Have | — |
-| UX-034 | Ranglista oszlopok újrarendezése – Arány, bontások, Torna pont | Should Have | — |
 | SEC-002 | HMAC-aláírt meghívó URL-ek | Nice to Have | — |
 
 > UX-019 felülírva — UX-020 implementálja a frissített, mockup-alapú 5 lépéses onboardingot.
@@ -33,4 +32,4 @@
 
 ---
 
-**Haladás: 174 / 191 story kész** — Must Have: 32/32, Should Have: 141/149, Nice to Have: 0/5 (US-937, PUSH-003 won't do)
+**Haladás: 175 / 191 story kész** — Must Have: 32/32, Should Have: 142/149, Nice to Have: 0/5 (US-937, PUSH-003 won't do)

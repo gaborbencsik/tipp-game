@@ -109,7 +109,7 @@ describe('LeaderboardView LS scope persistence', () => {
 
   it('table thead visible on mobile, all data columns visible (UX-025)', async () => {
     mockLeaderboardList.mockResolvedValue([
-      { userId: 'u1', displayName: 'Me', avatarUrl: null, rank: 1, predictionCount: 4, correctCount: 1, totalPoints: 1 },
+      { userId: 'u1', displayName: 'Me', avatarUrl: null, rank: 1, predictionCount: 4, correctCount: 1, totalPoints: 1, matchPoints: 1, scorerBonusPoints: 0, successRate: 25, matchSuccessRate: 25, scorerSuccessRate: 0, specialPredictionPoints: 0 },
     ])
     const wrapper = mount(LeaderboardView)
     await flushPromises()
@@ -118,13 +118,66 @@ describe('LeaderboardView LS scope persistence', () => {
     expect(thead.exists()).toBe(true)
     expect(thead.classes()).not.toContain('hidden')
 
+    // UX-034: 8 columns on desktop when no tournament points
+    // (rank, player, P/M, %, match, match%, scorer, scorer%, points = 9 actually).
     const headerCells = wrapper.findAll('table thead th')
-    expect(headerCells.length).toBe(5)
+    expect(headerCells.length).toBe(9)
 
     const dataCells = wrapper.findAll('table tbody tr:first-child td')
-    expect(dataCells.length).toBe(5)
-    for (const td of dataCells) {
-      expect(td.classes()).not.toContain('hidden')
-    }
+    expect(dataCells.length).toBe(9)
+  })
+
+  // ─── UX-034: new column structure ──────────────────────────────────────────
+
+  it('renders successRate / matchPoints / scorerBonusPoints columns; no tips/correct', async () => {
+    mockLeaderboardList.mockResolvedValue([
+      { userId: 'u1', displayName: 'Me', avatarUrl: null, rank: 1, predictionCount: 3, correctCount: 2, totalPoints: 9, matchPoints: 7, scorerBonusPoints: 2, successRate: 67, matchSuccessRate: 33, scorerSuccessRate: 67, specialPredictionPoints: 0 },
+    ])
+    const wrapper = mount(LeaderboardView)
+    await flushPromises()
+
+    const headerText = wrapper.findAll('table thead th').map(th => th.text())
+    expect(headerText).toContain('Sikeres tippek')
+    expect(headerText).toContain('%')
+    expect(headerText.some(t => t.includes('Meccs pont'))).toBe(true)
+    expect(headerText.some(t => t.includes('Gólszerző pont'))).toBe(true)
+    expect(headerText).not.toContain('Tipp')
+    expect(headerText).not.toContain('Pontot ért')
+
+    const rowText = wrapper.find('table tbody tr:first-child').text()
+    expect(rowText).toContain('2/3')
+    expect(rowText).toContain('67%')
+  })
+
+  it('renders em-dash when predictionCount is 0', async () => {
+    mockLeaderboardList.mockResolvedValue([
+      { userId: 'u1', displayName: 'Me', avatarUrl: null, rank: 1, predictionCount: 0, correctCount: 0, totalPoints: 0, matchPoints: 0, scorerBonusPoints: 0, successRate: null, matchSuccessRate: null, scorerSuccessRate: null, specialPredictionPoints: 0 },
+    ])
+    const wrapper = mount(LeaderboardView)
+    await flushPromises()
+
+    expect(wrapper.find('table tbody tr:first-child').text()).toContain('—')
+  })
+
+  it('hides tournament column when all entries have specialPredictionPoints = 0', async () => {
+    mockLeaderboardList.mockResolvedValue([
+      { userId: 'u1', displayName: 'Me', avatarUrl: null, rank: 1, predictionCount: 3, correctCount: 2, totalPoints: 9, matchPoints: 7, scorerBonusPoints: 2, successRate: 67, matchSuccessRate: 33, scorerSuccessRate: 67, specialPredictionPoints: 0 },
+    ])
+    const wrapper = mount(LeaderboardView)
+    await flushPromises()
+
+    const headerText = wrapper.findAll('table thead th').map(th => th.text())
+    expect(headerText.some(t => t.includes('Torna'))).toBe(false)
+  })
+
+  it('shows tournament column when any entry has specialPredictionPoints > 0', async () => {
+    mockLeaderboardList.mockResolvedValue([
+      { userId: 'u1', displayName: 'Me', avatarUrl: null, rank: 1, predictionCount: 3, correctCount: 2, totalPoints: 14, matchPoints: 7, scorerBonusPoints: 2, successRate: 67, matchSuccessRate: 33, scorerSuccessRate: 67, specialPredictionPoints: 5 },
+    ])
+    const wrapper = mount(LeaderboardView)
+    await flushPromises()
+
+    const headerText = wrapper.findAll('table thead th').map(th => th.text())
+    expect(headerText.some(t => t.includes('Torna'))).toBe(true)
   })
 })

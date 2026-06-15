@@ -27,8 +27,18 @@
           <tr class="border-b border-gray-200 text-gray-500 text-left text-xs md:text-sm">
             <th class="pl-2 md:pl-4 pr-1 md:pr-2 py-2 md:py-3 w-8 md:w-10">{{ $t('leaderboard.rank') }}</th>
             <th class="px-1 md:px-2 py-2 md:py-3">{{ $t('leaderboard.player') }}</th>
-            <th class="px-1 md:px-2 py-2 md:py-3 text-right whitespace-nowrap">{{ $t('leaderboard.tips') }}</th>
-            <th class="px-1 md:px-2 py-2 md:py-3 text-right whitespace-nowrap">{{ $t('leaderboard.correct') }}</th>
+            <th class="px-1 md:px-2 py-2 md:py-3 text-right whitespace-nowrap">
+              <span class="tt-down" :data-tooltip="$t('leaderboard.scoredFractionTooltip')">{{ $t('leaderboard.scoredFraction') }}</span>
+            </th>
+            <th class="hidden md:table-cell px-1 md:px-2 py-2 md:py-3 text-right whitespace-nowrap">{{ $t('leaderboard.successRate') }}</th>
+            <th class="hidden md:table-cell px-1 md:px-2 py-2 md:py-3 text-right whitespace-nowrap">⚽ {{ $t('leaderboard.matchPoints') }}</th>
+            <th class="hidden md:table-cell px-1 md:px-2 py-2 md:py-3 text-right whitespace-nowrap">{{ $t('leaderboard.successRate') }}</th>
+            <th class="hidden md:table-cell px-1 md:px-2 py-2 md:py-3 text-right whitespace-nowrap">👟 {{ $t('leaderboard.scorerBonusPoints') }}</th>
+            <th class="hidden md:table-cell px-1 md:px-2 py-2 md:py-3 text-right whitespace-nowrap">{{ $t('leaderboard.successRate') }}</th>
+            <th
+              v-if="showTournamentColumn"
+              class="hidden md:table-cell px-1 md:px-2 py-2 md:py-3 text-right whitespace-nowrap"
+            >🏆 {{ $t('leaderboard.tournamentPoints') }}</th>
             <th class="pl-1 pr-2 md:pl-2 md:pr-4 py-2 md:py-3 text-right font-semibold whitespace-nowrap">{{ $t('leaderboard.points') }}</th>
           </tr>
         </thead>
@@ -73,9 +83,32 @@
                 />
                 <span v-if="entry.userId === authStore.user?.id" class="text-[0.65rem] md:text-xs text-blue-600 shrink-0">{{ $t('leaderboard.you') }}</span>
               </div>
+              <div class="md:hidden mt-0.5 ml-8 text-[0.65rem] text-gray-500 tabular-nums">
+                <span>⚽ {{ entry.matchPoints }}</span>
+                <span class="ml-2">👟 {{ entry.scorerBonusPoints }}</span>
+                <span v-if="showTournamentColumn" class="ml-2">🏆 {{ entry.specialPredictionPoints }}</span>
+              </div>
             </td>
-            <td class="px-1 md:px-2 py-2 md:py-3 text-right text-gray-600 tabular-nums">{{ entry.predictionCount }}</td>
-            <td class="px-1 md:px-2 py-2 md:py-3 text-right text-gray-600 tabular-nums">{{ entry.correctCount }}</td>
+            <td class="px-1 md:px-2 py-2 md:py-3 text-right text-gray-600 tabular-nums">
+              <span class="tt" :data-tooltip="$t('leaderboard.scoredFractionTooltip')">
+                {{ entry.predictionCount > 0 ? `${entry.correctCount}/${entry.predictionCount}` : '—' }}
+              </span>
+            </td>
+            <td class="hidden md:table-cell px-1 md:px-2 py-2 md:py-3 text-right text-gray-600 tabular-nums">
+              {{ entry.successRate !== null ? `${entry.successRate}%` : '—' }}
+            </td>
+            <td class="hidden md:table-cell px-1 md:px-2 py-2 md:py-3 text-right text-gray-500 tabular-nums">{{ entry.matchPoints }}</td>
+            <td class="hidden md:table-cell px-1 md:px-2 py-2 md:py-3 text-right text-gray-500 tabular-nums">
+              {{ entry.matchSuccessRate !== null ? `${entry.matchSuccessRate}%` : '—' }}
+            </td>
+            <td class="hidden md:table-cell px-1 md:px-2 py-2 md:py-3 text-right text-gray-500 tabular-nums">{{ entry.scorerBonusPoints }}</td>
+            <td class="hidden md:table-cell px-1 md:px-2 py-2 md:py-3 text-right text-gray-500 tabular-nums">
+              {{ entry.scorerSuccessRate !== null ? `${entry.scorerSuccessRate}%` : '—' }}
+            </td>
+            <td
+              v-if="showTournamentColumn"
+              class="hidden md:table-cell px-1 md:px-2 py-2 md:py-3 text-right text-gray-500 tabular-nums"
+            >{{ entry.specialPredictionPoints }}</td>
             <td class="pl-1 pr-2 md:pl-2 md:pr-4 py-2 md:py-3 text-right font-bold text-blue-700 tabular-nums">{{ entry.totalPoints }}</td>
           </tr>
         </tbody>
@@ -129,6 +162,7 @@ const groupError = ref<string | null>(null)
 const isLoading = computed(() => selectedScope.value === 'global' ? leaderboardStore.isLoading : groupIsLoading.value)
 const error = computed(() => selectedScope.value === 'global' ? leaderboardStore.error : groupError.value)
 const entries = computed(() => selectedScope.value === 'global' ? leaderboardStore.entries : groupEntries.value)
+const showTournamentColumn = computed(() => entries.value.some(e => (e.specialPredictionPoints ?? 0) > 0))
 
 async function loadGroupLeaderboard(groupId: string): Promise<void> {
   groupIsLoading.value = true

@@ -42,7 +42,7 @@ vi.mock('../src/db/client.js', () => ({
 
 vi.mock('../src/db/schema/index.js', () => ({
   users: { id: 'users.id', displayName: 'users.displayName', avatarUrl: 'users.avatarUrl', deletedAt: 'users.deletedAt' },
-  predictions: { pointsGlobal: 'predictions.pointsGlobal', id: 'predictions.id', userId: 'predictions.userId', matchId: 'predictions.matchId' },
+  predictions: { pointsGlobal: 'predictions.pointsGlobal', id: 'predictions.id', userId: 'predictions.userId', matchId: 'predictions.matchId', scorerBonusPoints: 'predictions.scorerBonusPoints' },
   groups: { id: 'groups.id', scoringConfigId: 'groups.scoringConfigId', favoriteTeamDoublePoints: 'groups.favoriteTeamDoublePoints' },
   groupMembers: { groupId: 'groupMembers.groupId', userId: 'groupMembers.userId' },
   groupPredictionPoints: { points: 'gpp.points', id: 'gpp.id', predictionId: 'gpp.predictionId', groupId: 'gpp.groupId' },
@@ -75,8 +75,8 @@ const GROUP_ROW_NO_CONFIG = { id: GROUP_ID, scoringConfigId: null, favoriteTeamD
 const GROUP_ROW_WITH_CONFIG = { id: GROUP_ID, scoringConfigId: 'config-uuid-1', favoriteTeamDoublePoints: false }
 const MEMBER_ROWS = [{ userId: REQUESTER_ID }, { userId: 'user-uuid-2' }]
 const LEADERBOARD_ROWS = [
-  { userId: REQUESTER_ID, displayName: 'Alice', avatarUrl: null, totalPoints: 10, predictionCount: 3, correctCount: 2 },
-  { userId: 'user-uuid-2', displayName: 'Bob', avatarUrl: null, totalPoints: 5, predictionCount: 2, correctCount: 1 },
+  { userId: REQUESTER_ID, displayName: 'Alice', avatarUrl: null, totalPoints: 10, predictionCount: 3, correctCount: 2, scorerBonusPoints: 0, matchCorrectCount: 2, scorerCorrectCount: 0 },
+  { userId: 'user-uuid-2', displayName: 'Bob', avatarUrl: null, totalPoints: 5, predictionCount: 2, correctCount: 1, scorerBonusPoints: 0, matchCorrectCount: 1, scorerCorrectCount: 0 },
 ]
 
 function setupStatChain(statRows: unknown[] = []) {
@@ -202,9 +202,9 @@ describe('getGroupLeaderboard', () => {
 
   it('tied ranks share the same rank number', async () => {
     const tiedRows = [
-      { userId: 'u1', displayName: 'Alice', avatarUrl: null, totalPoints: 10, predictionCount: 2, correctCount: 1 },
-      { userId: 'u2', displayName: 'Bob', avatarUrl: null, totalPoints: 10, predictionCount: 2, correctCount: 1 },
-      { userId: 'u3', displayName: 'Carol', avatarUrl: null, totalPoints: 5, predictionCount: 1, correctCount: 0 },
+      { userId: 'u1', displayName: 'Alice', avatarUrl: null, totalPoints: 10, predictionCount: 2, correctCount: 1, scorerBonusPoints: 0, matchCorrectCount: 1, scorerCorrectCount: 0 },
+      { userId: 'u2', displayName: 'Bob', avatarUrl: null, totalPoints: 10, predictionCount: 2, correctCount: 1, scorerBonusPoints: 0, matchCorrectCount: 1, scorerCorrectCount: 0 },
+      { userId: 'u3', displayName: 'Carol', avatarUrl: null, totalPoints: 5, predictionCount: 1, correctCount: 0, scorerBonusPoints: 0, matchCorrectCount: 0, scorerCorrectCount: 0 },
     ]
     setupLeaderboardSelectChain(GROUP_ROW_NO_CONFIG, [{ userId: REQUESTER_ID }, { userId: 'u1' }, { userId: 'u2' }, { userId: 'u3' }], tiedRows, false)
 
@@ -429,7 +429,7 @@ describe('getGroupLeaderboard', () => {
 
   it('soft-deleted users do not appear in the response (DB-filtered out)', async () => {
     const ROWS_ACTIVE_ONLY = [
-      { userId: REQUESTER_ID, displayName: 'Alice', avatarUrl: null, totalPoints: 10, predictionCount: 3, correctCount: 2 },
+      { userId: REQUESTER_ID, displayName: 'Alice', avatarUrl: null, totalPoints: 10, predictionCount: 3, correctCount: 2, scorerBonusPoints: 0, matchCorrectCount: 2, scorerCorrectCount: 0 },
     ]
     setupLeaderboardSelectChain(GROUP_ROW_NO_CONFIG, MEMBER_ROWS, ROWS_ACTIVE_ONLY)
 
@@ -438,5 +438,46 @@ describe('getGroupLeaderboard', () => {
     expect(result).toHaveLength(1)
     expect(result[0]?.userId).toBe(REQUESTER_ID)
     expect(result.find(r => r.userId === 'user-uuid-2')).toBeUndefined()
+  })
+
+  // ─── UX-034: matchPoints / scorerBonusPoints / successRate ────────────────
+
+  it('exposes matchPoints = totalPoints - scorerBonusPoints', async () => {
+    const rows = [
+      { userId: REQUESTER_ID, displayName: 'Alice', avatarUrl: null, totalPoints: 10, predictionCount: 3, correctCount: 2, scorerBonusPoints: 3, matchCorrectCount: 2, scorerCorrectCount: 3 },
+    ]
+    setupLeaderboardSelectChain(GROUP_ROW_NO_CONFIG, MEMBER_ROWS, rows)
+
+    const result = await getGroupLeaderboard(GROUP_ID, REQUESTER_ID)
+
+    expect(result[0]?.matchPoints).toBe(7)
+    expect(result[0]?.scorerBonusPoints).toBe(3)
+  })
+
+  it('successRate is round(correctCount / predictionCount * 100); null when no predictions', async () => {
+    const rows = [
+      { userId: REQUESTER_ID, displayName: 'Alice', avatarUrl: null, totalPoints: 9, predictionCount: 3, correctCount: 2, scorerBonusPoints: 0, matchCorrectCount: 2, scorerCorrectCount: 0 },
+      { userId: 'user-uuid-2', displayName: 'Bob', avatarUrl: null, totalPoints: 0, predictionCount: 0, correctCount: 0, scorerBonusPoints: 0, matchCorrectCount: 0, scorerCorrectCount: 0 },
+    ]
+    setupLeaderboardSelectChain(GROUP_ROW_NO_CONFIG, MEMBER_ROWS, rows)
+
+    const result = await getGroupLeaderboard(GROUP_ID, REQUESTER_ID)
+
+    const alice = result.find(r => r.userId === REQUESTER_ID)
+    const bob = result.find(r => r.userId === 'user-uuid-2')
+    expect(alice?.successRate).toBe(67)
+    expect(bob?.successRate).toBeNull()
+  })
+
+  it('matchSuccessRate / scorerSuccessRate computed per category', async () => {
+    const rows = [
+      { userId: REQUESTER_ID, displayName: 'Alice', avatarUrl: null, totalPoints: 9, predictionCount: 6, correctCount: 4, scorerBonusPoints: 4, matchCorrectCount: 2, scorerCorrectCount: 4 },
+    ]
+    setupLeaderboardSelectChain(GROUP_ROW_NO_CONFIG, MEMBER_ROWS, rows)
+
+    const result = await getGroupLeaderboard(GROUP_ID, REQUESTER_ID)
+
+    expect(result[0]?.matchSuccessRate).toBe(33)
+    expect(result[0]?.scorerSuccessRate).toBe(67)
   })
 })
