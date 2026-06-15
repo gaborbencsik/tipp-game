@@ -130,8 +130,8 @@ export async function listGlobalTypesWithPredictions(
 
   const playerNameMap = new Map<string, string>()
   if (playerIds.length > 0) {
-    const playerRows = await db.select({ id: players.id, name: players.name }).from(players).where(inArray(players.id, playerIds))
-    for (const r of playerRows) playerNameMap.set(r.id, r.name)
+    const playerRows = await db.select({ id: players.id, name: players.name, shortName: players.shortName }).from(players).where(inArray(players.id, playerIds))
+    for (const r of playerRows) playerNameMap.set(r.id, r.shortName ?? r.name)
   }
 
   const now = new Date()
@@ -276,12 +276,12 @@ export async function upsertGlobalPrediction(
   if (type.inputType === 'player_select') {
     if (!UUID_RE.test(answer)) throw new AppError(400, 'Invalid player id')
     const playerRows = await db
-      .select({ id: players.id, name: players.name })
+      .select({ id: players.id, name: players.name, shortName: players.shortName })
       .from(players)
       .where(eq(players.id, answer))
       .limit(1)
     if (!playerRows[0]) throw new AppError(400, 'Invalid player id')
-    resolvedAnswerLabel = playerRows[0].name
+    resolvedAnswerLabel = playerRows[0].shortName ?? playerRows[0].name
   }
 
   if (type.inputType === 'multi_team_weighted') {

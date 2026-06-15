@@ -20,7 +20,7 @@ interface PlayerRow {
 function toApiPlayer(row: PlayerRow): Player {
   return {
     id: row.players.id,
-    name: row.players.name,
+    name: row.players.shortName ?? row.players.name,
     teamId: row.players.teamId ?? null,
     teamName: row.teams?.name ?? null,
     teamShortCode: row.teams?.shortCode ?? null,
@@ -60,7 +60,7 @@ export async function getPlayers(opts: GetPlayersOptions = {}): Promise<Player[]
       .from(players)
       .leftJoin(teams, eq(players.teamId, teams.id))
       .where(filter)
-      .orderBy(players.name)
+      .orderBy(sql`coalesce(${players.shortName}, ${players.name})`)
     return rows.map(toApiPlayer)
   }
 
@@ -68,7 +68,7 @@ export async function getPlayers(opts: GetPlayersOptions = {}): Promise<Player[]
     .select()
     .from(players)
     .leftJoin(teams, eq(players.teamId, teams.id))
-    .orderBy(players.name)
+    .orderBy(sql`coalesce(${players.shortName}, ${players.name})`)
 
   const rows = teamId
     ? await baseQuery.where(eq(players.teamId, teamId))

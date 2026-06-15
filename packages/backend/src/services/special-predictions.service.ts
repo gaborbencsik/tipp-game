@@ -97,8 +97,8 @@ export async function getMyPredictions(
 
   const playerNameMap = new Map<string, string>()
   if (playerIds.length > 0) {
-    const playerRows = await db.select({ id: players.id, name: players.name, teamId: players.teamId }).from(players).where(inArray(players.id, playerIds))
-    for (const r of playerRows) playerNameMap.set(r.id, r.name)
+    const playerRows = await db.select({ id: players.id, name: players.name, shortName: players.shortName, teamId: players.teamId }).from(players).where(inArray(players.id, playerIds))
+    for (const r of playerRows) playerNameMap.set(r.id, r.shortName ?? r.name)
   }
 
   return allTypes.map(t => {
@@ -234,14 +234,14 @@ export async function upsertPrediction(
         throw new AppError(400, 'Invalid player id')
       }
       const playerRows = await db
-        .select({ id: players.id, name: players.name })
+        .select({ id: players.id, name: players.name, shortName: players.shortName })
         .from(players)
         .where(eq(players.id, answer))
         .limit(1)
       if (!playerRows[0]) {
         throw new AppError(400, 'Invalid player id')
       }
-      resolvedAnswerLabel = playerRows[0].name
+      resolvedAnswerLabel = playerRows[0].shortName ?? playerRows[0].name
     } else {
       if (answer.length > 200) {
         throw new AppError(400, 'Player name must be at most 200 characters')

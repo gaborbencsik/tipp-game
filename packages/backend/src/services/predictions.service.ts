@@ -76,7 +76,7 @@ async function resolveScorerPick(
     throw new AppError(400, 'scorer_player_not_in_match')
   }
 
-  return { playerId: player.id, nameSnapshot: player.name }
+  return { playerId: player.id, nameSnapshot: player.shortName ?? player.name }
 }
 
 export async function upsertPrediction(

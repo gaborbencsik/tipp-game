@@ -73,7 +73,7 @@ const TYPE_ROW_TEAM_SELECT = {
 
 const VALID_PLAYER_UUID = '11111111-2222-3333-4444-555555555555'
 
-const PLAYER_ROW = { id: VALID_PLAYER_UUID, name: 'Messi', teamId: 'team-uuid-1' }
+const PLAYER_ROW = { id: VALID_PLAYER_UUID, name: 'Lionel Andrés Messi Cuccittini', shortName: 'Messi', teamId: 'team-uuid-1' }
 
 const PRED_ROW = {
   id: PRED_ID,
@@ -250,6 +250,23 @@ describe('getMyPredictions', () => {
 
     expect(result[0]?.correctAnswer).toBe(VALID_PLAYER_UUID)
     expect(result[0]?.correctAnswerLabel).toBe('Messi')
+  })
+
+  it('falls back to long name when short_name is null for player_select', async () => {
+    const playerRowNoShort = { ...PLAYER_ROW, shortName: null }
+    const typeRow = { ...TYPE_ROW_PLAYER_SELECT, deadline: PAST, correctAnswer: VALID_PLAYER_UUID }
+    setupSelectSequence([
+      [GROUP_ROW],
+      [MEMBER_ROW],
+      [typeRow],
+      [],
+      [],
+      [playerRowNoShort],
+    ])
+
+    const result = await getMyPredictions(GROUP_ID, USER_ID)
+
+    expect(result[0]?.correctAnswerLabel).toBe('Lionel Andrés Messi Cuccittini')
   })
 
   it('returns correctAnswerLabel null for text type', async () => {

@@ -14,6 +14,7 @@ const PLAYER_ROW = {
   players: {
     id: 'p1',
     name: 'Messi',
+    shortName: null,
     teamId: 't1',
     position: 'FW',
     shirtNumber: 10,
@@ -21,6 +22,16 @@ const PLAYER_ROW = {
     updatedAt: NOW,
   },
   teams: { id: 't1', name: 'Argentina', shortCode: 'ARG' },
+}
+
+const PLAYER_ROW_WITH_SHORT = {
+  ...PLAYER_ROW,
+  players: {
+    ...PLAYER_ROW.players,
+    id: 'p2',
+    name: 'Vinícius José Paixão de Oliveira Júnior',
+    shortName: 'Vinícius Júnior',
+  },
 }
 
 function makeChain(result: unknown) {
@@ -70,6 +81,19 @@ describe('getPlayers', () => {
     setupSequence([[]])
     const result = await getPlayers({ leagueId: 'league-empty' })
     expect(result).toEqual([])
+  })
+
+  it('returns short_name when present (display name = short_name ?? name)', async () => {
+    setupSequence([[PLAYER_ROW_WITH_SHORT]])
+    const result = await getPlayers()
+    expect(result).toHaveLength(1)
+    expect(result[0]?.name).toBe('Vinícius Júnior')
+  })
+
+  it('falls back to name when short_name is null', async () => {
+    setupSequence([[PLAYER_ROW]])
+    const result = await getPlayers()
+    expect(result[0]?.name).toBe('Messi')
   })
 })
 

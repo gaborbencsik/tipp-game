@@ -171,6 +171,37 @@ describe('listGlobalTypesWithPredictions', () => {
     expect(result[0]?.correctAnswer).toBe('Mbappé')
   })
 
+  it('uses short_name for player_select correctAnswerLabel after deadline', async () => {
+    const PLAYER_UUID = '11111111-2222-3333-4444-555555555555'
+    const PLAYER_TYPE = { ...GLOBAL_TYPE_ROW, inputType: 'player_select', deadline: PAST, correctAnswer: PLAYER_UUID }
+    setupSelectSequence([
+      ACCESS_GRANTED,
+      [PLAYER_TYPE],
+      [],
+      [{ id: PLAYER_UUID, name: 'Vinícius José Paixão de Oliveira Júnior', shortName: 'Vinícius Júnior' }],
+    ])
+
+    const result = await listGlobalTypesWithPredictions(USER_ID)
+
+    expect(result[0]?.correctAnswer).toBe(PLAYER_UUID)
+    expect(result[0]?.correctAnswerLabel).toBe('Vinícius Júnior')
+  })
+
+  it('falls back to long name when short_name is null for player_select', async () => {
+    const PLAYER_UUID = '11111111-2222-3333-4444-555555555555'
+    const PLAYER_TYPE = { ...GLOBAL_TYPE_ROW, inputType: 'player_select', deadline: PAST, correctAnswer: PLAYER_UUID }
+    setupSelectSequence([
+      ACCESS_GRANTED,
+      [PLAYER_TYPE],
+      [],
+      [{ id: PLAYER_UUID, name: 'Lionel Andrés Messi Cuccittini', shortName: null }],
+    ])
+
+    const result = await listGlobalTypesWithPredictions(USER_ID)
+
+    expect(result[0]?.correctAnswerLabel).toBe('Lionel Andrés Messi Cuccittini')
+  })
+
   it('throws 403 when user has no group with WC league', async () => {
     setupSelectSequence([ACCESS_DENIED])
 
