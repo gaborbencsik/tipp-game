@@ -1,6 +1,6 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-06-15 (US-1314 kész: backend `name` válasz `shortName ?? name`)
+> Utoljára frissítve: 2026-06-15 (US-1314 kész: hibrid display name szabály – ≤3 szó keep, 4+ short_name)
 
 ## Nyitott story-k
 
@@ -25,6 +25,7 @@
 | UX-022 | Torna tippek kitöltöttsége az admin statisztikákban | Should Have | UX-021 |
 | UX-029 | Pontozási szabályzat modal – polished error state | Nice to Have | ~~UX-028~~ |
 | UX-032 | Torna tippek – lejárt deadline után is mutassa a tippet (read-only lock) | Should Have | — |
+| UX-034 | Ranglista oszlopok újrarendezése – Arány, bontások, Torna pont | Should Have | — |
 | SEC-002 | HMAC-aláírt meghívó URL-ek | Nice to Have | — |
 
 > UX-019 felülírva — UX-020 implementálja a frissített, mockup-alapú 5 lépéses onboardingot.
@@ -32,4 +33,4 @@
 
 ---
 
-**Haladás: 174 / 190 story kész** — Must Have: 32/32, Should Have: 141/148, Nice to Have: 0/5 (US-937, PUSH-003 won't do)
+**Haladás: 174 / 191 story kész** — Must Have: 32/32, Should Have: 141/149, Nice to Have: 0/5 (US-937, PUSH-003 won't do)
