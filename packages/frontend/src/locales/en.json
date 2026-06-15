@@ -346,6 +346,8 @@
     "scoredFraction": "Successful tips",
     "scoredFractionTooltip": "Tips that scored points / tips on finished matches",
     "successRate": "%",
+    "matchSuccessRateTooltip": "Share of tips that scored points on finished matches",
+    "scorerSuccessRateTooltip": "Share of tips with the correct scorer on finished matches",
     "matchPoints": "Match pts",
     "scorerBonusPoints": "Scorer pts",
     "tournamentPoints": "Tourn.",

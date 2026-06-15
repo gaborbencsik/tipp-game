@@ -32,9 +32,13 @@
             </th>
             <th class="hidden md:table-cell px-1 md:px-2 py-2 md:py-3 text-right whitespace-nowrap">{{ $t('leaderboard.successRate') }}</th>
             <th class="hidden md:table-cell px-1 md:px-2 py-2 md:py-3 text-right whitespace-nowrap">⚽ {{ $t('leaderboard.matchPoints') }}</th>
-            <th class="hidden md:table-cell px-1 md:px-2 py-2 md:py-3 text-right whitespace-nowrap">{{ $t('leaderboard.successRate') }}</th>
+            <th class="hidden md:table-cell px-1 md:px-2 py-2 md:py-3 text-right whitespace-nowrap">
+              <span class="tt-down" :data-tooltip="$t('leaderboard.matchSuccessRateTooltip')">{{ $t('leaderboard.successRate') }}</span>
+            </th>
             <th class="hidden md:table-cell px-1 md:px-2 py-2 md:py-3 text-right whitespace-nowrap">👟 {{ $t('leaderboard.scorerBonusPoints') }}</th>
-            <th class="hidden md:table-cell px-1 md:px-2 py-2 md:py-3 text-right whitespace-nowrap">{{ $t('leaderboard.successRate') }}</th>
+            <th class="hidden md:table-cell px-1 md:px-2 py-2 md:py-3 text-right whitespace-nowrap">
+              <span class="tt-down" :data-tooltip="$t('leaderboard.scorerSuccessRateTooltip')">{{ $t('leaderboard.successRate') }}</span>
+            </th>
             <th
               v-if="showTournamentColumn"
               class="hidden md:table-cell px-1 md:px-2 py-2 md:py-3 text-right whitespace-nowrap"

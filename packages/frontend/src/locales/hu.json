@@ -346,6 +346,8 @@
     "scoredFraction": "Sikeres tippek",
     "scoredFractionTooltip": "Pontot ért tippek / lejátszott meccsekre leadott tippek",
     "successRate": "%",
+    "matchSuccessRateTooltip": "Pontot szerzett tippek aránya a lejátszott meccseken",
+    "scorerSuccessRateTooltip": "Gólszerzőt eltaláló tippek aránya a lejátszott meccseken",
     "matchPoints": "Meccs pont",
     "scorerBonusPoints": "Gólszerző pont",
     "tournamentPoints": "Torna",
