@@ -423,6 +423,7 @@ import DayNavigator from '../components/DayNavigator.vue'
 import SegmentedControl from '../components/SegmentedControl.vue'
 import PlayerSelectCombobox from '../components/predictions/PlayerSelectCombobox.vue'
 import { usePendingSpecialTips } from '../composables/usePendingSpecialTips.js'
+import { useUntippedTodayCount } from '../composables/useUntippedTodayCount.js'
 import { useDayNavigation } from '../composables/useDayNavigation.js'
 import { useLeagueFilter } from '../composables/useLeagueFilter.js'
 import { useMatchEvents, type MatchUpdateEvent } from '../composables/useMatchEvents.js'
@@ -714,16 +715,7 @@ function isToday(dateStr: string): boolean {
   return d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth() && d.getDate() === today.getDate()
 }
 
-const untippedTodayCount = computed((): number => {
-  const today = new Date()
-  return matchesStore.matches.filter(m => {
-    if (m.status !== 'scheduled') return false
-    const d = new Date(m.scheduledAt)
-    if (d.getFullYear() !== today.getFullYear() || d.getMonth() !== today.getMonth() || d.getDate() !== today.getDate()) return false
-    if (d <= now.value) return false
-    return !predictionsStore.predictionByMatchId(m.id)
-  }).length
-})
+const untippedTodayCount = useUntippedTodayCount().untippedTodayCount
 
 const alertBannerDismissed = ref(false)
 

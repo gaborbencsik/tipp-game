@@ -166,13 +166,10 @@ import UserMenuButton from './UserMenuButton.vue'
 import OnboardingOverlay from './OnboardingOverlay.vue'
 import DonationButton from './DonationButton.vue'
 import { useAuthStore } from '../stores/auth.store.js'
-import { useMatchesStore } from '../stores/matches.store.js'
-import { usePredictionsStore } from '../stores/predictions.store.js'
 import { useScoringExplainerStore } from '../stores/scoring-explainer.store.js'
+import { useUntippedTodayCount } from '../composables/useUntippedTodayCount.js'
 
 const authStore = useAuthStore()
-const matchesStore = useMatchesStore()
-const predictionsStore = usePredictionsStore()
 const scoringExplainerStore = useScoringExplainerStore()
 const sidebarOpen = ref(false)
 const sidebarHover = ref(false)
@@ -194,17 +191,7 @@ const showOnboarding = computed((): boolean => {
   return !!authStore.user && !authStore.user.onboardingCompletedAt
 })
 
-const untippedTodayCount = computed((): number => {
-  const today = new Date()
-  const now = new Date()
-  return matchesStore.matches.filter(m => {
-    if (m.status !== 'scheduled') return false
-    const d = new Date(m.scheduledAt)
-    if (d.getFullYear() !== today.getFullYear() || d.getMonth() !== today.getMonth() || d.getDate() !== today.getDate()) return false
-    if (d <= now) return false
-    return !predictionsStore.predictionByMatchId(m.id)
-  }).length
-})
+const untippedTodayCount = useUntippedTodayCount().untippedTodayCount
 
 async function onOnboardingComplete(): Promise<void> {
   await authStore.completeOnboarding()

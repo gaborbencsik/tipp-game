@@ -1,6 +1,6 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-06-15 (US-1314 kész: hibrid display name szabály – ≤3 szó keep, 4+ short_name)
+> Utoljára frissítve: 2026-06-16 (UX-035 kész: banner számolás 17:00 → 07:00 időablakkal, közös composable)
 
 ## Nyitott story-k
 
@@ -32,4 +32,4 @@
 
 ---
 
-**Haladás: 175 / 191 story kész** — Must Have: 32/32, Should Have: 142/149, Nice to Have: 0/5 (US-937, PUSH-003 won't do)
+**Haladás: 176 / 192 story kész** — Must Have: 32/32, Should Have: 143/150, Nice to Have: 0/5 (US-937, PUSH-003 won't do)

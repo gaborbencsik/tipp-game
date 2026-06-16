@@ -348,6 +348,7 @@ describe('AdminSyncView', () => {
     })
 
     it('renders match selector populated from scheduled matches', async () => {
+      const future = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
       mockMatchesList.mockResolvedValue([
         {
           id: 'match-1',
@@ -358,7 +359,7 @@ describe('AdminSyncView', () => {
           stage: 'group',
           groupName: 'A',
           matchNumber: 1,
-          scheduledAt: '2026-06-15T18:00:00.000Z',
+          scheduledAt: future,
           status: 'scheduled',
           result: null,
         },
@@ -372,6 +373,7 @@ describe('AdminSyncView', () => {
     })
 
     it('passes selected matchId to runInsights when a match is chosen', async () => {
+      const future = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
       mockMatchesList.mockResolvedValue([
         {
           id: 'match-42',
@@ -382,7 +384,7 @@ describe('AdminSyncView', () => {
           stage: 'group',
           groupName: null,
           matchNumber: null,
-          scheduledAt: '2026-06-15T18:00:00.000Z',
+          scheduledAt: future,
           status: 'scheduled',
           result: null,
         },
