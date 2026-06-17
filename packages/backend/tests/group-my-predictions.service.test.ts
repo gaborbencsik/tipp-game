@@ -253,6 +253,28 @@ describe('getMyGroupPredictions', () => {
     expect(result.predictions[0]!.matchPoints).toBe(3)
   })
 
+  it('doubles scorer bonus and match points in breakdown when doubledByFavorite=true', async () => {
+    // Pred: 3-0, result 3-0 → result=3pt; scorer hit → bonus=1; favorite × 2 → 4×2=8 group total.
+    // Breakdown must add up to the total: matchPoints=6 (3×2), scorerBonusPoints=2 (1×2).
+    setupCalls({ groupExists: true, flag: true, predictionRows: [{
+      predictionId: 'pred-1', matchId: 'match-1',
+      scheduledAt: new Date('2026-06-14T18:00:00Z'), leagueId: 'league-1',
+      homeTeamId: 'team-h', awayTeamId: 'team-a',
+      homeTeamName: 'Germany', homeTeamShortCode: 'GER', homeTeamFlagUrl: null,
+      awayTeamName: 'Curacao', awayTeamShortCode: 'CUR', awayTeamFlagUrl: null,
+      predHomeGoals: 3, predAwayGoals: 0, resultHomeGoals: 7, resultAwayGoals: 1,
+      pointsGlobal: 4, groupPoints: 8,
+      scorerBonusPoints: 1, scorerPlayerNameSnapshot: 'Havertz', playerShortName: 'Havertz',
+    }], favorites: [{ leagueId: 'league-1', teamId: 'team-h' }] })
+    const result = await getMyGroupPredictions(GROUP_ID, USER_ID)
+    const p = result.predictions[0]!
+    expect(p.doubledByFavorite).toBe(true)
+    expect(p.points).toBe(8)
+    expect(p.matchPoints).toBe(6)
+    expect(p.scorerBonusPoints).toBe(2)
+    expect(p.matchPoints + p.scorerBonusPoints).toBe(p.points)
+  })
+
   it('returns null scorerPickPlayerName when both snapshot and player are null', async () => {
     setupCalls({ groupExists: true, flag: false, predictionRows: [{
       predictionId: 'pred-1', matchId: 'match-1',

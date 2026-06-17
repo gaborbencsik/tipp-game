@@ -104,8 +104,7 @@ export async function getMyGroupPredictions(
 
   const result: GroupMatchPrediction[] = rows.map(row => {
     const points = row.groupPoints ?? row.pointsGlobal ?? 0
-    const scorerBonusPoints = row.scorerBonusPoints ?? 0
-    const matchPoints = points - scorerBonusPoints
+    const rawScorerBonus = row.scorerBonusPoints ?? 0
     const scorerPickPlayerName = row.scorerPlayerNameSnapshot ?? row.playerShortName ?? null
 
     let doubledByFavorite = false
@@ -115,6 +114,14 @@ export async function getMyGroupPredictions(
         doubledByFavorite = true
       }
     }
+
+    // The favorite-team multiplier is applied to (resultPoints + scorerBonus)
+    // before being saved into groupPredictionPoints.points, but the raw
+    // predictions.scorerBonusPoints column is stored undoubled. To keep the UI
+    // breakdown additive (matchPoints + scorerBonusPoints === points), surface
+    // the doubled scorer bonus when the row was doubled.
+    const scorerBonusPoints = doubledByFavorite ? rawScorerBonus * 2 : rawScorerBonus
+    const matchPoints = points - scorerBonusPoints
 
     return {
       predictionId: row.predictionId,
