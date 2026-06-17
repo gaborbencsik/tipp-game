@@ -460,4 +460,158 @@ describe('GroupDetailView', () => {
     await flushPromises()
     expect(deleteSpy).toHaveBeenCalledWith('group-uuid-1')
   })
+
+  // ─── Tippjeim tab – scorer columns (UX-036) ─────────────────────────────────
+
+  async function mountWithMyPredictions(rows: Array<Partial<{
+    predictionId: string
+    matchId: string
+    points: number
+    matchPoints: number
+    scorerBonusPoints: number
+    scorerPickPlayerName: string | null
+    doubledByFavorite: boolean
+  }>>) {
+    const fullRows = rows.map((r, i) => ({
+      predictionId: r.predictionId ?? `p${i + 1}`,
+      matchId: r.matchId ?? `m${i + 1}`,
+      scheduledAt: '2026-06-14T18:00:00Z',
+      homeTeam: { id: 'th', name: 'Hungary', shortCode: 'HUN', flagUrl: null },
+      awayTeam: { id: 'ta', name: 'France', shortCode: 'FRA', flagUrl: null },
+      homeGoals: 2,
+      awayGoals: 1,
+      resultHomeGoals: 2,
+      resultAwayGoals: 1,
+      points: r.points ?? 0,
+      matchPoints: r.matchPoints ?? 0,
+      scorerBonusPoints: r.scorerBonusPoints ?? 0,
+      scorerPickPlayerName: r.scorerPickPlayerName ?? null,
+      doubledByFavorite: r.doubledByFavorite ?? false,
+    }))
+    const total = fullRows.reduce((s, r) => s + r.points, 0)
+    const { wrapper, store } = await mountView([MEMBER_SELF])
+    store.myGroupPredictionsMap = { 'group-uuid-1': { predictions: fullRows, totalPoints: total } }
+    await wrapper.find('[data-testid="tab-my-predictions"]').trigger('click')
+    await flushPromises()
+    return { wrapper, store }
+  }
+
+  it('Tippjeim table renders new column headers (Match pts, Scorer pick, Scorer pts, Total pts)', async () => {
+    const { wrapper } = await mountWithMyPredictions([{ points: 4, matchPoints: 3, scorerBonusPoints: 1, scorerPickPlayerName: 'Salah' }])
+    const table = wrapper.find('[data-testid="my-predictions-tab"] table')
+    const headers = table.findAll('thead th').map(th => th.text())
+    expect(headers).toContain('⚽ Meccs pont')
+    expect(headers).toContain('Gólszerző tipp')
+    expect(headers).toContain('👟 Gólszerző pont')
+    expect(headers).toContain('Összes pont')
+  })
+
+  it('Tippjeim row shows match points, scorer pick name, scorer points, total points', async () => {
+    const { wrapper } = await mountWithMyPredictions([{ points: 4, matchPoints: 3, scorerBonusPoints: 1, scorerPickPlayerName: 'Salah' }])
+    const row = wrapper.find('[data-testid="my-prediction-row"]')
+    expect(row.find('[data-testid="my-pred-match-points"]').text()).toBe('3')
+    expect(row.find('[data-testid="my-pred-scorer-name"]').text()).toBe('Salah')
+    expect(row.find('[data-testid="my-pred-scorer-points"]').text()).toBe('1')
+    expect(row.find('[data-testid="my-pred-total-points"]').text()).toContain('4')
+  })
+
+  it('Tippjeim row shows em-dash when scorer pick name is null', async () => {
+    const { wrapper } = await mountWithMyPredictions([{ points: 3, matchPoints: 3, scorerBonusPoints: 0, scorerPickPlayerName: null }])
+    const cell = wrapper.find('[data-testid="my-prediction-row"] [data-testid="my-pred-scorer-name"]')
+    expect(cell.text()).toBe('—')
+  })
+
+  it('Tippjeim row shows the ×2 badges in match-points and scorer-points columns when doubledByFavorite', async () => {
+    const { wrapper } = await mountWithMyPredictions([{ points: 8, matchPoints: 3, scorerBonusPoints: 1, scorerPickPlayerName: 'Mbappé', doubledByFavorite: true }])
+    const row = wrapper.find('[data-testid="my-prediction-row"]')
+    expect(row.find('[data-testid="match-double-badge"]').exists()).toBe(true)
+    expect(row.find('[data-testid="scorer-double-badge"]').exists()).toBe(true)
+    // Total cell no longer carries the badge
+    expect(row.find('[data-testid="my-pred-total-points"] [data-testid="double-badge"]').exists()).toBe(false)
+  })
+
+  it('Tippjeim new columns are hidden on mobile (hidden md:table-cell)', async () => {
+    const { wrapper } = await mountWithMyPredictions([{ points: 4, matchPoints: 3, scorerBonusPoints: 1, scorerPickPlayerName: 'Salah' }])
+    const matchPtsHeader = wrapper.find('[data-testid="my-pred-match-points-header"]')
+    const scorerHeader = wrapper.find('[data-testid="my-pred-scorer-name-header"]')
+    const scorerPtsHeader = wrapper.find('[data-testid="my-pred-scorer-points-header"]')
+    expect(matchPtsHeader.classes()).toContain('hidden')
+    expect(matchPtsHeader.classes()).toContain('md:table-cell')
+    expect(scorerHeader.classes()).toContain('hidden')
+    expect(scorerHeader.classes()).toContain('md:table-cell')
+    expect(scorerPtsHeader.classes()).toContain('hidden')
+    expect(scorerPtsHeader.classes()).toContain('md:table-cell')
+  })
+
+  // ─── Color coding (UX-036 follow-up) ────────────────────────────────────────
+
+  async function mountWithRichPrediction(p: {
+    homeGoals: number; awayGoals: number
+    resultHomeGoals: number; resultAwayGoals: number
+    points: number; matchPoints: number
+    scorerBonusPoints: number; scorerPickPlayerName: string | null
+  }) {
+    const fullRow = {
+      predictionId: 'p1',
+      matchId: 'm1',
+      scheduledAt: '2026-06-14T18:00:00Z',
+      homeTeam: { id: 'th', name: 'Hungary', shortCode: 'HUN', flagUrl: null },
+      awayTeam: { id: 'ta', name: 'France', shortCode: 'FRA', flagUrl: null },
+      homeGoals: p.homeGoals,
+      awayGoals: p.awayGoals,
+      resultHomeGoals: p.resultHomeGoals,
+      resultAwayGoals: p.resultAwayGoals,
+      points: p.points,
+      matchPoints: p.matchPoints,
+      scorerBonusPoints: p.scorerBonusPoints,
+      scorerPickPlayerName: p.scorerPickPlayerName,
+      doubledByFavorite: false,
+    }
+    const { wrapper, store } = await mountView([MEMBER_SELF])
+    store.myGroupPredictionsMap = { 'group-uuid-1': { predictions: [fullRow], totalPoints: p.points } }
+    await wrapper.find('[data-testid="tab-my-predictions"]').trigger('click')
+    await flushPromises()
+    return { wrapper, store }
+  }
+
+  it('exact match → row gets green tint + tip cell green/bold', async () => {
+    const { wrapper } = await mountWithRichPrediction({ homeGoals: 2, awayGoals: 1, resultHomeGoals: 2, resultAwayGoals: 1, points: 3, matchPoints: 3, scorerBonusPoints: 0, scorerPickPlayerName: null })
+    const row = wrapper.find('[data-testid="my-prediction-row"]')
+    expect(row.classes()).toContain('bg-green-50')
+    const tip = wrapper.find('[data-testid="my-pred-tip"]')
+    expect(tip.classes()).toContain('text-green-700')
+    expect(tip.classes()).toContain('font-bold')
+  })
+
+  it('outcome match (not exact) → row gets yellow tint + tip cell yellow', async () => {
+    // 2-0 tip vs 3-1 result: same outcome (home win), not exact
+    const { wrapper } = await mountWithRichPrediction({ homeGoals: 2, awayGoals: 0, resultHomeGoals: 3, resultAwayGoals: 1, points: 1, matchPoints: 1, scorerBonusPoints: 0, scorerPickPlayerName: null })
+    const row = wrapper.find('[data-testid="my-prediction-row"]')
+    expect(row.classes()).toContain('bg-yellow-50')
+    const tip = wrapper.find('[data-testid="my-pred-tip"]')
+    expect(tip.classes()).toContain('text-yellow-700')
+  })
+
+  it('miss → row stays neutral, tip cell muted', async () => {
+    const { wrapper } = await mountWithRichPrediction({ homeGoals: 0, awayGoals: 2, resultHomeGoals: 3, resultAwayGoals: 0, points: 0, matchPoints: 0, scorerBonusPoints: 0, scorerPickPlayerName: null })
+    const row = wrapper.find('[data-testid="my-prediction-row"]')
+    expect(row.classes()).not.toContain('bg-green-50')
+    expect(row.classes()).not.toContain('bg-yellow-50')
+    const tip = wrapper.find('[data-testid="my-pred-tip"]')
+    expect(tip.classes()).toContain('text-gray-500')
+  })
+
+  it('scorer hit → scorer cell green', async () => {
+    const { wrapper } = await mountWithRichPrediction({ homeGoals: 2, awayGoals: 1, resultHomeGoals: 2, resultAwayGoals: 1, points: 4, matchPoints: 3, scorerBonusPoints: 1, scorerPickPlayerName: 'Salah' })
+    const cell = wrapper.find('[data-testid="my-pred-scorer-name"]')
+    expect(cell.classes()).toContain('text-green-700')
+    expect(cell.classes()).toContain('font-bold')
+  })
+
+  it('scorer miss → scorer cell muted with line-through', async () => {
+    const { wrapper } = await mountWithRichPrediction({ homeGoals: 2, awayGoals: 1, resultHomeGoals: 2, resultAwayGoals: 1, points: 3, matchPoints: 3, scorerBonusPoints: 0, scorerPickPlayerName: 'Salah' })
+    const cell = wrapper.find('[data-testid="my-pred-scorer-name"]')
+    expect(cell.classes()).toContain('text-gray-500')
+    expect(cell.classes()).toContain('line-through')
+  })
 })

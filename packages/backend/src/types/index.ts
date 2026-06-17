@@ -345,6 +345,9 @@ export interface GroupMatchPrediction {
   readonly resultHomeGoals: number
   readonly resultAwayGoals: number
   readonly points: number
+  readonly matchPoints: number
+  readonly scorerBonusPoints: number
+  readonly scorerPickPlayerName: string | null
   readonly doubledByFavorite: boolean
 }
 

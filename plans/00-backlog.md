@@ -1,6 +1,6 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-06-16 (UX-035 kész: banner számolás 17:00 → 07:00 időablakkal, közös composable)
+> Utoljára frissítve: 2026-06-17 (UX-036 kész: Tippjeim tábla scorer/match-points oszlopokkal)
 
 ## Nyitott story-k
 
@@ -32,4 +32,4 @@
 
 ---
 
-**Haladás: 176 / 192 story kész** — Must Have: 32/32, Should Have: 143/150, Nice to Have: 0/5 (US-937, PUSH-003 won't do)
+**Haladás: 178 / 194 story kész** — Must Have: 32/32, Should Have: 146/152, Nice to Have: 0/5 (US-937, PUSH-003 won't do)

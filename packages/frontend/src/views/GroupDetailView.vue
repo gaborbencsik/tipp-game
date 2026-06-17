@@ -661,7 +661,10 @@
                 <th class="px-4 py-3">{{ $t('groupDetail.matchCol') }}</th>
                 <th class="px-4 py-3 text-center">{{ $t('groupDetail.tipCol') }}</th>
                 <th class="px-4 py-3 text-center">{{ $t('groupDetail.resultCol') }}</th>
-                <th class="px-4 py-3 text-right">{{ $t('groupDetail.pointCol') }}</th>
+                <th data-testid="my-pred-match-points-header" class="hidden md:table-cell px-4 py-3 text-right text-gray-400">{{ $t('groupDetail.matchPointCol') }}</th>
+                <th data-testid="my-pred-scorer-name-header" class="hidden md:table-cell px-4 py-3 text-center">{{ $t('groupDetail.scorerTipCol') }}</th>
+                <th data-testid="my-pred-scorer-points-header" class="hidden md:table-cell px-4 py-3 text-right text-gray-400">{{ $t('groupDetail.scorerPointCol') }}</th>
+                <th class="px-4 py-3 text-right">{{ $t('groupDetail.totalPointCol') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -670,6 +673,7 @@
                 :key="pred.predictionId"
                 data-testid="my-prediction-row"
                 class="border-b border-gray-100 last:border-0"
+                :class="myPredRowClass(pred)"
               >
                 <td class="px-4 py-3">
                   <div class="flex flex-col gap-0.5">
@@ -677,13 +681,23 @@
                     <span class="font-medium text-gray-800">{{ pred.homeTeam.shortCode }} – {{ pred.awayTeam.shortCode }}</span>
                   </div>
                 </td>
-                <td class="px-4 py-3 text-center text-gray-600 font-mono">{{ pred.homeGoals }}–{{ pred.awayGoals }}</td>
-                <td class="px-4 py-3 text-center text-gray-600 font-mono">{{ pred.resultHomeGoals }}–{{ pred.resultAwayGoals }}</td>
-                <td class="px-4 py-3 text-right">
+                <td data-testid="my-pred-tip" class="px-4 py-3 text-center font-mono" :class="myPredTipClass(pred)">{{ pred.homeGoals }}–{{ pred.awayGoals }}</td>
+                <td class="px-4 py-3 text-center text-gray-700 font-mono">{{ pred.resultHomeGoals }}–{{ pred.resultAwayGoals }}</td>
+                <td data-testid="my-pred-match-points" class="hidden md:table-cell px-4 py-3 text-right tabular-nums" :class="pred.matchPoints > 0 ? 'text-green-700 font-semibold' : 'text-gray-400'">
                   <div class="flex items-center justify-end gap-1">
-                    <span v-if="pred.doubledByFavorite" data-testid="double-badge" class="text-xs font-bold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">×2</span>
-                    <span class="font-bold" :class="pred.points > 0 ? 'text-blue-700' : 'text-gray-400'">{{ pred.points }}</span>
+                    <span v-if="pred.doubledByFavorite && pred.matchPoints > 0" data-testid="match-double-badge" class="text-xs font-bold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">×2</span>
+                    <span>{{ pred.matchPoints }}</span>
                   </div>
+                </td>
+                <td data-testid="my-pred-scorer-name" class="hidden md:table-cell px-4 py-3 text-center font-mono" :class="myPredScorerNameClass(pred)">{{ pred.scorerPickPlayerName ?? '—' }}</td>
+                <td data-testid="my-pred-scorer-points" class="hidden md:table-cell px-4 py-3 text-right tabular-nums" :class="pred.scorerBonusPoints > 0 ? 'text-green-700 font-semibold' : 'text-gray-400'">
+                  <div class="flex items-center justify-end gap-1">
+                    <span v-if="pred.doubledByFavorite && pred.scorerBonusPoints > 0" data-testid="scorer-double-badge" class="text-xs font-bold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">×2</span>
+                    <span>{{ pred.scorerBonusPoints }}</span>
+                  </div>
+                </td>
+                <td data-testid="my-pred-total-points" class="px-4 py-3 text-right">
+                  <span class="font-bold" :class="pred.points > 0 ? 'text-blue-700' : 'text-gray-400'">{{ pred.points }}</span>
                 </td>
               </tr>
             </tbody>
@@ -935,7 +949,7 @@ import { hasAnyLiveMatch } from '../composables/useLiveMatchPolling.js'
 import { useMatchEvents, type MatchUpdateEvent } from '../composables/useMatchEvents.js'
 import { api } from '../api/index.js'
 import { supabase } from '../lib/supabase.js'
-import type { GroupMember, LeaderboardEntry, ScoringConfigInput, SpecialPredictionOptions, SpecialTypeInput, StatPredictionTemplate, GlobalTypeWithSubscription, VirtualPointEntry } from '../types/index.js'
+import type { GroupMember, GroupMatchPrediction, LeaderboardEntry, ScoringConfigInput, SpecialPredictionOptions, SpecialTypeInput, StatPredictionTemplate, GlobalTypeWithSubscription, VirtualPointEntry } from '../types/index.js'
 import { getDateLocale } from '../lib/dateLocale.js'
 
 type Tab = 'leaderboard' | 'my-predictions' | 'members' | 'settings' | 'special'
@@ -952,6 +966,28 @@ async function getAccessToken(): Promise<string> {
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(getDateLocale(), { year: 'numeric', month: 'short', day: 'numeric' })
+}
+
+function isExactMatch(pred: GroupMatchPrediction): boolean {
+  return pred.homeGoals === pred.resultHomeGoals && pred.awayGoals === pred.resultAwayGoals
+}
+
+function myPredRowClass(pred: GroupMatchPrediction): string {
+  if (isExactMatch(pred)) return 'bg-green-50'
+  if (pred.matchPoints > 0) return 'bg-yellow-50'
+  return ''
+}
+
+function myPredTipClass(pred: GroupMatchPrediction): string {
+  if (isExactMatch(pred)) return 'text-green-700 font-bold'
+  if (pred.matchPoints > 0) return 'text-yellow-700 font-semibold'
+  return 'text-gray-500'
+}
+
+function myPredScorerNameClass(pred: GroupMatchPrediction): string {
+  if (pred.scorerPickPlayerName === null) return 'text-gray-400'
+  if (pred.scorerBonusPoints > 0) return 'text-green-700 font-bold'
+  return 'text-gray-500 line-through decoration-gray-300'
 }
 
 const route = useRoute()

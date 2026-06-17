@@ -1,7 +1,7 @@
 import { eq, and, isNull, desc, sql, inArray } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/pg-core'
 import { db } from '../db/client.js'
-import { predictions, matches, matchResults, teams, groups, groupMembers, groupPredictionPoints, userLeagueFavorites, groupLeagues } from '../db/schema/index.js'
+import { predictions, matches, matchResults, teams, players, groups, groupMembers, groupPredictionPoints, userLeagueFavorites, groupLeagues } from '../db/schema/index.js'
 import type { GroupMatchPrediction } from '../types/index.js'
 
 class AppError extends Error {
@@ -80,6 +80,9 @@ export async function getMyGroupPredictions(
       resultAwayGoals: matchResults.awayGoals,
       pointsGlobal: predictions.pointsGlobal,
       groupPoints: groupPredictionPoints.points,
+      scorerBonusPoints: predictions.scorerBonusPoints,
+      scorerPlayerNameSnapshot: predictions.scorerPlayerNameSnapshot,
+      playerShortName: players.shortName,
     })
     .from(predictions)
     .innerJoin(matches, and(eq(predictions.matchId, matches.id), eq(matches.status, 'finished'), isNull(matches.deletedAt)))
@@ -87,6 +90,7 @@ export async function getMyGroupPredictions(
     .innerJoin(awayTeam, eq(matches.awayTeamId, awayTeam.id))
     .innerJoin(matchResults, eq(matchResults.matchId, matches.id))
     .leftJoin(groupPredictionPoints, sql`${groupPredictionPoints.predictionId} = ${predictions.id} AND ${groupPredictionPoints.groupId} = ${groupId}::uuid`)
+    .leftJoin(players, eq(predictions.scorerPickPlayerId, players.id))
     .where(and(...whereConditions))
     .orderBy(desc(matches.scheduledAt))
 
@@ -100,6 +104,9 @@ export async function getMyGroupPredictions(
 
   const result: GroupMatchPrediction[] = rows.map(row => {
     const points = row.groupPoints ?? row.pointsGlobal ?? 0
+    const scorerBonusPoints = row.scorerBonusPoints ?? 0
+    const matchPoints = points - scorerBonusPoints
+    const scorerPickPlayerName = row.scorerPlayerNameSnapshot ?? row.playerShortName ?? null
 
     let doubledByFavorite = false
     if (favoriteTeamDoublePoints && row.leagueId) {
@@ -120,6 +127,9 @@ export async function getMyGroupPredictions(
       resultHomeGoals: row.resultHomeGoals,
       resultAwayGoals: row.resultAwayGoals,
       points,
+      matchPoints,
+      scorerBonusPoints,
+      scorerPickPlayerName,
       doubledByFavorite,
     }
   })

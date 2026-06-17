@@ -19,10 +19,11 @@ vi.mock('../src/db/client.js', () => ({
 }))
 
 vi.mock('../src/db/schema/index.js', () => ({
-  predictions: { id: 'predictions.id', userId: 'predictions.userId', matchId: 'predictions.matchId', homeGoals: 'predictions.homeGoals', awayGoals: 'predictions.awayGoals', pointsGlobal: 'predictions.pointsGlobal' },
+  predictions: { id: 'predictions.id', userId: 'predictions.userId', matchId: 'predictions.matchId', homeGoals: 'predictions.homeGoals', awayGoals: 'predictions.awayGoals', pointsGlobal: 'predictions.pointsGlobal', scorerBonusPoints: 'predictions.scorerBonusPoints', scorerPickPlayerId: 'predictions.scorerPickPlayerId', scorerPlayerNameSnapshot: 'predictions.scorerPlayerNameSnapshot' },
   matches: { id: 'matches.id', homeTeamId: 'matches.homeTeamId', awayTeamId: 'matches.awayTeamId', leagueId: 'matches.leagueId', scheduledAt: 'matches.scheduledAt', status: 'matches.status', deletedAt: 'matches.deletedAt' },
   matchResults: { matchId: 'matchResults.matchId', homeGoals: 'matchResults.homeGoals', awayGoals: 'matchResults.awayGoals' },
   teams: { id: 'teams.id', name: 'teams.name', shortCode: 'teams.shortCode', flagUrl: 'teams.flagUrl' },
+  players: { id: 'players.id', shortName: 'players.shortName' },
   groups: { id: 'groups.id', favoriteTeamDoublePoints: 'groups.favoriteTeamDoublePoints', deletedAt: 'groups.deletedAt' },
   groupMembers: { id: 'groupMembers.id', groupId: 'groupMembers.groupId', userId: 'groupMembers.userId' },
   groupPredictionPoints: { predictionId: 'gpp.predictionId', groupId: 'gpp.groupId', points: 'gpp.points' },
@@ -215,5 +216,57 @@ describe('getMyGroupPredictions', () => {
     ] })
     const result = await getMyGroupPredictions(GROUP_ID, USER_ID)
     expect(result.totalPoints).toBe(3)
+  })
+
+  it('returns scorer fields with snapshot name when scorerBonusPoints=1', async () => {
+    setupCalls({ groupExists: true, flag: false, predictionRows: [{
+      predictionId: 'pred-1', matchId: 'match-1',
+      scheduledAt: new Date('2026-06-14T18:00:00Z'), leagueId: null,
+      homeTeamId: 'team-h', awayTeamId: 'team-a',
+      homeTeamName: 'Hungary', homeTeamShortCode: 'HUN', homeTeamFlagUrl: null,
+      awayTeamName: 'France', awayTeamShortCode: 'FRA', awayTeamFlagUrl: null,
+      predHomeGoals: 2, predAwayGoals: 1, resultHomeGoals: 2, resultAwayGoals: 1,
+      pointsGlobal: 4, groupPoints: null,
+      scorerBonusPoints: 1, scorerPlayerNameSnapshot: 'M. Salah', playerShortName: 'Salah',
+    }] })
+    const result = await getMyGroupPredictions(GROUP_ID, USER_ID)
+    expect(result.predictions[0]!.scorerBonusPoints).toBe(1)
+    expect(result.predictions[0]!.scorerPickPlayerName).toBe('M. Salah')
+    expect(result.predictions[0]!.matchPoints).toBe(3)
+    expect(result.predictions[0]!.points).toBe(4)
+  })
+
+  it('falls back to current player short name when snapshot is null', async () => {
+    setupCalls({ groupExists: true, flag: false, predictionRows: [{
+      predictionId: 'pred-1', matchId: 'match-1',
+      scheduledAt: new Date('2026-06-14T18:00:00Z'), leagueId: null,
+      homeTeamId: 'team-h', awayTeamId: 'team-a',
+      homeTeamName: 'Hungary', homeTeamShortCode: 'HUN', homeTeamFlagUrl: null,
+      awayTeamName: 'France', awayTeamShortCode: 'FRA', awayTeamFlagUrl: null,
+      predHomeGoals: 2, predAwayGoals: 1, resultHomeGoals: 2, resultAwayGoals: 1,
+      pointsGlobal: 3, groupPoints: null,
+      scorerBonusPoints: 0, scorerPlayerNameSnapshot: null, playerShortName: 'Mbappé',
+    }] })
+    const result = await getMyGroupPredictions(GROUP_ID, USER_ID)
+    expect(result.predictions[0]!.scorerPickPlayerName).toBe('Mbappé')
+    expect(result.predictions[0]!.scorerBonusPoints).toBe(0)
+    expect(result.predictions[0]!.matchPoints).toBe(3)
+  })
+
+  it('returns null scorerPickPlayerName when both snapshot and player are null', async () => {
+    setupCalls({ groupExists: true, flag: false, predictionRows: [{
+      predictionId: 'pred-1', matchId: 'match-1',
+      scheduledAt: new Date('2026-06-14T18:00:00Z'), leagueId: null,
+      homeTeamId: 'team-h', awayTeamId: 'team-a',
+      homeTeamName: 'Hungary', homeTeamShortCode: 'HUN', homeTeamFlagUrl: null,
+      awayTeamName: 'France', awayTeamShortCode: 'FRA', awayTeamFlagUrl: null,
+      predHomeGoals: 2, predAwayGoals: 1, resultHomeGoals: 2, resultAwayGoals: 1,
+      pointsGlobal: 0, groupPoints: null,
+      scorerBonusPoints: null, scorerPlayerNameSnapshot: null, playerShortName: null,
+    }] })
+    const result = await getMyGroupPredictions(GROUP_ID, USER_ID)
+    expect(result.predictions[0]!.scorerPickPlayerName).toBeNull()
+    expect(result.predictions[0]!.scorerBonusPoints).toBe(0)
+    expect(result.predictions[0]!.matchPoints).toBe(0)
   })
 })

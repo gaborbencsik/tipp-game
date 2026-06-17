@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 176 story kész (Must Have: 32/32, Should Have: 143/143)
+> 177 story kész (Must Have: 32/32, Should Have: 144/144)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -180,3 +180,5 @@
 | US-1314 | Játékos rövid név megjelenítése a UI-on (`short_name` használata) | Should Have |
 | UX-034 | Ranglista oszlopok újrarendezése – Arány, bontások, Torna pont | Should Have |
 | UX-035 | Mérkőzések banner – hiányzó tippek számolása a 17:00 → 07:00 időablakkal | Should Have |
+| OPS-011 | Tick handler – push és player sync függetlenítése a futball sync gate-től | Should Have |
+| UX-036 | Csoport Tippjeim tábla – gólszerző tipp, gólszerző pont és összes pont oszlopok | Should Have |
