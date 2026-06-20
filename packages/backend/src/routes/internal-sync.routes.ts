@@ -7,6 +7,8 @@ import { syncAllMatchOdds } from '../services/polymarket.service.js'
 import { syncPlayers } from '../services/player-sync.service.js'
 import { syncTransfermarktValues } from '../services/transfermarkt.service.js'
 import { buildConfig, createFootballApiClient } from '../services/football-api.service.js'
+import { runMatchKickoffReminderJob } from '../jobs/match-kickoff-reminder.job.js'
+import { runDailyReviewIfDueWindow } from '../jobs/daily-match-review.job.js'
 
 const internalSyncRouter = new Router({ prefix: '/api/internal/sync' })
 
@@ -40,12 +42,27 @@ async function runPlayerSyncIfDue(): Promise<PlayerSyncOutcome> {
   return { synced: true, result }
 }
 
+async function safeRun<T>(fn: () => Promise<T>): Promise<T | { error: string }> {
+  try {
+    return await fn()
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : String(err) }
+  }
+}
+
 internalSyncRouter.post('/tick', async (ctx) => {
+  // Push and player sync run on every tick, independent of the football sync
+  // gate and daily API quota. Each is wrapped in safeRun so a failure in one
+  // does not affect the others or the football sync below.
+  const kickoffReminder = await safeRun(() => runMatchKickoffReminderJob())
+  const dailyReview = await safeRun(() => runDailyReviewIfDueWindow(new Date()))
+  const playerSync = await safeRun(() => runPlayerSyncIfDue())
+
   const state = await getSyncState()
 
   const limit = Number(process.env['FOOTBALL_API_DAILY_LIMIT'] ?? '100')
   if (state.apiCallsToday >= limit) {
-    ctx.body = { skipped: true, reason: 'daily api limit reached' }
+    ctx.body = { skipped: true, reason: 'daily api limit reached', kickoffReminder, dailyReview, playerSync }
     return
   }
 
@@ -53,13 +70,13 @@ internalSyncRouter.post('/tick', async (ctx) => {
   const decision = shouldRunSync(state.mode, state.lastSuccessfulSyncAt, hasLive, new Date())
 
   if (!decision.run) {
-    ctx.body = { skipped: true, reason: decision.reason }
+    ctx.body = { skipped: true, reason: decision.reason, kickoffReminder, dailyReview, playerSync }
     return
   }
 
   const claimed = await markSyncStarted()
   if (!claimed) {
-    ctx.body = { skipped: true, reason: 'sync already in progress' }
+    ctx.body = { skipped: true, reason: 'sync already in progress', kickoffReminder, dailyReview, playerSync }
     return
   }
 
@@ -68,15 +85,7 @@ internalSyncRouter.post('/tick', async (ctx) => {
     const totalApiCalls = results.length * 2
     await markSyncFinished(true)
     await incrementApiCalls(totalApiCalls)
-
-    let playerSync: PlayerSyncOutcome
-    try {
-      playerSync = await runPlayerSyncIfDue()
-    } catch (err) {
-      playerSync = { error: err instanceof Error ? err.message : String(err) }
-    }
-
-    ctx.body = { synced: true, results, playerSync }
+    ctx.body = { synced: true, results, kickoffReminder, dailyReview, playerSync }
   } catch (err) {
     await markSyncFinished(false)
     throw err

@@ -204,3 +204,38 @@ export async function runDailyMatchReviewJob(now: Date = new Date()): Promise<Da
     durationMs,
   }
 }
+
+// Trigger window for the daily review push: 12:00 .. 12:04 Budapest local time.
+// Called every minute by the /tick handler; the pushNotificationLog
+// (user_id, type, scope_key=date) unique constraint guards against duplicate
+// sends within the window.
+const DAILY_REVIEW_TRIGGER_HOUR_BUDAPEST = 12
+const DAILY_REVIEW_WINDOW_MINUTES = 5
+
+function budapestHourAndMinute(date: Date): { hour: number; minute: number } {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: TIMEZONE,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(date)
+  const get = (t: string): string => parts.find(p => p.type === t)?.value ?? '0'
+  // Budapest never reports hour 24 in practice; normalise just in case.
+  const hour = Number.parseInt(get('hour'), 10) % 24
+  const minute = Number.parseInt(get('minute'), 10)
+  return { hour, minute }
+}
+
+export type DailyReviewIfDueWindowResult =
+  | DailyMatchReviewJobResult
+  | { skipped: true; reason: string }
+
+export async function runDailyReviewIfDueWindow(
+  now: Date = new Date(),
+): Promise<DailyReviewIfDueWindowResult> {
+  const { hour, minute } = budapestHourAndMinute(now)
+  if (hour !== DAILY_REVIEW_TRIGGER_HOUR_BUDAPEST || minute >= DAILY_REVIEW_WINDOW_MINUTES) {
+    return { skipped: true, reason: 'not in trigger window' }
+  }
+  return runDailyMatchReviewJob(now)
+}

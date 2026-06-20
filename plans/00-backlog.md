@@ -1,6 +1,6 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-06-17 (UX-036 kész: Tippjeim tábla scorer/match-points oszlopokkal)
+> Utoljára frissítve: 2026-06-20 (OPS-011 kész: tick handler push/player sync függetlenítve a sync gate-től)
 
 ## Nyitott story-k
 

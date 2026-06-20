@@ -63,6 +63,20 @@ vi.mock('../src/middleware/service-token.middleware.js', () => ({
   serviceTokenMiddleware: mockServiceTokenMiddleware,
 }))
 
+const { mockRunMatchKickoffReminderJob, mockRunDailyReviewIfDueWindow } = vi.hoisted(() => ({
+  mockRunMatchKickoffReminderJob: vi.fn(),
+  mockRunDailyReviewIfDueWindow: vi.fn(),
+}))
+
+vi.mock('../src/jobs/match-kickoff-reminder.job.js', () => ({
+  runMatchKickoffReminderJob: mockRunMatchKickoffReminderJob,
+}))
+
+vi.mock('../src/jobs/daily-match-review.job.js', () => ({
+  runDailyMatchReviewJob: vi.fn(),
+  runDailyReviewIfDueWindow: mockRunDailyReviewIfDueWindow,
+}))
+
 import { internalSyncRouter } from '../src/routes/internal-sync.routes.js'
 
 function getHandler(path: string): (ctx: any, next: () => Promise<void>) => Promise<void> {
@@ -96,6 +110,8 @@ describe('POST /api/internal/sync/tick', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     delete process.env['FOOTBALL_API_DAILY_LIMIT']
+    mockRunMatchKickoffReminderJob.mockResolvedValue({ matchesProcessed: 0, sent: 0, failed: 0, durationMs: 1 })
+    mockRunDailyReviewIfDueWindow.mockResolvedValue({ skipped: true, reason: 'not in trigger window' })
   })
 
   afterEach(() => {
@@ -115,7 +131,7 @@ describe('POST /api/internal/sync/tick', () => {
     const ctx: Record<string, unknown> = { body: undefined }
     await getTickHandler()(ctx, async () => {})
 
-    expect(ctx.body).toEqual({ skipped: true, reason: 'sync disabled' })
+    expect(ctx.body).toEqual(expect.objectContaining({ skipped: true, reason: 'sync disabled' }))
     expect(mockRunAllLeagues).not.toHaveBeenCalled()
   })
 
@@ -128,7 +144,7 @@ describe('POST /api/internal/sync/tick', () => {
     const ctx: Record<string, unknown> = { body: undefined }
     await getTickHandler()(ctx, async () => {})
 
-    expect(ctx.body).toEqual({ skipped: true, reason: 'daily api limit reached' })
+    expect(ctx.body).toEqual(expect.objectContaining({ skipped: true, reason: 'daily api limit reached' }))
   })
 
   it('skips when interval not elapsed', async () => {
@@ -154,7 +170,7 @@ describe('POST /api/internal/sync/tick', () => {
     const ctx: Record<string, unknown> = { body: undefined }
     await getTickHandler()(ctx, async () => {})
 
-    expect(ctx.body).toEqual({ skipped: true, reason: 'sync already in progress' })
+    expect(ctx.body).toEqual(expect.objectContaining({ skipped: true, reason: 'sync already in progress' }))
   })
 
   it('runs sync when all gates pass', async () => {
@@ -251,5 +267,126 @@ describe('POST /api/internal/sync/tick', () => {
 
     expect((ctx.body as any).synced).toBe(true)
     expect((ctx.body as any).playerSync).toEqual({ error: 'player API timeout' })
+  })
+
+  describe('push and player sync independence from football sync gate', () => {
+    it('runs push and player sync even when sync mode is off', async () => {
+      mockGetSyncState.mockResolvedValue({
+        ...BASE_STATE, mode: 'off', lastSuccessfulSyncAt: null, apiCallsToday: 0, apiCallsDate: null,
+        playerSyncEnabled: true, lastPlayerSyncAt: null,
+      })
+      mockSyncPlayers.mockResolvedValue({ inserted: 0, updated: 0, statsUpserted: 0, skipped: 0, errors: [] })
+
+      const ctx: Record<string, unknown> = { body: undefined }
+      await getTickHandler()(ctx, async () => {})
+
+      expect(mockRunMatchKickoffReminderJob).toHaveBeenCalled()
+      expect(mockRunDailyReviewIfDueWindow).toHaveBeenCalled()
+      expect(mockSyncPlayers).toHaveBeenCalled()
+      expect((ctx.body as any).skipped).toBe(true)
+      expect((ctx.body as any).reason).toBe('sync disabled')
+      expect((ctx.body as any).kickoffReminder).toBeDefined()
+      expect((ctx.body as any).dailyReview).toBeDefined()
+      expect((ctx.body as any).playerSync).toBeDefined()
+    })
+
+    it('runs push and player sync when daily API limit reached', async () => {
+      process.env['FOOTBALL_API_DAILY_LIMIT'] = '50'
+      mockGetSyncState.mockResolvedValue({
+        ...BASE_STATE, lastSuccessfulSyncAt: null, apiCallsToday: 50,
+        playerSyncEnabled: true, lastPlayerSyncAt: null,
+      })
+      mockSyncPlayers.mockResolvedValue({ inserted: 0, updated: 0, statsUpserted: 0, skipped: 0, errors: [] })
+
+      const ctx: Record<string, unknown> = { body: undefined }
+      await getTickHandler()(ctx, async () => {})
+
+      expect(mockRunMatchKickoffReminderJob).toHaveBeenCalled()
+      expect(mockRunDailyReviewIfDueWindow).toHaveBeenCalled()
+      expect(mockSyncPlayers).toHaveBeenCalled()
+      expect((ctx.body as any).skipped).toBe(true)
+      expect((ctx.body as any).reason).toBe('daily api limit reached')
+    })
+
+    it('runs push and player sync when sync interval has not elapsed', async () => {
+      mockGetSyncState.mockResolvedValue({
+        ...BASE_STATE, mode: 'final_only', lastSuccessfulSyncAt: new Date(), apiCallsToday: 0,
+        playerSyncEnabled: true, lastPlayerSyncAt: null,
+      })
+      mockHasLiveMatch.mockResolvedValue(false)
+      mockSyncPlayers.mockResolvedValue({ inserted: 0, updated: 0, statsUpserted: 0, skipped: 0, errors: [] })
+
+      const ctx: Record<string, unknown> = { body: undefined }
+      await getTickHandler()(ctx, async () => {})
+
+      expect(mockRunMatchKickoffReminderJob).toHaveBeenCalled()
+      expect(mockRunDailyReviewIfDueWindow).toHaveBeenCalled()
+      expect(mockSyncPlayers).toHaveBeenCalled()
+      expect((ctx.body as any).skipped).toBe(true)
+    })
+
+    it('runs push and player sync when another sync is already in progress', async () => {
+      mockGetSyncState.mockResolvedValue({
+        ...BASE_STATE, mode: 'full_live', lastSuccessfulSyncAt: new Date(Date.now() - 5 * 60 * 1000), apiCallsToday: 0,
+        playerSyncEnabled: true, lastPlayerSyncAt: null,
+      })
+      mockHasLiveMatch.mockResolvedValue(false)
+      mockMarkSyncStarted.mockResolvedValue(false)
+      mockSyncPlayers.mockResolvedValue({ inserted: 0, updated: 0, statsUpserted: 0, skipped: 0, errors: [] })
+
+      const ctx: Record<string, unknown> = { body: undefined }
+      await getTickHandler()(ctx, async () => {})
+
+      expect(mockRunMatchKickoffReminderJob).toHaveBeenCalled()
+      expect(mockRunDailyReviewIfDueWindow).toHaveBeenCalled()
+      expect(mockSyncPlayers).toHaveBeenCalled()
+      expect((ctx.body as any).skipped).toBe(true)
+      expect((ctx.body as any).reason).toBe('sync already in progress')
+    })
+
+    it('exposes kickoffReminder and dailyReview in success body', async () => {
+      mockRunMatchKickoffReminderJob.mockResolvedValue({ matchesProcessed: 2, sent: 3, failed: 0, durationMs: 12 })
+      mockRunDailyReviewIfDueWindow.mockResolvedValue({ date: '2026-06-15', firstMatchId: 'm-1', targetCount: 5, sent: 5, failed: 0, durationMs: 8 })
+      mockGetSyncState.mockResolvedValue({ ...BASE_STATE })
+      mockHasLiveMatch.mockResolvedValue(false)
+      mockMarkSyncStarted.mockResolvedValue(true)
+      mockRunAllLeagues.mockResolvedValue([])
+
+      const ctx: Record<string, unknown> = { body: undefined }
+      await getTickHandler()(ctx, async () => {})
+
+      expect((ctx.body as any).synced).toBe(true)
+      expect((ctx.body as any).kickoffReminder).toEqual({ matchesProcessed: 2, sent: 3, failed: 0, durationMs: 12 })
+      expect((ctx.body as any).dailyReview).toEqual({ date: '2026-06-15', firstMatchId: 'm-1', targetCount: 5, sent: 5, failed: 0, durationMs: 8 })
+    })
+
+    it('isolates kickoff reminder errors from the rest of the tick', async () => {
+      mockRunMatchKickoffReminderJob.mockRejectedValue(new Error('reminder boom'))
+      mockGetSyncState.mockResolvedValue({ ...BASE_STATE })
+      mockHasLiveMatch.mockResolvedValue(false)
+      mockMarkSyncStarted.mockResolvedValue(true)
+      mockRunAllLeagues.mockResolvedValue([])
+
+      const ctx: Record<string, unknown> = { body: undefined }
+      await getTickHandler()(ctx, async () => {})
+
+      expect((ctx.body as any).synced).toBe(true)
+      expect((ctx.body as any).kickoffReminder).toEqual({ error: 'reminder boom' })
+      expect((ctx.body as any).dailyReview).toBeDefined()
+    })
+
+    it('isolates daily review errors from the rest of the tick', async () => {
+      mockRunDailyReviewIfDueWindow.mockRejectedValue(new Error('daily review boom'))
+      mockGetSyncState.mockResolvedValue({ ...BASE_STATE })
+      mockHasLiveMatch.mockResolvedValue(false)
+      mockMarkSyncStarted.mockResolvedValue(true)
+      mockRunAllLeagues.mockResolvedValue([])
+
+      const ctx: Record<string, unknown> = { body: undefined }
+      await getTickHandler()(ctx, async () => {})
+
+      expect((ctx.body as any).synced).toBe(true)
+      expect((ctx.body as any).dailyReview).toEqual({ error: 'daily review boom' })
+    })
   })
 })

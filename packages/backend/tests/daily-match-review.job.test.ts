@@ -45,6 +45,7 @@ vi.mock('../src/services/push-settings.service.js', () => ({
 }))
 
 import { runDailyMatchReviewJob } from '../src/jobs/daily-match-review.job.js'
+import { runDailyReviewIfDueWindow } from '../src/jobs/daily-match-review.job.js'
 
 interface MatchRow { id: string; scheduledAt: Date }
 interface UserRow { id: string; missingCount: number }
@@ -212,5 +213,55 @@ describe('runDailyMatchReviewJob', () => {
     expect(result.sent).toBe(0)
     expect(result.targetCount).toBe(0)
     expect(mockSendToUser).not.toHaveBeenCalled()
+  })
+})
+
+describe('runDailyReviewIfDueWindow', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockSendToUser.mockResolvedValue(undefined)
+  })
+
+  // Trigger window: 12:00 .. 12:04 Budapest (CEST in summer = UTC+2)
+  // 12:00 Budapest CEST == 10:00 UTC
+  it('runs the daily review job when now is exactly 12:00 Budapest', async () => {
+    setMatchesQuery([])
+    const result = await runDailyReviewIfDueWindow(new Date('2026-06-15T10:00:00Z'))
+    expect('skipped' in result && result.skipped).not.toBe(true)
+  })
+
+  it('runs the daily review job when now is 12:04 Budapest', async () => {
+    setMatchesQuery([])
+    const result = await runDailyReviewIfDueWindow(new Date('2026-06-15T10:04:00Z'))
+    expect('skipped' in result && result.skipped).not.toBe(true)
+  })
+
+  it('skips when now is 12:05 Budapest (just past the window)', async () => {
+    const result = await runDailyReviewIfDueWindow(new Date('2026-06-15T10:05:00Z'))
+    expect(result).toEqual({ skipped: true, reason: 'not in trigger window' })
+    expect(mockSelect).not.toHaveBeenCalled()
+  })
+
+  it('skips when now is 11:59 Budapest (just before the window)', async () => {
+    const result = await runDailyReviewIfDueWindow(new Date('2026-06-15T09:59:00Z'))
+    expect(result).toEqual({ skipped: true, reason: 'not in trigger window' })
+    expect(mockSelect).not.toHaveBeenCalled()
+  })
+
+  it('skips when now is 09:30 Budapest (different hour)', async () => {
+    const result = await runDailyReviewIfDueWindow(new Date('2026-06-15T07:30:00Z'))
+    expect(result).toEqual({ skipped: true, reason: 'not in trigger window' })
+  })
+
+  // Winter: 12:00 Budapest CET (UTC+1) == 11:00 UTC
+  it('runs in the trigger window in winter time (CET, UTC+1)', async () => {
+    setMatchesQuery([])
+    const result = await runDailyReviewIfDueWindow(new Date('2026-12-15T11:00:00Z'))
+    expect('skipped' in result && result.skipped).not.toBe(true)
+  })
+
+  it('skips at 12:05 Budapest in winter time', async () => {
+    const result = await runDailyReviewIfDueWindow(new Date('2026-12-15T11:05:00Z'))
+    expect(result).toEqual({ skipped: true, reason: 'not in trigger window' })
   })
 })
