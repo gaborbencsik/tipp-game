@@ -5,6 +5,7 @@ const {
   mockUserFrom, mockUserWhere, mockUserLimit,
   mockSubFrom, mockSubWhere,
   mockCountFrom, mockCountWhere,
+  mockDedupFrom, mockDedupWhere, mockDedupLimit,
   mockInsertValues, mockOnConflict,
   mockUpdateSet, mockUpdateWhere,
   mockSendNotification, mockSetVapidDetails,
@@ -19,6 +20,9 @@ const {
   mockSubWhere: vi.fn(),
   mockCountFrom: vi.fn(),
   mockCountWhere: vi.fn(),
+  mockDedupFrom: vi.fn(),
+  mockDedupWhere: vi.fn(),
+  mockDedupLimit: vi.fn(),
   mockInsertValues: vi.fn(),
   mockOnConflict: vi.fn(() => Promise.resolve()),
   mockUpdateSet: vi.fn(),
@@ -47,6 +51,7 @@ vi.mock('../src/db/schema/index.js', () => ({
     lastUsedAt: 'ps.lastUsedAt',
   },
   pushNotificationLog: {
+    id: 'pnl.id',
     userId: 'pnl.userId',
     type: 'pnl.type',
     scopeKey: 'pnl.scopeKey',
@@ -90,10 +95,12 @@ function setupHarness(opts: {
   userPushEnabled?: boolean | null
   subs?: Array<typeof SUB>
   recentCount?: number
+  alreadySent?: boolean
 } = {}) {
   const userPushEnabled = 'userPushEnabled' in opts ? opts.userPushEnabled : true
   const subs = opts.subs ?? [SUB]
   const recentCount = opts.recentCount ?? 0
+  const alreadySent = opts.alreadySent ?? false
 
   // user select chain: select().from(users).where(...).limit(1)
   mockUserLimit.mockResolvedValue(userPushEnabled === null ? [] : [{ pushEnabled: userPushEnabled }])
@@ -104,19 +111,29 @@ function setupHarness(opts: {
   mockCountWhere.mockResolvedValue([{ c: recentCount }])
   mockCountFrom.mockReturnValue({ where: mockCountWhere })
 
+  // dedup select chain: select({id}).from(pushNotificationLog).where(...).limit(1)
+  mockDedupLimit.mockResolvedValue(alreadySent ? [{ id: 'prev-log-id' }] : [])
+  mockDedupWhere.mockReturnValue({ limit: mockDedupLimit })
+  mockDedupFrom.mockReturnValue({ where: mockDedupWhere })
+
   // subs select chain: select().from(pushSubscriptions).where(...) -> resolves
   mockSubWhere.mockResolvedValue(subs)
   mockSubFrom.mockReturnValue({ where: mockSubWhere })
 
-  // select() routing — must return the correct chain by call order:
-  // 1) users, 2) (rate-limit count) | (subs), 3) subs (after rate-limit)
-  // We track call index and pick the right `from` by which table is requested.
+  // select() routing — pick chain by the shape of the projection arg:
+  //   { c: ... }          → rate-limit count
+  //   { pushEnabled }     → user lookup
+  //   { id } on log table → dedup pre-send check
+  //   no arg              → subscriptions
   mockSelect.mockImplementation((arg?: unknown) => {
     if (arg && typeof arg === 'object' && 'c' in (arg as object)) {
       return { from: mockCountFrom }
     }
     if (arg && typeof arg === 'object' && 'pushEnabled' in (arg as object)) {
       return { from: mockUserFrom }
+    }
+    if (arg && typeof arg === 'object' && 'id' in (arg as object) && Object.keys(arg as object).length === 1) {
+      return { from: mockDedupFrom }
     }
     return { from: mockSubFrom }
   })
@@ -288,6 +305,56 @@ describe('webpush.service', () => {
       await expect(sendToUser(USER_ID, PAYLOAD, { now: dayTimeBudapest })).rejects.toBe(err)
       const setCalls = mockUpdateSet.mock.calls.map(c => c[0])
       expect(setCalls.some(s => s && typeof s === 'object' && 'deletedAt' in s)).toBe(false)
+    })
+
+    describe('scope-key deduplication', () => {
+      it('skips when a prior successful send exists for the same (userId, type, scopeKey)', async () => {
+        setupHarness({ alreadySent: true })
+
+        await sendToUser(USER_ID, PAYLOAD, {
+          now: dayTimeBudapest,
+          type: 'match_kickoff_reminder',
+          scopeKey: 'match-abc',
+        })
+
+        expect(mockSendNotification).not.toHaveBeenCalled()
+      })
+
+      it('does not write a new log entry when skipping a duplicate scoped send', async () => {
+        setupHarness({ alreadySent: true })
+
+        await sendToUser(USER_ID, PAYLOAD, {
+          now: dayTimeBudapest,
+          type: 'match_kickoff_reminder',
+          scopeKey: 'match-abc',
+        })
+
+        expect(mockInsertValues).not.toHaveBeenCalled()
+      })
+
+      it('still sends when scopeKey is null (no dedup applies)', async () => {
+        setupHarness({ alreadySent: true })
+
+        await sendToUser(USER_ID, PAYLOAD, {
+          now: dayTimeBudapest,
+          type: 'admin_broadcast',
+          scopeKey: null,
+        })
+
+        expect(mockSendNotification).toHaveBeenCalledTimes(1)
+      })
+
+      it('sends when no prior send exists for the scope', async () => {
+        setupHarness({ alreadySent: false })
+
+        await sendToUser(USER_ID, PAYLOAD, {
+          now: dayTimeBudapest,
+          type: 'match_kickoff_reminder',
+          scopeKey: 'match-abc',
+        })
+
+        expect(mockSendNotification).toHaveBeenCalledTimes(1)
+      })
     })
   })
 })

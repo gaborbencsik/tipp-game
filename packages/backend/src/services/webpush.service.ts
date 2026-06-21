@@ -105,6 +105,24 @@ async function countRecentSends(userId: string, now: Date): Promise<number> {
   return Number(rows[0]?.c ?? 0)
 }
 
+async function hasPriorSuccessfulSend(
+  userId: string,
+  type: PushNotificationType,
+  scopeKey: string,
+): Promise<boolean> {
+  const rows = await db
+    .select({ id: pushNotificationLog.id })
+    .from(pushNotificationLog)
+    .where(and(
+      eq(pushNotificationLog.userId, userId),
+      eq(pushNotificationLog.type, type),
+      eq(pushNotificationLog.scopeKey, scopeKey),
+      isNull(pushNotificationLog.skippedReason),
+    ))
+    .limit(1)
+  return rows.length > 0
+}
+
 export async function sendToUser(
   userId: string,
   payload: IPushPayload,
@@ -129,6 +147,11 @@ export async function sendToUser(
   if (!userRows[0].pushEnabled) {
     logger.debug('push skipped', { userId, type, scopeKey, reason: 'push_disabled' })
     await logEntry({ userId, type, scopeKey, endpoint: null, skippedReason: 'push_disabled' })
+    return
+  }
+
+  if (scopeKey && await hasPriorSuccessfulSend(userId, type, scopeKey)) {
+    logger.debug('push skipped: already sent for scope', { userId, type, scopeKey })
     return
   }
 
