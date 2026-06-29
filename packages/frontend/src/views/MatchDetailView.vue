@@ -117,37 +117,37 @@
             </div>
 
             <!-- Outcome selector egyenes kieséses meccseknél döntetlen tipp esetén -->
-            <div v-if="showOutcomeSelector" class="mt-3 flex flex-col gap-1 items-center">
-              <div class="flex gap-1">
-                <span class="text-xs text-gray-400 w-20 text-right self-center">{{ $t('matches.extraTimeShort') }}</span>
-                <button
-                  type="button"
-                  class="text-xs px-2 py-1 rounded border transition-colors"
-                  :class="draftOutcome === 'extra_time_home' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'"
-                  @click="setOutcome('extra_time_home')"
-                >{{ $t('matches.homeWin') }}</button>
-                <button
-                  type="button"
-                  class="text-xs px-2 py-1 rounded border transition-colors"
-                  :class="draftOutcome === 'extra_time_away' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'"
-                  @click="setOutcome('extra_time_away')"
-                >{{ $t('matches.awayWin') }}</button>
-              </div>
-              <div class="flex gap-1">
-                <span class="text-xs text-gray-400 w-20 text-right self-center">{{ $t('matches.penaltyShort') }}</span>
-                <button
-                  type="button"
-                  class="text-xs px-2 py-1 rounded border transition-colors"
-                  :class="draftOutcome === 'penalties_home' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'"
-                  @click="setOutcome('penalties_home')"
-                >{{ $t('matches.homeWin') }}</button>
-                <button
-                  type="button"
-                  class="text-xs px-2 py-1 rounded border transition-colors"
-                  :class="draftOutcome === 'penalties_away' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'"
-                  @click="setOutcome('penalties_away')"
-                >{{ $t('matches.awayWin') }}</button>
-              </div>
+            <div v-if="showOutcomeSelector" class="mt-3 grid grid-cols-[auto_auto_auto] gap-x-1 gap-y-1 items-center justify-center">
+              <span class="text-xs text-gray-400 text-right self-center whitespace-nowrap">{{ $t('matches.outcomeLabel') }}</span>
+              <button
+                type="button"
+                class="text-xs px-2 py-1 rounded border transition-colors whitespace-nowrap"
+                :class="outcomeKind === 'extra_time' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'"
+                data-testid="outcome-kind-extra-time"
+                @click="setOutcomeKind('extra_time')"
+              >{{ $t('matches.outcomeExtraTime') }}</button>
+              <button
+                type="button"
+                class="text-xs px-2 py-1 rounded border transition-colors whitespace-nowrap"
+                :class="outcomeKind === 'penalties' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'"
+                data-testid="outcome-kind-penalties"
+                @click="setOutcomeKind('penalties')"
+              >{{ $t('matches.outcomePenalties') }}</button>
+              <span class="text-xs text-gray-400 text-right self-center whitespace-nowrap">{{ $t('matches.advancerLabel') }}</span>
+              <button
+                type="button"
+                class="text-xs px-2 py-1 rounded border transition-colors whitespace-nowrap"
+                :class="outcomeAdvancer === 'home' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'"
+                data-testid="outcome-advancer-home"
+                @click="setOutcomeAdvancer('home')"
+              ><TeamBadge :team="{ ...match.homeTeam, name: match.homeTeam.shortCode }" /></button>
+              <button
+                type="button"
+                class="text-xs px-2 py-1 rounded border transition-colors whitespace-nowrap"
+                :class="outcomeAdvancer === 'away' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'"
+                data-testid="outcome-advancer-away"
+                @click="setOutcomeAdvancer('away')"
+              ><TeamBadge :team="{ ...match.awayTeam, name: match.awayTeam.shortCode }" /></button>
             </div>
 
             <div class="mt-3 pt-3 border-t border-gray-100">
@@ -332,7 +332,7 @@ const blurredOdds = computed((): MatchOdds | null => {
 })
 let autosaveTimer: ReturnType<typeof setTimeout> | null = null
 
-const KNOCKOUT_STAGES: readonly MatchStage[] = ['round_of_16', 'quarter_final', 'semi_final', 'third_place', 'final']
+const KNOCKOUT_STAGES: readonly MatchStage[] = ['round_of_32', 'round_of_16', 'quarter_final', 'semi_final', 'third_place', 'final']
 
 const matchId = computed(() => route.params.id as string)
 const isRevealed = computed((): boolean => insightsRevealStore.isRevealed(matchId.value))
@@ -426,10 +426,53 @@ const showOutcomeSelector = computed((): boolean => {
   return draftGoals.value.home != null && draftGoals.value.away != null && draftGoals.value.home === draftGoals.value.away
 })
 
-function setOutcome(outcome: MatchOutcome): void {
-  draftOutcome.value = draftOutcome.value === outcome ? null : outcome
+type OutcomeKind = 'extra_time' | 'penalties'
+type OutcomeAdvancer = 'home' | 'away'
+
+const partialOutcomeKind = ref<OutcomeKind | null>(null)
+const partialOutcomeAdvancer = ref<OutcomeAdvancer | null>(null)
+
+const outcomeKind = computed<OutcomeKind | null>(() => {
+  const o = draftOutcome.value
+  if (o === 'extra_time_home' || o === 'extra_time_away') return 'extra_time'
+  if (o === 'penalties_home' || o === 'penalties_away') return 'penalties'
+  return partialOutcomeKind.value
+})
+
+const outcomeAdvancer = computed<OutcomeAdvancer | null>(() => {
+  const o = draftOutcome.value
+  if (o === 'extra_time_home' || o === 'penalties_home') return 'home'
+  if (o === 'extra_time_away' || o === 'penalties_away') return 'away'
+  return partialOutcomeAdvancer.value
+})
+
+function composeOutcome(kind: OutcomeKind | null, adv: OutcomeAdvancer | null): MatchOutcome | null {
+  if (!kind || !adv) return null
+  if (kind === 'extra_time' && adv === 'home') return 'extra_time_home'
+  if (kind === 'extra_time' && adv === 'away') return 'extra_time_away'
+  if (kind === 'penalties' && adv === 'home') return 'penalties_home'
+  return 'penalties_away'
+}
+
+function applyOutcomeDimensions(kind: OutcomeKind | null, adv: OutcomeAdvancer | null): void {
+  const composed = composeOutcome(kind, adv)
+  draftOutcome.value = composed
+  partialOutcomeKind.value = composed ? null : kind
+  partialOutcomeAdvancer.value = composed ? null : adv
   if (autosaveTimer) clearTimeout(autosaveTimer)
   autosaveTimer = setTimeout(() => { void savePrediction() }, 2000)
+}
+
+function setOutcomeKind(kind: OutcomeKind): void {
+  const current = outcomeKind.value
+  const next = current === kind ? null : kind
+  applyOutcomeDimensions(next, outcomeAdvancer.value)
+}
+
+function setOutcomeAdvancer(adv: OutcomeAdvancer): void {
+  const current = outcomeAdvancer.value
+  const next = current === adv ? null : adv
+  applyOutcomeDimensions(outcomeKind.value, next)
 }
 
 function onGoalFocus(side: 'home' | 'away', event: FocusEvent): void {
@@ -573,6 +616,7 @@ function statusClass(status: MatchStatus): string {
 function stageLabel(stage: MatchStage): string {
   switch (stage) {
     case 'group': return t('stage.group')
+    case 'round_of_32': return t('stage.round32')
     case 'round_of_16': return t('stage.round16')
     case 'quarter_final': return t('stage.quarter')
     case 'semi_final': return t('stage.semi')

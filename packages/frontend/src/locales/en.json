@@ -103,6 +103,10 @@
     "homeWin": "Home",
     "awayWin": "Away",
     "penaltyShort": "Penalties:",
+    "outcomeLabel": "Outcome:",
+    "advancerLabel": "Advancing:",
+    "outcomeExtraTime": "Extra time",
+    "outcomePenalties": "Penalties",
     "groupLabel": "Group {name}",
     "scorer": {
       "label": "Scorer:",

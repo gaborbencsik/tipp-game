@@ -33,7 +33,7 @@
         <SegmentedControl
           :options="stageFilterOptions"
           :model-value="matchesStore.stageFilter"
-          @update:model-value="matchesStore.stageFilter = $event as MatchStage | null"
+          @update:model-value="matchesStore.stageFilter = $event as StageFilterValue | null"
         />
 
         <select
@@ -55,7 +55,7 @@
         <select
           :value="matchesStore.stageFilter ?? ''"
           class="flex-1 h-10 px-3 text-sm text-gray-900 bg-gray-50 border border-gray-300 rounded-lg transition-all duration-150 focus:border-blue-500 focus:bg-white focus:ring-3 focus:ring-blue-500/10 focus:outline-none"
-          @change="matchesStore.stageFilter = (($event.target as HTMLSelectElement).value || null) as MatchStage | null"
+          @change="matchesStore.stageFilter = (($event.target as HTMLSelectElement).value || null) as StageFilterValue | null"
         >
           <option v-for="opt in stageFilterOptions" :key="opt.value ?? '__null__'" :value="opt.value ?? ''">{{ opt.label }}</option>
         </select>
@@ -325,17 +325,13 @@
                   />
                 </div>
 
-                <div v-if="showOutcomeSelector(match.id, match.stage)" class="mt-2 flex flex-col gap-1 items-center">
-                  <div class="flex gap-1">
-                    <span class="text-xs text-gray-400 w-20 text-right self-center">{{ $t('matches.extraTimeShort') }}</span>
-                    <button type="button" class="text-xs px-2 py-1 rounded border transition-colors" :class="draftOutcomes[match.id] === 'extra_time_home' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'" data-testid="outcome-extra-time-home" @click="setOutcome(match.id, 'extra_time_home')">{{ $t('matches.homeWin') }}</button>
-                    <button type="button" class="text-xs px-2 py-1 rounded border transition-colors" :class="draftOutcomes[match.id] === 'extra_time_away' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'" data-testid="outcome-extra-time-away" @click="setOutcome(match.id, 'extra_time_away')">{{ $t('matches.awayWin') }}</button>
-                  </div>
-                  <div class="flex gap-1">
-                    <span class="text-xs text-gray-400 w-20 text-right self-center">{{ $t('matches.penaltyShort') }}</span>
-                    <button type="button" class="text-xs px-2 py-1 rounded border transition-colors" :class="draftOutcomes[match.id] === 'penalties_home' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'" data-testid="outcome-penalties-home" @click="setOutcome(match.id, 'penalties_home')">{{ $t('matches.homeWin') }}</button>
-                    <button type="button" class="text-xs px-2 py-1 rounded border transition-colors" :class="draftOutcomes[match.id] === 'penalties_away' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'" data-testid="outcome-penalties-away" @click="setOutcome(match.id, 'penalties_away')">{{ $t('matches.awayWin') }}</button>
-                  </div>
+                <div v-if="showOutcomeSelector(match.id, match.stage)" class="mt-2 grid grid-cols-[auto_auto_auto] gap-x-1 gap-y-1 items-center justify-center">
+                  <span class="text-xs text-gray-400 text-right self-center whitespace-nowrap">{{ $t('matches.outcomeLabel') }}</span>
+                  <button type="button" class="text-xs px-2 py-1 rounded border transition-colors whitespace-nowrap" :class="outcomeKind(match.id) === 'extra_time' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'" data-testid="outcome-kind-extra-time" @click="setOutcomeKind(match.id, 'extra_time')">{{ $t('matches.outcomeExtraTime') }}</button>
+                  <button type="button" class="text-xs px-2 py-1 rounded border transition-colors whitespace-nowrap" :class="outcomeKind(match.id) === 'penalties' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'" data-testid="outcome-kind-penalties" @click="setOutcomeKind(match.id, 'penalties')">{{ $t('matches.outcomePenalties') }}</button>
+                  <span class="text-xs text-gray-400 text-right self-center whitespace-nowrap">{{ $t('matches.advancerLabel') }}</span>
+                  <button type="button" class="text-xs px-2 py-1 rounded border transition-colors whitespace-nowrap" :class="outcomeAdvancer(match.id) === 'home' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'" data-testid="outcome-advancer-home" @click="setOutcomeAdvancer(match.id, 'home')"><TeamBadge :team="{ ...match.homeTeam, name: match.homeTeam.shortCode }" /></button>
+                  <button type="button" class="text-xs px-2 py-1 rounded border transition-colors whitespace-nowrap" :class="outcomeAdvancer(match.id) === 'away' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'" data-testid="outcome-advancer-away" @click="setOutcomeAdvancer(match.id, 'away')"><TeamBadge :team="{ ...match.awayTeam, name: match.awayTeam.shortCode }" /></button>
                 </div>
                 <div class="mt-2 flex items-center gap-2">
                   <span class="text-xs text-gray-500 font-medium">⚽ {{ $t('matches.scorer.label') }}</span>
@@ -410,6 +406,7 @@
 import { onMounted, ref, nextTick, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useMatchesStore } from '../stores/matches.store.js'
+import type { StageFilterValue } from '../stores/matches.store.js'
 import { usePredictionsStore } from '../stores/predictions.store.js'
 import { useGroupsStore } from '../stores/groups.store.js'
 import { useLeagueFavoritesStore } from '../stores/league-favorites.store.js'
@@ -447,7 +444,7 @@ useMatchEvents({
 const stageFilterOptions = computed(() => [
   { label: t('matches.allStages'), value: null },
   { label: t('matches.groupStage'), value: 'group' },
-  { label: t('matches.knockout'), value: 'round_of_16' },
+  { label: t('matches.knockout'), value: 'knockout' },
 ])
 
 const now = ref(new Date())
@@ -644,7 +641,7 @@ function isDirty(matchId: string, side: 'home' | 'away'): boolean {
   return draft !== original
 }
 
-const KNOCKOUT_STAGES: readonly MatchStage[] = ['round_of_16', 'quarter_final', 'semi_final', 'third_place', 'final']
+const KNOCKOUT_STAGES: readonly MatchStage[] = ['round_of_32', 'round_of_16', 'quarter_final', 'semi_final', 'third_place', 'final']
 
 function showOutcomeSelector(matchId: string, stage: MatchStage): boolean {
   if (!KNOCKOUT_STAGES.includes(stage)) return false
@@ -652,13 +649,53 @@ function showOutcomeSelector(matchId: string, stage: MatchStage): boolean {
   return goals?.home != null && goals?.away != null && goals.home === goals.away
 }
 
-function setOutcome(matchId: string, outcome: MatchOutcome): void {
-  draftOutcomes.value = {
-    ...draftOutcomes.value,
-    [matchId]: draftOutcomes.value[matchId] === outcome ? null : outcome,
-  }
+type OutcomeKind = 'extra_time' | 'penalties'
+type OutcomeAdvancer = 'home' | 'away'
+
+const partialOutcomeKind = ref<Record<string, OutcomeKind | null>>({})
+const partialOutcomeAdvancer = ref<Record<string, OutcomeAdvancer | null>>({})
+
+function outcomeKind(matchId: string): OutcomeKind | null {
+  const o = draftOutcomes.value[matchId]
+  if (o === 'extra_time_home' || o === 'extra_time_away') return 'extra_time'
+  if (o === 'penalties_home' || o === 'penalties_away') return 'penalties'
+  return partialOutcomeKind.value[matchId] ?? null
+}
+
+function outcomeAdvancer(matchId: string): OutcomeAdvancer | null {
+  const o = draftOutcomes.value[matchId]
+  if (o === 'extra_time_home' || o === 'penalties_home') return 'home'
+  if (o === 'extra_time_away' || o === 'penalties_away') return 'away'
+  return partialOutcomeAdvancer.value[matchId] ?? null
+}
+
+function composeOutcome(kind: OutcomeKind | null, adv: OutcomeAdvancer | null): MatchOutcome | null {
+  if (!kind || !adv) return null
+  if (kind === 'extra_time' && adv === 'home') return 'extra_time_home'
+  if (kind === 'extra_time' && adv === 'away') return 'extra_time_away'
+  if (kind === 'penalties' && adv === 'home') return 'penalties_home'
+  return 'penalties_away'
+}
+
+function applyOutcomeDimensions(matchId: string, kind: OutcomeKind | null, adv: OutcomeAdvancer | null): void {
+  const composed = composeOutcome(kind, adv)
+  draftOutcomes.value = { ...draftOutcomes.value, [matchId]: composed }
+  partialOutcomeKind.value = { ...partialOutcomeKind.value, [matchId]: composed ? null : kind }
+  partialOutcomeAdvancer.value = { ...partialOutcomeAdvancer.value, [matchId]: composed ? null : adv }
   if (autosaveTimers[matchId]) clearTimeout(autosaveTimers[matchId])
   autosaveTimers[matchId] = setTimeout(() => { void savePrediction(matchId) }, 2000)
+}
+
+function setOutcomeKind(matchId: string, kind: OutcomeKind): void {
+  const current = outcomeKind(matchId)
+  const next = current === kind ? null : kind
+  applyOutcomeDimensions(matchId, next, outcomeAdvancer(matchId))
+}
+
+function setOutcomeAdvancer(matchId: string, adv: OutcomeAdvancer): void {
+  const current = outcomeAdvancer(matchId)
+  const next = current === adv ? null : adv
+  applyOutcomeDimensions(matchId, outcomeKind(matchId), next)
 }
 
 function cardBorderClass(match: Match): string {
@@ -816,6 +853,7 @@ function statusClass(status: MatchStatus): string {
 function stageLabel(stage: MatchStage): string {
   switch (stage) {
     case 'group': return t('stage.group')
+    case 'round_of_32': return t('stage.round32')
     case 'round_of_16': return t('stage.round16')
     case 'quarter_final': return t('stage.quarter')
     case 'semi_final': return t('stage.semi')
