@@ -181,4 +181,118 @@ describe('GroupStandingsPicker', () => {
       expect(wrapper.emitted('submit')).toBeUndefined()
     })
   })
+
+  // UX-039: scored tip — render green/red feedback when correctAnswer is provided.
+  describe('UX-039 scored (correctAnswer)', () => {
+    it('passes parsed correctPositions to each GroupStandingCard', async () => {
+      const answer = JSON.stringify({
+        groups: { A: ['a1', 'a2', 'a3', 'a4'], B: ['b1', 'b2', 'b3', 'b4'] },
+        best3rds: ['a3'],
+      })
+      const correctAnswer = JSON.stringify({
+        groups: { A: ['a1', 'a3', 'a2', 'a4'], B: ['b1', 'b2', 'b3', 'b4'] },
+        best3rds: ['b3'],
+      })
+      const wrapper = mount(GroupStandingsPicker, {
+        props: { options: OPTIONS, answer, correctAnswer, readOnly: true },
+      })
+      await flushPromises()
+
+      // Group A summary: pos1 (a1==a1) green, pos2 (a2 vs a3) red, pos3 (a3 vs a2) red, pos4 (a4==a4) green
+      const summaryA = wrapper.find('[data-testid="group-standing-summary-A"]')
+      const chipsA = summaryA.findAll('[data-testid^="group-standing-summary-chip-A-"]')
+      expect(chipsA).toHaveLength(4)
+      expect(chipsA[0]!.classes().some(c => c.includes('emerald'))).toBe(true)
+      expect(chipsA[1]!.classes().some(c => c.includes('rose') || c.includes('red'))).toBe(true)
+      expect(chipsA[2]!.classes().some(c => c.includes('rose') || c.includes('red'))).toBe(true)
+      expect(chipsA[3]!.classes().some(c => c.includes('emerald'))).toBe(true)
+    })
+
+    it('passes correctTeams to Best3rdPicker so selected wrong picks render red and selected correct picks render green', async () => {
+      const answer = JSON.stringify({
+        groups: { A: ['a1', 'a2', 'a3', 'a4'], B: ['b1', 'b2', 'b3', 'b4'] },
+        best3rds: ['a3'],
+      })
+      const correctAnswer = JSON.stringify({
+        groups: { A: ['a1', 'a2', 'a3', 'a4'], B: ['b1', 'b2', 'b3', 'b4'] },
+        best3rds: ['b3'],
+      })
+      const wrapper = mount(GroupStandingsPicker, {
+        props: { options: OPTIONS, answer, correctAnswer, readOnly: true },
+      })
+      await flushPromises()
+
+      // The user picked a3 (wrong) → rose; b3 is the actual answer (not picked) → neutral with actual label.
+      const wrongChip = wrapper.find('[data-testid="best-3rd-chip-a3"]')
+      expect(wrongChip.exists()).toBe(true)
+      expect(wrongChip.classes().some(c => c.includes('rose') || c.includes('red'))).toBe(true)
+    })
+
+    it('hides the save status row when readOnly', async () => {
+      const wrapper = mount(GroupStandingsPicker, {
+        props: { options: OPTIONS, answer: null, readOnly: true },
+      })
+      await flushPromises()
+      expect(wrapper.find('[data-testid="group-standings-save-status"]').exists()).toBe(false)
+    })
+  })
+
+  // UX-040: per-group points breakdown propagation + summary
+  describe('UX-040 points breakdown', () => {
+    it('renders a summary row with 3p × correctGroups when scored', async () => {
+      const answer = JSON.stringify({
+        groups: { A: ['a1', 'a2', 'a3', 'a4'], B: ['b1', 'b3', 'b2', 'b4'] },
+        best3rds: [],
+      })
+      const correctAnswer = JSON.stringify({
+        groups: { A: ['a1', 'a2', 'a3', 'a4'], B: ['b1', 'b2', 'b3', 'b4'] },
+        best3rds: [],
+      })
+      const wrapper = mount(GroupStandingsPicker, {
+        props: { options: OPTIONS, answer, correctAnswer, readOnly: true },
+      })
+      await flushPromises()
+      const summary = wrapper.find('[data-testid="group-standings-score-summary"]')
+      expect(summary.exists()).toBe(true)
+      // Only group A is exact match → 1 csoport × 3 pont = 3 pont
+      expect(summary.text()).toContain('1')
+      expect(summary.text()).toContain('3')
+    })
+
+    it('renders the per-card points pill on a correct group', async () => {
+      const answer = JSON.stringify({
+        groups: { A: ['a1', 'a2', 'a3', 'a4'], B: ['b1', 'b2', 'b3', 'b4'] },
+        best3rds: [],
+      })
+      const correctAnswer = answer
+      const wrapper = mount(GroupStandingsPicker, {
+        props: { options: OPTIONS, answer, correctAnswer, readOnly: true },
+      })
+      await flushPromises()
+      const pillA = wrapper.find('[data-testid="group-standing-points-A"]')
+      const pillB = wrapper.find('[data-testid="group-standing-points-B"]')
+      expect(pillA.exists()).toBe(true)
+      expect(pillB.exists()).toBe(true)
+      expect(pillA.text()).toContain('3')
+      expect(pillB.text()).toContain('3')
+    })
+
+    it('shows 0 on the per-card pill for an incorrect group', async () => {
+      const answer = JSON.stringify({
+        groups: { A: ['a1', 'a3', 'a2', 'a4'], B: ['b1', 'b2', 'b3', 'b4'] },
+        best3rds: [],
+      })
+      const correctAnswer = JSON.stringify({
+        groups: { A: ['a1', 'a2', 'a3', 'a4'], B: ['b1', 'b2', 'b3', 'b4'] },
+        best3rds: [],
+      })
+      const wrapper = mount(GroupStandingsPicker, {
+        props: { options: OPTIONS, answer, correctAnswer, readOnly: true },
+      })
+      await flushPromises()
+      const pillA = wrapper.find('[data-testid="group-standing-points-A"]')
+      expect(pillA.exists()).toBe(true)
+      expect(pillA.text()).toContain('0')
+    })
+  })
 })

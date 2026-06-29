@@ -520,6 +520,15 @@ async function onSaveAndEvaluate(gt: SpecialPredictionType, slice: string | null
     gt.inputType === 'dropdown' ||
     gt.inputType === 'team_select' ||
     gt.inputType === 'player_select'
+  if (usesChips) {
+    // Auto-flush any pending picker/text draft so a forgotten "Hozzáadás" press
+    // doesn't silently drop the last selection on save.
+    if (gt.inputType === 'team_select' || gt.inputType === 'player_select') {
+      if ((pickerDrafts[gt.id] ?? '').trim()) addPickerChip(gt.id)
+    } else if ((simpleDrafts[gt.id] ?? '').trim()) {
+      addSimpleChip(gt.id)
+    }
+  }
   const draft = usesChips
     ? serializeChips(answerChips[gt.id] ?? [])
     : (answerDrafts[gt.id] ?? gt.correctAnswer ?? '').trim()

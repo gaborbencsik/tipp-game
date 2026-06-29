@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 178 story kész (Must Have: 32/32, Should Have: 145/145)
+> 184 story kész (Must Have: 32/32, Should Have: 152/152)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -184,3 +184,7 @@
 | UX-036 | Csoport Tippjeim tábla – gólszerző tipp, gólszerző pont és összes pont oszlopok | Should Have |
 | OPS-012 | Knockout meccs sync – Round of 32 támogatás és parseRound robusztusság | Should Have |
 | UX-037 | Torna tippek – több helyes válasz támogatása holtverseny esetén | Should Have |
+| UX-038 | Torna tippek – Csoport végeredmény helyes válasz olvasható megjelenítése | Should Have |
+| UX-039 | Torna tippek – Csoport végeredmény kiértékelt tipp vizuális visszajelzés (zöld/piros) | Should Have |
+| UX-040 | Torna tippek – Csoport végeredmény kiértékelt tipp részpont-bontás kártyánként | Should Have |
+| UX-041 | Torna tippek – Biztos kiesők kiértékelt tipp vizuális visszajelzés + részpont-bontás | Should Have |

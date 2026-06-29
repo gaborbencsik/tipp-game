@@ -665,7 +665,11 @@
   },
   "upsetSpecial": {
     "instruction": "Pick exactly {max} teams you think will NOT advance from the group stage.",
-    "selectedCount": "Selected: {n}/{max}"
+    "selectedCount": "Selected: {n}/{max}",
+    "scoredSummary": "Breakdown: {correct} correct picks → {points} pts",
+    "actualEliminatedCount": "Actual eliminations: {n} teams",
+    "actualBadge": "Actual",
+    "pointsZero": "0 pts"
   },
   "groupStandings": {
     "intro": "Predict the final standings for all 12 groups (positions 1–4), then pick the 8 best 3rd-placed teams that advance.",
@@ -683,7 +687,16 @@
     "best3rdInstruction": "Pick {n} teams from the 3rd-placed teams that will advance.",
     "best3rdEmpty": "No 3rd-placed teams available — finish the groups first.",
     "best3rdRemaining": "You still need to pick {n} more team(s).",
-    "best3rdGroupLabel": "Grp. {code}"
+    "best3rdGroupLabel": "Grp. {code}",
+    "actualAnswer": "Actual",
+    "yourPick": "Your pick",
+    "evaluatedLegendCorrect": "Correct",
+    "evaluatedLegendIncorrect": "Incorrect",
+    "pointsPill": "+{n} pts",
+    "pointsZero": "0 pts",
+    "scoreFooter": "{hits}/4 correct positions → {points} pts",
+    "scoreSummary": "Breakdown: {correct} / {total} groups × {perGroup} pts = {points} pts",
+    "best3rdScoringNote": "Best 3rd-placed teams have no separate score — Round of 32 progression is scored by the Bracket tip."
   },
   "bracketProgression": {
     "intro": "Pick the winner of every match in the knockout bracket.",

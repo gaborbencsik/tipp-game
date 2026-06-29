@@ -49,6 +49,22 @@ vi.mock('@/components/predictions/PlayerSelectCombobox.vue', () => ({
   default: { template: '<div data-testid="player-select-stub" />' },
 }))
 
+vi.mock('@/components/predictions/GroupStandingsPicker.vue', () => ({
+  default: {
+    name: 'GroupStandingsPicker',
+    props: ['options', 'answer', 'correctAnswer', 'readOnly'],
+    template: '<div data-testid="group-standings-picker-stub" :data-read-only="readOnly ? \'1\' : \'0\'" :data-correct="correctAnswer ?? \'\'" />',
+  },
+}))
+
+vi.mock('@/components/predictions/UpsetSpecialPicker.vue', () => ({
+  default: {
+    name: 'UpsetSpecialPicker',
+    props: ['options', 'answer', 'correctAnswer', 'readOnly'],
+    template: '<div data-testid="upset-special-picker-stub" :data-read-only="readOnly ? \'1\' : \'0\'" :data-correct="correctAnswer ?? \'\'" />',
+  },
+}))
+
 const FUTURE_DEADLINE = '2099-07-01T00:00:00.000Z'
 const PAST_DEADLINE = '2020-01-01T00:00:00.000Z'
 
@@ -215,6 +231,110 @@ describe('TournamentTipsView', () => {
     const { wrapper } = await mountView()
     expect(wrapper.text()).toContain('Argentina')
     expect(wrapper.text()).toContain('25')
+  })
+
+  // UX-038: structured "all_groups_standing" correctAnswerLabel renders as readable text.
+  // Fallback case: options is null so the UX-039 picker is not rendered and the text label remains.
+  it('UX-038: renders multi-line all_groups_standing correctAnswerLabel via whitespace-pre-line', async () => {
+    const AGS_SCORED: SpecialPredictionWithType = {
+      ...TIP_SCORED,
+      typeId: 'type-ags-scored',
+      typeName: 'Csoport végeredmény',
+      inputType: 'all_groups_standing',
+      options: null,
+      answer: JSON.stringify({ groups: { A: ['t1', 't2'] }, best3rds: ['t3'] }),
+      answerLabel: '1/1 csoport · 1/1 továbbjutó',
+      correctAnswer: JSON.stringify({ groups: { A: ['t1', 't2'] }, best3rds: ['t3'] }),
+      correctAnswerLabel: 'A: Magyarország, Brazília\nTovábbjutó 3. helyezettek: Olaszország',
+    }
+    mockTournamentTipsList.mockResolvedValueOnce([AGS_SCORED])
+    const { wrapper } = await mountView()
+    const p = wrapper.find('[data-testid="tip-correct-answer"]')
+    expect(p.exists()).toBe(true)
+    expect(p.classes()).toContain('whitespace-pre-line')
+    expect(p.text()).toContain('A: Magyarország, Brazília')
+    expect(p.text()).toContain('Továbbjutó 3. helyezettek: Olaszország')
+    // No raw JSON braces leak through.
+    expect(p.text()).not.toContain('{')
+    expect(p.text()).not.toContain('}')
+  })
+
+  // UX-039: scored all_groups_standing tip → render picker readOnly+correctAnswer, not plain text.
+  it('UX-039: scored all_groups_standing tip renders GroupStandingsPicker readOnly with correctAnswer', async () => {
+    const correctJson = JSON.stringify({ groups: { A: ['t1', 't2'] }, best3rds: ['t3'] })
+    const AGS_SCORED: SpecialPredictionWithType = {
+      ...TIP_SCORED,
+      typeId: 'type-ags-scored-2',
+      typeName: 'Csoport végeredmény',
+      inputType: 'all_groups_standing',
+      options: { groups: ['A'], teamsPerGroup: 2, best3rdPicks: 1 },
+      answer: JSON.stringify({ groups: { A: ['t1', 't9'] }, best3rds: ['t3'] }),
+      answerLabel: '1/1 csoport · 1/1 továbbjutó',
+      correctAnswer: correctJson,
+      correctAnswerLabel: 'A: Magyarország, Brazília\nTovábbjutó 3. helyezettek: Olaszország',
+    }
+    mockTournamentTipsList.mockResolvedValueOnce([AGS_SCORED])
+    const { wrapper } = await mountView()
+    const stub = wrapper.find('[data-testid="group-standings-picker-stub"]')
+    expect(stub.exists()).toBe(true)
+    expect(stub.attributes('data-read-only')).toBe('1')
+    expect(stub.attributes('data-correct')).toBe(correctJson)
+    // The plain-text "Helyes válasz" line should not be rendered when the picker takes over.
+    expect(wrapper.find('[data-testid="tip-correct-answer"]').exists()).toBe(false)
+  })
+
+  // UX-041: scored multi_team_weighted → render UpsetSpecialPicker readOnly with derived correctAnswer.
+  it('UX-041: scored multi_team_weighted tip renders UpsetSpecialPicker readOnly with derived correctAnswer', async () => {
+    // Upstream tips provide the bracket derivation context.
+    const GROUP_STANDINGS_SCORED: SpecialPredictionWithType = {
+      ...TIP_SCORED,
+      typeId: 'type-ags',
+      typeName: 'Csoport végeredmény',
+      inputType: 'all_groups_standing',
+      options: { groups: ['A'], teamsPerGroup: 2, best3rdPicks: 0 },
+      answer: JSON.stringify({ groups: { A: ['t1', 't2'] }, best3rds: [] }),
+      answerLabel: '1/1 csoport',
+      correctAnswer: JSON.stringify({ groups: { A: ['t1', 't2'] }, best3rds: [] }),
+      correctAnswerLabel: null,
+    }
+    const BRACKET_SCORED: SpecialPredictionWithType = {
+      ...TIP_SCORED,
+      typeId: 'type-bp',
+      typeName: 'Bracket',
+      inputType: 'bracket_progression',
+      options: {
+        bracketTemplate: {
+          matches: [
+            { id: 'm1', round: 'last_32', slotA: 'W_A1', slotB: 'RU_A1', winnerTo: null },
+          ],
+        },
+      },
+      answer: JSON.stringify({ winners: {} }),
+      answerLabel: null,
+      correctAnswer: JSON.stringify({ winners: { m1: 't1' } }),
+      correctAnswerLabel: null,
+    }
+    const UPSET_SCORED: SpecialPredictionWithType = {
+      ...TIP_SCORED,
+      typeId: 'type-upset-scored',
+      typeName: 'Biztos kiesők',
+      inputType: 'multi_team_weighted',
+      options: { maxPicks: 3, minPicks: 1, choices: [{ teamId: 't1', points: 18 }, { teamId: 't2', points: 17 }, { teamId: 't3', points: 15 }] },
+      // t3 is NOT in last_32 → eliminated set is [t3]
+      answer: JSON.stringify(['t1', 't2']),
+      answerLabel: 'A, B',
+      correctAnswer: null,
+      correctAnswerLabel: null,
+    }
+    mockTournamentTipsList.mockResolvedValueOnce([GROUP_STANDINGS_SCORED, BRACKET_SCORED, UPSET_SCORED])
+    const { wrapper } = await mountView()
+    // Switch to "upset" tab since the view auto-routes to progression first.
+    const upsetTab = wrapper.find('[data-testid="tournament-tips-tab-upset"]')
+    if (upsetTab.exists()) await upsetTab.trigger('click')
+    const stubs = wrapper.findAll('[data-testid="upset-special-picker-stub"]')
+    expect(stubs).toHaveLength(1)
+    expect(stubs[0]!.attributes('data-read-only')).toBe('1')
+    expect(stubs[0]!.attributes('data-correct')).toBe(JSON.stringify(['t3']))
   })
 
   it('calls store.upsertTip when dropdown changes', async () => {

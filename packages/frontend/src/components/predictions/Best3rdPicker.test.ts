@@ -65,4 +65,72 @@ describe('Best3rdPicker', () => {
     })
     expect(wrapper.find('[data-testid="best-3rd-counter"]').text()).toContain('1 / 4')
   })
+
+  // UX-039: visual feedback against correctTeams.
+  describe('UX-039 scored mode (correctTeams)', () => {
+    it('marks selected & correct chip with emerald classes', () => {
+      const wrapper = mount(Best3rdPicker, {
+        props: {
+          unlocked: true,
+          availableTeams: [A3.id, B3.id, C3.id],
+          selected: [A3.id],
+          correctTeams: [A3.id],
+          maxPicks: 1,
+          teamMap,
+          readOnly: true,
+        },
+      })
+      const chip = wrapper.find(`[data-testid="best-3rd-chip-${A3.id}"]`)
+      expect(chip.classes().some(c => c.includes('emerald'))).toBe(true)
+    })
+
+    it('marks selected but incorrect chip with rose/red classes', () => {
+      const wrapper = mount(Best3rdPicker, {
+        props: {
+          unlocked: true,
+          availableTeams: [A3.id, B3.id, C3.id],
+          selected: [A3.id],
+          correctTeams: [B3.id],
+          maxPicks: 1,
+          teamMap,
+          readOnly: true,
+        },
+      })
+      const chip = wrapper.find(`[data-testid="best-3rd-chip-${A3.id}"]`)
+      expect(chip.classes().some(c => c.includes('rose') || c.includes('red'))).toBe(true)
+    })
+
+    it('marks an unselected actual answer with the "actual" badge', () => {
+      const wrapper = mount(Best3rdPicker, {
+        props: {
+          unlocked: true,
+          availableTeams: [A3.id, B3.id, C3.id],
+          selected: [A3.id],
+          correctTeams: [B3.id],
+          maxPicks: 1,
+          teamMap,
+          readOnly: true,
+        },
+      })
+      const actualBadge = wrapper.find(`[data-testid="best-3rd-actual-${B3.id}"]`)
+      expect(actualBadge.exists()).toBe(true)
+    })
+
+    it('does not emit toggle/overflow when readOnly', async () => {
+      const wrapper = mount(Best3rdPicker, {
+        props: {
+          unlocked: true,
+          availableTeams: [A3.id, B3.id],
+          selected: [],
+          correctTeams: [A3.id],
+          maxPicks: 1,
+          teamMap,
+          readOnly: true,
+        },
+      })
+      await wrapper.find(`[data-testid="best-3rd-chip-${A3.id}"]`).trigger('click')
+      expect(wrapper.emitted('toggle')).toBeUndefined()
+      expect(wrapper.emitted('overflow')).toBeUndefined()
+    })
+  })
 })

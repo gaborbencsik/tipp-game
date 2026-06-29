@@ -39,7 +39,17 @@
           @click="toggle(teamId)"
         >
           <span
-            v-if="isSelected(teamId)"
+            v-if="isScored && isCorrectPick(teamId)"
+            class="absolute top-1 right-1 text-emerald-600 text-xs"
+            aria-hidden="true"
+          >✓</span>
+          <span
+            v-else-if="isScored && isWrongPick(teamId)"
+            class="absolute top-1 right-1 text-rose-500 text-xs"
+            aria-hidden="true"
+          >✗</span>
+          <span
+            v-else-if="!isScored && isSelected(teamId)"
             class="absolute top-1 right-1 text-blue-600 text-xs"
             aria-hidden="true"
           >✓</span>
@@ -51,9 +61,14 @@
           />
           <span
             class="text-xs font-bold"
-            :class="isSelected(teamId) ? 'text-blue-900' : 'text-slate-700'"
+            :class="isSelected(teamId) && !isScored ? 'text-blue-900' : 'text-slate-700'"
           >{{ teamMap.get(teamId)?.shortCode ?? '—' }}</span>
           <span class="text-[10px] text-slate-500">{{ groupLabel(teamId) }}</span>
+          <span
+            v-if="isScored && isUnpickedActual(teamId)"
+            class="absolute -bottom-1.5 left-1/2 -translate-x-1/2 text-[9px] uppercase tracking-wide font-semibold text-emerald-700 bg-white px-1 rounded"
+            :data-testid="`best-3rd-actual-${teamId}`"
+          >{{ $t('groupStandings.actualAnswer') }}</span>
         </button>
       </div>
 
@@ -83,6 +98,8 @@ const props = defineProps<{
   selected: readonly string[]
   maxPicks: number
   teamMap: ReadonlyMap<string, Team>
+  correctTeams?: readonly string[]
+  readOnly?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -94,11 +111,32 @@ const { t } = useI18n()
 
 const remaining = computed(() => Math.max(0, props.maxPicks - props.selected.length))
 
+const isScored = computed(() => Boolean(props.readOnly) && Array.isArray(props.correctTeams))
+const correctSet = computed(() => new Set(props.correctTeams ?? []))
+
 function isSelected(teamId: string): boolean {
   return props.selected.includes(teamId)
 }
 
+function isCorrectPick(teamId: string): boolean {
+  return isSelected(teamId) && correctSet.value.has(teamId)
+}
+
+function isWrongPick(teamId: string): boolean {
+  return isSelected(teamId) && !correctSet.value.has(teamId)
+}
+
+function isUnpickedActual(teamId: string): boolean {
+  return !isSelected(teamId) && correctSet.value.has(teamId)
+}
+
 function chipClass(teamId: string): string {
+  if (isScored.value) {
+    if (isCorrectPick(teamId)) return 'border-2 border-emerald-500 bg-emerald-50'
+    if (isWrongPick(teamId)) return 'border-2 border-rose-400 bg-rose-50'
+    if (isUnpickedActual(teamId)) return 'border-2 border-emerald-300 border-dashed bg-white'
+    return 'border border-slate-200 bg-white opacity-60'
+  }
   const picked = isSelected(teamId)
   if (picked) return 'border-2 border-blue-500 bg-blue-50'
   if (!picked && props.selected.length >= props.maxPicks) {
@@ -113,6 +151,7 @@ function groupLabel(teamId: string): string {
 }
 
 function toggle(teamId: string): void {
+  if (props.readOnly) return
   if (!isSelected(teamId) && props.selected.length >= props.maxPicks) {
     emit('overflow')
     return

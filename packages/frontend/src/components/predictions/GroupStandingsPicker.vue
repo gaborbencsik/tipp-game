@@ -3,7 +3,23 @@
     data-testid="group-standings-picker"
     :class="readOnly ? 'pointer-events-auto' : ''"
   >
-    <div class="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2.5 flex gap-2 mb-3">
+    <div
+      v-if="isScored && scoreSummary"
+      class="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2.5 mb-3"
+      data-testid="group-standings-score-summary"
+    >
+      <p class="text-xs text-emerald-900 leading-snug font-medium">
+        {{ $t('groupStandings.scoreSummary', scoreSummary) }}
+      </p>
+      <p class="text-[11px] text-emerald-800/80 mt-1 leading-snug">
+        {{ $t('groupStandings.best3rdScoringNote') }}
+      </p>
+    </div>
+
+    <div
+      v-else
+      class="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2.5 flex gap-2 mb-3"
+    >
       <span class="text-blue-600" aria-hidden="true">💡</span>
       <p class="text-xs text-blue-900 leading-snug">{{ $t('groupStandings.infoCard') }}</p>
     </div>
@@ -15,6 +31,9 @@
         :group-code="code"
         :group-teams="groupTeamsByCode.get(code) ?? []"
         :assignments="state.groups[code] ?? emptyGroup"
+        :correct-positions="correctState?.groups[code] ?? undefined"
+        :read-only-scored="isScored"
+        :points-awarded="isScored ? (pointsByGroup[code] ?? 0) : null"
         :teams-per-group="options.teamsPerGroup"
         :expanded="expandedGroup === code"
         @toggle="toggleExpanded(code)"
@@ -25,9 +44,11 @@
 
     <section class="mt-3">
       <Best3rdPicker
-        :unlocked="is12of12"
-        :available-teams="best3rdsAvailable"
+        :unlocked="is12of12 || isScored"
+        :available-teams="best3rdsDisplay"
         :selected="state.best3rds"
+        :correct-teams="correctState?.best3rds ?? undefined"
+        :read-only="isScored"
         :max-picks="options.best3rdPicks"
         :team-map="allTeamsMap"
         @toggle="toggleBest3rd"
@@ -35,6 +56,7 @@
     </section>
 
     <div
+      v-if="!props.readOnly"
       class="mt-3 sticky bottom-2 left-0 right-0 z-10 px-4 py-3 rounded-lg border border-slate-200 bg-white shadow-sm"
       data-testid="group-standings-sticky"
     >
@@ -67,6 +89,7 @@ import GroupStandingCard from './GroupStandingCard.vue'
 import Best3rdPicker from './Best3rdPicker.vue'
 import { supabase } from '../../lib/supabase.js'
 import { api } from '../../api/index.js'
+import { TOURNAMENT_POINTS, scoreGroupExact } from '../../lib/tournamentPoints.js'
 import type {
   AllGroupsStandingAnswer,
   AllGroupsStandingCompletion,
@@ -77,6 +100,7 @@ import type {
 const props = defineProps<{
   options: AllGroupsStandingOptions
   answer: string | null
+  correctAnswer?: string | null
   readOnly?: boolean
 }>()
 
@@ -163,6 +187,41 @@ function parseAnswer(raw: string | null): PickerState {
 
 const state = reactive<PickerState>(parseAnswer(props.answer))
 
+// UX-039: parsed correct answer for the scored read-only mode.
+const correctState = computed<PickerState | null>(() => {
+  if (!props.correctAnswer) return null
+  return parseAnswer(props.correctAnswer)
+})
+
+const isScored = computed(() => Boolean(props.readOnly) && correctState.value !== null)
+
+// UX-040: per-group points + total summary.
+const pointsByGroup = computed<Record<string, number>>(() => {
+  const out: Record<string, number> = {}
+  if (!isScored.value || !correctState.value) return out
+  for (const code of props.options.groups) {
+    out[code] = scoreGroupExact(state.groups[code], correctState.value.groups[code])
+  }
+  return out
+})
+
+const scoreSummary = computed(() => {
+  if (!isScored.value) return null
+  let correctGroups = 0
+  let totalPoints = 0
+  for (const code of props.options.groups) {
+    const p = pointsByGroup.value[code] ?? 0
+    if (p > 0) correctGroups += 1
+    totalPoints += p
+  }
+  return {
+    correct: correctGroups,
+    total: props.options.groups.length,
+    perGroup: TOURNAMENT_POINTS.perGroup,
+    points: totalPoints,
+  }
+})
+
 watch(() => props.answer, value => {
   const fresh = parseAnswer(value)
   for (const code of props.options.groups) {
@@ -228,6 +287,23 @@ const best3rdsAvailable = computed<string[]>(() => {
     if (third) list.push(third)
   }
   return list
+})
+
+// UX-039: in scored read-only mode show every user pick + actual best 3rd, even if the
+// matching group is no longer 4/4 (e.g. user only filled part of the group standings).
+const best3rdsDisplay = computed<string[]>(() => {
+  if (!isScored.value) return best3rdsAvailable.value
+  const set = new Set<string>()
+  for (const t of state.best3rds) set.add(t)
+  for (const t of correctState.value?.best3rds ?? []) set.add(t)
+  // Also surface the picker's natural list when groups are filled, so the actual 3rd-placed
+  // teams stay visible even if the user did not pick them.
+  for (const code of props.options.groups) {
+    const positions = state.groups[code] ?? []
+    const third = positions[2]
+    if (third) set.add(third)
+  }
+  return Array.from(set)
 })
 
 watch(best3rdsAvailable, newList => {

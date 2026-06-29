@@ -250,6 +250,171 @@ describe('listGlobalTypesWithPredictions', () => {
     expect(result[0]?.correctAnswerLabel).toBe('Lionel Messi, Cristiano Ronaldo')
   })
 
+  // ─── UX-038: all_groups_standing / bracket_progression labels ─────────────
+
+  it('UX-038: builds a human-readable correctAnswerLabel for all_groups_standing', async () => {
+    const T1 = '11111111-1111-1111-1111-111111111111'
+    const T2 = '22222222-2222-2222-2222-222222222222'
+    const T3 = '33333333-3333-3333-3333-333333333333'
+    const T4 = '44444444-4444-4444-4444-444444444444'
+    const AGS_TYPE = {
+      ...GLOBAL_TYPE_ROW,
+      inputType: 'all_groups_standing',
+      deadline: PAST,
+      options: { groups: ['A'], teamsPerGroup: 4, best3rdPicks: 0 },
+      correctAnswer: JSON.stringify({
+        groups: { A: [T1, T2, T3, T4] },
+        best3rds: [],
+      }),
+    }
+    setupSelectSequence([
+      ACCESS_GRANTED,
+      [AGS_TYPE],
+      [],
+      [
+        { id: T1, name: 'Magyarország' },
+        { id: T2, name: 'Brazília' },
+        { id: T3, name: 'Spanyolország' },
+        { id: T4, name: 'Argentína' },
+      ],
+    ])
+
+    const result = await listGlobalTypesWithPredictions(USER_ID)
+
+    expect(result[0]?.correctAnswerLabel).toBe('A: Magyarország, Brazília, Spanyolország, Argentína')
+  })
+
+  it('UX-038: includes a "Továbbjutó 3. helyezettek" line for non-empty best3rds', async () => {
+    const T1 = '11111111-1111-1111-1111-111111111111'
+    const T2 = '22222222-2222-2222-2222-222222222222'
+    const B1 = 'aaaaaaaa-1111-1111-1111-111111111111'
+    const B2 = 'bbbbbbbb-2222-2222-2222-222222222222'
+    const AGS_TYPE = {
+      ...GLOBAL_TYPE_ROW,
+      inputType: 'all_groups_standing',
+      deadline: PAST,
+      options: { groups: ['A'], teamsPerGroup: 2, best3rdPicks: 2 },
+      correctAnswer: JSON.stringify({
+        groups: { A: [T1, T2] },
+        best3rds: [B1, B2],
+      }),
+    }
+    setupSelectSequence([
+      ACCESS_GRANTED,
+      [AGS_TYPE],
+      [],
+      [
+        { id: T1, name: 'Magyarország' },
+        { id: T2, name: 'Brazília' },
+        { id: B1, name: 'Olaszország' },
+        { id: B2, name: 'Németország' },
+      ],
+    ])
+
+    const result = await listGlobalTypesWithPredictions(USER_ID)
+
+    expect(result[0]?.correctAnswerLabel).toBe(
+      'A: Magyarország, Brazília\nTovábbjutó 3. helyezettek: Olaszország, Németország',
+    )
+  })
+
+  it('UX-038: renders "?" for unknown team UUIDs in correctAnswer', async () => {
+    const T1 = '11111111-1111-1111-1111-111111111111'
+    const UNKNOWN = '99999999-9999-9999-9999-999999999999'
+    const AGS_TYPE = {
+      ...GLOBAL_TYPE_ROW,
+      inputType: 'all_groups_standing',
+      deadline: PAST,
+      options: { groups: ['A'], teamsPerGroup: 2, best3rdPicks: 0 },
+      correctAnswer: JSON.stringify({
+        groups: { A: [T1, UNKNOWN] },
+        best3rds: [],
+      }),
+    }
+    setupSelectSequence([
+      ACCESS_GRANTED,
+      [AGS_TYPE],
+      [],
+      [{ id: T1, name: 'Magyarország' }], // UNKNOWN not in lookup
+    ])
+
+    const result = await listGlobalTypesWithPredictions(USER_ID)
+
+    expect(result[0]?.correctAnswerLabel).toBe('A: Magyarország, ?')
+  })
+
+  it('UX-038: renders "–" for null positions in correctAnswer', async () => {
+    const T1 = '11111111-1111-1111-1111-111111111111'
+    const AGS_TYPE = {
+      ...GLOBAL_TYPE_ROW,
+      inputType: 'all_groups_standing',
+      deadline: PAST,
+      options: { groups: ['A'], teamsPerGroup: 2, best3rdPicks: 0 },
+      correctAnswer: JSON.stringify({
+        groups: { A: [T1, null] },
+        best3rds: [],
+      }),
+    }
+    setupSelectSequence([
+      ACCESS_GRANTED,
+      [AGS_TYPE],
+      [],
+      [{ id: T1, name: 'Magyarország' }],
+    ])
+
+    const result = await listGlobalTypesWithPredictions(USER_ID)
+
+    expect(result[0]?.correctAnswerLabel).toBe('A: Magyarország, –')
+  })
+
+  it('UX-038: returns null label when all_groups_standing correctAnswer JSON cannot be parsed', async () => {
+    const AGS_TYPE = {
+      ...GLOBAL_TYPE_ROW,
+      inputType: 'all_groups_standing',
+      deadline: PAST,
+      options: { groups: ['A'], teamsPerGroup: 4, best3rdPicks: 0 },
+      correctAnswer: 'not-valid-json',
+    }
+    setupSelectSequence([
+      ACCESS_GRANTED,
+      [AGS_TYPE],
+      [],
+    ])
+
+    const result = await listGlobalTypesWithPredictions(USER_ID)
+
+    expect(result[0]?.correctAnswerLabel).toBeNull()
+  })
+
+  it('UX-038: builds a label for bracket_progression winners', async () => {
+    const T1 = '11111111-1111-1111-1111-111111111111'
+    const T2 = '22222222-2222-2222-2222-222222222222'
+    const BP_TYPE = {
+      ...GLOBAL_TYPE_ROW,
+      inputType: 'bracket_progression',
+      deadline: PAST,
+      options: { bracketTemplate: { matches: [
+        { id: 'm1', round: 'final', slotA: 'A1', slotB: 'B2', winnerTo: null },
+        { id: 'm2', round: 'sf', slotA: 'A2', slotB: 'B1', winnerTo: null },
+      ] } },
+      correctAnswer: JSON.stringify({ winners: { m1: T1, m2: T2 } }),
+    }
+    setupSelectSequence([
+      ACCESS_GRANTED,
+      [BP_TYPE],
+      [],
+      [
+        { id: T1, name: 'Magyarország' },
+        { id: T2, name: 'Brazília' },
+      ],
+    ])
+
+    const result = await listGlobalTypesWithPredictions(USER_ID)
+
+    expect(result[0]?.correctAnswerLabel).toContain('Magyarország')
+    expect(result[0]?.correctAnswerLabel).toContain('Brazília')
+  })
+
   it('throws 403 when user has no group with WC league', async () => {
     setupSelectSequence([ACCESS_DENIED])
 

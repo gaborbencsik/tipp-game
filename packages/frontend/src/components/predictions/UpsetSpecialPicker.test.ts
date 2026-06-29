@@ -102,4 +102,86 @@ describe('UpsetSpecialPicker', () => {
     const brazilItem = wrapper.find(`[data-testid="upset-choice-${BRAZIL}"]`)
     expect(brazilItem.classes().some(c => c.includes('bg-blue'))).toBe(false)
   })
+
+  // UX-041: scored read-only view — green/red/dashed feedback + breakdown.
+  describe('UX-041 scored mode (correctAnswer)', () => {
+    it('marks tipped + eliminated chip with emerald and shows +points pill', async () => {
+      const wrapper = mount(UpsetSpecialPicker, {
+        props: {
+          options: OPTIONS,
+          answer: JSON.stringify([SPAIN, BRAZIL]),
+          correctAnswer: JSON.stringify([SPAIN, FRANCE]),
+          readOnly: true,
+        },
+      })
+      await flushPromises()
+      const spainItem = wrapper.find(`[data-testid="upset-choice-${SPAIN}"]`)
+      expect(spainItem.classes().some(c => c.includes('emerald'))).toBe(true)
+      const pill = wrapper.find(`[data-testid="upset-points-${SPAIN}"]`)
+      expect(pill.exists()).toBe(true)
+      expect(pill.text()).toContain('18')
+    })
+
+    it('marks tipped + NOT eliminated chip with rose and shows zero pill', async () => {
+      const wrapper = mount(UpsetSpecialPicker, {
+        props: {
+          options: OPTIONS,
+          answer: JSON.stringify([SPAIN, BRAZIL]),
+          correctAnswer: JSON.stringify([SPAIN, FRANCE]),
+          readOnly: true,
+        },
+      })
+      await flushPromises()
+      const brazilItem = wrapper.find(`[data-testid="upset-choice-${BRAZIL}"]`)
+      expect(brazilItem.classes().some(c => c.includes('rose') || c.includes('red'))).toBe(true)
+      const pill = wrapper.find(`[data-testid="upset-points-${BRAZIL}"]`)
+      expect(pill.exists()).toBe(true)
+      expect(pill.text()).toContain('0')
+    })
+
+    it('renders an "Actual" badge on an unpicked but eliminated chip', async () => {
+      const wrapper = mount(UpsetSpecialPicker, {
+        props: {
+          options: OPTIONS,
+          answer: JSON.stringify([SPAIN, BRAZIL]),
+          correctAnswer: JSON.stringify([SPAIN, FRANCE]),
+          readOnly: true,
+        },
+      })
+      await flushPromises()
+      const badge = wrapper.find(`[data-testid="upset-actual-${FRANCE}"]`)
+      expect(badge.exists()).toBe(true)
+    })
+
+    it('renders a breakdown summary with the total weighted points', async () => {
+      const wrapper = mount(UpsetSpecialPicker, {
+        props: {
+          options: OPTIONS,
+          answer: JSON.stringify([SPAIN, BRAZIL]),
+          correctAnswer: JSON.stringify([SPAIN, FRANCE]),
+          readOnly: true,
+        },
+      })
+      await flushPromises()
+      const summary = wrapper.find('[data-testid="upset-score-summary"]')
+      expect(summary.exists()).toBe(true)
+      // 1 helyes pick (Spain, 18p), 1 helytelen (Brazil) → összesen 18 pont
+      expect(summary.text()).toContain('1')
+      expect(summary.text()).toContain('18')
+    })
+
+    it('does not emit submit when readOnly', async () => {
+      const wrapper = mount(UpsetSpecialPicker, {
+        props: {
+          options: OPTIONS,
+          answer: null,
+          correctAnswer: JSON.stringify([SPAIN]),
+          readOnly: true,
+        },
+      })
+      await flushPromises()
+      await wrapper.find(`[data-testid="upset-choice-${SPAIN}"]`).trigger('click')
+      expect(wrapper.emitted('submit')).toBeUndefined()
+    })
+  })
 })

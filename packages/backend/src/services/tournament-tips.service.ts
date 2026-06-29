@@ -119,12 +119,31 @@ export async function listGlobalTypesWithPredictions(
           for (const teamId of parsed.best3rds) teamIds.push(teamId)
         }
       }
+      // UX-038: correctAnswer also references team UUIDs; preload them for the label.
+      if (t.correctAnswer) {
+        const parsedCorrect = parseAllGroupsStandingAnswer(t.correctAnswer)
+        if (parsedCorrect) {
+          for (const positions of Object.values(parsedCorrect.groups)) {
+            for (const teamId of positions) {
+              if (teamId) teamIds.push(teamId)
+            }
+          }
+          for (const teamId of parsedCorrect.best3rds) teamIds.push(teamId)
+        }
+      }
     }
     if (t.inputType === 'bracket_progression') {
       if (pred?.answer) {
         const parsed = parseBracketProgressionAnswer(pred.answer)
         if (parsed) {
           for (const teamId of Object.values(parsed.winners)) teamIds.push(teamId)
+        }
+      }
+      // UX-038: correctAnswer winners → team name lookup for the label.
+      if (t.correctAnswer) {
+        const parsedCorrect = parseBracketProgressionAnswer(t.correctAnswer)
+        if (parsedCorrect) {
+          for (const teamId of Object.values(parsedCorrect.winners)) teamIds.push(teamId)
         }
       }
     }
@@ -213,6 +232,14 @@ export async function listGlobalTypesWithPredictions(
         const eliminated = parseUpsetPicks(t.correctAnswer) ?? []
         const labels = eliminated.map(id => teamNameMap.get(id)).filter((n): n is string => Boolean(n))
         correctAnswerLabel = labels.length > 0 ? labels.join(', ') : null
+      }
+      else if (t.inputType === 'all_groups_standing') {
+        // UX-038: render the structured JSON as a multi-line, human-readable label.
+        correctAnswerLabel = formatAllGroupsStandingCorrectAnswer(t.correctAnswer, teamNameMap)
+      }
+      else if (t.inputType === 'bracket_progression') {
+        // UX-038: render bracket winners as a per-match label.
+        correctAnswerLabel = formatBracketProgressionCorrectAnswer(t.correctAnswer, teamNameMap)
       }
     }
     return {
@@ -476,4 +503,42 @@ export async function upsertGlobalPrediction(
     updatedAt: row.updatedAt.toISOString(),
     ...(resolvedCompletion ? { completion: resolvedCompletion } : {}),
   }
+}
+
+// UX-038: human-readable label for the structured `all_groups_standing` correctAnswer JSON.
+// Output is multi-line: one line per group ("A: team1, team2, …"), plus a closing
+// "Továbbjutó 3. helyezettek: …" line if any best3rds are present. Unknown team UUIDs render
+// as "?" and null/missing positions as "–". Returns null when the JSON cannot be parsed.
+function formatAllGroupsStandingCorrectAnswer(
+  correctAnswer: string,
+  teamNameMap: ReadonlyMap<string, string>,
+): string | null {
+  const parsed = parseAllGroupsStandingAnswer(correctAnswer)
+  if (!parsed) return null
+  const lines: string[] = []
+  for (const [code, positions] of Object.entries(parsed.groups)) {
+    const cells = positions.map(id => (id ? teamNameMap.get(id) ?? '?' : '–'))
+    lines.push(`${code}: ${cells.join(', ')}`)
+  }
+  if (parsed.best3rds.length > 0) {
+    const cells = parsed.best3rds.map(id => teamNameMap.get(id) ?? '?')
+    lines.push(`Továbbjutó 3. helyezettek: ${cells.join(', ')}`)
+  }
+  return lines.length > 0 ? lines.join('\n') : null
+}
+
+// UX-038: human-readable label for the `bracket_progression` correctAnswer JSON.
+// One line per match: "<matchId>: <team name>". Unknown team UUIDs render as "?".
+// Returns null when the JSON cannot be parsed or has no winners.
+function formatBracketProgressionCorrectAnswer(
+  correctAnswer: string,
+  teamNameMap: ReadonlyMap<string, string>,
+): string | null {
+  const parsed = parseBracketProgressionAnswer(correctAnswer)
+  if (!parsed) return null
+  const entries = Object.entries(parsed.winners)
+  if (entries.length === 0) return null
+  return entries
+    .map(([matchId, teamId]) => `${matchId}: ${teamNameMap.get(teamId) ?? '?'}`)
+    .join('\n')
 }

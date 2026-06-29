@@ -81,7 +81,35 @@
 
           <div v-if="sp.points !== null" class="text-sm">
             <p class="text-gray-600">{{ $t('tournamentTips.yourTip', { answer: sp.answerLabel ?? sp.answer ?? '–' }) }}</p>
-            <p v-if="sp.correctAnswer" class="text-gray-600">{{ $t('tournamentTips.correctAnswer', { answer: sp.correctAnswerLabel ?? formatRawCorrectAnswer(sp.correctAnswer) }) }}</p>
+            <!-- UX-039: structured all_groups_standing tip → render picker readOnly+correctAnswer for visual diff -->
+            <div
+              v-if="sp.inputType === 'all_groups_standing' && isAllGroupsStandingOptions(sp.options) && sp.correctAnswer"
+              class="mt-2"
+            >
+              <GroupStandingsPicker
+                :options="sp.options"
+                :answer="sp.answer ?? null"
+                :correct-answer="sp.correctAnswer"
+                :read-only="true"
+              />
+            </div>
+            <!-- UX-041: structured multi_team_weighted tip → render Upset picker readOnly+derived correctAnswer for visual diff -->
+            <div
+              v-else-if="sp.inputType === 'multi_team_weighted' && isMultiTeamWeightedOptions(sp.options) && deriveUpsetCorrectAnswer(sp)"
+              class="mt-2"
+            >
+              <UpsetSpecialPicker
+                :options="sp.options"
+                :answer="sp.answer ?? null"
+                :correct-answer="deriveUpsetCorrectAnswer(sp)"
+                :read-only="true"
+              />
+            </div>
+            <p
+              v-else-if="sp.correctAnswer"
+              class="text-gray-600 whitespace-pre-line"
+              data-testid="tip-correct-answer"
+            >{{ $t('tournamentTips.correctAnswer', { answer: sp.correctAnswerLabel ?? formatRawCorrectAnswer(sp.correctAnswer) }) }}</p>
             <p class="mt-1 font-semibold" :class="sp.points > 0 ? 'text-green-600' : 'text-gray-400'">
               {{ sp.points > 0 ? $t('tournamentTips.pointsResult', { n: sp.points }) : $t('tournamentTips.zeroPoints') }}
             </p>
@@ -208,7 +236,8 @@ import { useTournamentTipsStore } from '../stores/tournamentTips.store.js'
 import { formatRelativeDeadline } from '../lib/deadline.js'
 import { supabase } from '../lib/supabase.js'
 import { api } from '../api/index.js'
-import type { AllGroupsStandingAnswer, AllGroupsStandingOptions, BracketProgressionOptions, MultiTeamWeightedOptions, SpecialPredictionOptions, SpecialPredictionWithType } from '../types/index.js'
+import { deriveBracket } from '../lib/bracketDerive.js'
+import type { AllGroupsStandingAnswer, AllGroupsStandingOptions, BracketProgressionAnswer, BracketProgressionOptions, MultiTeamWeightedOptions, SpecialPredictionOptions, SpecialPredictionWithType } from '../types/index.js'
 
 const { t, te } = useI18n()
 const store = useTournamentTipsStore()
@@ -221,6 +250,9 @@ function displayTypeName(sp: SpecialPredictionWithType): string {
 // UX-037: if the backend could not resolve labels for a JSON-array correctAnswer (e.g. a
 // team/player lookup miss), fall back to a comma-joined list of the raw entries so the user
 // does not see a bare JSON string. Plain single-string answers pass through unchanged.
+// UX-038: if the correctAnswer is a JSON object (e.g. all_groups_standing / bracket_progression)
+// and the backend label resolver could not produce a readable label, suppress the raw blob with
+// an em-dash so the user does not see "{...}".
 function formatRawCorrectAnswer(raw: string): string {
   const trimmed = raw.trim()
   if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
@@ -236,6 +268,9 @@ function formatRawCorrectAnswer(raw: string): string {
     } catch {
       // fall through
     }
+  }
+  if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+    return '–'
   }
   return raw
 }
@@ -327,6 +362,58 @@ function isBracketProgressionOptions(options: SpecialPredictionOptions): options
   return options !== null && !Array.isArray(options)
     && typeof (options as BracketProgressionOptions).bracketTemplate === 'object'
     && Array.isArray((options as BracketProgressionOptions).bracketTemplate?.matches)
+}
+
+// UX-041 follow-up: the multi_team_weighted (Upset Special) type has no explicit
+// correctAnswer on the row — the backend derives "eliminated" from the bracket
+// progression's correctAnswer. To render the scored visual diff we mirror that
+// derivation client-side from the two upstream tips already in `store.tips`.
+function deriveUpsetCorrectAnswer(sp: SpecialPredictionWithType): string | null {
+  if (sp.points === null) return null
+  if (!isMultiTeamWeightedOptions(sp.options)) return null
+  const groupStandingsTip = store.tips.find(t => t.inputType === 'all_groups_standing')
+  const bracketTip = store.tips.find(t => t.inputType === 'bracket_progression')
+  if (!groupStandingsTip?.correctAnswer) return null
+  if (!bracketTip || !isBracketProgressionOptions(bracketTip.options)) return null
+
+  let correctGroupStandings: AllGroupsStandingAnswer | null = null
+  try {
+    const parsed = JSON.parse(groupStandingsTip.correctAnswer) as AllGroupsStandingAnswer
+    if (parsed && typeof parsed === 'object' && parsed.groups && Array.isArray(parsed.best3rds)) {
+      correctGroupStandings = parsed
+    }
+  } catch {
+    return null
+  }
+  if (!correctGroupStandings) return null
+
+  let correctBracketWinners: Readonly<Record<string, string>> = {}
+  if (bracketTip.correctAnswer) {
+    try {
+      const parsed = JSON.parse(bracketTip.correctAnswer) as BracketProgressionAnswer
+      if (parsed && typeof parsed === 'object' && parsed.winners && typeof parsed.winners === 'object') {
+        const winners: Record<string, string> = {}
+        for (const [k, v] of Object.entries(parsed.winners)) {
+          if (typeof v === 'string') winners[k] = v
+        }
+        correctBracketWinners = winners
+      }
+    } catch {
+      // tolerate parse errors — winners stays empty and derive uses group standings only
+    }
+  }
+
+  const derived = deriveBracket(bracketTip.options.bracketTemplate.matches, correctGroupStandings, correctBracketWinners)
+  const last32 = new Set<string>()
+  let unresolved = 0
+  for (const m of derived.matches) {
+    if (m.round !== 'last_32') continue
+    if (m.teamA) last32.add(m.teamA); else unresolved += 1
+    if (m.teamB) last32.add(m.teamB); else unresolved += 1
+  }
+  if (last32.size === 0 || unresolved > 0) return null
+  const eliminated = sp.options.choices.map(c => c.teamId).filter(id => !last32.has(id))
+  return JSON.stringify(eliminated)
 }
 
 const parsedGroupStandingsAnswer = computed<AllGroupsStandingAnswer | null>(() => {

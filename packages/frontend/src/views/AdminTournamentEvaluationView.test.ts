@@ -199,6 +199,19 @@ describe('AdminTournamentEvaluationView', () => {
     expect(chips.text()).toContain('Mbappe')
   })
 
+  it('UX-037: auto-flushes a pending text draft on save (no orphaned last selection)', async () => {
+    const { wrapper } = await mountView([TEXT_TYPE])
+    const input = wrapper.find('input[type="text"]')
+    const addBtn = () => wrapper.findAll('button').find(b => b.text().trim() === 'Hozzáadás')!
+    await input.setValue('Messi')
+    await addBtn().trigger('click')
+    // Type a second value but do NOT press "Hozzáadás" — simulate the bug flow.
+    await input.setValue('Ronaldo')
+    await wrapper.findAll('button').find(b => b.text().includes('Mentés és kiértékelés'))!.trigger('click')
+    await flushPromises()
+    expect(mockSetCorrectAnswer).toHaveBeenCalledWith('mock-token', 'type-1', JSON.stringify(['Messi', 'Ronaldo']))
+  })
+
   it('UX-037: refuses to save when no chips are present', async () => {
     const { wrapper } = await mountView([TEXT_TYPE])
     await wrapper.findAll('button').find(b => b.text().includes('Mentés és kiértékelés'))!.trigger('click')

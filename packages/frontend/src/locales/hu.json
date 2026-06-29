@@ -665,7 +665,11 @@
   },
   "upsetSpecial": {
     "instruction": "Válassz pontosan {max} csapatot, akik szerinted nem jutnak túl a csoportkörön.",
-    "selectedCount": "Kiválasztva: {n}/{max}"
+    "selectedCount": "Kiválasztva: {n}/{max}",
+    "scoredSummary": "Részpont-bontás: {correct} helyes pick → {points} pont",
+    "actualEliminatedCount": "Tényleges kiesők: {n} csapat",
+    "actualBadge": "Tényleges",
+    "pointsZero": "0 pont"
   },
   "groupStandings": {
     "intro": "Tippeld meg mind a 12 csoport végeredményét (1–4. helyek), majd válaszd ki a 8 továbbjutó 3. helyezettet.",
@@ -683,7 +687,16 @@
     "best3rdInstruction": "Válassz {n} csapatot a 3. helyezettek közül, akik továbbjutnak.",
     "best3rdEmpty": "Nincs elérhető 3. helyezett — töltsd ki a csoportokat.",
     "best3rdRemaining": "Még {n} csapatot kell választanod.",
-    "best3rdGroupLabel": "{code} csop."
+    "best3rdGroupLabel": "{code} csop.",
+    "actualAnswer": "Tényleges",
+    "yourPick": "Te tipped",
+    "evaluatedLegendCorrect": "Helyes",
+    "evaluatedLegendIncorrect": "Helytelen",
+    "pointsPill": "+{n} pont",
+    "pointsZero": "0 pont",
+    "scoreFooter": "{hits}/4 helyes pozíció → {points} pont",
+    "scoreSummary": "Részpont-bontás: {correct} / {total} csoport × {perGroup} pont = {points} pont",
+    "best3rdScoringNote": "A best 3rd csapatoknak nincs önálló pontja — a 32-be jutási köröket a Bracket-progresszió pontozza."
   },
   "bracketProgression": {
     "intro": "Tippeld meg minden mérkőzés győztesét a kieséses ágon.",
