@@ -139,6 +139,68 @@ describe('evaluateSpecialPrediction', () => {
   it('different maxPoints value', () => {
     expect(evaluateSpecialPrediction('Messi', 'Messi', 100)).toBe(100)
   })
+
+  // ─── UX-037: multi-correct-answer support (JSON array correctAnswer) ──────
+
+  describe('JSON-array correctAnswer (UX-037)', () => {
+    it('any match in JSON array → full points', () => {
+      const correct = JSON.stringify(['Messi', 'Ronaldo', 'Mbappe'])
+      expect(evaluateSpecialPrediction('Messi', correct, 5)).toBe(5)
+      expect(evaluateSpecialPrediction('Ronaldo', correct, 5)).toBe(5)
+      expect(evaluateSpecialPrediction('Mbappe', correct, 5)).toBe(5)
+    })
+
+    it('any match in JSON array is case-insensitive + accent-normalized', () => {
+      const correct = JSON.stringify(['Müller', 'Várga'])
+      expect(evaluateSpecialPrediction('muller', correct, 5)).toBe(5)
+      expect(evaluateSpecialPrediction('VARGA', correct, 5)).toBe(5)
+    })
+
+    it('no match in JSON array → 0 points', () => {
+      const correct = JSON.stringify(['Messi', 'Ronaldo'])
+      expect(evaluateSpecialPrediction('Mbappe', correct, 5)).toBe(0)
+    })
+
+    it('single-element JSON array equivalent to plain string', () => {
+      const correct = JSON.stringify(['Messi'])
+      expect(evaluateSpecialPrediction('Messi', correct, 5)).toBe(5)
+      expect(evaluateSpecialPrediction('Ronaldo', correct, 5)).toBe(0)
+    })
+
+    it('empty JSON array → 0 points', () => {
+      expect(evaluateSpecialPrediction('Messi', '[]', 5)).toBe(0)
+    })
+
+    it('JSON array filters out empty / whitespace entries', () => {
+      const correct = JSON.stringify(['', '  ', 'Messi'])
+      expect(evaluateSpecialPrediction('Messi', correct, 5)).toBe(5)
+      // An empty user pick must NOT match the empty entries in the array.
+      expect(evaluateSpecialPrediction('', correct, 5)).toBe(0)
+    })
+
+    it('UUID-shaped multi-correct (team_select / player_select style)', () => {
+      const t1 = '11111111-1111-1111-1111-111111111111'
+      const t2 = '22222222-2222-2222-2222-222222222222'
+      const correct = JSON.stringify([t1, t2])
+      expect(evaluateSpecialPrediction(t1, correct, 3)).toBe(3)
+      expect(evaluateSpecialPrediction(t2, correct, 3)).toBe(3)
+      expect(evaluateSpecialPrediction('33333333-3333-3333-3333-333333333333', correct, 3)).toBe(0)
+    })
+
+    it('malformed JSON falls back to single-string match (BC)', () => {
+      // Looks like an array but is not valid JSON → treat as literal string.
+      const malformed = '["Messi","Ronaldo"' // missing closing bracket
+      expect(evaluateSpecialPrediction(malformed, malformed, 5)).toBe(5)
+      expect(evaluateSpecialPrediction('Messi', malformed, 5)).toBe(0)
+    })
+
+    it('non-array JSON (object) falls back to single-string match', () => {
+      const json = JSON.stringify({ winner: 'Messi' })
+      // The user would have to type the same JSON to match, not 'Messi'.
+      expect(evaluateSpecialPrediction('Messi', json, 5)).toBe(0)
+      expect(evaluateSpecialPrediction(json, json, 5)).toBe(5)
+    })
+  })
 })
 
 // ─── setCorrectAnswer ────────────────────────────────────────────────────────
@@ -263,6 +325,25 @@ describe('setGlobalCorrectAnswer', () => {
     setupSelectSequence([[]])
     await expect(setGlobalCorrectAnswer('missing', 'x'))
       .rejects.toMatchObject({ status: 404 })
+  })
+
+  // UX-037: reject empty JSON-array as correct answer
+  it('throws 400 when correctAnswer is an empty JSON array', async () => {
+    setupSelectSequence([[GLOBAL_TYPE_ROW]])
+    await expect(setGlobalCorrectAnswer(TYPE_ID, '[]'))
+      .rejects.toMatchObject({ status: 400 })
+  })
+
+  it('accepts a JSON array correctAnswer with multiple values', async () => {
+    setupSelectSequence([[GLOBAL_TYPE_ROW]])
+    const correctAnswer = JSON.stringify(['Messi', 'Ronaldo'])
+    const updatedRow = { ...GLOBAL_TYPE_ROW, correctAnswer }
+    const { setFn } = makeUpdateChain([updatedRow])
+    mockUpdate.mockReturnValueOnce({ set: setFn })
+
+    const result = await setGlobalCorrectAnswer(TYPE_ID, correctAnswer)
+
+    expect(result.correctAnswer).toBe(correctAnswer)
   })
 })
 

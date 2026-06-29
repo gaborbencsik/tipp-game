@@ -81,7 +81,7 @@
 
           <div v-if="sp.points !== null" class="text-sm">
             <p class="text-gray-600">{{ $t('tournamentTips.yourTip', { answer: sp.answerLabel ?? sp.answer ?? '–' }) }}</p>
-            <p v-if="sp.correctAnswer" class="text-gray-600">{{ $t('tournamentTips.correctAnswer', { answer: sp.correctAnswerLabel ?? sp.correctAnswer }) }}</p>
+            <p v-if="sp.correctAnswer" class="text-gray-600">{{ $t('tournamentTips.correctAnswer', { answer: sp.correctAnswerLabel ?? formatRawCorrectAnswer(sp.correctAnswer) }) }}</p>
             <p class="mt-1 font-semibold" :class="sp.points > 0 ? 'text-green-600' : 'text-gray-400'">
               {{ sp.points > 0 ? $t('tournamentTips.pointsResult', { n: sp.points }) : $t('tournamentTips.zeroPoints') }}
             </p>
@@ -216,6 +216,28 @@ const store = useTournamentTipsStore()
 function displayTypeName(sp: SpecialPredictionWithType): string {
   const key = `tournamentTips.typeName.${sp.inputType}`
   return te(key) ? t(key) : sp.typeName
+}
+
+// UX-037: if the backend could not resolve labels for a JSON-array correctAnswer (e.g. a
+// team/player lookup miss), fall back to a comma-joined list of the raw entries so the user
+// does not see a bare JSON string. Plain single-string answers pass through unchanged.
+function formatRawCorrectAnswer(raw: string): string {
+  const trimmed = raw.trim()
+  if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+    try {
+      const parsed = JSON.parse(trimmed) as unknown
+      if (Array.isArray(parsed)) {
+        return parsed
+          .filter((v): v is string => typeof v === 'string')
+          .map(v => v.trim())
+          .filter(v => v.length > 0)
+          .join(', ')
+      }
+    } catch {
+      // fall through
+    }
+  }
+  return raw
 }
 
 type TabKey = 'progression' | 'upset' | 'other'

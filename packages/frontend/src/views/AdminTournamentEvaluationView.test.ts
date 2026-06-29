@@ -40,6 +40,7 @@ vi.mock('@/api/index', () => ({
     matches: { list: vi.fn() },
     predictions: { mine: vi.fn(), upsert: vi.fn() },
     teams: { list: vi.fn().mockResolvedValue([]) },
+    players: { list: vi.fn().mockResolvedValue([]) },
     admin: {
       globalSpecialTypes: {
         list: mockGlobalTypesList,
@@ -130,14 +131,80 @@ describe('AdminTournamentEvaluationView', () => {
 
   it('calls setCorrectAnswer + evaluate(null) when the simple type save button is clicked', async () => {
     const { wrapper } = await mountView([TEXT_TYPE])
+    // UX-037: add a single chip first, then save → backend gets the single-string form (BC).
     const input = wrapper.find('input[type="text"]')
     await input.setValue('Messi')
+    const addBtn = wrapper.findAll('button').find(b => b.text().trim() === 'Hozzáadás')
+    expect(addBtn).toBeDefined()
+    await addBtn!.trigger('click')
     const saveBtn = wrapper.findAll('button').find(b => b.text().includes('Mentés és kiértékelés'))
     expect(saveBtn).toBeDefined()
     await saveBtn!.trigger('click')
     await flushPromises()
     expect(mockSetCorrectAnswer).toHaveBeenCalledWith('mock-token', 'type-1', 'Messi')
     expect(mockEvaluate).toHaveBeenCalledWith('mock-token', 'type-1', null)
+  })
+
+  // ─── UX-037: multi-correct answer support ────────────────────────────────
+
+  it('UX-037: saves a single chip as a plain string (BC)', async () => {
+    const { wrapper } = await mountView([TEXT_TYPE])
+    const input = wrapper.find('input[type="text"]')
+    await input.setValue('Messi')
+    await wrapper.findAll('button').find(b => b.text().trim() === 'Hozzáadás')!.trigger('click')
+    await wrapper.findAll('button').find(b => b.text().includes('Mentés és kiértékelés'))!.trigger('click')
+    await flushPromises()
+    expect(mockSetCorrectAnswer).toHaveBeenCalledWith('mock-token', 'type-1', 'Messi')
+  })
+
+  it('UX-037: saves two chips as a JSON array', async () => {
+    const { wrapper } = await mountView([TEXT_TYPE])
+    const input = wrapper.find('input[type="text"]')
+    const addBtn = () => wrapper.findAll('button').find(b => b.text().trim() === 'Hozzáadás')!
+    await input.setValue('Messi')
+    await addBtn().trigger('click')
+    await input.setValue('Ronaldo')
+    await addBtn().trigger('click')
+    await wrapper.findAll('button').find(b => b.text().includes('Mentés és kiértékelés'))!.trigger('click')
+    await flushPromises()
+    expect(mockSetCorrectAnswer).toHaveBeenCalledWith('mock-token', 'type-1', JSON.stringify(['Messi', 'Ronaldo']))
+  })
+
+  it('UX-037: removing a chip drops it from the saved value', async () => {
+    const { wrapper } = await mountView([TEXT_TYPE])
+    const input = wrapper.find('input[type="text"]')
+    const addBtn = () => wrapper.findAll('button').find(b => b.text().trim() === 'Hozzáadás')!
+    await input.setValue('Messi')
+    await addBtn().trigger('click')
+    await input.setValue('Ronaldo')
+    await addBtn().trigger('click')
+    // Remove the first chip ("Messi").
+    const removeBtn = wrapper.findAll('button').find(b => b.text().trim() === '×' && b.attributes('aria-label') === 'Eltávolítás')!
+    await removeBtn.trigger('click')
+    await wrapper.findAll('button').find(b => b.text().includes('Mentés és kiértékelés'))!.trigger('click')
+    await flushPromises()
+    expect(mockSetCorrectAnswer).toHaveBeenCalledWith('mock-token', 'type-1', 'Ronaldo')
+  })
+
+  it('UX-037: hydrates the chip list from a pre-existing JSON-array correctAnswer', async () => {
+    const seeded: SpecialPredictionType = {
+      ...TEXT_TYPE,
+      correctAnswer: JSON.stringify(['Messi', 'Ronaldo', 'Mbappe']),
+    }
+    const { wrapper } = await mountView([seeded])
+    const chips = wrapper.find(`[data-testid="chips-${seeded.id}"]`)
+    expect(chips.exists()).toBe(true)
+    expect(chips.text()).toContain('Messi')
+    expect(chips.text()).toContain('Ronaldo')
+    expect(chips.text()).toContain('Mbappe')
+  })
+
+  it('UX-037: refuses to save when no chips are present', async () => {
+    const { wrapper } = await mountView([TEXT_TYPE])
+    await wrapper.findAll('button').find(b => b.text().includes('Mentés és kiértékelés'))!.trigger('click')
+    await flushPromises()
+    expect(mockSetCorrectAnswer).not.toHaveBeenCalled()
+    expect(mockEvaluate).not.toHaveBeenCalled()
   })
 
   it('renders auto-derive notice (no JSON input) for multi_team_weighted type', async () => {

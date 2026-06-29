@@ -1,6 +1,6 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-06-20 (OPS-011 kész: tick handler push/player sync függetlenítve a sync gate-től)
+> Utoljára frissítve: 2026-06-29 (UX-037 kész: torna tippek több helyes válasz támogatása holtverseny esetén)
 
 ## Nyitott story-k
 
@@ -32,4 +32,4 @@
 
 ---
 
-**Haladás: 178 / 194 story kész** — Must Have: 32/32, Should Have: 146/152, Nice to Have: 0/5 (US-937, PUSH-003 won't do)
+**Haladás: 180 / 195 story kész** — Must Have: 32/32, Should Have: 148/153, Nice to Have: 0/5 (US-937, PUSH-003 won't do)

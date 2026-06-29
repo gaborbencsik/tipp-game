@@ -23,12 +23,42 @@ class AppError extends Error {
 const normalize = (s: string): string =>
   s.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
 
+/**
+ * UX-037: parse a stored `correctAnswer` into the set of accepted strings.
+ * - JSON-array (`["a","b",...]`) → array of non-empty trimmed strings (tie handling).
+ * - Anything else → `[correctAnswer]` (backward compatible single-value form).
+ *
+ * Malformed JSON or non-array JSON falls back to the single-string interpretation,
+ * preserving existing behaviour for free-text answers that happen to look JSON-ish.
+ */
+export function parseCorrectAnswerSet(raw: string): readonly string[] {
+  const trimmed = raw.trim()
+  if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+    try {
+      const parsed: unknown = JSON.parse(trimmed)
+      if (Array.isArray(parsed)) {
+        return parsed
+          .filter((v): v is string => typeof v === 'string')
+          .map(v => v.trim())
+          .filter(v => v.length > 0)
+      }
+    } catch {
+      // fall through to single-string treatment
+    }
+  }
+  return [raw]
+}
+
 export function evaluateSpecialPrediction(
   answer: string,
   correctAnswer: string,
   maxPoints: number,
 ): number {
-  return normalize(answer) === normalize(correctAnswer) ? maxPoints : 0
+  const candidates = parseCorrectAnswerSet(correctAnswer)
+  if (candidates.length === 0) return 0
+  const normalizedAnswer = normalize(answer)
+  if (normalizedAnswer.length === 0) return 0
+  return candidates.some(c => normalize(c) === normalizedAnswer) ? maxPoints : 0
 }
 
 /**
@@ -165,6 +195,27 @@ export async function setGlobalCorrectAnswer(
   typeId: string,
   correctAnswer: string,
 ): Promise<SpecialPredictionType> {
+  // UX-037: reject empty JSON-array form (`[]`) — it would silently zero out every user's points.
+  // Single empty string is allowed (legacy: clears the answer).
+  const trimmed = correctAnswer.trim()
+  if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+    try {
+      const parsed: unknown = JSON.parse(trimmed)
+      if (Array.isArray(parsed)) {
+        const meaningful = parsed
+          .filter((v): v is string => typeof v === 'string')
+          .map(v => v.trim())
+          .filter(v => v.length > 0)
+        if (meaningful.length === 0) {
+          throw new AppError(400, 'Helyes válasz nem lehet üres')
+        }
+      }
+    } catch (err) {
+      if (err instanceof AppError) throw err
+      // Malformed JSON — fall through and persist as-is (backward compatible).
+    }
+  }
+
   const typeRows = await db
     .select()
     .from(specialPredictionTypes)

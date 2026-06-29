@@ -54,8 +54,10 @@ test.describe('Admin tournament evaluation (US-1311)', () => {
       await expect(card).toContainText(typeName)
       await expect(card).toContainText('Nincs helyes válasz')
 
-      // Type a correct answer and click "Mentés és kiértékelés" — the simple-type button.
+      // UX-037: type the answer, click "Hozzáadás" so the chip lands in the list, then save.
       await card.locator('input[type="text"]').fill('Messi')
+      await card.getByRole('button', { name: 'Hozzáadás' }).click()
+      await expect(card.locator(`[data-testid="chips-${typeId}"]`)).toContainText('Messi')
 
       const evalResponse = page.waitForResponse(
         r => r.url().includes(`/api/admin/global-special-types/${typeId}/evaluate`)

@@ -202,6 +202,54 @@ describe('listGlobalTypesWithPredictions', () => {
     expect(result[0]?.correctAnswerLabel).toBe('Lionel Andrés Messi Cuccittini')
   })
 
+  // ─── UX-037: multi-correct-answer labels ──────────────────────────────────
+
+  it('UX-037: joins multiple team_select correctAnswer labels (tie)', async () => {
+    const T1 = '11111111-1111-1111-1111-111111111111'
+    const T2 = '22222222-2222-2222-2222-222222222222'
+    const TIE_TYPE = {
+      ...GLOBAL_TYPE_ROW,
+      inputType: 'team_select',
+      deadline: PAST,
+      correctAnswer: JSON.stringify([T1, T2]),
+    }
+    setupSelectSequence([
+      ACCESS_GRANTED,
+      [TIE_TYPE],
+      [],
+      [{ id: T1, name: 'Magyarország' }, { id: T2, name: 'Brazília' }], // teams lookup
+    ])
+
+    const result = await listGlobalTypesWithPredictions(USER_ID)
+
+    expect(result[0]?.correctAnswer).toBe(JSON.stringify([T1, T2]))
+    expect(result[0]?.correctAnswerLabel).toBe('Magyarország, Brazília')
+  })
+
+  it('UX-037: joins multiple player_select correctAnswer labels (tie)', async () => {
+    const P1 = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+    const P2 = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
+    const TIE_TYPE = {
+      ...GLOBAL_TYPE_ROW,
+      inputType: 'player_select',
+      deadline: PAST,
+      correctAnswer: JSON.stringify([P1, P2]),
+    }
+    setupSelectSequence([
+      ACCESS_GRANTED,
+      [TIE_TYPE],
+      [],
+      [
+        { id: P1, name: 'Lionel Messi', shortName: 'Messi' },
+        { id: P2, name: 'Cristiano Ronaldo', shortName: 'Ronaldo' },
+      ],
+    ])
+
+    const result = await listGlobalTypesWithPredictions(USER_ID)
+
+    expect(result[0]?.correctAnswerLabel).toBe('Lionel Messi, Cristiano Ronaldo')
+  })
+
   it('throws 403 when user has no group with WC league', async () => {
     setupSelectSequence([ACCESS_DENIED])
 
