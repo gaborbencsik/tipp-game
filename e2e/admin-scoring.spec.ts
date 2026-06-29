@@ -66,20 +66,22 @@ test.describe('Admin scoring config', () => {
     const nextET = before.extraTimeBonusPoints === 1 ? 2 : 1
 
     await injectSession(page)
+    // Wait for the initial GET to actually finish (and the watch(store.config → draft)
+    // flush to complete) before we touch the form. `networkidle` was not deterministic
+    // here — the initial fetchConfig could land late and overwrite the filled draft.
+    const initialGet = page.waitForResponse(
+      (r) => r.url().endsWith('/api/admin/scoring-config') && r.request().method() === 'GET' && r.status() === 200,
+    )
     await page.goto('/admin/scoring')
-    // Wait for the initial fetchConfig (and any other in-flight requests) to settle
-    // before we touch the form. Otherwise the watch(store.config → draft) flush can
-    // race our fill() and overwrite it back to the server-side value.
-    await page.waitForLoadState('networkidle')
+    await initialGet
 
     await expect(page.getByTestId('scoring-form')).toBeVisible()
     await expect(page.getByTestId('field-correctOutcomePoints')).toBeVisible()
     await expect(page.getByTestId('field-exactBonusPoints')).toBeVisible()
     await expect(page.getByTestId('field-extraTimeBonusPoints')).toBeVisible()
 
-    // Wait until the watch(store.config → draft) has settled with the loaded values,
-    // so our subsequent fill() isn't races against a late watch flush that would
-    // overwrite the draft back to the server-side value.
+    // The watch(store.config → draft) is microtask-async; wait until each input
+    // reflects the server-side `before` state before filling.
     await expect(page.getByTestId('field-correctOutcomePoints')).toHaveValue(String(before.correctOutcomePoints))
     await expect(page.getByTestId('field-exactBonusPoints')).toHaveValue(String(before.exactBonusPoints))
     await expect(page.getByTestId('field-extraTimeBonusPoints')).toHaveValue(String(before.extraTimeBonusPoints))
@@ -122,6 +124,14 @@ test.describe('Admin scoring config', () => {
       await expect(page.getByText('Pontrendszer frissítve')).toBeVisible()
     }
     await expect(page.getByTestId('save-status')).toHaveText('Elmentve!')
+
+    // After the PUT/override response, the store re-emits config via mergeUpdated,
+    // which re-flushes the draft watch. Wait for the inputs to settle on the new
+    // values — this proves the server returned and accepted the new state before
+    // we issue the fresh GET below.
+    await expect(page.getByTestId('field-correctOutcomePoints')).toHaveValue(String(nextOutcome))
+    await expect(page.getByTestId('field-exactBonusPoints')).toHaveValue(String(nextExact))
+    await expect(page.getByTestId('field-extraTimeBonusPoints')).toHaveValue(String(nextET))
 
     const after = await getScoringConfig()
     expect(after.correctOutcomePoints).toBe(nextOutcome)
