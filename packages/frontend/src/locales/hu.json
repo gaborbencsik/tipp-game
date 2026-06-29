@@ -519,9 +519,10 @@
   },
   "stage": {
     "group": "Csoportkör",
-    "round16": "Nyolcaddöntő",
-    "quarter": "Negyeddöntő",
-    "semi": "Elődöntő",
+    "round32": "Legjobb 32",
+    "round16": "Legjobb 16",
+    "quarter": "Legjobb 8",
+    "semi": "Legjobb 4",
     "thirdPlace": "Bronzmérkőzés",
     "final": "Döntő"
   },

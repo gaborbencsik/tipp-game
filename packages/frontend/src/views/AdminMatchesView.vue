@@ -78,9 +78,10 @@
                 class="w-full border border-gray-300 rounded px-2 py-1 text-sm"
               >
                 <option value="group">Csoportkör</option>
-                <option value="round_of_16">Nyolcaddöntő</option>
-                <option value="quarter_final">Negyeddöntő</option>
-                <option value="semi_final">Elődöntő</option>
+                <option value="round_of_32">Legjobb 32</option>
+                <option value="round_of_16">Legjobb 16</option>
+                <option value="quarter_final">Legjobb 8</option>
+                <option value="semi_final">Legjobb 4</option>
                 <option value="third_place">Bronzmérkőzés</option>
                 <option value="final">Döntő</option>
               </select>
@@ -345,7 +346,7 @@ async function submitForm(): Promise<void> {
 
 // ─── Result form ──────────────────────────────────────────────────────────────
 
-const KNOCKOUT_STAGES: readonly MatchStage[] = ['round_of_16', 'quarter_final', 'semi_final', 'third_place', 'final']
+const KNOCKOUT_STAGES: readonly MatchStage[] = ['round_of_32', 'round_of_16', 'quarter_final', 'semi_final', 'third_place', 'final']
 
 const resultFormMatchId = ref<string | null>(null)
 const resultForm = ref<{ homeGoals: number; awayGoals: number; outcomeAfterDraw: MatchOutcome | null; scorerPlayerIds: ReadonlyArray<string> }>({
@@ -400,9 +401,10 @@ async function handleDelete(id: string): Promise<void> {
 function stageLabel(stage: MatchStage): string {
   switch (stage) {
     case 'group': return 'Csoportkör'
-    case 'round_of_16': return 'Nyolcaddöntő'
-    case 'quarter_final': return 'Negyeddöntő'
-    case 'semi_final': return 'Elődöntő'
+    case 'round_of_32': return 'Legjobb 32'
+    case 'round_of_16': return 'Legjobb 16'
+    case 'quarter_final': return 'Legjobb 8'
+    case 'semi_final': return 'Legjobb 4'
     case 'third_place': return 'Bronzmérkőzés'
     case 'final': return 'Döntő'
   }

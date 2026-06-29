@@ -27,6 +27,7 @@ interface ParsedRound {
 }
 
 const KNOCKOUT_MAP: ReadonlyMap<string, MatchStage> = new Map([
+  ['Round of 32', 'round_of_32'],
   ['Round of 16', 'round_of_16'],
   ['Quarter-finals', 'quarter_final'],
   ['Semi-finals', 'semi_final'],
@@ -52,7 +53,8 @@ export function parseRound(round: string): ParsedRound {
     return { stage: 'group', groupName: round }
   }
 
-  // Fallback (Regular Season, unknown, empty)
+  // Fallback (Regular Season, unknown, empty) — warn so new round formats surface immediately
+  log.warn('parseRound_unknown_format', { round })
   return { stage: 'group', groupName: null }
 }
 

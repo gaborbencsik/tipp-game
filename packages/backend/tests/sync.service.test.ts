@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import {
   parseRound,
   FIXTURE_STATUS_MAP,
@@ -37,6 +37,10 @@ describe('sync.service – pure functions', () => {
       expect(parseRound('Group Stage - 1')).toEqual({ stage: 'group', groupName: 'Group Stage - 1' })
     })
 
+    it('parses "Round of 32" as round_of_32', () => {
+      expect(parseRound('Round of 32')).toEqual({ stage: 'round_of_32', groupName: null })
+    })
+
     it('parses "Round of 16" as round_of_16', () => {
       expect(parseRound('Round of 16')).toEqual({ stage: 'round_of_16', groupName: null })
     })
@@ -67,6 +71,33 @@ describe('sync.service – pure functions', () => {
 
     it('falls back for empty string', () => {
       expect(parseRound('')).toEqual({ stage: 'group', groupName: null })
+    })
+
+    it('emits a warn log when the round format is unknown', () => {
+      const writeSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true)
+      try {
+        parseRound('Playoffs - 99')
+        const calls = writeSpy.mock.calls.map(([chunk]) => String(chunk)).join('\n')
+        expect(calls).toContain('parseRound_unknown_format')
+        expect(calls).toContain('Playoffs - 99')
+      } finally {
+        writeSpy.mockRestore()
+      }
+    })
+
+    it('does NOT emit a warn log for recognised group-stage rounds', () => {
+      const writeSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true)
+      try {
+        parseRound('Group Stage - 1')
+        parseRound('Group A - 1')
+        parseRound('Round of 32')
+        const warnLines = writeSpy.mock.calls
+          .map(([chunk]) => String(chunk))
+          .filter(line => line.includes('parseRound_unknown_format'))
+        expect(warnLines).toHaveLength(0)
+      } finally {
+        writeSpy.mockRestore()
+      }
     })
   })
 

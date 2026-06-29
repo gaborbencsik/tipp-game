@@ -160,6 +160,16 @@ describe('matches.store', () => {
     expect(store.filteredMatches).toHaveLength(2)
   })
 
+  it('stageFilter=knockout → every non-group stage (round_of_32 → final)', () => {
+    const r32: Match = { ...MATCH_FINISHED, id: 'm-r32', stage: 'round_of_32', scheduledAt: '2026-06-30T18:00:00.000Z' }
+    const r16: Match = { ...MATCH_FINISHED, id: 'm-r16', stage: 'round_of_16', scheduledAt: '2026-07-04T18:00:00.000Z' }
+    const store = useMatchesStore()
+    store.matches = [MATCH_SCHEDULED, MATCH_LIVE, r32, r16, MATCH_FINISHED]
+    store.stageFilter = 'knockout'
+    const ids = store.filteredMatches.map(m => m.id).sort()
+    expect(ids).toEqual(['m-r16', 'm-r32', 'match-3'])
+  })
+
   // ─── matchesByDate ────────────────────────────────────────────────────────────
 
   it('matchesByDate → matches grouped by day', () => {

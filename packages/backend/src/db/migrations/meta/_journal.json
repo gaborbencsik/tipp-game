@@ -498,6 +498,13 @@
       "when": 1788000000014,
       "tag": "0070_fix_transfermarkt_ids",
       "breakpoints": true
+    },
+    {
+      "idx": 71,
+      "version": "7",
+      "when": 1788000000015,
+      "tag": "0071_match_stage_round_of_32",
+      "breakpoints": true
     }
   ]
 }

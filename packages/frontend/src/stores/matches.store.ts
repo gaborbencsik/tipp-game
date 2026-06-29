@@ -7,6 +7,20 @@ import type { Match, MatchDateGroup, MatchStage, MatchStatus } from '../types/in
 
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
 
+// "knockout" is a virtual filter value covering every non-group stage (Round of 32 → Final).
+// Used by the segmented control on the matches list so that newly-introduced knockout
+// stages (e.g. round_of_32 for the 48-team WC2026) are included without code changes.
+export type StageFilterValue = MatchStage | 'knockout'
+
+const KNOCKOUT_STAGES: ReadonlySet<MatchStage> = new Set([
+  'round_of_32',
+  'round_of_16',
+  'quarter_final',
+  'semi_final',
+  'third_place',
+  'final',
+])
+
 async function getAccessToken(): Promise<string> {
   if (DEV_AUTH_BYPASS) return 'dev-bypass-token'
   const { data } = await supabase.auth.getSession()
@@ -17,13 +31,18 @@ export const useMatchesStore = defineStore('matches', () => {
   const matches = ref<Match[]>([])
   const isLoading = ref(false)
   const error = ref<string | null>(null)
-  const stageFilter = ref<MatchStage | null>(null)
+  const stageFilter = ref<StageFilterValue | null>(null)
   const statusFilter = ref<MatchStatus | null>(null)
   const leagueFilter = ref<string | null>(null)
 
   const filteredMatches = computed<Match[]>(() => {
     return matches.value
-      .filter(m => !stageFilter.value || m.stage === stageFilter.value)
+      .filter(m => {
+        const f = stageFilter.value
+        if (!f) return true
+        if (f === 'knockout') return KNOCKOUT_STAGES.has(m.stage)
+        return m.stage === f
+      })
       .filter(m => !statusFilter.value || m.status === statusFilter.value)
       .filter(m => !leagueFilter.value || m.league?.id === leagueFilter.value)
   })
