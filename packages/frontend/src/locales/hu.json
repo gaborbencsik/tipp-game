@@ -750,6 +750,14 @@
       "silver": "{team} ezüst",
       "bronze": "{team} bronz",
       "fourth": "{team} 4."
+    },
+    "scored": {
+      "noTip": "Nem tippeltél",
+      "missed": "Tényleges",
+      "championLabel": "Bajnok",
+      "yourPick": "Tipped",
+      "correctWas": "Helyes válasz",
+      "pending": "Folyamatban"
     }
   },
   "scoringExplainer": {

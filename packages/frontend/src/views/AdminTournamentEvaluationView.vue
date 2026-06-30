@@ -261,12 +261,12 @@
           </div>
         </div>
 
-        <!-- bracket_progression: per-round team-list editor with save-and-evaluate per round (UX-042) -->
+        <!-- bracket_progression: per-round participants editor (UX-044) -->
         <div v-else-if="gt.inputType === 'bracket_progression' && isBracketProgressionOptions(gt.options)" class="space-y-3">
           <BracketRoundTeamList
             :options="gt.options"
-            :correct-group-standings="bracketGroupStandings"
-            :current-answer-json="gt.correctAnswer ?? null"
+            :current-correct-answer="parseBracketCorrectAnswer(gt.correctAnswer)"
+            :all-teams="allTeams"
             :busy="busy[gt.id]"
             :team-name-by-id="nameById"
             @save="(round, answer) => onSaveRound(gt, round, answer)"
@@ -297,12 +297,13 @@ import { supabase } from '../lib/supabase.js'
 import type {
   AllGroupsStandingAnswer,
   AllGroupsStandingOptions,
-  BracketProgressionAnswer,
+  BracketProgressionCorrectAnswer,
   BracketProgressionOptions,
-  BracketRound,
   SpecialPredictionOptions,
   SpecialPredictionType,
+  Team,
 } from '../types/index.js'
+import type { AdminCorrectAnswerRound } from '../lib/bracketCorrectAnswer.js'
 
 const store = useAdminTournamentEvaluationStore()
 const toast = useToastStore()
@@ -403,18 +404,6 @@ async function loadNameCache(): Promise<void> {
 
 const activeTypes = computed(() => store.globalTypes.filter(t => t.isActive))
 
-const bracketGroupStandings = computed<AllGroupsStandingAnswer | null>(() => {
-  const groupType = store.globalTypes.find(t => t.inputType === 'all_groups_standing' && t.isActive)
-  if (!groupType?.correctAnswer) return null
-  try {
-    const parsed = JSON.parse(groupType.correctAnswer) as AllGroupsStandingAnswer
-    if (parsed && typeof parsed === 'object' && parsed.groups) return parsed
-  } catch {
-    // ignore
-  }
-  return null
-})
-
 /**
  * Names of upstream types whose `correctAnswer` is required before multi_team_weighted
  * (Biztos kieső) can derive its eliminated set. The eliminated halmaz a bracket template
@@ -474,14 +463,15 @@ function inputTypeLabel(t: string): string {
   }
 }
 
-function roundLabel(r: BracketRound): string {
+function roundLabel(r: AdminCorrectAnswerRound): string {
   switch (r) {
     case 'last_32': return '32-be jutók'
     case 'last_16': return '16-ba jutók'
     case 'qf': return 'Negyeddöntő'
     case 'sf': return 'Elődöntő'
-    case 'final': return 'Döntő'
-    case 'bronze': return 'Bronzmeccs'
+    case 'final': return 'Döntősök'
+    case 'champion': return 'Bajnok'
+    case 'bronze': return 'Bronz győztes'
   }
 }
 
@@ -504,12 +494,12 @@ function onPickerSubmit(gt: SpecialPredictionType, value: string): void {
   answerDrafts[gt.id] = value
 }
 
-// UX-042: per-round save flow for bracket_progression — first persists the extended
-// winners map via setCorrectAnswer, then runs the slice-specific evaluation.
+// UX-044: per-round save flow for bracket_progression — first persists the new-shape
+// participants answer via setCorrectAnswer, then runs the slice-specific evaluation.
 async function onSaveRound(
   gt: SpecialPredictionType,
-  round: BracketRound,
-  answer: BracketProgressionAnswer,
+  round: AdminCorrectAnswerRound,
+  answer: BracketProgressionCorrectAnswer,
 ): Promise<void> {
   busy[gt.id] = true
   try {
@@ -525,6 +515,37 @@ async function onSaveRound(
     toast.addToast(`Hiba: ${msg}`, 'error')
   } finally {
     busy[gt.id] = false
+  }
+}
+
+function parseBracketCorrectAnswer(raw: string | null | undefined): BracketProgressionCorrectAnswer | null {
+  if (!raw) return null
+  try {
+    const parsed = JSON.parse(raw) as unknown
+    if (typeof parsed !== 'object' || parsed === null) return null
+    const obj = parsed as Record<string, unknown>
+    const p = obj.participants
+    if (typeof p !== 'object' || p === null) return null
+    return parsed as BracketProgressionCorrectAnswer
+  } catch {
+    return null
+  }
+}
+
+const allTeams = ref<Team[]>([])
+async function loadAllTeams(): Promise<void> {
+  try {
+    let token = ''
+    if (DEV_AUTH_BYPASS) {
+      token = 'dev-bypass-token'
+    } else {
+      const { data } = await supabase.auth.getSession()
+      token = data.session?.access_token ?? ''
+    }
+    if (!token) return
+    allTeams.value = await api.teams.list(token)
+  } catch {
+    // non-fatal — BracketRoundTeamList self-loads as a fallback
   }
 }
 
@@ -572,7 +593,7 @@ async function onSaveAndEvaluate(gt: SpecialPredictionType, slice: string | null
 }
 
 onMounted(async () => {
-  await Promise.all([store.fetchGlobalTypes(), loadNameCache()])
+  await Promise.all([store.fetchGlobalTypes(), loadNameCache(), loadAllTeams()])
   // Pre-fill drafts from the stored correctAnswer so the picker shows the persisted state.
   for (const t of store.globalTypes) {
     if (t.correctAnswer) answerDrafts[t.id] = t.correctAnswer

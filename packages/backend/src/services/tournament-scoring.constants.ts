@@ -36,7 +36,7 @@ export type GroupStandingSlice =
   | 'group_A' | 'group_B' | 'group_C' | 'group_D' | 'group_E' | 'group_F'
   | 'group_G' | 'group_H' | 'group_I' | 'group_J' | 'group_K' | 'group_L'
 
-export type BracketSlice = 'last_32' | 'last_16' | 'qf' | 'sf' | 'final' | 'bronze'
+export type BracketSlice = 'last_32' | 'last_16' | 'qf' | 'sf' | 'final' | 'champion' | 'bronze'
 
 export type TournamentEvaluationSlice = GroupStandingSlice | BracketSlice | null
 
@@ -46,7 +46,7 @@ export const GROUP_STANDING_SLICES: readonly GroupStandingSlice[] = [
 ]
 
 export const BRACKET_SLICES: readonly BracketSlice[] = [
-  'last_32', 'last_16', 'qf', 'sf', 'final', 'bronze',
+  'last_32', 'last_16', 'qf', 'sf', 'final', 'champion', 'bronze',
 ]
 
 export function isGroupStandingSlice(value: string): value is GroupStandingSlice {

@@ -1,6 +1,6 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-06-30 (UX-043 kész: knockout meccsek – döntetlen tipp visuális megjelenítése)
+> Utoljára frissítve: 2026-06-30 (UX-044 kész: admin bracket korönkénti participantok kiértékelése – új adatmodell)
 
 ## Nyitott story-k
 
@@ -32,4 +32,4 @@
 
 ---
 
-**Haladás: 186 / 197 story kész** — Must Have: 32/32, Should Have: 154/155, Nice to Have: 0/5 (US-937, PUSH-003 won't do)
+**Haladás: 187 / 198 story kész** — Must Have: 32/32, Should Have: 156/156, Nice to Have: 0/5 (US-937, PUSH-003 won't do)

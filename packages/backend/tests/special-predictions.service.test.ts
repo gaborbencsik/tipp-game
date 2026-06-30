@@ -285,6 +285,26 @@ describe('getMyPredictions', () => {
     expect(result[0]?.correctAnswer).toBe('Mbappé')
     expect(result[0]?.correctAnswerLabel).toBeNull()
   })
+
+  it('resolves JSON-array correctAnswer (UX-037 tie) into joined labels for team_select', async () => {
+    const TEAM_A = '11111111-1111-1111-1111-111111111111'
+    const TEAM_B = '22222222-2222-2222-2222-222222222222'
+    const jsonCorrect = JSON.stringify([TEAM_A, TEAM_B])
+    const typeRow = { ...TYPE_ROW_TEAM_SELECT, deadline: PAST, correctAnswer: jsonCorrect }
+    setupSelectSequence([
+      [GROUP_ROW],
+      [MEMBER_ROW],
+      [typeRow],
+      [],
+      [],
+      [{ id: TEAM_A, name: 'Argentína' }, { id: TEAM_B, name: 'Franciaország' }],
+    ])
+
+    const result = await getMyPredictions(GROUP_ID, USER_ID)
+
+    expect(result[0]?.correctAnswer).toBe(jsonCorrect)
+    expect(result[0]?.correctAnswerLabel).toBe('Argentína, Franciaország')
+  })
 })
 
 // ─── upsertPrediction ────────────────────────────────────────────────────────

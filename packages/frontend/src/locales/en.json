@@ -750,6 +750,14 @@
       "silver": "{team} silver",
       "bronze": "{team} bronze",
       "fourth": "{team} 4th"
+    },
+    "scored": {
+      "noTip": "No pick",
+      "missed": "Actual",
+      "championLabel": "Champion",
+      "yourPick": "Your pick",
+      "correctWas": "Correct",
+      "pending": "Pending"
     }
   },
   "scoringExplainer": {

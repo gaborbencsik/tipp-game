@@ -97,6 +97,12 @@ Egy mondatban közöld:
 
 Ne ajánld fel a push-t, ne kérdezd meg, akar-e pusholni. A CLAUDE.md szerint a user mindig kézzel pusholja a saját ütemében.
 
+### 6. Kontextus compactálása
+
+A commit után **mindig** futtasd le a `/compact` parancsot, hogy a kontextus tömörített állapotra kerüljön a következő feladat előtt. Ez a skill utolsó lépése — a visszajelzés (5. lépés) után közvetlenül következik, külön user-kérdés nélkül.
+
+Csak akkor hagyd ki, ha a commit nem jött létre (1–4. lépés bármelyikén elakadtál).
+
 ## Hibakezelés
 
 - **Conflict / detached HEAD / nem `main` branch** → állj meg, magyarázd el a state-et, kérdezd a usert.
@@ -138,3 +144,4 @@ $ git add -A && git commit -m "refactor(UX-043): trim badge label, show ET/PK mo
 - [ ] Commit message angol, conventional-commit forma, Co-Authored-By trailer nélkül?
 - [ ] **Nem pushol, nem branchel, nem nyit PR-t.**
 - [ ] Záró mondat: commit hash + "te pusholod kézzel".
+- [ ] Commit után `/compact` lefutott.

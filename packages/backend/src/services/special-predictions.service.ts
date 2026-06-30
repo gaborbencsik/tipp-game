@@ -3,6 +3,7 @@ import { db } from '../db/client.js'
 import { groups, groupMembers, specialPredictionTypes, specialPredictions, teams, players, groupGlobalTypeSubscriptions, groupLeagues } from '../db/schema/index.js'
 import { countPlayersForLeague } from './players.service.js'
 import { resolvePlayerDisplayName } from './player-display-name.js'
+import { parseCorrectAnswerSet } from './special-prediction-evaluation.service.js'
 import type { SpecialPredictionInput, SpecialPredictionInputType, SpecialPredictionWithType } from '../types/index.js'
 
 class AppError extends Error {
@@ -82,11 +83,17 @@ export async function getMyPredictions(
     const pred = predByTypeId.get(t.id)
     if (t.inputType === 'team_select') {
       if (pred?.answer) teamIds.push(pred.answer)
-      if (t.correctAnswer) teamIds.push(t.correctAnswer)
+      // UX-037: correctAnswer may be a JSON array of team UUIDs (tie handling).
+      if (t.correctAnswer) {
+        for (const id of parseCorrectAnswerSet(t.correctAnswer)) teamIds.push(id)
+      }
     }
     if (t.inputType === 'player_select') {
       if (pred?.answer) playerIds.push(pred.answer)
-      if (t.correctAnswer) playerIds.push(t.correctAnswer)
+      // UX-037: correctAnswer may be a JSON array of player UUIDs (tie handling).
+      if (t.correctAnswer) {
+        for (const id of parseCorrectAnswerSet(t.correctAnswer)) playerIds.push(id)
+      }
     }
   }
 
@@ -110,6 +117,20 @@ export async function getMyPredictions(
       if (t.inputType === 'team_select') answerLabel = teamNameMap.get(pred.answer) ?? null
       if (t.inputType === 'player_select') answerLabel = playerNameMap.get(pred.answer) ?? null
     }
+    const reveal = deadlinePassed || (pred?.points !== null && pred?.points !== undefined)
+    let correctAnswerLabel: string | null = null
+    if (reveal && t.correctAnswer) {
+      if (t.inputType === 'team_select') {
+        // UX-037: resolve every accepted team (tie handling).
+        const ids = parseCorrectAnswerSet(t.correctAnswer)
+        const labels = ids.map(id => teamNameMap.get(id)).filter((n): n is string => Boolean(n))
+        correctAnswerLabel = labels.length > 0 ? labels.join(', ') : null
+      } else if (t.inputType === 'player_select') {
+        const ids = parseCorrectAnswerSet(t.correctAnswer)
+        const labels = ids.map(id => playerNameMap.get(id)).filter((n): n is string => Boolean(n))
+        correctAnswerLabel = labels.length > 0 ? labels.join(', ') : null
+      }
+    }
     return {
       id: pred?.id ?? null,
       typeId: t.id,
@@ -122,14 +143,8 @@ export async function getMyPredictions(
       answer: pred?.answer ?? null,
       answerLabel,
       points: pred?.points ?? null,
-      correctAnswer: (deadlinePassed || pred?.points !== null && pred?.points !== undefined) ? (t.correctAnswer ?? null) : null,
-      correctAnswerLabel: (deadlinePassed || pred?.points !== null && pred?.points !== undefined)
-        ? t.inputType === 'team_select'
-          ? (t.correctAnswer ? teamNameMap.get(t.correctAnswer) ?? null : null)
-          : t.inputType === 'player_select'
-            ? (t.correctAnswer ? playerNameMap.get(t.correctAnswer) ?? null : null)
-            : null
-        : null,
+      correctAnswer: reveal ? (t.correctAnswer ?? null) : null,
+      correctAnswerLabel,
       isGlobal: t._isGlobal,
       createdAt: pred?.createdAt.toISOString() ?? null,
       updatedAt: pred?.updatedAt.toISOString() ?? null,

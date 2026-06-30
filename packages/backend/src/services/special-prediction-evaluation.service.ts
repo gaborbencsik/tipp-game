@@ -1,13 +1,14 @@
 import { and, eq, isNull, inArray } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { auditLogs, groupMembers, specialPredictionTypes, specialPredictions, users } from '../db/schema/index.js'
-import type { SpecialPredictionType, SpecialPredictionOptions, SpecialPredictionInputType, AllGroupsStandingAnswer, BracketMatch, BracketProgressionAnswer } from '../types/index.js'
+import type { SpecialPredictionType, SpecialPredictionOptions, SpecialPredictionInputType, AllGroupsStandingAnswer, BracketMatch, BracketProgressionAnswer, BracketProgressionCorrectAnswer } from '../types/index.js'
 import { deriveEliminatedFromBracket, parseUpsetEliminated, parseUpsetPicks, scoreUpsetSpecial, validateUpsetOptions } from './upset-special.service.js'
 import {
   parseBracketProgressionAnswer,
   scoreBracketProgression,
   validateBracketProgressionOptions,
 } from './bracket-progression.service.js'
+import { parseBracketProgressionCorrectAnswer } from './bracket-correct-answer.js'
 import { parseAllGroupsStandingAnswer, validateAllGroupsStandingOptions } from './group-standings.service.js'
 import { scoreAllGroupsStanding } from './tournament-scoring.service.js'
 
@@ -70,7 +71,7 @@ export function evaluateSpecialPrediction(
 export interface ScoringContext {
   readonly userGroupStandings?: AllGroupsStandingAnswer | null
   readonly correctGroupStandings?: AllGroupsStandingAnswer | null
-  readonly correctBracket?: BracketProgressionAnswer | null
+  readonly correctBracket?: BracketProgressionAnswer | BracketProgressionCorrectAnswer | null
   readonly correctBracketTemplate?: readonly BracketMatch[] | null
 }
 
@@ -101,7 +102,10 @@ function scorePrediction(
     const opts = validateBracketProgressionOptions(options)
     if (!opts) return 0
     const predicted = parseBracketProgressionAnswer(answer) ?? { winners: {} }
-    const correct = parseBracketProgressionAnswer(correctAnswer) ?? { winners: {} }
+    // UX-044: admin correctAnswer may be the new participants shape or the legacy winners-map.
+    // Try the new shape first; fall back to legacy if not present.
+    const newShape = parseBracketProgressionCorrectAnswer(correctAnswer)
+    const correct = newShape ?? (parseBracketProgressionAnswer(correctAnswer) ?? { winners: {} })
     return scoreBracketProgression(
       predicted,
       correct,
@@ -407,7 +411,7 @@ async function runGlobalRecomputeInternal(type: SpecialPredictionTypeRow): Promi
   }
 }
 
-async function loadCorrectBracket(): Promise<{ answer: BracketProgressionAnswer | null; template: readonly BracketMatch[] | null } | null> {
+async function loadCorrectBracket(): Promise<{ answer: BracketProgressionAnswer | BracketProgressionCorrectAnswer | null; template: readonly BracketMatch[] | null } | null> {
   const rows = await db
     .select({ correctAnswer: specialPredictionTypes.correctAnswer, options: specialPredictionTypes.options })
     .from(specialPredictionTypes)
@@ -421,7 +425,12 @@ async function loadCorrectBracket(): Promise<{ answer: BracketProgressionAnswer 
   if (!row) return null
   const opts = validateBracketProgressionOptions(row.options)
   if (!opts) return null
-  const answer = row.correctAnswer ? parseBracketProgressionAnswer(row.correctAnswer) : null
+  let answer: BracketProgressionAnswer | BracketProgressionCorrectAnswer | null = null
+  if (row.correctAnswer) {
+    // UX-044: prefer the new participants shape; fall back to legacy winners-map.
+    answer = parseBracketProgressionCorrectAnswer(row.correctAnswer)
+      ?? parseBracketProgressionAnswer(row.correctAnswer)
+  }
   return { answer, template: opts.bracketTemplate.matches }
 }
 
