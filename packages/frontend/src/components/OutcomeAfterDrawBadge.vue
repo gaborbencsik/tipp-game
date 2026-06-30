@@ -15,8 +15,6 @@ const props = defineProps<{
   homeTeam: Pick<MatchTeam, 'id' | 'name' | 'shortCode'>
   awayTeam: Pick<MatchTeam, 'id' | 'name' | 'shortCode'>
   bonusPoints: number | null
-  // Compact rendering for the "Mások tippjei" list rows (single-line, smaller label).
-  compact?: boolean
 }>()
 
 const { t } = useI18n()
@@ -25,6 +23,16 @@ const advancer = computed(() => outcomeAdvancer(props.predictionOutcome))
 const advancingTeamName = computed<string | null>(() => {
   if (advancer.value === 'home') return props.homeTeam.name
   if (advancer.value === 'away') return props.awayTeam.name
+  return null
+})
+
+const modeLabel = computed<string | null>(() => {
+  if (props.predictionOutcome === 'extra_time_home' || props.predictionOutcome === 'extra_time_away') {
+    return t('matchPredictions.outcomeAfterDraw.modeExtraTime')
+  }
+  if (props.predictionOutcome === 'penalties_home' || props.predictionOutcome === 'penalties_away') {
+    return t('matchPredictions.outcomeAfterDraw.modePenalties')
+  }
   return null
 })
 
@@ -74,11 +82,11 @@ const showBonus = computed((): boolean => {
     class="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded border whitespace-nowrap"
     :class="containerClass"
   >
-    <span class="text-[10px] uppercase tracking-wide opacity-70">
-      {{ compact ? $t('matchPredictions.outcomeAfterDraw.labelShort') : $t('matchPredictions.outcomeAfterDraw.label') }}
-    </span>
     <span v-if="advancingTeamName" data-testid="outcome-after-draw-team" :class="teamClass">
       {{ advancingTeamName }}
+    </span>
+    <span v-if="advancingTeamName && modeLabel" data-testid="outcome-after-draw-mode" class="text-[10px] opacity-70" :class="teamClass">
+      · {{ modeLabel }}
     </span>
     <span v-if="advancingTeamName && statusLabel" data-testid="outcome-after-draw-status-label" class="text-[10px] opacity-70">
       ({{ statusLabel }})

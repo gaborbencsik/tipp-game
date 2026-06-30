@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import type { APIRequestContext, APIResponse } from '@playwright/test'
 
 const API_BASE = process.env['API_URL'] ?? 'http://localhost:3000'
 const AUTH_HEADERS = { Authorization: 'Bearer dev-bypass-token' }
@@ -21,26 +22,46 @@ const CACHED_ENDPOINTS: ReadonlyArray<CachedEndpoint> = [
   { path: '/api/matches', maxAge: 0, swr: 15 },
 ]
 
+// Két consecutive kérést indítunk addig, amíg ugyanazt az ETag-et nem kapjuk vissza —
+// így biztos, hogy az adott pillanatban a backend-en a body stabilan ugyanaz. Párhuzamos
+// teszt-write-ok (új liga / csapat / játékos) közben más worker módosíthatja a DB-t, ami
+// az ETag-et legitim módon eltolja; a teszt-invariáns "azonos body → 304" csak stabil
+// pillanatban értelmes.
+async function stableEtag(
+  request: APIRequestContext,
+  path: string,
+): Promise<{ etag: string; firstResponse: APIResponse }> {
+  const ATTEMPTS = 5
+  for (let i = 0; i < ATTEMPTS; i++) {
+    const first = await request.get(`${API_BASE}${path}`, { headers: AUTH_HEADERS })
+    expect(first.status()).toBe(200)
+    const etag = first.headers()['etag']
+    expect(etag, `ETag missing on ${path}`).toBeDefined()
+    const second = await request.get(`${API_BASE}${path}`, { headers: AUTH_HEADERS })
+    expect(second.status()).toBe(200)
+    if (second.headers()['etag'] === etag) return { etag: etag!, firstResponse: first }
+  }
+  throw new Error(`ETag did not stabilize for ${path} within ${ATTEMPTS} attempts`)
+}
+
+test.describe.configure({ mode: 'serial' })
+
 test.describe('HTTP cache headers (OPS-005)', () => {
   for (const endpoint of CACHED_ENDPOINTS) {
     test(`${endpoint.path} → Cache-Control + ETag + 304 + stale-200`, async ({ request }) => {
-      // 1) Initial GET → 200 with Cache-Control + ETag
-      const first = await request.get(`${API_BASE}${endpoint.path}`, { headers: AUTH_HEADERS })
-      expect(first.status()).toBe(200)
+      // 1) GET → 200 with Cache-Control + ETag (stabilized over consecutive calls)
+      const { etag, firstResponse } = await stableEtag(request, endpoint.path)
 
-      const cacheControl = first.headers()['cache-control']
+      const cacheControl = firstResponse.headers()['cache-control']
       expect(cacheControl, 'Cache-Control header missing').toBeDefined()
       expect(cacheControl).toContain('private')
       expect(cacheControl).toContain(`max-age=${endpoint.maxAge}`)
       expect(cacheControl).toContain(`stale-while-revalidate=${endpoint.swr}`)
-
-      const etag = first.headers()['etag']
-      expect(etag, 'ETag header missing').toBeDefined()
       expect(etag).toMatch(/^W\/"[a-f0-9]+"$/)
 
       // 2) Matching If-None-Match → 304 Not Modified, same ETag echoed back
       const cached = await request.get(`${API_BASE}${endpoint.path}`, {
-        headers: { ...AUTH_HEADERS, 'If-None-Match': etag! },
+        headers: { ...AUTH_HEADERS, 'If-None-Match': etag },
       })
       expect(cached.status()).toBe(304)
       expect(cached.headers()['etag']).toBe(etag)

@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import OutcomeAfterDrawBadge from '../OutcomeAfterDrawBadge.vue'
-import { buildTestI18n } from '@/test-utils/i18n'
 import type { MatchTeam } from '@/types/index'
 
 const HOME: MatchTeam = {
@@ -21,7 +20,6 @@ function mountBadge(props: Partial<{
   bonusPoints: number | null
 }> = {}) {
   return mount(OutcomeAfterDrawBadge, {
-    global: { plugins: [buildTestI18n()] },
     props: {
       status: 'correct',
       predictionOutcome: 'penalties_home',
@@ -79,7 +77,6 @@ describe('OutcomeAfterDrawBadge', () => {
 
   it('does not render anything when status is "not-applicable"', () => {
     const wrapper = mount(OutcomeAfterDrawBadge, {
-      global: { plugins: [buildTestI18n()] },
       props: {
         status: 'not-applicable' as const,
         predictionOutcome: null,
@@ -94,5 +91,24 @@ describe('OutcomeAfterDrawBadge', () => {
   it('does not show +bonus when bonusPoints is 0 (incorrect)', () => {
     const wrapper = mountBadge({ status: 'incorrect', bonusPoints: 0 })
     expect(wrapper.text()).not.toContain('+0')
+  })
+
+  it('shows "hosszabbítás" mode label for extra_time outcomes', () => {
+    const wrapper = mountBadge({ status: 'correct', predictionOutcome: 'extra_time_home' })
+    const mode = wrapper.find('[data-testid="outcome-after-draw-mode"]')
+    expect(mode.exists()).toBe(true)
+    expect(mode.text()).toContain('hosszabbítás')
+  })
+
+  it('shows "11-esek" mode label for penalties outcomes', () => {
+    const wrapper = mountBadge({ status: 'incorrect', predictionOutcome: 'penalties_away', bonusPoints: 0 })
+    const mode = wrapper.find('[data-testid="outcome-after-draw-mode"]')
+    expect(mode.exists()).toBe(true)
+    expect(mode.text()).toContain('11-esek')
+  })
+
+  it('does not show mode label when there is no prediction (no-tip)', () => {
+    const wrapper = mountBadge({ status: 'no-tip', predictionOutcome: null, bonusPoints: null })
+    expect(wrapper.find('[data-testid="outcome-after-draw-mode"]').exists()).toBe(false)
   })
 })

@@ -120,7 +120,6 @@ function bonusForRow(p: MatchPrediction): number | null {
             :home-team="homeTeam!"
             :away-team="awayTeam!"
             :bonus-points="bonusForRow(p)"
-            compact
           />
         </div>
       </li>

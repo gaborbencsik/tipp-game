@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import MatchPredictionsList from '../MatchPredictionsList.vue'
-import { buildTestI18n } from '@/test-utils/i18n'
 import type { MatchPrediction, MatchResult, MatchStage, MatchTeam } from '../../types/index.js'
 
 const SCORER_DEFAULTS = {
@@ -26,7 +25,6 @@ function mountComponent(
   extra: Partial<{ stage: MatchStage; result: MatchResult | null; homeTeam: MatchTeam; awayTeam: MatchTeam; extraTimeBonusPoints: number }> = {},
 ) {
   return mount(MatchPredictionsList, {
-    global: { plugins: [buildTestI18n()] },
     props: { predictions, currentUserId, ...extra },
   })
 }

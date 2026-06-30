@@ -497,13 +497,13 @@
     "scorerLabel": "Góllövő tipp",
     "scorerHit": "Találat!",
     "outcomeAfterDraw": {
-      "label": "Döntetlen esetén:",
-      "labelShort": "Dönt.:",
       "noTip": "Nincs tipp",
       "pending": "Kiértékelés alatt",
       "inactive": "Nem volt döntetlen",
       "correctSuffix": "✓",
-      "incorrectSuffix": "✗"
+      "incorrectSuffix": "✗",
+      "modeExtraTime": "hosszabbítás",
+      "modePenalties": "11-esek"
     }
   },
   "playerSelect": {

@@ -227,3 +227,22 @@ export async function setMatchResult(
     ...(outcomeAfterDraw !== undefined ? { outcomeAfterDraw } : {}),
   })
 }
+
+async function put(path: string, body?: unknown): Promise<unknown> {
+  const res = await fetch(`${BASE}${path}`, {
+    method: 'PUT',
+    headers: HEADERS,
+    body: body ? JSON.stringify(body) : undefined,
+  })
+  if (!res.ok) {
+    throw new Error(`API ${path} failed: ${res.status} ${await res.text()}`)
+  }
+  return res.json()
+}
+
+export async function updateMatch(
+  matchId: string,
+  patch: { scheduledAt?: string; status?: string },
+): Promise<unknown> {
+  return put(`/api/admin/matches/${matchId}`, patch)
+}

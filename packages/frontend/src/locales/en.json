@@ -497,13 +497,13 @@
     "scorerLabel": "Scorer pick",
     "scorerHit": "Hit!",
     "outcomeAfterDraw": {
-      "label": "If a draw:",
-      "labelShort": "Draw:",
       "noTip": "No pick",
       "pending": "Pending",
       "inactive": "Not a draw",
       "correctSuffix": "✓",
-      "incorrectSuffix": "✗"
+      "incorrectSuffix": "✗",
+      "modeExtraTime": "extra time",
+      "modePenalties": "penalties"
     }
   },
   "playerSelect": {
