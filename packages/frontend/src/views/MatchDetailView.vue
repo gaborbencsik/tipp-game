@@ -223,6 +223,20 @@
                 {{ lockedScorerBadgeLabel }}
               </span>
             </div>
+            <!-- UX-043: Döntetlen-tipp megjelenítése knockout meccsek után -->
+            <div
+              v-if="ownOutcomeStatus !== 'not-applicable' && myPrediction"
+              data-testid="own-outcome-after-draw"
+              class="text-center mt-2 flex items-center justify-center"
+            >
+              <OutcomeAfterDrawBadge
+                :status="ownOutcomeStatus"
+                :prediction-outcome="myPrediction.outcomeAfterDraw"
+                :home-team="match.homeTeam"
+                :away-team="match.awayTeam"
+                :bonus-points="ownOutcomeBonus"
+              />
+            </div>
           </template>
         </div>
 
@@ -255,9 +269,14 @@
         </div>
 
         <MatchPredictionsList
-          v-if="isPredictionsRevealable && matchPredictions.length > 0"
+          v-if="isPredictionsRevealable && matchPredictions.length > 0 && match"
           :predictions="matchPredictions"
           :current-user-id="authStore.user?.id ?? ''"
+          :stage="match.stage"
+          :result="match.result"
+          :home-team="match.homeTeam"
+          :away-team="match.awayTeam"
+          :extra-time-bonus-points="extraTimeBonusPoints"
           class="mt-4"
           data-testid="match-predictions-list"
         />
@@ -285,8 +304,10 @@ import VenueBanner from '../components/VenueBanner.vue'
 import MatchPredictionsList from '../components/MatchPredictionsList.vue'
 import MatchOddsBar from '../components/MatchOddsBar.vue'
 import MarketValuesBar from '../components/MarketValuesBar.vue'
+import OutcomeAfterDrawBadge from '../components/OutcomeAfterDrawBadge.vue'
 import PlayerSelectCombobox from '../components/predictions/PlayerSelectCombobox.vue'
 import { getDateLocale } from '../lib/dateLocale.js'
+import { resolveOutcomeAfterDrawStatus } from '../lib/outcomeAfterDrawStatus.js'
 
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
 
@@ -404,6 +425,7 @@ onMounted(async () => {
     await loadMatchPredictions()
   }
   loadMatchOdds()
+  void loadExtraTimeBonusPoints()
 
   // UX-016: load favorites for this match's league
   const leagueId = match.value?.league?.id
@@ -530,6 +552,35 @@ const isKnockoutStage = computed((): boolean => {
   if (!match.value) return false
   return KNOCKOUT_STAGES.includes(match.value.stage)
 })
+
+// UX-043: status + bónusz pont a saját tipp döntetlen-mezőjéhez és a "mások tippjei" lista soraihoz.
+// A "+N" érték a backend `extraTimeBonusPoints` configját tükrözi — a globális default-ot húzzuk le
+// egyszer (15 perc cache, statikus érték), ha sikertelen marad az alap 1 (ami a default a backenden).
+const extraTimeBonusPoints = ref<number>(1)
+
+const ownOutcomeStatus = computed(() => {
+  if (!match.value) return 'not-applicable' as const
+  return resolveOutcomeAfterDrawStatus({
+    stage: match.value.stage,
+    result: match.value.result,
+    predictionOutcome: myPrediction.value?.outcomeAfterDraw ?? null,
+  })
+})
+
+const ownOutcomeBonus = computed<number | null>(() => {
+  return ownOutcomeStatus.value === 'correct' ? extraTimeBonusPoints.value : null
+})
+
+async function loadExtraTimeBonusPoints(): Promise<void> {
+  try {
+    const token = await getToken()
+    if (!token) return
+    const cfg = await api.scoringConfig.default(token)
+    extraTimeBonusPoints.value = cfg.extraTimeBonusPoints
+  } catch {
+    // silent — default of 1 already set
+  }
+}
 
 const lockedScorerStatus = computed((): 'pending' | 'hit' | 'miss' => {
   const pred = myPrediction.value

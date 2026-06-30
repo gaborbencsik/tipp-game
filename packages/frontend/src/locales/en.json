@@ -495,7 +495,16 @@
     "title": "Others' predictions",
     "points": "{n} pts",
     "scorerLabel": "Scorer pick",
-    "scorerHit": "Hit!"
+    "scorerHit": "Hit!",
+    "outcomeAfterDraw": {
+      "label": "If a draw:",
+      "labelShort": "Draw:",
+      "noTip": "No pick",
+      "pending": "Pending",
+      "inactive": "Not a draw",
+      "correctSuffix": "✓",
+      "incorrectSuffix": "✗"
+    }
   },
   "playerSelect": {
     "placeholder": "Search for a player...",

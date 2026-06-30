@@ -1,10 +1,21 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import SupporterBadge from './SupporterBadge.vue'
-import type { MatchPrediction } from '../types/index.js'
+import OutcomeAfterDrawBadge from './OutcomeAfterDrawBadge.vue'
+import { resolveOutcomeAfterDrawStatus, isKnockoutStage } from '../lib/outcomeAfterDrawStatus.js'
+import type { MatchPrediction, MatchResult, MatchStage, MatchTeam } from '../types/index.js'
 
 const props = defineProps<{
   predictions: MatchPrediction[]
   currentUserId: string
+  // UX-043: knockout meccsek esetén a "döntetlen esetén továbbjutó" tipp megjelenítéséhez.
+  // Mind a négy prop együtt kell — bármelyik hiánya kikapcsolja a badge megjelenítését
+  // (visszafelé-kompatibilitás a csoportkörös használattal).
+  stage?: MatchStage
+  result?: MatchResult | null
+  homeTeam?: MatchTeam
+  awayTeam?: MatchTeam
+  extraTimeBonusPoints?: number
 }>()
 
 function isExactMatch(p: MatchPrediction): boolean {
@@ -20,6 +31,29 @@ function scorerChipClass(p: MatchPrediction): string {
     return 'text-green-700 bg-green-50 font-medium'
   }
   return 'text-gray-600 bg-gray-50'
+}
+
+const showOutcomeBadges = computed((): boolean => {
+  return props.stage !== undefined
+    && props.homeTeam !== undefined
+    && props.awayTeam !== undefined
+    && isKnockoutStage(props.stage)
+})
+
+function outcomeStatus(p: MatchPrediction) {
+  return resolveOutcomeAfterDrawStatus({
+    stage: props.stage!,
+    result: props.result ?? null,
+    predictionOutcome: p.outcomeAfterDraw,
+  })
+}
+
+// A scoring service azt a +N pontot adja, amit a config `extraTimeBonusPoints`-ja előír.
+// Ha a parent megadja, mi a sor pontjából vonatkoztatva a badge-be írjuk.
+function bonusForRow(p: MatchPrediction): number | null {
+  if (props.extraTimeBonusPoints !== undefined) return props.extraTimeBonusPoints
+  // Fallback: ha a pointsResult ismert, jelezzük csak hogy "+pont" — konkrét érték nélkül a 1 ésszerű alapérték.
+  return p.pointsResult !== null && p.pointsResult > 0 ? 1 : null
 }
 </script>
 
@@ -75,6 +109,19 @@ function scorerChipClass(p: MatchPrediction): string {
           :class="scorerChipClass(p)"
         >
           ⚽ {{ p.scorerPlayerNameSnapshot }}
+        </div>
+        <div
+          v-if="showOutcomeBadges"
+          class="mt-1 flex flex-wrap"
+        >
+          <OutcomeAfterDrawBadge
+            :status="outcomeStatus(p)"
+            :prediction-outcome="p.outcomeAfterDraw"
+            :home-team="homeTeam!"
+            :away-team="awayTeam!"
+            :bonus-points="bonusForRow(p)"
+            compact
+          />
         </div>
       </li>
     </ul>

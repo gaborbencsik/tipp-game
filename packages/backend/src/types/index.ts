@@ -492,6 +492,7 @@ export interface MatchPrediction {
   readonly displayName: string
   readonly homeGoals: number
   readonly awayGoals: number
+  readonly outcomeAfterDraw: MatchOutcome | null
   readonly pointsGlobal: number | null
   readonly pointsResult: number | null
   readonly scorerPickPlayerId: string | null

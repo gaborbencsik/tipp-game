@@ -12,13 +12,18 @@ vi.mock('vue-router', async (importOriginal) => {
   return { ...actual, useRouter: () => ({ push: vi.fn() }) }
 })
 
-const { mockMatchesList, mockMatchesOdds, mockPredictionsMine, mockPredictionsUpsert, mockPredictionsForMatch, mockFavoritesSummary } = vi.hoisted(() => ({
+const { mockMatchesList, mockMatchesOdds, mockPredictionsMine, mockPredictionsUpsert, mockPredictionsForMatch, mockFavoritesSummary, mockScoringConfigDefault } = vi.hoisted(() => ({
   mockMatchesList: vi.fn().mockResolvedValue([]),
   mockMatchesOdds: vi.fn().mockResolvedValue({ odds: null, revealed: false }),
   mockPredictionsMine: vi.fn().mockResolvedValue([]),
   mockPredictionsUpsert: vi.fn().mockResolvedValue(undefined),
   mockPredictionsForMatch: vi.fn().mockResolvedValue([]),
   mockFavoritesSummary: vi.fn().mockResolvedValue({ members: [] }),
+  mockScoringConfigDefault: vi.fn().mockResolvedValue({
+    id: 'cfg', name: 'default',
+    correctOutcomePoints: 1, exactBonusPoints: 1, extraTimeBonusPoints: 1,
+    isGlobalDefault: true, createdAt: '', updatedAt: '',
+  }),
 }))
 
 vi.mock('@/lib/supabase', () => ({
@@ -38,6 +43,7 @@ vi.mock('@/api/index', () => ({
     predictions: { mine: mockPredictionsMine, upsert: mockPredictionsUpsert, forMatch: mockPredictionsForMatch },
     players: { list: vi.fn().mockResolvedValue([]) },
     leagues: { favoritesSummary: mockFavoritesSummary },
+    scoringConfig: { default: mockScoringConfigDefault },
   },
 }))
 
@@ -400,6 +406,74 @@ describe('MatchDetailView', () => {
       mockMatchesOdds.mockResolvedValue(SAMPLE_ODDS)
       const { wrapper } = await mountView('match-finished', [MATCH_FINISHED])
       expect(wrapper.find('[data-testid="insights-section"]').exists()).toBe(false)
+    })
+  })
+
+  // ─── UX-043: outcomeAfterDraw badge in the locked-tip block ───────────────
+  describe('UX-043 outcomeAfterDraw badge (saját tipp)', () => {
+    const KNOCKOUT_DRAW_MATCH: Match = {
+      id: 'match-ko-draw',
+      homeTeam: { id: 'ht-hu', name: 'Magyarország', shortCode: 'HUN', flagUrl: null, teamType: 'national', countryCode: 'hu', marketValueEur: null, transfermarktId: null },
+      awayTeam: { id: 'at-rs', name: 'Szerbia', shortCode: 'SRB', flagUrl: null, teamType: 'national', countryCode: 'rs', marketValueEur: null, transfermarktId: null },
+      venue: null, league: null,
+      stage: 'round_of_16', groupName: null, matchNumber: 50,
+      scheduledAt: '2026-06-29T18:00:00.000Z',
+      status: 'finished',
+      result: { homeGoals: 1, awayGoals: 1, outcomeAfterDraw: 'penalties_home' },
+    }
+    const KNOCKOUT_DECISIVE_MATCH: Match = {
+      ...KNOCKOUT_DRAW_MATCH,
+      id: 'match-ko-decisive',
+      result: { homeGoals: 2, awayGoals: 1, outcomeAfterDraw: null },
+    }
+
+    function predictionFor(matchId: string, outcome: 'penalties_home' | 'penalties_away' | null, pointsResult = 0): Prediction {
+      return {
+        id: `pred-${matchId}`,
+        userId: 'db-user-uuid-001',
+        matchId,
+        homeGoals: 1,
+        awayGoals: 1,
+        outcomeAfterDraw: outcome,
+        pointsGlobal: pointsResult,
+        pointsResult,
+        scorerPickPlayerId: null,
+        scorerPlayerNameSnapshot: null,
+        scorerBonusPoints: null,
+        createdAt: '2026-06-20T10:00:00.000Z',
+        updatedAt: '2026-06-20T10:00:00.000Z',
+      }
+    }
+
+    it('knockout draw + correct outcome tip → badge shows the advancing team with +1 bonus', async () => {
+      const { wrapper } = await mountView('match-ko-draw', [KNOCKOUT_DRAW_MATCH], [], [predictionFor('match-ko-draw', 'penalties_home', 2)])
+      const badge = wrapper.find('[data-testid="own-outcome-after-draw"] [data-testid="outcome-after-draw-badge"]')
+      expect(badge.exists()).toBe(true)
+      expect(badge.attributes('data-status')).toBe('correct')
+      expect(badge.text()).toContain('Magyarország')
+      expect(badge.text()).toContain('+1')
+    })
+
+    it('knockout draw + incorrect outcome tip → badge marked "incorrect" with strikethrough team', async () => {
+      const { wrapper } = await mountView('match-ko-draw', [KNOCKOUT_DRAW_MATCH], [], [predictionFor('match-ko-draw', 'penalties_away', 1)])
+      const badge = wrapper.find('[data-testid="own-outcome-after-draw"] [data-testid="outcome-after-draw-badge"]')
+      expect(badge.attributes('data-status')).toBe('incorrect')
+      expect(badge.text()).toContain('Szerbia')
+    })
+
+    it('knockout decisive result → badge marked "inactive" (nem volt döntetlen)', async () => {
+      const { wrapper } = await mountView('match-ko-decisive', [KNOCKOUT_DECISIVE_MATCH], [], [predictionFor('match-ko-decisive', 'penalties_home', 1)])
+      const badge = wrapper.find('[data-testid="own-outcome-after-draw"] [data-testid="outcome-after-draw-badge"]')
+      expect(badge.attributes('data-status')).toBe('inactive')
+    })
+
+    it('group-stage match → no outcome badge in own tip', async () => {
+      const groupPrediction: Prediction = {
+        ...PREDICTION_FOR_FINISHED,
+        outcomeAfterDraw: 'penalties_home',
+      }
+      const { wrapper } = await mountView('match-finished', [MATCH_FINISHED], [], [groupPrediction])
+      expect(wrapper.find('[data-testid="own-outcome-after-draw"]').exists()).toBe(false)
     })
   })
 })

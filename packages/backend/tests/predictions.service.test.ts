@@ -498,6 +498,7 @@ describe('getMatchPredictions', () => {
   function predictionRow(userId: string, displayName: string, overrides: Partial<{
     homeGoals: number
     awayGoals: number
+    outcomeAfterDraw: string | null
     pointsGlobal: number | null
     scorerPickPlayerId: string | null
     scorerPlayerNameSnapshot: string | null
@@ -510,6 +511,7 @@ describe('getMatchPredictions', () => {
       supporterAt: overrides.supporterAt ?? null,
       homeGoals: overrides.homeGoals ?? 1,
       awayGoals: overrides.awayGoals ?? 0,
+      outcomeAfterDraw: overrides.outcomeAfterDraw ?? null,
       pointsGlobal: overrides.pointsGlobal ?? null,
       scorerPickPlayerId: overrides.scorerPickPlayerId ?? null,
       scorerPlayerNameSnapshot: overrides.scorerPlayerNameSnapshot ?? null,
@@ -625,6 +627,32 @@ describe('getMatchPredictions', () => {
     expect(result).toHaveLength(3)
     const peerBOccurrences = result.filter(r => r.userId === PEER_B_ID)
     expect(peerBOccurrences).toHaveLength(1)
+  })
+
+  it('outcomeAfterDraw mezőt visszaadja minden sorra (knockout tipp visibility — UX-043)', async () => {
+    setupQueryStack([
+      [PAST_MATCH_ROW],
+      [{ groupId: GROUP_1_ID }],
+      [{ userId: REQUESTER_ID }, { userId: PEER_A_ID }],
+      [
+        predictionRow(REQUESTER_ID, 'Me', { outcomeAfterDraw: 'penalties_home' }),
+        predictionRow(PEER_A_ID, 'Peer A', { outcomeAfterDraw: 'extra_time_away' }),
+      ],
+    ])
+    const result = await getMatchPredictions(MATCH_ID, REQUESTER_ID)
+    expect(result.find(r => r.userId === REQUESTER_ID)?.outcomeAfterDraw).toBe('penalties_home')
+    expect(result.find(r => r.userId === PEER_A_ID)?.outcomeAfterDraw).toBe('extra_time_away')
+  })
+
+  it('outcomeAfterDraw null marad, ha a user nem tippelt rá', async () => {
+    setupQueryStack([
+      [PAST_MATCH_ROW],
+      [{ groupId: GROUP_1_ID }],
+      [{ userId: REQUESTER_ID }, { userId: PEER_A_ID }],
+      [predictionRow(PEER_A_ID, 'Peer A', { outcomeAfterDraw: null })],
+    ])
+    const result = await getMatchPredictions(MATCH_ID, REQUESTER_ID)
+    expect(result[0]?.outcomeAfterDraw).toBeNull()
   })
 
   it('groupId megadva → isPaid flag hozzádúsítva a tagsági lekérdezésből', async () => {

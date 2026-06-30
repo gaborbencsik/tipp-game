@@ -143,13 +143,13 @@ export async function createMatch(
   homeTeamId: string,
   awayTeamId: string,
   leagueId: string,
-  options: { scheduledAt?: string; status?: string } = {},
+  options: { scheduledAt?: string; status?: string; stage?: string } = {},
 ): Promise<TestMatch> {
   return post('/api/admin/matches', {
     homeTeamId,
     awayTeamId,
     leagueId,
-    stage: 'group',
+    stage: options.stage ?? 'group',
     scheduledAt: options.scheduledAt ?? '2099-01-01T12:00:00.000Z',
     status: options.status ?? 'scheduled',
   }) as Promise<TestMatch>
@@ -202,12 +202,14 @@ export async function createPrediction(
   homeGoals: number,
   awayGoals: number,
   scorerPickPlayerId?: string,
+  outcomeAfterDraw?: 'extra_time_home' | 'extra_time_away' | 'penalties_home' | 'penalties_away' | null,
 ): Promise<TestPrediction> {
   return post('/api/predictions', {
     matchId,
     homeGoals,
     awayGoals,
     ...(scorerPickPlayerId ? { scorerPickPlayerId } : {}),
+    ...(outcomeAfterDraw !== undefined ? { outcomeAfterDraw } : {}),
   }) as Promise<TestPrediction>
 }
 
@@ -216,10 +218,12 @@ export async function setMatchResult(
   homeGoals: number,
   awayGoals: number,
   scorerPlayerIds?: ReadonlyArray<string>,
+  outcomeAfterDraw?: 'extra_time_home' | 'extra_time_away' | 'penalties_home' | 'penalties_away' | null,
 ): Promise<unknown> {
   return post(`/api/admin/matches/${matchId}/result`, {
     homeGoals,
     awayGoals,
     ...(scorerPlayerIds ? { scorerPlayerIds } : {}),
+    ...(outcomeAfterDraw !== undefined ? { outcomeAfterDraw } : {}),
   })
 }
