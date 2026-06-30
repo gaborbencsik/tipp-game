@@ -12,7 +12,7 @@ vi.mock('vue-router', async (importOriginal) => {
   return { ...actual, useRouter: () => ({ push: vi.fn() }) }
 })
 
-const { mockMatchesList, mockPredictionsMine, mockPredictionsUpsert, mockLeaguesList, mockGetLeagueFavorites, mockFavoritesSummary, mockGroupsGroups } = vi.hoisted(() => ({
+const { mockMatchesList, mockPredictionsMine, mockPredictionsUpsert, mockLeaguesList, mockGetLeagueFavorites, mockFavoritesSummary, mockGroupsGroups, mockScoringConfigDefault } = vi.hoisted(() => ({
   mockMatchesList: vi.fn().mockResolvedValue([]),
   mockPredictionsMine: vi.fn().mockResolvedValue([]),
   mockPredictionsUpsert: vi.fn().mockResolvedValue(undefined),
@@ -20,6 +20,12 @@ const { mockMatchesList, mockPredictionsMine, mockPredictionsUpsert, mockLeagues
   mockGetLeagueFavorites: vi.fn().mockResolvedValue([]),
   mockFavoritesSummary: vi.fn().mockResolvedValue({ members: [] }),
   mockGroupsGroups: [] as import('@/types/index').Group[],
+  mockScoringConfigDefault: vi.fn().mockResolvedValue({
+    correctOutcomePoints: 1,
+    exactBonusPoints: 2,
+    extraTimeBonusPoints: 1,
+    scorerBonusPoints: 1,
+  }),
 }))
 
 vi.mock('@/lib/supabase', () => ({
@@ -41,6 +47,7 @@ vi.mock('@/api/index', () => ({
     leagueTeams: { forLeague: vi.fn().mockResolvedValue([]) },
     users: { getLeagueFavorites: mockGetLeagueFavorites, setLeagueFavorite: vi.fn().mockResolvedValue(undefined) },
     players: { list: vi.fn().mockResolvedValue([]) },
+    scoringConfig: { default: mockScoringConfigDefault },
   },
 }))
 
@@ -642,6 +649,88 @@ describe('MatchesView', () => {
       // own name uses font-semibold
       const selfSpan = indicator.findAll('span').find(s => s.text() === 'Self')
       expect(selfSpan?.classes()).toContain('font-semibold')
+    })
+  })
+
+  // ─── UX-043: outcomeAfterDraw badge on finished knockout cards ───────────────
+
+  describe('outcomeAfterDraw badge in finished match list', () => {
+    const KNOCKOUT_DRAW: Match = {
+      id: 'match-knockout-draw',
+      homeTeam: { id: 'kt-h', name: 'Hungary', shortCode: 'HUN', flagUrl: null, teamType: 'national' as const, countryCode: 'hu', marketValueEur: null, transfermarktId: null },
+      awayTeam: { id: 'kt-a', name: 'Serbia', shortCode: 'SRB', flagUrl: null, teamType: 'national' as const, countryCode: 'rs', marketValueEur: null, transfermarktId: null },
+      venue: null,
+      league: DEFAULT_LEAGUE,
+      stage: 'round_of_16',
+      groupName: null,
+      matchNumber: 50,
+      scheduledAt: '2026-06-29T18:00:00.000Z',
+      status: 'finished',
+      result: { homeGoals: 1, awayGoals: 1, outcomeAfterDraw: 'penalties_home' },
+    }
+
+    const KNOCKOUT_GROUP_STAGE: Match = {
+      ...KNOCKOUT_DRAW,
+      id: 'match-group-finished',
+      stage: 'group',
+      groupName: 'A',
+    }
+
+    function predictionFor(matchId: string, outcome: import('@/types/index').MatchOutcome | null, pointsResult: number | null): Prediction {
+      return {
+        id: `pred-${matchId}`,
+        userId: 'db-user-uuid-001',
+        matchId,
+        homeGoals: 1,
+        awayGoals: 1,
+        outcomeAfterDraw: outcome,
+        pointsGlobal: pointsResult,
+        pointsResult,
+        scorerPickPlayerId: null,
+        scorerPlayerNameSnapshot: null,
+        scorerBonusPoints: null,
+        createdAt: '2026-06-10T10:00:00.000Z',
+        updatedAt: '2026-06-10T10:00:00.000Z',
+      }
+    }
+
+    it('knockout draw + correct outcome tip → badge with correct status and bonus visible on the card', async () => {
+      const { wrapper } = await mountView(
+        [KNOCKOUT_DRAW],
+        [predictionFor(KNOCKOUT_DRAW.id, 'penalties_home', 4)],
+      )
+      const badge = wrapper.find('[data-testid="outcome-after-draw-badge"]')
+      expect(badge.exists()).toBe(true)
+      expect(badge.attributes('data-status')).toBe('correct')
+      expect(badge.text()).toContain('Hungary')
+      expect(badge.text()).toContain('+1')
+    })
+
+    it('knockout draw + incorrect outcome tip → badge with incorrect status (no bonus)', async () => {
+      const { wrapper } = await mountView(
+        [KNOCKOUT_DRAW],
+        [predictionFor(KNOCKOUT_DRAW.id, 'extra_time_away', 1)],
+      )
+      const badge = wrapper.find('[data-testid="outcome-after-draw-badge"]')
+      expect(badge.exists()).toBe(true)
+      expect(badge.attributes('data-status')).toBe('incorrect')
+      expect(badge.text()).toContain('Serbia')
+    })
+
+    it('group-stage match never shows the outcomeAfterDraw badge even with a tip', async () => {
+      const { wrapper } = await mountView(
+        [KNOCKOUT_GROUP_STAGE],
+        [predictionFor(KNOCKOUT_GROUP_STAGE.id, 'penalties_home', 3)],
+      )
+      expect(wrapper.find('[data-testid="outcome-after-draw-badge"]').exists()).toBe(false)
+    })
+
+    it('knockout match with no outcome tip → no badge (no-tip is not rendered in list)', async () => {
+      const { wrapper } = await mountView(
+        [KNOCKOUT_DRAW],
+        [predictionFor(KNOCKOUT_DRAW.id, null, 1)],
+      )
+      expect(wrapper.find('[data-testid="outcome-after-draw-badge"]').exists()).toBe(false)
     })
   })
 

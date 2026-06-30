@@ -213,6 +213,20 @@
                       :class="pointsBadgeClass(predictionsStore.predictionByMatchId(match.id)!.scorerBonusPoints!)"
                     >+{{ predictionsStore.predictionByMatchId(match.id)!.scorerBonusPoints }} {{ $t('common.points') }}</span>
                   </div>
+                  <!-- UX-043: outcomeAfterDraw badge a list-view finished knockout cards-on. -->
+                  <div
+                    v-if="ownOutcomeStatusFor(match) !== 'not-applicable'"
+                    class="text-center text-xs flex items-center justify-center mt-1"
+                    data-testid="own-outcome-after-draw"
+                  >
+                    <OutcomeAfterDrawBadge
+                      :status="ownOutcomeStatusFor(match)"
+                      :prediction-outcome="predictionsStore.predictionByMatchId(match.id)!.outcomeAfterDraw"
+                      :home-team="match.homeTeam"
+                      :away-team="match.awayTeam"
+                      :bonus-points="ownOutcomeBonusFor(match)"
+                    />
+                  </div>
                   <div
                     v-if="favoriteIndicator(match)"
                     class="text-center text-xs flex items-center justify-center gap-1 mt-1"
@@ -419,12 +433,16 @@ import SpecialPendingBanner from '../components/SpecialPendingBanner.vue'
 import DayNavigator from '../components/DayNavigator.vue'
 import SegmentedControl from '../components/SegmentedControl.vue'
 import PlayerSelectCombobox from '../components/predictions/PlayerSelectCombobox.vue'
+import OutcomeAfterDrawBadge from '../components/OutcomeAfterDrawBadge.vue'
+import { resolveOutcomeAfterDrawStatus, isKnockoutStage } from '../lib/outcomeAfterDrawStatus.js'
 import { usePendingSpecialTips } from '../composables/usePendingSpecialTips.js'
 import { useUntippedTodayCount } from '../composables/useUntippedTodayCount.js'
 import { useDayNavigation } from '../composables/useDayNavigation.js'
 import { useLeagueFilter } from '../composables/useLeagueFilter.js'
 import { useMatchEvents, type MatchUpdateEvent } from '../composables/useMatchEvents.js'
 import { getDateLocale } from '../lib/dateLocale.js'
+import { api } from '../api/index.js'
+import { supabase } from '../lib/supabase.js'
 
 const { t } = useI18n()
 const matchesStore = useMatchesStore()
@@ -457,6 +475,11 @@ const draftOutcomes = ref<Record<string, MatchOutcome | null>>({})
 const draftScorerPicks = ref<Record<string, string | null>>({})
 const favBannerDismissed = ref(false)
 const initialDataLoaded = ref(false)
+
+// UX-043: a finished knockout cards-on a saját outcomeAfterDraw tipp megjelenítéséhez
+// a bonus pont a default scoring config alapján kerül a badge-be (group-szintű override-ok
+// a list-view-ban nem érvényesülnek; ha hibázik a hívás, az alapérték 1 marad).
+const extraTimeBonusPoints = ref<number>(1)
 
 type UserLeague = { readonly id: string; readonly name: string; readonly shortName: string }
 
@@ -505,6 +528,41 @@ function toggleFinishedSection(): void {
 
 function isFinishedDay(group: MatchDateGroup): boolean {
   return group.matches.every(m => m.status === 'finished' || m.status === 'cancelled')
+}
+
+// UX-043: a finished knockout match card-on a saját outcomeAfterDraw tipp státusza.
+// 'not-applicable' jelzi azokat a eseteket amikor a badge-et el kell rejteni
+// (csoportkör vagy a user nem adott meg outcome-ot a knockout meccsre — utóbbi a list-view-on
+// kevésbé fontos visszajelzés).
+function ownOutcomeStatusFor(match: Match) {
+  const prediction = predictionsStore.predictionByMatchId(match.id)
+  if (!prediction) return 'not-applicable' as const
+  if (!isKnockoutStage(match.stage)) return 'not-applicable' as const
+  if (prediction.outcomeAfterDraw == null) return 'not-applicable' as const
+  return resolveOutcomeAfterDrawStatus({
+    stage: match.stage,
+    result: match.result,
+    predictionOutcome: prediction.outcomeAfterDraw,
+  })
+}
+
+function ownOutcomeBonusFor(match: Match): number | null {
+  return ownOutcomeStatusFor(match) === 'correct' ? extraTimeBonusPoints.value : null
+}
+
+const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
+
+async function loadExtraTimeBonusPoints(): Promise<void> {
+  try {
+    const token = DEV_AUTH_BYPASS
+      ? 'dev-bypass-token'
+      : (await supabase.auth.getSession()).data.session?.access_token ?? ''
+    if (!token) return
+    const cfg = await api.scoringConfig.default(token)
+    extraTimeBonusPoints.value = cfg.extraTimeBonusPoints
+  } catch {
+    // silent — default of 1 already set
+  }
 }
 
 const finishedDayGroups = computed((): MatchDateGroup[] =>
@@ -594,6 +652,7 @@ onMounted(async () => {
     await Promise.all([
       matchesStore.fetchMatches(userLeagueIds),
       predictionsStore.fetchMyPredictions(),
+      loadExtraTimeBonusPoints(),
     ])
   } catch {
     // tolerate — error states handled by stores
