@@ -105,20 +105,6 @@
                 :read-only="true"
               />
             </div>
-            <!-- UX-045: structured bracket_progression tip → render scored read-only breakdown
-                 with per-round hit/miss chips and champion line. -->
-            <div
-              v-else-if="sp.inputType === 'bracket_progression' && isBracketProgressionOptions(sp.options) && parsedBracketScoring(sp)"
-              class="mt-2"
-            >
-              <BracketProgressionScored
-                :user-answer="parsedBracketScoring(sp)!.userAnswer"
-                :correct-answer="parsedBracketScoring(sp)!.correctAnswer"
-                :template="sp.options.bracketTemplate.matches"
-                :user-group-standings="parsedGroupStandingsAnswer"
-                :correct-group-standings="parsedCorrectGroupStandings"
-              />
-            </div>
             <p
               v-else-if="sp.correctAnswer"
               class="text-gray-600 whitespace-pre-line"
@@ -246,13 +232,11 @@ import PlayerSelectCombobox from '../components/predictions/PlayerSelectCombobox
 import UpsetSpecialPicker from '../components/predictions/UpsetSpecialPicker.vue'
 import GroupStandingsPicker from '../components/predictions/GroupStandingsPicker.vue'
 import BracketProgressionPicker from '../components/predictions/BracketProgressionPicker.vue'
-import BracketProgressionScored from '../components/predictions/BracketProgressionScored.vue'
 import { useTournamentTipsStore } from '../stores/tournamentTips.store.js'
 import { formatRelativeDeadline } from '../lib/deadline.js'
 import { supabase } from '../lib/supabase.js'
 import { api } from '../api/index.js'
 import { deriveBracket } from '../lib/bracketDerive.js'
-import { parseCorrectAnswer as parseBracketCorrectAnswerScored } from '../lib/bracketScoredView.js'
 import type { AllGroupsStandingAnswer, AllGroupsStandingOptions, BracketProgressionAnswer, BracketProgressionOptions, MultiTeamWeightedOptions, SpecialPredictionOptions, SpecialPredictionWithType } from '../types/index.js'
 
 const { t, te } = useI18n()
@@ -445,53 +429,6 @@ const parsedGroupStandingsAnswer = computed<AllGroupsStandingAnswer | null>(() =
   }
   return null
 })
-
-// UX-045: companion to parsedGroupStandingsAnswer — the admin's correctAnswer for the
-// group-standing tip, used as a fallback by BracketProgressionScored when the bracket's
-// correctAnswer is in legacy `{winners:{...}}` form and we need to derive participants.
-// The new participants-shape (UX-044) makes this unnecessary, but we keep it for
-// backward compatibility.
-const parsedCorrectGroupStandings = computed<AllGroupsStandingAnswer | null>(() => {
-  const sp = store.tips.find(t => t.inputType === 'all_groups_standing')
-  if (!sp?.correctAnswer) return null
-  try {
-    const parsed = JSON.parse(sp.correctAnswer) as AllGroupsStandingAnswer
-    if (parsed && typeof parsed === 'object' && parsed.groups && Array.isArray(parsed.best3rds)) {
-      return parsed
-    }
-  } catch {
-    // ignore
-  }
-  return null
-})
-
-// UX-045: parse both sides of a bracket_progression tip for the scored read-only view.
-// Returns null if either side is missing/malformed — the caller falls back to the
-// simple text-only "Helyes válasz" line.
-function parsedBracketScoring(sp: SpecialPredictionWithType): {
-  userAnswer: BracketProgressionAnswer
-  correctAnswer: BracketProgressionAnswer | import('../types/index.js').BracketProgressionCorrectAnswer
-} | null {
-  if (sp.inputType !== 'bracket_progression') return null
-  if (!sp.answer || !sp.correctAnswer) return null
-  let userAnswer: BracketProgressionAnswer | null = null
-  try {
-    const parsed = JSON.parse(sp.answer) as BracketProgressionAnswer
-    if (parsed && typeof parsed === 'object' && parsed.winners && typeof parsed.winners === 'object') {
-      const winners: Record<string, string> = {}
-      for (const [k, v] of Object.entries(parsed.winners)) {
-        if (typeof v === 'string') winners[k] = v
-      }
-      userAnswer = { winners }
-    }
-  } catch {
-    return null
-  }
-  if (!userAnswer) return null
-  const correctAnswer = parseBracketCorrectAnswerScored(sp.correctAnswer)
-  if (!correctAnswer) return null
-  return { userAnswer, correctAnswer }
-}
 
 function scrollToGroupStandings(): void {
   const sp = store.tips.find(t => t.inputType === 'all_groups_standing')

@@ -1,5 +1,13 @@
 <template>
   <div data-testid="bracket-round-team-list" class="space-y-4">
+    <div
+      v-if="!correctGroupStandings"
+      class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2"
+    >
+      Hiányzik a Csoport végeredmény helyes válasza — előbb azt rögzítsd, hogy a Last 32
+      párosítások levezethetők legyenek.
+    </div>
+
     <section
       v-for="round in ROUND_ORDER"
       :key="round"
@@ -16,7 +24,7 @@
           </span>
         </div>
         <div v-if="isLocked(round)" class="text-[11px] text-gray-500">
-          Előbb a(z) {{ prevRoundLabel(round) }} kört kell rögzíteni.
+          Előbb a {{ prevRoundLabel(round) }} kört kell kiértékelni.
         </div>
       </header>
 
@@ -60,13 +68,22 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, watch, onMounted, ref } from 'vue'
+import { computed, reactive, ref, watch, onMounted } from 'vue'
 import { supabase } from '../../lib/supabase.js'
 import { api } from '../../api/index.js'
-import { buildCorrectAnswer, type AdminCorrectAnswerRound } from '../../lib/bracketCorrectAnswer.js'
+import {
+  deriveBracket,
+  parseBracketProgressionAnswer,
+} from '../../lib/bracketDerive.js'
+import {
+  mapRoundWinnersToBracketAnswer,
+  BracketTeamNotInRoundError,
+} from '../../lib/bracketRoundMapping.js'
 import type {
-  BracketProgressionCorrectAnswer,
+  AllGroupsStandingAnswer,
+  BracketProgressionAnswer,
   BracketProgressionOptions,
+  BracketRound,
   Team,
 } from '../../types/index.js'
 
@@ -75,77 +92,58 @@ type ChipTeam = { readonly id: string; readonly name: string }
 
 const props = defineProps<{
   options: BracketProgressionOptions
-  currentCorrectAnswer: BracketProgressionCorrectAnswer | null
-  allTeams?: readonly Team[]
+  correctGroupStandings: AllGroupsStandingAnswer | null
+  currentAnswerJson: string | null
   busy?: boolean
   // Optional UUID → human-readable name map from the parent (teams + players cache).
-  // The component still self-loads /teams as a safety net so chips never fall back
-  // to raw UUIDs if the parent cache is empty or late.
+  // We still self-load /teams as a safety net so chips never fall back to UUIDs even
+  // if the parent cache is empty or arrived late.
   teamNameById?: ReadonlyMap<string, string>
 }>()
 
 const emit = defineEmits<{
-  save: [round: AdminCorrectAnswerRound, answer: BracketProgressionCorrectAnswer]
+  save: [round: BracketRound, answer: BracketProgressionAnswer]
   error: [message: string]
 }>()
 
-const ROUND_ORDER: readonly AdminCorrectAnswerRound[] = [
-  'last_32', 'last_16', 'qf', 'sf', 'final', 'champion', 'bronze',
-]
+const ROUND_ORDER: readonly BracketRound[] = ['last_32', 'last_16', 'qf', 'sf', 'final', 'bronze']
 
-const PREV_ROUND: Record<AdminCorrectAnswerRound, AdminCorrectAnswerRound | null> = {
+const PREV_ROUND: Record<BracketRound, BracketRound | null> = {
   last_32: null,
   last_16: 'last_32',
   qf: 'last_16',
   sf: 'qf',
   final: 'sf',
-  champion: 'final',
+  // Bronze depends on the SF losers, so its gating mirrors `final` (both need SF winners).
   bronze: 'sf',
 }
 
-const ROUND_LABELS: Record<AdminCorrectAnswerRound, string> = {
-  last_32: '32-be jutók (32 csapat)',
-  last_16: '16-ba jutók (16 csapat)',
-  qf: 'Negyeddöntő (8 csapat)',
-  sf: 'Elődöntő (4 csapat)',
-  final: 'Döntősök (2 csapat)',
-  champion: 'Bajnok (1 csapat)',
-  bronze: 'Bronz győztes (1 csapat)',
+const ROUND_LABELS: Record<BracketRound, string> = {
+  last_32: '32-be jutók',
+  last_16: '16-ba jutók',
+  qf: 'Negyeddöntő',
+  sf: 'Elődöntő',
+  final: 'Döntő (bajnok)',
+  bronze: 'Bronzmeccs',
 }
 
-function roundLabel(r: AdminCorrectAnswerRound): string {
+function roundLabel(r: BracketRound): string {
   return ROUND_LABELS[r]
 }
 
-function prevRoundLabel(r: AdminCorrectAnswerRound): string {
+function prevRoundLabel(r: BracketRound): string {
   const prev = PREV_ROUND[r]
   return prev ? ROUND_LABELS[prev] : ''
 }
 
-const TARGET_COUNT: Record<AdminCorrectAnswerRound, number> = {
-  last_32: 32,
-  last_16: 16,
-  qf: 8,
-  sf: 4,
-  final: 2,
-  champion: 1,
-  bronze: 1,
-}
-
-function targetCount(round: AdminCorrectAnswerRound): number {
-  return TARGET_COUNT[round]
-}
-
-// ── Team-name cache (self-loaded /teams + parent-provided cache) ──────────────────────────
 const localTeams = ref<Team[]>([])
+
+// Mirror the admin store auth pattern — local dev runs with VITE_DEV_AUTH_BYPASS=true
+// and the backend accepts the literal 'dev-bypass-token'. Without this the chip names
+// silently fall back to UUIDs whenever the Supabase session is empty in dev.
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
 
 async function loadTeams(): Promise<void> {
-  // Skip self-load when the parent already supplied a full team list (test convenience).
-  if (props.allTeams && props.allTeams.length > 0) {
-    localTeams.value = [...props.allTeams]
-    return
-  }
   try {
     let token = ''
     if (DEV_AUTH_BYPASS) {
@@ -154,117 +152,138 @@ async function loadTeams(): Promise<void> {
       const { data } = await supabase.auth.getSession()
       token = data.session?.access_token ?? ''
     }
-    if (!token) return
+    if (!token) {
+      console.warn('[BracketRoundTeamList] no access token — chip names will fall back to UUIDs')
+      return
+    }
     const result = await api.teams.list(token)
     localTeams.value = result
-  } catch {
+    console.info(`[BracketRoundTeamList] loaded ${result.length} teams from /api/teams`)
+  } catch (err) {
+    console.error('[BracketRoundTeamList] /api/teams fetch failed', err)
     localTeams.value = []
   }
 }
 
 onMounted(loadTeams)
 
+// Combine the parent-provided name cache with our own /teams fetch. The local fetch
+// is a safety net — if the parent cache arrives late or is empty, we still resolve
+// names so the admin never sees raw UUIDs.
 const teamMap = computed<ReadonlyMap<string, string>>(() => {
   const merged = new Map<string, string>()
-  if (props.teamNameById) for (const [id, name] of props.teamNameById) merged.set(id, name)
-  for (const t of localTeams.value) if (!merged.has(t.id)) merged.set(t.id, t.name)
+  if (props.teamNameById) {
+    for (const [id, name] of props.teamNameById) merged.set(id, name)
+  }
+  for (const t of localTeams.value) {
+    if (!merged.has(t.id)) merged.set(t.id, t.name)
+  }
   return merged
 })
 
-const allTeamsList = computed<readonly Team[]>(() => {
-  if (props.allTeams && props.allTeams.length > 0) return props.allTeams
-  return localTeams.value
+const savedAnswer = computed<BracketProgressionAnswer>(() => {
+  const parsed = props.currentAnswerJson
+    ? parseBracketProgressionAnswer(props.currentAnswerJson)
+    : null
+  return parsed ?? { winners: {} }
 })
 
-// ── Reactive selections (admin's current pick, before save) ───────────────────────────────
-const selections = reactive<Record<AdminCorrectAnswerRound, Set<string>>>({
-  last_32: new Set(), last_16: new Set(), qf: new Set(), sf: new Set(),
-  final: new Set(), champion: new Set(), bronze: new Set(),
+const derivedBracket = computed(() =>
+  deriveBracket(
+    props.options.bracketTemplate.matches,
+    props.correctGroupStandings,
+    savedAnswer.value.winners,
+  ),
+)
+
+// Per-round selection (admin's current pick set, before save). Seeded from saved winners
+// so re-opening the page reflects what's already evaluated.
+const selections = reactive<Record<BracketRound, Set<string>>>({
+  last_32: new Set(),
+  last_16: new Set(),
+  qf: new Set(),
+  sf: new Set(),
+  final: new Set(),
+  bronze: new Set(),
 })
 
-function seedSelectionsFromCurrent(): void {
+function seedSelectionsFromSavedAnswer(): void {
+  const template = props.options.bracketTemplate.matches
   for (const r of ROUND_ORDER) selections[r] = new Set()
-  const cur = props.currentCorrectAnswer
-  if (!cur) return
-  selections.last_32 = new Set(cur.participants.last_32)
-  selections.last_16 = new Set(cur.participants.last_16)
-  selections.qf = new Set(cur.participants.qf)
-  selections.sf = new Set(cur.participants.sf)
-  selections.final = new Set(cur.participants.final)
-  if (cur.champion) selections.champion = new Set([cur.champion])
-  if (cur.bronzeWinner) selections.bronze = new Set([cur.bronzeWinner])
+  for (const [matchId, teamId] of Object.entries(savedAnswer.value.winners)) {
+    const m = template.find(x => x.id === matchId)
+    if (!m) continue
+    selections[m.round].add(teamId)
+  }
 }
 
-watch(() => props.currentCorrectAnswer, seedSelectionsFromCurrent, { immediate: true })
+watch(() => props.currentAnswerJson, seedSelectionsFromSavedAnswer, { immediate: true })
 
-// ── Pool computation (cascade from prior round; bronze auto-derives sf \ final) ───────────
-function poolFor(round: AdminCorrectAnswerRound): readonly ChipTeam[] {
-  const cur = props.currentCorrectAnswer
-  let poolIds: readonly string[] = []
+function targetCount(round: BracketRound): number {
+  const template = props.options.bracketTemplate.matches
+  return template.filter(m => m.round === round).length
+}
 
-  if (round === 'last_32') {
-    poolIds = allTeamsList.value.map(t => t.id)
-  } else if (round === 'last_16') {
-    poolIds = cur?.participants.last_32 ?? []
-  } else if (round === 'qf') {
-    poolIds = cur?.participants.last_16 ?? []
-  } else if (round === 'sf') {
-    poolIds = cur?.participants.qf ?? []
-  } else if (round === 'final') {
-    poolIds = cur?.participants.sf ?? []
-  } else if (round === 'champion') {
-    poolIds = cur?.participants.final ?? []
-  } else if (round === 'bronze') {
-    const sfIds = cur?.participants.sf ?? []
-    const finalSet = new Set(cur?.participants.final ?? [])
-    poolIds = sfIds.filter(id => !finalSet.has(id))
+function poolFor(round: BracketRound): readonly ChipTeam[] {
+  // last_32 pool = participants (slotA ∪ slotB) of last_32 matches.
+  // Later rounds: participants of that round's derived matches (winners of the prior round).
+  // bronze pool = the SF losers (the team in each sf-derived match that didn't win).
+  const matches = derivedBracket.value.matches.filter(m => m.round === round)
+  const ids = new Set<string>()
+  if (round === 'bronze') {
+    const sfMatches = derivedBracket.value.matches.filter(m => m.round === 'sf')
+    for (const m of sfMatches) {
+      if (m.teamA && m.teamA !== m.winnerId) ids.add(m.teamA)
+      if (m.teamB && m.teamB !== m.winnerId) ids.add(m.teamB)
+    }
+    // Tiny-template fallback: derive losers from the upstream-loser slot directly
+    // (when there's no SF round in the template).
+    if (ids.size === 0) {
+      for (const m of matches) {
+        if (m.teamA) ids.add(m.teamA)
+        if (m.teamB) ids.add(m.teamB)
+      }
+    }
+  } else {
+    for (const m of matches) {
+      if (m.teamA) ids.add(m.teamA)
+      if (m.teamB) ids.add(m.teamB)
+    }
   }
-
   const list: ChipTeam[] = []
-  for (const id of poolIds) {
-    const name = teamMap.value.get(id) ?? (id.length > 8 ? `${id.slice(0, 8)}…` : id)
-    list.push({ id, name })
+  for (const id of ids) {
+    const name = teamMap.value.get(id)
+    list.push({ id, name: name ?? (id.length > 8 ? `${id.slice(0, 8)}…` : id) })
   }
   list.sort((a, b) => a.name.localeCompare(b.name))
   return list
 }
 
-function isLocked(round: AdminCorrectAnswerRound): boolean {
-  if (round === 'last_32') return false
-  const prev = PREV_ROUND[round]
-  if (!prev) return false
-  // Locked when the upstream round hasn't been saved with the right number of teams.
-  const cur = props.currentCorrectAnswer
-  if (!cur) return true
-  if (prev === 'last_32') return cur.participants.last_32.length !== TARGET_COUNT.last_32
-  if (prev === 'last_16') return cur.participants.last_16.length !== TARGET_COUNT.last_16
-  if (prev === 'qf') return cur.participants.qf.length !== TARGET_COUNT.qf
-  if (prev === 'sf') return cur.participants.sf.length !== TARGET_COUNT.sf
-  if (prev === 'final') return cur.participants.final.length !== TARGET_COUNT.final
-  return false
+function isLocked(round: BracketRound): boolean {
+  if (round === 'last_32') return !props.correctGroupStandings
+  return poolFor(round).length === 0
 }
 
-function isSelected(round: AdminCorrectAnswerRound, teamId: string): boolean {
+function isSelected(round: BracketRound, teamId: string): boolean {
   return selections[round].has(teamId)
 }
 
-function selectedCount(round: AdminCorrectAnswerRound): number {
+function selectedCount(round: BracketRound): number {
   return selections[round].size
 }
 
-function overLimit(round: AdminCorrectAnswerRound): boolean {
+function overLimit(round: BracketRound): boolean {
   return selections[round].size > targetCount(round)
 }
 
-function isChipDisabled(round: AdminCorrectAnswerRound, teamId: string): boolean {
-  // Single-pick rounds (champion / bronze): a chip click always replaces the prior pick
-  // — never disable.
-  if (targetCount(round) === 1) return false
+function isChipDisabled(round: BracketRound, teamId: string): boolean {
+  // Block adding new picks once we hit the target — already-selected chips stay
+  // clickable so the admin can deselect them.
   if (selections[round].has(teamId)) return false
   return selections[round].size >= targetCount(round)
 }
 
-function chipClass(round: AdminCorrectAnswerRound, teamId: string): string {
+function chipClass(round: BracketRound, teamId: string): string {
   if (selections[round].has(teamId)) {
     return 'bg-emerald-500 text-white border-emerald-500'
   }
@@ -274,19 +293,9 @@ function chipClass(round: AdminCorrectAnswerRound, teamId: string): string {
   return 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
 }
 
-function toggleTeam(round: AdminCorrectAnswerRound, teamId: string): void {
+function toggleTeam(round: BracketRound, teamId: string): void {
   if (isLocked(round)) return
   const set = selections[round]
-  // For single-pick rounds (champion / bronze) a click replaces the prior pick.
-  if (targetCount(round) === 1) {
-    if (set.has(teamId)) {
-      set.clear()
-    } else {
-      set.clear()
-      set.add(teamId)
-    }
-    return
-  }
   if (set.has(teamId)) {
     set.delete(teamId)
   } else {
@@ -295,19 +304,30 @@ function toggleTeam(round: AdminCorrectAnswerRound, teamId: string): void {
   }
 }
 
-function canSave(round: AdminCorrectAnswerRound): boolean {
-  // Allow saving an empty selection (= reset that round). Otherwise require exact match.
+function canSave(round: BracketRound): boolean {
+  // Allow saving an empty selection (= reset that round). Otherwise require an
+  // exact match: too few or too many is suspicious and would mis-score.
   const count = selections[round].size
   return count === 0 || count === targetCount(round)
 }
 
-function onSave(round: AdminCorrectAnswerRound): void {
+function onSave(round: BracketRound): void {
   const selected = [...selections[round]]
   try {
-    const next = buildCorrectAnswer(round, selected, props.currentCorrectAnswer)
+    const next = mapRoundWinnersToBracketAnswer(
+      round,
+      selected,
+      savedAnswer.value,
+      props.options.bracketTemplate.matches,
+      props.correctGroupStandings,
+    )
     emit('save', round, next)
   } catch (err) {
-    emit('error', err instanceof Error ? err.message : 'Hiba a kör mentésekor.')
+    if (err instanceof BracketTeamNotInRoundError) {
+      emit('error', `A "${err.teamId}" csapat nem szerepel a ${roundLabel(round)} körben.`)
+    } else {
+      emit('error', err instanceof Error ? err.message : 'Hiba a kör mentésekor.')
+    }
   }
 }
 </script>

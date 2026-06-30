@@ -406,23 +406,6 @@ export interface BracketProgressionAnswer {
   readonly winners: Readonly<Record<string, string>>
 }
 
-/**
- * UX-044: admin-side correct-answer shape — participants per round (not match-level winners).
- * Subset invariants: last_16 ⊆ last_32, qf ⊆ last_16, sf ⊆ qf, final ⊆ sf.
- * `champion ∈ final`. `bronzeWinner ∈ (sf \ final)` or null.
- */
-export interface BracketProgressionCorrectAnswer {
-  readonly participants: {
-    readonly last_32: readonly string[]
-    readonly last_16: readonly string[]
-    readonly qf: readonly string[]
-    readonly sf: readonly string[]
-    readonly final: readonly string[]
-  }
-  readonly champion: string | null
-  readonly bronzeWinner: string | null
-}
-
 export interface BracketProgressionRoundCompletion {
   readonly done: number
   readonly total: number

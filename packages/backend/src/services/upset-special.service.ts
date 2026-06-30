@@ -2,12 +2,10 @@ import type {
   AllGroupsStandingAnswer,
   BracketMatch,
   BracketProgressionAnswer,
-  BracketProgressionCorrectAnswer,
   MultiTeamWeightedChoice,
   MultiTeamWeightedOptions,
 } from '../types/index.js'
 import { deriveBracket } from './bracket-progression.service.js'
-import { isBracketProgressionCorrectAnswer } from './bracket-correct-answer.js'
 
 export function scoreUpsetSpecial(
   picks: readonly string[],
@@ -92,20 +90,9 @@ export function deriveEliminatedFromBracket(
   options: MultiTeamWeightedOptions,
   template: readonly BracketMatch[] | null,
   correctGroupStandings: AllGroupsStandingAnswer | null,
-  correctBracket: BracketProgressionAnswer | BracketProgressionCorrectAnswer | null,
+  correctBracket: BracketProgressionAnswer | null,
 ): string[] | null {
   if (!template || template.length === 0) return null
-
-  // UX-044: when the admin has stored the new participants shape, take last_32 directly from it
-  // — no need to re-derive from group standings + winners.
-  if (correctBracket && isBracketProgressionCorrectAnswer(correctBracket)) {
-    const last32Set = new Set(correctBracket.participants.last_32)
-    if (last32Set.size !== 32) return null
-    return options.choices
-      .map(c => c.teamId)
-      .filter(teamId => !last32Set.has(teamId))
-  }
-
   if (!correctGroupStandings) return null
   const winners = correctBracket?.winners ?? {}
   const derived = deriveBracket(template, correctGroupStandings, winners)

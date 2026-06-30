@@ -190,4 +190,3 @@
 | UX-041 | Torna tippek – Biztos kiesők kiértékelt tipp vizuális visszajelzés + részpont-bontás | Should Have |
 | UX-042 | Admin torna-tipp kiértékelés körönkénti csapatlistával | Should Have |
 | UX-043 | Knockout meccsek – döntetlen tipp visuális megjelenítése kiértékelés után | Should Have |
-| UX-044 | Admin bracket körönkénti participantok kiértékelése – új adatmodell | Should Have |
