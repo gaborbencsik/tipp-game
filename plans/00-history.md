@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 184 story kész (Must Have: 32/32, Should Have: 152/152)
+> 185 story kész (Must Have: 32/32, Should Have: 153/153)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -188,3 +188,4 @@
 | UX-039 | Torna tippek – Csoport végeredmény kiértékelt tipp vizuális visszajelzés (zöld/piros) | Should Have |
 | UX-040 | Torna tippek – Csoport végeredmény kiértékelt tipp részpont-bontás kártyánként | Should Have |
 | UX-041 | Torna tippek – Biztos kiesők kiértékelt tipp vizuális visszajelzés + részpont-bontás | Should Have |
+| UX-042 | Admin torna-tipp kiértékelés körönkénti csapatlistával | Should Have |

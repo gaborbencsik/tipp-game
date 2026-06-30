@@ -1,6 +1,6 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-06-29 (UX-041 kész: torna tippek – Biztos kiesők kiértékelt tipp vizuális visszajelzés + részpont-bontás)
+> Utoljára frissítve: 2026-06-29 (UX-042 kész: körönkénti csapatlistás admin torna-tipp kiértékelés)
 
 ## Nyitott story-k
 
@@ -32,4 +32,4 @@
 
 ---
 
-**Haladás: 184 / 195 story kész** — Must Have: 32/32, Should Have: 152/153, Nice to Have: 0/5 (US-937, PUSH-003 won't do)
+**Haladás: 185 / 196 story kész** — Must Have: 32/32, Should Have: 153/154, Nice to Have: 0/5 (US-937, PUSH-003 won't do)

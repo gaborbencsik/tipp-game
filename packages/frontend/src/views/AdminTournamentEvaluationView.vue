@@ -261,33 +261,17 @@
           </div>
         </div>
 
-        <!-- bracket_progression: per-round slice buttons -->
+        <!-- bracket_progression: per-round team-list editor with save-and-evaluate per round (UX-042) -->
         <div v-else-if="gt.inputType === 'bracket_progression' && isBracketProgressionOptions(gt.options)" class="space-y-3">
-          <BracketProgressionPicker
+          <BracketRoundTeamList
             :options="gt.options"
-            :answer="answerDrafts[gt.id] || null"
-            :group-standings-answer="bracketGroupStandings"
-            @submit="v => onPickerSubmit(gt, v)"
+            :correct-group-standings="bracketGroupStandings"
+            :current-answer-json="gt.correctAnswer ?? null"
+            :busy="busy[gt.id]"
+            :team-name-by-id="nameById"
+            @save="(round, answer) => onSaveRound(gt, round, answer)"
+            @error="msg => toast.addToast(msg, 'error')"
           />
-          <div class="flex flex-wrap gap-2 pt-2 border-t">
-            <span class="text-xs text-gray-600 self-center mr-2">Kiértékelés körönként:</span>
-            <button
-              v-for="round in BRACKET_ROUNDS"
-              :key="round"
-              class="text-xs px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
-              :disabled="busy[gt.id]"
-              @click="onSaveAndEvaluate(gt, round)"
-            >
-              {{ roundLabel(round) }}
-            </button>
-            <button
-              class="text-xs px-2 py-1 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
-              :disabled="busy[gt.id]"
-              @click="onSaveAndEvaluate(gt, null)"
-            >
-              Mind kiértékelése
-            </button>
-          </div>
         </div>
 
         <div v-else class="text-xs text-amber-700">
@@ -303,7 +287,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import AppLayout from '../components/AppLayout.vue'
 import AdminNav from '../components/admin/AdminNav.vue'
 import GroupStandingsPicker from '../components/predictions/GroupStandingsPicker.vue'
-import BracketProgressionPicker from '../components/predictions/BracketProgressionPicker.vue'
+import BracketRoundTeamList from '../components/admin/BracketRoundTeamList.vue'
 import TeamSelectDropdown from '../components/predictions/TeamSelectDropdown.vue'
 import PlayerSelectCombobox from '../components/predictions/PlayerSelectCombobox.vue'
 import { useAdminTournamentEvaluationStore, type EvaluationRunResult } from '../stores/admin-tournament-evaluation.store.js'
@@ -313,12 +297,12 @@ import { supabase } from '../lib/supabase.js'
 import type {
   AllGroupsStandingAnswer,
   AllGroupsStandingOptions,
+  BracketProgressionAnswer,
   BracketProgressionOptions,
+  BracketRound,
   SpecialPredictionOptions,
   SpecialPredictionType,
 } from '../types/index.js'
-
-const BRACKET_ROUNDS = ['last_32', 'last_16', 'qf', 'sf', 'final', 'bronze'] as const
 
 const store = useAdminTournamentEvaluationStore()
 const toast = useToastStore()
@@ -386,11 +370,19 @@ function teamLabel(id: string): string {
 // UX-037: cached name lookup for chip labels. Populated on mount from /teams and /players.
 const nameById = ref<Map<string, string>>(new Map())
 
+// Match the admin-store auth pattern so local dev (VITE_DEV_AUTH_BYPASS=true) also fills the cache.
+const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
+
 async function loadNameCache(): Promise<void> {
   // Resolving names is non-critical UI sugar — failures must not break the page.
   try {
-    const { data } = await supabase.auth.getSession()
-    const token = data.session?.access_token ?? ''
+    let token = ''
+    if (DEV_AUTH_BYPASS) {
+      token = 'dev-bypass-token'
+    } else {
+      const { data } = await supabase.auth.getSession()
+      token = data.session?.access_token ?? ''
+    }
     if (!token) return
     const [teamsRes, playersRes] = await Promise.allSettled([
       api.teams.list(token),
@@ -482,7 +474,7 @@ function inputTypeLabel(t: string): string {
   }
 }
 
-function roundLabel(r: typeof BRACKET_ROUNDS[number]): string {
+function roundLabel(r: BracketRound): string {
   switch (r) {
     case 'last_32': return '32-be jutók'
     case 'last_16': return '16-ba jutók'
@@ -510,6 +502,30 @@ function formatLastRun(r: EvaluationRunResult): string {
 
 function onPickerSubmit(gt: SpecialPredictionType, value: string): void {
   answerDrafts[gt.id] = value
+}
+
+// UX-042: per-round save flow for bracket_progression — first persists the extended
+// winners map via setCorrectAnswer, then runs the slice-specific evaluation.
+async function onSaveRound(
+  gt: SpecialPredictionType,
+  round: BracketRound,
+  answer: BracketProgressionAnswer,
+): Promise<void> {
+  busy[gt.id] = true
+  try {
+    const serialized = JSON.stringify(answer)
+    await store.setCorrectAnswer(gt.id, serialized)
+    const result = await store.evaluate(gt.id, round)
+    toast.addToast(
+      `${roundLabel(round)} kiértékelve: ${result.evaluatedCount} felhasználó · ${result.totalPoints} pont`,
+      'success',
+    )
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Hiba'
+    toast.addToast(`Hiba: ${msg}`, 'error')
+  } finally {
+    busy[gt.id] = false
+  }
 }
 
 async function onSaveAndEvaluate(gt: SpecialPredictionType, slice: string | null): Promise<void> {
