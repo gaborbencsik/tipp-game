@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 import { injectSession } from './helpers/auth.js'
 import {
   ensureUser, createLeague, createTeam, createMatch,
-  createPrediction, setMatchResult, updateMatch,
+  createPrediction, setMatchResult, updateMatch, getDefaultScoringConfig,
 } from './helpers/api.js'
 
 // UX-043: a knockout meccsek "döntetlen esetén továbbjutó" tipp kiértékelés után is
@@ -14,9 +14,11 @@ test.describe('UX-043 outcomeAfterDraw badge visibility', () => {
   let decisiveMatchId: string
   let homeTeamName: string
   let awayTeamName: string
+  let extraTimeBonus: number
 
   test.beforeAll(async () => {
     await ensureUser()
+    extraTimeBonus = (await getDefaultScoringConfig()).extraTimeBonusPoints
     const suffix = String(Date.now()).slice(-3)
     const league = await createLeague(`UX-043 League ${Date.now()}`)
     homeTeamName = `UX-043 Home ${suffix}`
@@ -68,7 +70,7 @@ test.describe('UX-043 outcomeAfterDraw badge visibility', () => {
     await expect(ownBadge).toBeVisible({ timeout: 5000 })
     await expect(ownBadge).toHaveAttribute('data-status', 'correct')
     await expect(ownBadge).toContainText(homeTeamName)
-    await expect(ownBadge).toContainText('+1')
+    await expect(ownBadge).toContainText(`+${extraTimeBonus}`)
 
     // A "mások tippjei" listán a saját sor is megjelenik — ott is correct badge.
     const listBadge = page.getByTestId('match-predictions-list').getByTestId('outcome-after-draw-badge').first()

@@ -246,3 +246,13 @@ export async function updateMatch(
 ): Promise<unknown> {
   return put(`/api/admin/matches/${matchId}`, patch)
 }
+
+export interface DefaultScoringConfig {
+  correctOutcomePoints: number
+  exactBonusPoints: number
+  extraTimeBonusPoints: number
+}
+
+export async function getDefaultScoringConfig(): Promise<DefaultScoringConfig> {
+  return get('/api/scoring-config/default') as Promise<DefaultScoringConfig>
+}
