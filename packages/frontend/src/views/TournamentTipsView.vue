@@ -105,6 +105,20 @@
                 :read-only="true"
               />
             </div>
+            <!-- UX-045: structured bracket_progression tip → render picker readOnly+correctAnswer for visual diff -->
+            <div
+              v-else-if="sp.inputType === 'bracket_progression' && isBracketProgressionOptions(sp.options) && sp.correctAnswer"
+              class="mt-2"
+            >
+              <BracketProgressionPicker
+                :options="sp.options"
+                :answer="sp.answer ?? null"
+                :group-standings-answer="parsedGroupStandingsAnswer"
+                :correct-answer="sp.correctAnswer"
+                :read-only="true"
+                @open-group-standings="scrollToGroupStandings"
+              />
+            </div>
             <p
               v-else-if="sp.correctAnswer"
               class="text-gray-600 whitespace-pre-line"

@@ -3,7 +3,24 @@
     <GroupStandingsGate v-if="!groupStandingsAnswer" @open-group-standings="$emit('open-group-standings')" />
 
     <div v-else class="space-y-2">
-      <div class="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2.5 flex gap-2">
+      <!-- UX-045: evaluated summary strip (replaces the blue tip info-card). -->
+      <div
+        v-if="isEvaluated"
+        class="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 flex items-center gap-3"
+        data-testid="bracket-evaluated-summary"
+      >
+        <span class="text-lg" aria-hidden="true">🏆</span>
+        <div class="flex-1 min-w-0">
+          <div class="text-xs text-emerald-900 font-semibold">{{ $t('bracketProgression.evaluatedTitle') }}</div>
+          <div class="text-[11px] text-emerald-800">{{ $t('bracketProgression.evaluatedSubtitle') }}</div>
+        </div>
+        <span
+          class="inline-flex items-center rounded-full bg-emerald-500 text-white px-3 py-1 text-sm font-bold shadow-sm"
+          data-testid="bracket-evaluated-total-points"
+        >{{ $t('bracketProgression.pointsFormat', { n: breakdown!.total }) }}</span>
+      </div>
+
+      <div v-else class="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2.5 flex gap-2">
         <span class="text-blue-600" aria-hidden="true">💡</span>
         <p class="text-xs text-blue-900 leading-snug">{{ $t('bracketProgression.infoCard') }}</p>
       </div>
@@ -16,6 +33,9 @@
         :expanded="expandedRound === round"
         :completion="completionByRound[round]"
         :team-map="teamMap"
+        :advancing-team-ids="advancingTeamIdsByRound[round]"
+        :evaluation="evaluationByRound[round]"
+        :is-read-only="readOnly || isEvaluated"
         @toggle="toggleExpanded(round)"
         @pick="onPick"
       />
@@ -23,13 +43,18 @@
         :matches="finalsAndBronzeMatches"
         :expanded="expandedRound === 'final'"
         :team-map="teamMap"
+        :advancing-team-ids="advancingTeamIdsForFinal"
+        :bronze-advancing-team-ids="advancingTeamIdsForBronze"
+        :champion-id="correctAnswerParsed?.champion ?? null"
+        :evaluation="finalEvaluation"
+        :is-read-only="readOnly || isEvaluated"
         @toggle="toggleExpanded('final')"
         @pick="onPick"
       />
     </div>
 
     <div
-      v-if="groupStandingsAnswer"
+      v-if="groupStandingsAnswer && !isEvaluated"
       class="mt-3 sticky bottom-2 left-0 right-0 z-10 px-4 py-3 rounded-lg border border-slate-200 bg-white shadow-sm"
       data-testid="bracket-progression-sticky"
     >
@@ -69,9 +94,12 @@ import {
   computeBracketCompletion,
   findDownstreamMatches,
 } from '../../lib/bracketDerive.js'
+import { parseBracketProgressionCorrectAnswer } from '../../lib/bracketCorrectAnswer.js'
+import { computeBracketBreakdown, type BracketRoundKey } from '../../lib/bracketBreakdown.js'
 import type {
   AllGroupsStandingAnswer,
   BracketProgressionAnswer,
+  BracketProgressionCorrectAnswer,
   BracketProgressionOptions,
   BracketRound,
   Team,
@@ -83,6 +111,12 @@ const props = defineProps<{
   answer: string | null
   groupStandingsAnswer: AllGroupsStandingAnswer | null
   readOnly?: boolean
+  /**
+   * UX-045: raw participants-shape correctAnswer JSON. When non-null the picker enters
+   * "evaluated" mode: chips are colored green/red per-round, header pills show earned
+   * points, and the sticky save-status bar is hidden.
+   */
+  correctAnswer?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -146,6 +180,13 @@ watch(() => props.answer, value => {
   state.winners = fresh.winners
 })
 
+const correctAnswerParsed = computed<BracketProgressionCorrectAnswer | null>(() => {
+  if (!props.correctAnswer) return null
+  return parseBracketProgressionCorrectAnswer(props.correctAnswer)
+})
+
+const isEvaluated = computed(() => correctAnswerParsed.value !== null)
+
 const derivedBracket = computed(() => deriveBracket(
   props.options.bracketTemplate.matches,
   props.groupStandingsAnswer,
@@ -171,6 +212,80 @@ const completion = computed(() => computeBracketCompletion(
 ))
 
 const completionByRound = computed(() => completion.value.picksByRound)
+
+const breakdown = computed(() => {
+  const correct = correctAnswerParsed.value
+  if (!correct) return null
+  return computeBracketBreakdown(
+    { winners: state.winners },
+    correct,
+    props.options.bracketTemplate.matches,
+    props.groupStandingsAnswer,
+  )
+})
+
+const advancingTeamIdsByRound = computed<Record<BracketRound, ReadonlySet<string> | null>>(() => {
+  const c = correctAnswerParsed.value
+  const empty: Record<BracketRound, ReadonlySet<string> | null> = {
+    last_32: null, last_16: null, qf: null, sf: null, final: null, bronze: null,
+  }
+  if (!c) return empty
+  const build = (key: BracketRoundKey): ReadonlySet<string> | null => {
+    const arr = c.participants[key]
+    if (!arr || arr.length === 0) return null
+    return new Set(arr)
+  }
+  return {
+    last_32: build('last_32'),
+    last_16: build('last_16'),
+    qf: build('qf'),
+    sf: build('sf'),
+    final: build('final'),
+    bronze: null,
+  }
+})
+
+const advancingTeamIdsForFinal = computed(() => advancingTeamIdsByRound.value.final)
+
+const advancingTeamIdsForBronze = computed<ReadonlySet<string> | null>(() => {
+  const c = correctAnswerParsed.value
+  if (!c) return null
+  // A bronze participant is anyone who was in SF but not in the final. If sf list is empty
+  // we can't compute this — bail out.
+  const sf = c.participants.sf
+  const finalists = new Set(c.participants.final)
+  if (!sf || sf.length === 0) return null
+  const bronzePool = sf.filter(id => !finalists.has(id))
+  return new Set(bronzePool)
+})
+
+const evaluationByRound = computed<Record<BracketRound, {
+  matched: number; points: number; pointsPerTeam: number; pending?: boolean
+} | null>>(() => {
+  const b = breakdown.value
+  if (!b) {
+    return {
+      last_32: null, last_16: null, qf: null, sf: null, final: null, bronze: null,
+    }
+  }
+  return {
+    last_32: b.perRound.last_32,
+    last_16: b.perRound.last_16,
+    qf: b.perRound.qf,
+    sf: b.perRound.sf,
+    final: b.perRound.final,
+    bronze: null,
+  }
+})
+
+const finalEvaluation = computed(() => {
+  const b = breakdown.value
+  if (!b) return null
+  return {
+    final: b.perRound.final,
+    champion: { hit: b.championHit, points: b.championPoints },
+  }
+})
 
 const expandedRound = ref<BracketRound | null>('last_32')
 
@@ -236,7 +351,7 @@ watch(() => props.groupStandingsAnswer, () => {
 }, { deep: true })
 
 function onPick(matchId: string, teamId: string): void {
-  if (props.readOnly) return
+  if (props.readOnly || isEvaluated.value) return
   const oldWinner = state.winners[matchId]
   state.winners[matchId] = teamId
 

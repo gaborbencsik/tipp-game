@@ -750,7 +750,12 @@
       "silver": "{team} silver",
       "bronze": "{team} bronze",
       "fourth": "{team} 4th"
-    }
+    },
+    "evaluatedTitle": "Evaluated tip",
+    "evaluatedSubtitle": "Expand rounds to see which teams you got right.",
+    "pointsFormat": "{n} p",
+    "bronzeNoScore": "Bronze pick awards no points ⓘ",
+    "bronzeNoScoreTooltip": "The bronze medalist pick currently awards zero points."
   },
   "scoringExplainer": {
     "title": "Scoring rules",

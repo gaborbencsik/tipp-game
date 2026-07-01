@@ -25,11 +25,6 @@
       aria-hidden="true"
     >✓</span>
     <span
-      v-if="isCorrect"
-      class="absolute -top-1.5 -right-1.5 text-emerald-700 text-[11px] font-bold"
-      aria-hidden="true"
-    >✓✓</span>
-    <span
       v-if="isActual"
       class="absolute -top-2 left-2 bg-emerald-600 text-white text-[9px] font-semibold px-1.5 py-[1px] rounded"
     >{{ $t('bracketProgression.actualWinner') }}</span>

@@ -750,7 +750,12 @@
       "silver": "{team} ezüst",
       "bronze": "{team} bronz",
       "fourth": "{team} 4."
-    }
+    },
+    "evaluatedTitle": "Kiértékelt tipp",
+    "evaluatedSubtitle": "Nyisd ki a köröket, hogy lásd melyik csapatot találtad el.",
+    "pointsFormat": "{n} p",
+    "bronzeNoScore": "Bronze tipp nem pontoz ⓘ",
+    "bronzeNoScoreTooltip": "A bronzérmes tipp jelenleg nem ad pontot."
   },
   "scoringExplainer": {
     "title": "Pontozási szabályzat",

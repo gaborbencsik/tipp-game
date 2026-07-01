@@ -8,8 +8,8 @@
       <button
         type="button"
         class="min-w-0 text-left rounded-lg"
-        :disabled="match.isLocked || !match.teamA"
-        :class="!match.isLocked && match.teamA ? 'cursor-pointer' : 'cursor-not-allowed'"
+        :disabled="isReadOnly || match.isLocked || !match.teamA"
+        :class="!isReadOnly && !match.isLocked && match.teamA ? 'cursor-pointer' : 'cursor-not-allowed'"
         @click="onPick(match.teamA)"
       >
         <TeamSlotChip
@@ -17,6 +17,8 @@
           :team="match.teamA ? (teamMap.get(match.teamA) ?? null) : null"
           :is-picked="!!match.teamA && match.winnerId === match.teamA"
           :is-locked="match.isLocked || !match.teamA"
+          :is-correct="chipIsCorrect(match.teamA)"
+          :is-wrong="chipIsWrong(match.teamA)"
         />
       </button>
       <span class="flex items-center justify-center text-[11px] font-bold text-slate-300 px-1">
@@ -25,8 +27,8 @@
       <button
         type="button"
         class="min-w-0 text-left rounded-lg"
-        :disabled="match.isLocked || !match.teamB"
-        :class="!match.isLocked && match.teamB ? 'cursor-pointer' : 'cursor-not-allowed'"
+        :disabled="isReadOnly || match.isLocked || !match.teamB"
+        :class="!isReadOnly && !match.isLocked && match.teamB ? 'cursor-pointer' : 'cursor-not-allowed'"
         @click="onPick(match.teamB)"
       >
         <TeamSlotChip
@@ -34,6 +36,8 @@
           :team="match.teamB ? (teamMap.get(match.teamB) ?? null) : null"
           :is-picked="!!match.teamB && match.winnerId === match.teamB"
           :is-locked="match.isLocked || !match.teamB"
+          :is-correct="chipIsCorrect(match.teamB)"
+          :is-wrong="chipIsWrong(match.teamB)"
         />
       </button>
     </div>
@@ -50,6 +54,14 @@ import type { DerivedMatch } from '../../lib/bracketDerive.js'
 const props = defineProps<{
   match: DerivedMatch
   teamMap: ReadonlyMap<string, Team>
+  /**
+   * UX-045: when the tip has been evaluated for this round, pass the set of teams
+   * that advanced (from `correctAnswer.participants[round]`). Every chip whose team is
+   * in the set turns green; every chip whose team is NOT in the set turns red. If null,
+   * chips render in their pre-eval colors (blue-picked / neutral).
+   */
+  advancingTeamIds?: ReadonlySet<string> | null
+  isReadOnly?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -91,8 +103,18 @@ function slotLabelFor(slot: string): string {
   return slot.replace(/_/g, ' ')
 }
 
+function chipIsCorrect(teamId: string | null): boolean {
+  if (!teamId || !props.advancingTeamIds) return false
+  return props.advancingTeamIds.has(teamId)
+}
+
+function chipIsWrong(teamId: string | null): boolean {
+  if (!teamId || !props.advancingTeamIds) return false
+  return !props.advancingTeamIds.has(teamId)
+}
+
 function onPick(teamId: string | null): void {
-  if (props.match.isLocked || !teamId) return
+  if (props.isReadOnly || props.match.isLocked || !teamId) return
   emit('pick', props.match.id, teamId)
 }
 </script>
