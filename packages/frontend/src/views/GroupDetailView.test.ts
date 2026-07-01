@@ -129,8 +129,10 @@ const LEADERBOARD_ENTRY: LeaderboardEntry = {
   isSupporter: false,
 }
 
+// Build the test router once per file — 25 routes × 40 tests was measurable overhead.
+const sharedRouter = buildTestRouter({ '/app/groups/:id': GroupDetailView })
 function buildRouter() {
-  return buildTestRouter({ '/app/groups/:id': GroupDetailView })
+  return sharedRouter
 }
 
 async function mountView(

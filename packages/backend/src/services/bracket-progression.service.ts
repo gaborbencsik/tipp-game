@@ -3,7 +3,9 @@ import type {
   BracketMatch,
   BracketProgressionAnswer,
   BracketProgressionCompletion,
+  BracketProgressionCorrectAnswer,
   BracketProgressionOptions,
+  BracketProgressionParticipants,
   BracketProgressionRoundCompletion,
   BracketRound,
 } from '../types/index.js'
@@ -57,6 +59,62 @@ export function parseBracketProgressionAnswer(json: string): BracketProgressionA
     winners[matchId] = teamId
   }
   return { winners }
+}
+
+/**
+ * UX-044: parse the participants-shape correct answer.
+ *
+ * Accepts the new admin-side payload:
+ *   {
+ *     participants: { last_32:[...], last_16:[...], qf:[...], sf:[...], final:[...] },
+ *     champion: string|null,
+ *     bronzeWinner: string|null,
+ *   }
+ *
+ * Returns null on malformed JSON or shape mismatch — callers should fall back to the
+ * legacy `parseBracketProgressionAnswer` (winners-map) when this returns null.
+ */
+export function parseBracketProgressionCorrectAnswer(
+  json: string,
+): BracketProgressionCorrectAnswer | null {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(json)
+  } catch {
+    return null
+  }
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return null
+  const root = parsed as Record<string, unknown>
+  const participantsRaw = root.participants
+  if (typeof participantsRaw !== 'object' || participantsRaw === null || Array.isArray(participantsRaw)) return null
+  const p = participantsRaw as Record<string, unknown>
+  const roundKeys: readonly (keyof BracketProgressionParticipants)[] = ['last_32', 'last_16', 'qf', 'sf', 'final']
+  const collected: Record<string, string[]> = {}
+  for (const key of roundKeys) {
+    const arr = p[key]
+    if (!Array.isArray(arr)) return null
+    const strs: string[] = []
+    for (const v of arr) {
+      if (typeof v !== 'string') return null
+      strs.push(v)
+    }
+    collected[key] = strs
+  }
+  const champion = root.champion
+  const bronzeWinner = root.bronzeWinner
+  if (champion !== null && typeof champion !== 'string') return null
+  if (bronzeWinner !== null && typeof bronzeWinner !== 'string') return null
+  return {
+    participants: {
+      last_32: collected.last_32,
+      last_16: collected.last_16,
+      qf: collected.qf,
+      sf: collected.sf,
+      final: collected.final,
+    },
+    champion: champion as string | null,
+    bronzeWinner: bronzeWinner as string | null,
+  }
 }
 
 export function validateBracketProgressionOptions(options: unknown): BracketProgressionOptions | null {
@@ -417,4 +475,66 @@ function setIntersectSize(a: ReadonlySet<string>, b: ReadonlySet<string>): numbe
   let n = 0
   for (const x of a) if (b.has(x)) n++
   return n
+}
+
+/**
+ * UX-044: set-based scorer for the participants-shape correct answer.
+ *
+ * Compares the user's *derived* per-round sets (from their winners-map + group standings)
+ * against the admin's *directly-stored* per-round team sets. Champion is checked by exact
+ * id match against the user's final-match winner.
+ *
+ * Same point matrix as `scoreBracketProgression` (TOURNAMENT_POINTS.perTeam). Where the
+ * legacy scorer derived the correct sets from the correct winners-map, this one reads them
+ * straight off the admin payload — so the admin no longer has to fill in match-by-match
+ * winners just to set "the 16 teams that should have advanced".
+ *
+ * Bronze match awards no extra points (matching legacy scorer behaviour) — the admin's
+ * `bronzeWinner` is stored for display only, not scored.
+ */
+export function scoreBracketProgressionWithParticipants(
+  predicted: BracketProgressionAnswer,
+  correct: BracketProgressionCorrectAnswer,
+  template: readonly BracketMatch[],
+  predictedGroupStandings: AllGroupsStandingAnswer | null,
+): number {
+  const userBracket = deriveBracket(template, predictedGroupStandings, predicted.winners)
+
+  let total = 0
+
+  total += setIntersectSize(
+    roundParticipantSet(userBracket, 'last_32'),
+    new Set(correct.participants.last_32),
+  ) * TOURNAMENT_POINTS.perTeam.last_32
+
+  // For rounds beyond last_32, the user's "participants in round X" set is the WINNERS of
+  // round X-1. The admin's correct.participants.<round> is the canonical team set for that
+  // round, so we intersect those directly.
+  total += setIntersectSize(
+    roundWinnerSet(userBracket, 'last_32'),
+    new Set(correct.participants.last_16),
+  ) * TOURNAMENT_POINTS.perTeam.last_16
+
+  total += setIntersectSize(
+    roundWinnerSet(userBracket, 'last_16'),
+    new Set(correct.participants.qf),
+  ) * TOURNAMENT_POINTS.perTeam.qf
+
+  total += setIntersectSize(
+    roundWinnerSet(userBracket, 'qf'),
+    new Set(correct.participants.sf),
+  ) * TOURNAMENT_POINTS.perTeam.sf
+
+  total += setIntersectSize(
+    roundWinnerSet(userBracket, 'sf'),
+    new Set(correct.participants.final),
+  ) * TOURNAMENT_POINTS.perTeam.final
+
+  // Champion: user's final-match winner must equal admin's champion pick.
+  const userChampion = userBracket.matches.find(m => m.round === 'final')?.winnerId ?? null
+  if (correct.champion !== null && userChampion === correct.champion) {
+    total += TOURNAMENT_POINTS.perTeam.champion
+  }
+
+  return total
 }

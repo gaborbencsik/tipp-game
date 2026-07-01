@@ -1,26 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { createI18n } from 'vue-i18n'
 import GroupStandingCard from './GroupStandingCard.vue'
 import type { Team } from '@/types/index'
 
-const i18n = createI18n({
-  legacy: false,
-  locale: 'hu',
-  messages: {
-    hu: {
-      groupStandings: {
-        groupTitle: '{code} csoport',
-        done: '✓ Kész',
-        clearGroup: 'Csoport ürítése',
-        actualAnswer: 'Tényleges',
-        pointsPill: '+{n} pont',
-        pointsZero: '0 pont',
-        scoreFooter: '{hits}/4 helyes pozíció → {points} pont',
-      },
-    },
-  },
-})
+// The global i18n plugin is installed via vitest.setup.ts; installing another
+// instance here would double-register components/directives and spam Vue warns.
 
 const A1: Team = { id: 'a1', name: 'Argentína', shortCode: 'ARG', flagUrl: null, group: 'A', teamType: 'national', countryCode: null }
 const A2: Team = { id: 'a2', name: 'Brazília', shortCode: 'BRA', flagUrl: null, group: 'A', teamType: 'national', countryCode: null }
@@ -41,7 +25,6 @@ describe('GroupStandingCard – UX-039 scored mode (correctPositions)', () => {
         expanded: false,
         readOnlyScored: true,
       },
-      global: { plugins: [i18n] },
     })
     const chips = wrapper.findAll('[data-testid^="group-standing-summary-chip-A-"]')
     expect(chips).toHaveLength(4)
@@ -66,7 +49,6 @@ describe('GroupStandingCard – UX-039 scored mode (correctPositions)', () => {
         expanded: true,
         readOnlyScored: true,
       },
-      global: { plugins: [i18n] },
     })
     const row2 = wrapper.find('[data-testid="group-standing-row-A-2"]')
     expect(row2.exists()).toBe(true)
@@ -86,7 +68,6 @@ describe('GroupStandingCard – UX-039 scored mode (correctPositions)', () => {
         expanded: true,
         readOnlyScored: true,
       },
-      global: { plugins: [i18n] },
     })
     expect(wrapper.find('[data-testid="group-standing-actual-A-1"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="group-standing-actual-A-2"]').exists()).toBe(false)
@@ -103,7 +84,6 @@ describe('GroupStandingCard – UX-039 scored mode (correctPositions)', () => {
         expanded: true,
         readOnlyScored: true,
       },
-      global: { plugins: [i18n] },
     })
     const actualLine = wrapper.find('[data-testid="group-standing-actual-A-2"]')
     expect(actualLine.exists()).toBe(true)
@@ -124,7 +104,6 @@ describe('GroupStandingCard – UX-039 scored mode (correctPositions)', () => {
           readOnlyScored: true,
           pointsAwarded: 3,
         },
-        global: { plugins: [i18n] },
       })
       const pill = wrapper.find('[data-testid="group-standing-points-A"]')
       expect(pill.exists()).toBe(true)
@@ -144,7 +123,6 @@ describe('GroupStandingCard – UX-039 scored mode (correctPositions)', () => {
           readOnlyScored: true,
           pointsAwarded: 0,
         },
-        global: { plugins: [i18n] },
       })
       const pill = wrapper.find('[data-testid="group-standing-points-A"]')
       expect(pill.exists()).toBe(true)
@@ -164,7 +142,6 @@ describe('GroupStandingCard – UX-039 scored mode (correctPositions)', () => {
           expanded: false,
           readOnlyScored: true,
         },
-        global: { plugins: [i18n] },
       })
       expect(wrapper.find('[data-testid="group-standing-points-A"]').exists()).toBe(false)
     })
@@ -181,7 +158,6 @@ describe('GroupStandingCard – UX-039 scored mode (correctPositions)', () => {
           readOnlyScored: true,
           pointsAwarded: 0,
         },
-        global: { plugins: [i18n] },
       })
       const footer = wrapper.find('[data-testid="group-standing-footer-A"]')
       expect(footer.exists()).toBe(true)

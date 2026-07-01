@@ -148,8 +148,10 @@ const EXISTING_PREDICTION: Prediction = {
   updatedAt: '2026-06-10T10:00:00.000Z',
 }
 
+// Build the test router once per file — 25 routes × 48 tests was measurable overhead.
+const sharedRouter = buildTestRouter({ '/app/matches': MatchesView })
 function buildRouter() {
-  return buildTestRouter({ '/app/matches': MatchesView })
+  return sharedRouter
 }
 
 const DEFAULT_GROUP_WITH_LEAGUE = {

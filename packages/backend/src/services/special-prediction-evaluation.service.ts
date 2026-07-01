@@ -5,7 +5,9 @@ import type { SpecialPredictionType, SpecialPredictionOptions, SpecialPrediction
 import { deriveEliminatedFromBracket, parseUpsetEliminated, parseUpsetPicks, scoreUpsetSpecial, validateUpsetOptions } from './upset-special.service.js'
 import {
   parseBracketProgressionAnswer,
+  parseBracketProgressionCorrectAnswer,
   scoreBracketProgression,
+  scoreBracketProgressionWithParticipants,
   validateBracketProgressionOptions,
 } from './bracket-progression.service.js'
 import { parseAllGroupsStandingAnswer, validateAllGroupsStandingOptions } from './group-standings.service.js'
@@ -101,6 +103,17 @@ function scorePrediction(
     const opts = validateBracketProgressionOptions(options)
     if (!opts) return 0
     const predicted = parseBracketProgressionAnswer(answer) ?? { winners: {} }
+    // UX-044: prefer the new participants-shape correct answer when the stored JSON
+    // matches it; fall back to the legacy winners-map (parsed + derived) otherwise.
+    const correctParticipants = parseBracketProgressionCorrectAnswer(correctAnswer)
+    if (correctParticipants) {
+      return scoreBracketProgressionWithParticipants(
+        predicted,
+        correctParticipants,
+        opts.bracketTemplate.matches,
+        context.userGroupStandings ?? null,
+      )
+    }
     const correct = parseBracketProgressionAnswer(correctAnswer) ?? { winners: {} }
     return scoreBracketProgression(
       predicted,

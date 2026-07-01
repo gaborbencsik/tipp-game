@@ -261,11 +261,9 @@
           </div>
         </div>
 
-        <!-- bracket_progression: per-round team-list editor with save-and-evaluate per round (UX-042) -->
+        <!-- bracket_progression: per-round team-list editor with save-and-evaluate per round (UX-044) -->
         <div v-else-if="gt.inputType === 'bracket_progression' && isBracketProgressionOptions(gt.options)" class="space-y-3">
           <BracketRoundTeamList
-            :options="gt.options"
-            :correct-group-standings="bracketGroupStandings"
             :current-answer-json="gt.correctAnswer ?? null"
             :busy="busy[gt.id]"
             :team-name-by-id="nameById"
@@ -297,12 +295,13 @@ import { supabase } from '../lib/supabase.js'
 import type {
   AllGroupsStandingAnswer,
   AllGroupsStandingOptions,
-  BracketProgressionAnswer,
+  BracketProgressionCorrectAnswer,
   BracketProgressionOptions,
   BracketRound,
   SpecialPredictionOptions,
   SpecialPredictionType,
 } from '../types/index.js'
+import type { AdminCorrectAnswerRound } from '../lib/bracketCorrectAnswer.js'
 
 const store = useAdminTournamentEvaluationStore()
 const toast = useToastStore()
@@ -403,18 +402,6 @@ async function loadNameCache(): Promise<void> {
 
 const activeTypes = computed(() => store.globalTypes.filter(t => t.isActive))
 
-const bracketGroupStandings = computed<AllGroupsStandingAnswer | null>(() => {
-  const groupType = store.globalTypes.find(t => t.inputType === 'all_groups_standing' && t.isActive)
-  if (!groupType?.correctAnswer) return null
-  try {
-    const parsed = JSON.parse(groupType.correctAnswer) as AllGroupsStandingAnswer
-    if (parsed && typeof parsed === 'object' && parsed.groups) return parsed
-  } catch {
-    // ignore
-  }
-  return null
-})
-
 /**
  * Names of upstream types whose `correctAnswer` is required before multi_team_weighted
  * (Biztos kieső) can derive its eliminated set. The eliminated halmaz a bracket template
@@ -504,20 +491,25 @@ function onPickerSubmit(gt: SpecialPredictionType, value: string): void {
   answerDrafts[gt.id] = value
 }
 
-// UX-042: per-round save flow for bracket_progression — first persists the extended
-// winners map via setCorrectAnswer, then runs the slice-specific evaluation.
+// UX-044: per-round save flow for bracket_progression — first persists the new
+// participants-shape correct answer via setCorrectAnswer, then runs the slice-specific
+// evaluation (only the rounds the admin re-saved are evaluated server-side).
 async function onSaveRound(
   gt: SpecialPredictionType,
-  round: BracketRound,
-  answer: BracketProgressionAnswer,
+  round: AdminCorrectAnswerRound,
+  answer: BracketProgressionCorrectAnswer,
 ): Promise<void> {
   busy[gt.id] = true
   try {
     const serialized = JSON.stringify(answer)
     await store.setCorrectAnswer(gt.id, serialized)
-    const result = await store.evaluate(gt.id, round)
+    // The backend evaluate endpoint expects a BracketRound slice (last_32/last_16/qf/sf/
+    // final/bronze). `champion` doesn't map to a bracket-round slice, so we run with the
+    // closest equivalent (`final`), which is the same set the champion sits in.
+    const slice: BracketRound = round === 'champion' ? 'final' : round
+    const result = await store.evaluate(gt.id, slice)
     toast.addToast(
-      `${roundLabel(round)} kiértékelve: ${result.evaluatedCount} felhasználó · ${result.totalPoints} pont`,
+      `${roundLabel(slice)} kiértékelve: ${result.evaluatedCount} felhasználó · ${result.totalPoints} pont`,
       'success',
     )
   } catch (err) {

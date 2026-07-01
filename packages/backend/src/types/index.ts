@@ -406,6 +406,20 @@ export interface BracketProgressionAnswer {
   readonly winners: Readonly<Record<string, string>>
 }
 
+export interface BracketProgressionParticipants {
+  readonly last_32: readonly string[]
+  readonly last_16: readonly string[]
+  readonly qf: readonly string[]
+  readonly sf: readonly string[]
+  readonly final: readonly string[]
+}
+
+export interface BracketProgressionCorrectAnswer {
+  readonly participants: BracketProgressionParticipants
+  readonly champion: string | null
+  readonly bronzeWinner: string | null
+}
+
 export interface BracketProgressionRoundCompletion {
   readonly done: number
   readonly total: number
