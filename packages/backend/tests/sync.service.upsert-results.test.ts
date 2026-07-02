@@ -33,6 +33,8 @@ function fixture(opts: {
   homeGoals?: number | null
   awayGoals?: number | null
   elapsed?: number | null
+  fulltime?: { home: number | null; away: number | null }
+  extratime?: { home: number | null; away: number | null }
   pen?: { home: number | null; away: number | null }
 }): ApiFootballFixture {
   return {
@@ -49,7 +51,8 @@ function fixture(opts: {
     },
     goals: { home: opts.homeGoals ?? null, away: opts.awayGoals ?? null },
     score: {
-      fulltime: { home: null, away: null },
+      fulltime: opts.fulltime ?? { home: opts.homeGoals ?? null, away: opts.awayGoals ?? null },
+      extratime: opts.extratime ?? { home: null, away: null },
       penalty: opts.pen ?? { home: null, away: null },
     },
   }
@@ -101,11 +104,34 @@ describe('upsertResults – live/finished/cancelled branches', () => {
       matchId: 'm-uuid',
       homeGoals: 2,
       awayGoals: 1,
+      extraTimeHomeGoals: null,
+      extraTimeAwayGoals: null,
       outcomeAfterDraw: null,
     })
     expect(scoringMocks.calculateAndSavePoints).toHaveBeenCalledOnce()
     expect(scoringMocks.calculateAndSaveGroupPoints).toHaveBeenCalledOnce()
     expect(liveStateMocks.upsertLiveState).not.toHaveBeenCalled()
+  })
+
+  it('BUG-011: stores 90-min score and derives extra_time_home for AET fixture', async () => {
+    mockMatchLookup('m-uuid')
+    await upsertResults([fixture({
+      id: 100,
+      short: 'AET',
+      homeGoals: 3, // api-football `goals.*` is FT+ET total (3-2)
+      awayGoals: 2,
+      fulltime: { home: 2, away: 2 }, // 90-min: 2-2
+      extratime: { home: 3, away: 2 }, // ET: 3-2
+    })])
+
+    expect(liveStateMocks.finalizeLiveToResult).toHaveBeenCalledWith({
+      matchId: 'm-uuid',
+      homeGoals: 2,
+      awayGoals: 2,
+      extraTimeHomeGoals: 3,
+      extraTimeAwayGoals: 2,
+      outcomeAfterDraw: 'extra_time_home',
+    })
   })
 
   it('passes outcomeAfterDraw on PEN-finalized fixture', async () => {

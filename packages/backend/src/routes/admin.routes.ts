@@ -125,9 +125,11 @@ adminRouter.delete('/matches/:id', async (ctx) => {
 })
 
 adminRouter.post('/matches/:id/result', async (ctx) => {
-  const { homeGoals, awayGoals, outcomeAfterDraw, scorerPlayerIds } = ctx.request.body as {
+  const { homeGoals, awayGoals, extraTimeHomeGoals, extraTimeAwayGoals, outcomeAfterDraw, scorerPlayerIds } = ctx.request.body as {
     homeGoals: number
     awayGoals: number
+    extraTimeHomeGoals?: number | null
+    extraTimeAwayGoals?: number | null
     outcomeAfterDraw?: MatchOutcome | null
     scorerPlayerIds?: readonly string[]
   }
@@ -148,6 +150,8 @@ adminRouter.post('/matches/:id/result', async (ctx) => {
     dbUser.id,
     outcomeAfterDraw,
     scorerPlayerIds,
+    extraTimeHomeGoals ?? null,
+    extraTimeAwayGoals ?? null,
   )
 })
 

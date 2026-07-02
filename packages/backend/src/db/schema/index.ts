@@ -198,6 +198,8 @@ export const matchResults = pgTable('match_results', {
   matchId:          uuid('match_id').notNull().unique().references(() => matches.id),
   homeGoals:        smallint('home_goals').notNull(),
   awayGoals:        smallint('away_goals').notNull(),
+  extraTimeHomeGoals: smallint('extra_time_home_goals'),
+  extraTimeAwayGoals: smallint('extra_time_away_goals'),
   outcomeAfterDraw: text('outcome_after_draw'),
   recordedBy:       uuid('recorded_by').references(() => users.id),
   recordedAt:       timestamp('recorded_at', { withTimezone: true }).notNull().defaultNow(),

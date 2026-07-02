@@ -170,6 +170,31 @@
               <option value="penalties_away">Tizenegyes – vendég nyer</option>
             </select>
           </div>
+          <div
+            v-if="resultFormShowsExtraTime"
+            class="mb-4"
+          >
+            <label class="block text-xs text-gray-500 mb-1">Hosszabbítás utáni végeredmény (opcionális)</label>
+            <div class="flex items-center gap-3">
+              <input
+                v-model.number="resultForm.extraTimeHomeGoals"
+                type="number"
+                min="0"
+                max="99"
+                data-testid="result-et-home"
+                class="w-16 text-center border border-gray-300 rounded px-2 py-1 text-sm"
+              />
+              <span class="text-gray-400">–</span>
+              <input
+                v-model.number="resultForm.extraTimeAwayGoals"
+                type="number"
+                min="0"
+                max="99"
+                data-testid="result-et-away"
+                class="w-16 text-center border border-gray-300 rounded px-2 py-1 text-sm"
+              />
+            </div>
+          </div>
           <div class="mb-4" v-if="resultFormMatchObj">
             <label class="block text-xs text-gray-500 mb-1">⚽ Gólszerzők (rendes idő + hosszabbítás, büntetőpárbaj NEM)</label>
             <PlayerMultiSelectCombobox
@@ -349,14 +374,30 @@ async function submitForm(): Promise<void> {
 const KNOCKOUT_STAGES: readonly MatchStage[] = ['round_of_32', 'round_of_16', 'quarter_final', 'semi_final', 'third_place', 'final']
 
 const resultFormMatchId = ref<string | null>(null)
-const resultForm = ref<{ homeGoals: number; awayGoals: number; outcomeAfterDraw: MatchOutcome | null; scorerPlayerIds: ReadonlyArray<string> }>({
-  homeGoals: 0, awayGoals: 0, outcomeAfterDraw: null, scorerPlayerIds: [],
+const resultForm = ref<{
+  homeGoals: number
+  awayGoals: number
+  extraTimeHomeGoals: number | null
+  extraTimeAwayGoals: number | null
+  outcomeAfterDraw: MatchOutcome | null
+  scorerPlayerIds: ReadonlyArray<string>
+}>({
+  homeGoals: 0, awayGoals: 0, extraTimeHomeGoals: null, extraTimeAwayGoals: null, outcomeAfterDraw: null, scorerPlayerIds: [],
 })
 
 const resultFormIsKnockout = computed((): boolean => {
   if (!resultFormMatchId.value) return false
   const match = store.matches.find(m => m.id === resultFormMatchId.value)
   return match ? KNOCKOUT_STAGES.includes(match.stage) : false
+})
+
+// BUG-011: hosszabbítás utáni végeredményt csak akkor mutatunk, ha a rendes játékidős
+// állás döntetlen ÉS ET-kimenetel van kiválasztva (nem PK, ahol nem játszottak hosszabbítás után gólt).
+const resultFormShowsExtraTime = computed((): boolean => {
+  if (!resultFormIsKnockout.value) return false
+  if (resultForm.value.homeGoals !== resultForm.value.awayGoals) return false
+  const outcome = resultForm.value.outcomeAfterDraw
+  return outcome === 'extra_time_home' || outcome === 'extra_time_away' || outcome === 'penalties_home' || outcome === 'penalties_away'
 })
 
 const resultFormMatchObj = computed(() => {
@@ -370,6 +411,8 @@ function openResultForm(matchId: string): void {
   resultForm.value = {
     homeGoals: match?.result?.homeGoals ?? 0,
     awayGoals: match?.result?.awayGoals ?? 0,
+    extraTimeHomeGoals: match?.result?.extraTimeHomeGoals ?? null,
+    extraTimeAwayGoals: match?.result?.extraTimeAwayGoals ?? null,
     outcomeAfterDraw: match?.result?.outcomeAfterDraw ?? null,
     scorerPlayerIds: match?.result?.scorerPlayerIds ?? [],
   }
@@ -377,12 +420,15 @@ function openResultForm(matchId: string): void {
 
 async function submitResult(): Promise<void> {
   if (!resultFormMatchId.value) return
+  const isDrawKnockout = resultFormIsKnockout.value && resultForm.value.homeGoals === resultForm.value.awayGoals
+  const outcome = isDrawKnockout ? resultForm.value.outcomeAfterDraw : null
+  const hasEtScore = outcome !== null && resultForm.value.extraTimeHomeGoals !== null && resultForm.value.extraTimeAwayGoals !== null
   const input = {
     homeGoals: resultForm.value.homeGoals,
     awayGoals: resultForm.value.awayGoals,
-    outcomeAfterDraw: resultFormIsKnockout.value && resultForm.value.homeGoals === resultForm.value.awayGoals
-      ? resultForm.value.outcomeAfterDraw
-      : null,
+    extraTimeHomeGoals: hasEtScore ? resultForm.value.extraTimeHomeGoals : null,
+    extraTimeAwayGoals: hasEtScore ? resultForm.value.extraTimeAwayGoals : null,
+    outcomeAfterDraw: outcome,
     scorerPlayerIds: resultForm.value.scorerPlayerIds,
   }
   await store.setResult(resultFormMatchId.value, input)

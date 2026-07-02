@@ -3,6 +3,7 @@ import {
   parseRound,
   FIXTURE_STATUS_MAP,
   derivePenaltyOutcome,
+  deriveKnockoutOutcome,
   filterFixturesByAllowlist,
   teamsFromFixtures,
   mapEventsToScorerPlayerIds,
@@ -19,7 +20,7 @@ function makeFixture(id: number, home: ApiFootballTeamEntry, away: ApiFootballTe
     league: { id: 10, round: 'Regular Season - 1' },
     teams: { home, away },
     goals: { home: null, away: null },
-    score: { fulltime: { home: null, away: null }, penalty: { home: null, away: null } },
+    score: { fulltime: { home: null, away: null }, extratime: { home: null, away: null }, penalty: { home: null, away: null } },
   }
 }
 
@@ -148,6 +149,37 @@ describe('sync.service – pure functions', () => {
 
     it('returns null when both are null', () => {
       expect(derivePenaltyOutcome({ home: null, away: null })).toBeNull()
+    })
+  })
+
+  // BUG-011: knockout outcome derivation from full-time + extra-time + penalty scores.
+  describe('deriveKnockoutOutcome', () => {
+    it('regular-time win returns null (not a draw at 90\')', () => {
+      expect(deriveKnockoutOutcome(2, 0, { home: null, away: null }, { home: null, away: null })).toBeNull()
+    })
+
+    it('PK shootout home win returns penalties_home even if extratime is drawn', () => {
+      expect(deriveKnockoutOutcome(1, 1, { home: 2, away: 2 }, { home: 5, away: 4 })).toBe('penalties_home')
+    })
+
+    it('PK shootout away win returns penalties_away', () => {
+      expect(deriveKnockoutOutcome(0, 0, { home: 0, away: 0 }, { home: 3, away: 4 })).toBe('penalties_away')
+    })
+
+    it('draw at 90\', ET home win, no PK → extra_time_home (BEL-SEN 2-2 → 3-2)', () => {
+      expect(deriveKnockoutOutcome(2, 2, { home: 3, away: 2 }, { home: null, away: null })).toBe('extra_time_home')
+    })
+
+    it('draw at 90\', ET away win → extra_time_away', () => {
+      expect(deriveKnockoutOutcome(0, 0, { home: 0, away: 1 }, { home: null, away: null })).toBe('extra_time_away')
+    })
+
+    it('draw at 90\', extratime also drawn, no PK → null (no decision)', () => {
+      expect(deriveKnockoutOutcome(1, 1, { home: 1, away: 1 }, { home: null, away: null })).toBeNull()
+    })
+
+    it('draw at 90\', no extratime data → null', () => {
+      expect(deriveKnockoutOutcome(1, 1, { home: null, away: null }, { home: null, away: null })).toBeNull()
     })
   })
 

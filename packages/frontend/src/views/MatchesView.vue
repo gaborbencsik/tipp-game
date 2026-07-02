@@ -172,7 +172,13 @@
                     </span>
                     <div class="text-xl font-bold min-w-[5rem] text-center" :class="match.status === 'live' ? 'text-red-600' : 'text-gray-900'">
                       <template v-if="match.result">
-                        {{ match.result.homeGoals }} – {{ match.result.awayGoals }}
+                        <div>{{ match.result.homeGoals }} – {{ match.result.awayGoals }}</div>
+                        <div
+                          v-if="extraLine(match.result)"
+                          class="text-[10px] font-normal text-gray-500 mt-0.5"
+                        >
+                          {{ extraLine(match.result) }}
+                        </div>
                       </template>
                       <template v-else>
                         {{ formatTime(match.scheduledAt) }}
@@ -289,7 +295,13 @@
                 </span>
                 <div class="text-xl font-bold text-gray-900 min-w-[5rem] text-center">
                   <template v-if="match.result">
-                    {{ match.result.homeGoals }} – {{ match.result.awayGoals }}
+                    <div>{{ match.result.homeGoals }} – {{ match.result.awayGoals }}</div>
+                    <div
+                      v-if="extraLine(match.result)"
+                      class="text-[10px] font-normal text-gray-500 mt-0.5"
+                    >
+                      {{ extraLine(match.result) }}
+                    </div>
                   </template>
                   <template v-else>
                     {{ formatTime(match.scheduledAt) }}
@@ -441,6 +453,7 @@ import { useDayNavigation } from '../composables/useDayNavigation.js'
 import { useLeagueFilter } from '../composables/useLeagueFilter.js'
 import { useMatchEvents, type MatchUpdateEvent } from '../composables/useMatchEvents.js'
 import { getDateLocale } from '../lib/dateLocale.js'
+import { finalScoreDisplay, finalScoreExtraLabel } from '../lib/finalScoreDisplay.js'
 import { api } from '../api/index.js'
 import { supabase } from '../lib/supabase.js'
 
@@ -452,6 +465,10 @@ const favStore = useLeagueFavoritesStore()
 const groupFavStore = useGroupFavoritesStore()
 const authStore = useAuthStore()
 const { pendingGroups, totalPendingCount, now: pendingNow } = usePendingSpecialTips()
+
+function extraLine(result: Match['result']): string | null {
+  return finalScoreExtraLabel(finalScoreDisplay(result)?.extra ?? null, t)
+}
 
 useMatchEvents({
   onMatchUpdate: (event: MatchUpdateEvent) => {

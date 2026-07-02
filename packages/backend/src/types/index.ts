@@ -111,6 +111,8 @@ export interface MatchVenue {
 export interface MatchResult {
   readonly homeGoals: number
   readonly awayGoals: number
+  readonly extraTimeHomeGoals?: number | null
+  readonly extraTimeAwayGoals?: number | null
   readonly outcomeAfterDraw?: MatchOutcome | null
   readonly scorerPlayerIds?: ReadonlyArray<string>
 }
@@ -169,6 +171,8 @@ export interface MatchResultRow {
   readonly matchId: string
   readonly homeGoals: number
   readonly awayGoals: number
+  readonly extraTimeHomeGoals: number | null
+  readonly extraTimeAwayGoals: number | null
   readonly outcomeAfterDraw: string | null
   readonly recordedBy: string | null
   readonly recordedAt: Date
@@ -314,6 +318,8 @@ export interface PredictionInput {
 export interface AdminMatchResultInput {
   readonly homeGoals: number
   readonly awayGoals: number
+  readonly extraTimeHomeGoals?: number | null
+  readonly extraTimeAwayGoals?: number | null
   readonly outcomeAfterDraw?: MatchOutcome | null
   readonly scorerPlayerIds?: readonly string[]
 }
@@ -606,6 +612,7 @@ export interface ApiFootballFixture {
   }
   readonly score: {
     readonly fulltime: { readonly home: number | null; readonly away: number | null }
+    readonly extratime: { readonly home: number | null; readonly away: number | null }
     readonly penalty: { readonly home: number | null; readonly away: number | null }
   }
 }

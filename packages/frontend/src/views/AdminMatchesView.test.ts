@@ -204,6 +204,6 @@ describe('AdminMatchesView', () => {
     await vm.submitResult()
     await flushPromises()
 
-    expect(setResultSpy).toHaveBeenCalledWith(MATCH.id, { homeGoals: 2, awayGoals: 1, outcomeAfterDraw: null, scorerPlayerIds: [] })
+    expect(setResultSpy).toHaveBeenCalledWith(MATCH.id, { homeGoals: 2, awayGoals: 1, extraTimeHomeGoals: null, extraTimeAwayGoals: null, outcomeAfterDraw: null, scorerPlayerIds: [] })
   })
 })

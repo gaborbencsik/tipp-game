@@ -44,6 +44,8 @@ export type MatchOutcome = 'extra_time_home' | 'extra_time_away' | 'penalties_ho
 export interface MatchResult {
   readonly homeGoals: number
   readonly awayGoals: number
+  readonly extraTimeHomeGoals?: number | null
+  readonly extraTimeAwayGoals?: number | null
   readonly outcomeAfterDraw?: MatchOutcome | null
   readonly scorerPlayerIds?: ReadonlyArray<string>
 }
@@ -116,6 +118,8 @@ export interface MatchInput {
 export interface MatchResultInput {
   readonly homeGoals: number
   readonly awayGoals: number
+  readonly extraTimeHomeGoals?: number | null
+  readonly extraTimeAwayGoals?: number | null
   readonly outcomeAfterDraw?: MatchOutcome | null
   readonly scorerPlayerIds?: ReadonlyArray<string>
 }

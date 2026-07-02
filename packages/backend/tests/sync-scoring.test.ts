@@ -45,7 +45,11 @@ describe('sync.service – upsertResults scoring integration', () => {
     const fixtures = [{
       fixture: { id: 101, status: { short: 'FT' } },
       goals: { home: 2, away: 1 },
-      score: { penalty: { home: null, away: null } },
+      score: {
+        fulltime: { home: 2, away: 1 },
+        extratime: { home: null, away: null },
+        penalty: { home: null, away: null },
+      },
     }] as any
 
     ;(db.select as any).mockReturnValue({
@@ -77,7 +81,11 @@ describe('sync.service – upsertResults scoring integration', () => {
     const fixtures = [{
       fixture: { id: 202, status: { short: 'PEN' } },
       goals: { home: 1, away: 1 },
-      score: { penalty: { home: 4, away: 2 } },
+      score: {
+        fulltime: { home: 1, away: 1 },
+        extratime: { home: 1, away: 1 },
+        penalty: { home: 4, away: 2 },
+      },
     }] as any
 
     ;(db.select as any).mockReturnValue({
@@ -105,7 +113,11 @@ describe('sync.service – upsertResults scoring integration', () => {
     const fixtures = [{
       fixture: { id: 303, status: { short: 'NS' } },
       goals: { home: null, away: null },
-      score: { penalty: { home: null, away: null } },
+      score: {
+        fulltime: { home: null, away: null },
+        extratime: { home: null, away: null },
+        penalty: { home: null, away: null },
+      },
     }] as any
 
     await upsertResults(fixtures)
@@ -118,7 +130,11 @@ describe('sync.service – upsertResults scoring integration', () => {
     const fixtures = [{
       fixture: { id: 404, status: { short: 'FT' } },
       goals: { home: 3, away: 0 },
-      score: { penalty: { home: null, away: null } },
+      score: {
+        fulltime: { home: 3, away: 0 },
+        extratime: { home: null, away: null },
+        penalty: { home: null, away: null },
+      },
     }] as any
 
     ;(db.select as any).mockReturnValue({

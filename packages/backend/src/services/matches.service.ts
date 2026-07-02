@@ -79,6 +79,8 @@ export async function getMatches(filters: MatchesFilters = {}): Promise<Match[]>
       ? {
           homeGoals: row.match_results.homeGoals,
           awayGoals: row.match_results.awayGoals,
+          extraTimeHomeGoals: row.match_results.extraTimeHomeGoals ?? null,
+          extraTimeAwayGoals: row.match_results.extraTimeAwayGoals ?? null,
           outcomeAfterDraw: (row.match_results.outcomeAfterDraw as MatchOutcome | null) ?? null,
           scorerPlayerIds: row.match_results.scorerPlayerIds ?? [],
         }
@@ -147,6 +149,8 @@ export async function setResult(
   actorId: string,
   outcomeAfterDraw?: MatchOutcome | null,
   scorerPlayerIds?: readonly string[],
+  extraTimeHomeGoals?: number | null,
+  extraTimeAwayGoals?: number | null,
 ): Promise<MatchResultRow> {
   const dedupedScorerIds = scorerPlayerIds ? Array.from(new Set(scorerPlayerIds)) : []
 
@@ -174,13 +178,21 @@ export async function setResult(
     }
   }
 
+  // BUG-011: outcomeAfterDraw only makes sense when the match was drawn at 90'.
+  // Extra-time goals only make sense when there was extra time to play.
+  const normalizedOutcome = homeGoals === awayGoals ? (outcomeAfterDraw ?? null) : null
+  const normalizedEtHome = normalizedOutcome !== null ? extraTimeHomeGoals ?? null : null
+  const normalizedEtAway = normalizedOutcome !== null ? extraTimeAwayGoals ?? null : null
+
   const rows = await db
     .insert(matchResults)
     .values({
       matchId,
       homeGoals,
       awayGoals,
-      outcomeAfterDraw: outcomeAfterDraw ?? null,
+      extraTimeHomeGoals: normalizedEtHome,
+      extraTimeAwayGoals: normalizedEtAway,
+      outcomeAfterDraw: normalizedOutcome,
       recordedBy: actorId,
       scorerPlayerIds: dedupedScorerIds,
     })
@@ -189,7 +201,9 @@ export async function setResult(
       set: {
         homeGoals,
         awayGoals,
-        outcomeAfterDraw: outcomeAfterDraw ?? null,
+        extraTimeHomeGoals: normalizedEtHome,
+        extraTimeAwayGoals: normalizedEtAway,
+        outcomeAfterDraw: normalizedOutcome,
         recordedBy: actorId,
         scorerPlayerIds: dedupedScorerIds,
         updatedAt: new Date(),
@@ -205,8 +219,8 @@ export async function setResult(
     .set({ status: 'finished', updatedAt: new Date() })
     .where(eq(matches.id, matchId))
 
-  await calculateAndSavePoints(matchId, { homeGoals, awayGoals, outcomeAfterDraw: outcomeAfterDraw ?? null })
-  await calculateAndSaveGroupPoints(matchId, { homeGoals, awayGoals, outcomeAfterDraw: outcomeAfterDraw ?? null })
+  await calculateAndSavePoints(matchId, { homeGoals, awayGoals, outcomeAfterDraw: normalizedOutcome })
+  await calculateAndSaveGroupPoints(matchId, { homeGoals, awayGoals, outcomeAfterDraw: normalizedOutcome })
 
   return row
 }

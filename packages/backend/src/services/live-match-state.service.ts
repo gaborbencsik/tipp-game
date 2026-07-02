@@ -24,6 +24,8 @@ export interface FinalizeInput {
   readonly matchId: string
   readonly homeGoals: number
   readonly awayGoals: number
+  readonly extraTimeHomeGoals?: number | null
+  readonly extraTimeAwayGoals?: number | null
   readonly outcomeAfterDraw?: string | null
   readonly recordedBy?: string | null
 }
@@ -78,6 +80,8 @@ export async function finalizeLiveToResult(input: FinalizeInput): Promise<Finali
       .select({
         homeGoals: matchResults.homeGoals,
         awayGoals: matchResults.awayGoals,
+        extraTimeHomeGoals: matchResults.extraTimeHomeGoals,
+        extraTimeAwayGoals: matchResults.extraTimeAwayGoals,
         outcomeAfterDraw: matchResults.outcomeAfterDraw,
       })
       .from(matchResults)
@@ -87,9 +91,13 @@ export async function finalizeLiveToResult(input: FinalizeInput): Promise<Finali
     const existing = existingRows[0]
     const wasInserted = !existing
     const newOutcome = input.outcomeAfterDraw ?? null
+    const newEtHome = input.extraTimeHomeGoals ?? null
+    const newEtAway = input.extraTimeAwayGoals ?? null
     const scoreChanged = !!existing && (
       existing.homeGoals !== input.homeGoals ||
       existing.awayGoals !== input.awayGoals ||
+      (existing.extraTimeHomeGoals ?? null) !== newEtHome ||
+      (existing.extraTimeAwayGoals ?? null) !== newEtAway ||
       (existing.outcomeAfterDraw ?? null) !== newOutcome
     )
 
@@ -97,6 +105,8 @@ export async function finalizeLiveToResult(input: FinalizeInput): Promise<Finali
       matchId: input.matchId,
       homeGoals: input.homeGoals,
       awayGoals: input.awayGoals,
+      extraTimeHomeGoals: newEtHome,
+      extraTimeAwayGoals: newEtAway,
       outcomeAfterDraw: newOutcome,
       recordedBy: input.recordedBy ?? null,
     }).onConflictDoUpdate({
@@ -104,6 +114,8 @@ export async function finalizeLiveToResult(input: FinalizeInput): Promise<Finali
       set: {
         homeGoals: input.homeGoals,
         awayGoals: input.awayGoals,
+        extraTimeHomeGoals: newEtHome,
+        extraTimeAwayGoals: newEtAway,
         outcomeAfterDraw: newOutcome,
         updatedAt: new Date(),
       },

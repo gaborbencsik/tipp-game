@@ -173,7 +173,7 @@ describe('getMatches', () => {
 
     const result = await getMatches()
 
-    expect(result[0]?.result).toEqual({ homeGoals: 2, awayGoals: 1, outcomeAfterDraw: null, scorerPlayerIds: [] })
+    expect(result[0]?.result).toEqual({ homeGoals: 2, awayGoals: 1, extraTimeHomeGoals: null, extraTimeAwayGoals: null, outcomeAfterDraw: null, scorerPlayerIds: [] })
   })
 
   it('scheduled match → result: null', async () => {

@@ -69,6 +69,43 @@ describe('calculatePoints (3-field stackable)', () => {
     const custom: ScoringConfig = { correctOutcomePoints: 2, exactBonusPoints: 3, extraTimeBonusPoints: 1 }
     expect(calculatePoints({ homeGoals: 2, awayGoals: 1 }, { homeGoals: 2, awayGoals: 1 }, custom)).toBe(5)
   })
+
+  // BUG-011: knockout meccs 90 percben döntetlen, hosszabbításban dől el —
+  // a `match_results` a 90 perces állást tárolja, ezért a döntetlen tipp
+  // most már helyes kimenetel + ET-bónusz pontot is kap.
+  describe('BUG-011: knockout meccs 90 percben döntetlen, hosszabbítás/PK-val döntött', () => {
+    it('BEL-SEN: 1-1 tipp + extra_time_home, 2-2 (rendes idő) + extra_time_home eredmény → 3p', () => {
+      expect(calculatePoints(
+        { homeGoals: 1, awayGoals: 1, outcomeAfterDraw: 'extra_time_home' },
+        { homeGoals: 2, awayGoals: 2, outcomeAfterDraw: 'extra_time_home' },
+        cfg,
+      )).toBe(2)
+    })
+
+    it('BEL-SEN pontos eredmény: 2-2 tipp + extra_time_home, 2-2 + extra_time_home → 3p (1+1+1)', () => {
+      expect(calculatePoints(
+        { homeGoals: 2, awayGoals: 2, outcomeAfterDraw: 'extra_time_home' },
+        { homeGoals: 2, awayGoals: 2, outcomeAfterDraw: 'extra_time_home' },
+        cfg,
+      )).toBe(3)
+    })
+
+    it('döntetlen tipp döntetlen 90p eredményre, ET nem egyezik → 2p (1+1 pontos)', () => {
+      expect(calculatePoints(
+        { homeGoals: 2, awayGoals: 2, outcomeAfterDraw: 'extra_time_home' },
+        { homeGoals: 2, awayGoals: 2, outcomeAfterDraw: 'penalties_away' },
+        cfg,
+      )).toBe(2)
+    })
+
+    it('döntetlen tipp döntetlen 90p eredményre, ET egyezik, de nem pontos gólszám → 2p (1+1 bonus)', () => {
+      expect(calculatePoints(
+        { homeGoals: 1, awayGoals: 1, outcomeAfterDraw: 'extra_time_home' },
+        { homeGoals: 0, awayGoals: 0, outcomeAfterDraw: 'extra_time_home' },
+        cfg,
+      )).toBe(2)
+    })
+  })
 })
 
 describe('applyFavoriteTeamMultiplier', () => {

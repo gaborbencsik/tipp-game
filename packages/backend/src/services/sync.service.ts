@@ -82,6 +82,11 @@ interface PenaltyScore {
   readonly away: number | null
 }
 
+interface ExtraTimeScore {
+  readonly home: number | null
+  readonly away: number | null
+}
+
 export function derivePenaltyOutcome(penalty: PenaltyScore): MatchOutcome | null {
   if (penalty.home === null || penalty.away === null) {
     return null
@@ -90,6 +95,28 @@ export function derivePenaltyOutcome(penalty: PenaltyScore): MatchOutcome | null
     return null
   }
   return penalty.home > penalty.away ? 'penalties_home' : 'penalties_away'
+}
+
+/**
+ * BUG-011: derive the outcome-after-draw for a knockout fixture.
+ *
+ * Priority:
+ *   1. PK shootout winner (if `penalty.*` set and unequal).
+ *   2. ET winner (if match was 90-min draw and `extratime.*` set and unequal).
+ *   3. null (regular-time win, unknown, or drawn in ET with no PK).
+ */
+export function deriveKnockoutOutcome(
+  fulltimeHome: number,
+  fulltimeAway: number,
+  extratime: ExtraTimeScore,
+  penalty: PenaltyScore,
+): MatchOutcome | null {
+  const pk = derivePenaltyOutcome(penalty)
+  if (pk !== null) return pk
+  if (fulltimeHome !== fulltimeAway) return null
+  if (extratime.home === null || extratime.away === null) return null
+  if (extratime.home === extratime.away) return null
+  return extratime.home > extratime.away ? 'extra_time_home' : 'extra_time_away'
 }
 
 export function filterFixturesByAllowlist(
@@ -381,12 +408,28 @@ export async function upsertResults(
       continue
     }
 
-    const outcomeAfterDraw = derivePenaltyOutcome(fixture.score.penalty)
+    // BUG-011: for finished matches the stored home_goals/away_goals is the
+    // regulation-time (90') score. `fixture.goals.*` reflects the full-time
+    // score (incl. extra time), so we prefer `score.fulltime.*` when present.
+    const fulltimeHome = fixture.score.fulltime.home ?? homeGoals
+    const fulltimeAway = fixture.score.fulltime.away ?? awayGoals
+
+    const outcomeAfterDraw = deriveKnockoutOutcome(
+      fulltimeHome,
+      fulltimeAway,
+      fixture.score.extratime,
+      fixture.score.penalty,
+    )
+
+    const extraTimeHomeGoals = fixture.score.extratime.home
+    const extraTimeAwayGoals = fixture.score.extratime.away
 
     const finalizeResult = await finalizeLiveToResult({
       matchId: match.id,
-      homeGoals,
-      awayGoals,
+      homeGoals: fulltimeHome,
+      awayGoals: fulltimeAway,
+      extraTimeHomeGoals,
+      extraTimeAwayGoals,
       outcomeAfterDraw,
     })
 
@@ -394,8 +437,8 @@ export async function upsertResults(
       if (client) {
         await syncScorerPlayerIds({ matchId: match.id, externalFixtureId: fixture.fixture.id, client })
       }
-      await calculateAndSavePoints(match.id, { homeGoals, awayGoals, outcomeAfterDraw: outcomeAfterDraw ?? null })
-      await calculateAndSaveGroupPoints(match.id, { homeGoals, awayGoals, outcomeAfterDraw: outcomeAfterDraw ?? null })
+      await calculateAndSavePoints(match.id, { homeGoals: fulltimeHome, awayGoals: fulltimeAway, outcomeAfterDraw: outcomeAfterDraw ?? null })
+      await calculateAndSaveGroupPoints(match.id, { homeGoals: fulltimeHome, awayGoals: fulltimeAway, outcomeAfterDraw: outcomeAfterDraw ?? null })
       await db
         .update(matchResults)
         .set({ pointsCalculatedAt: new Date() })

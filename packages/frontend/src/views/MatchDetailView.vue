@@ -44,7 +44,14 @@
 
             <div class="text-2xl font-bold text-gray-900 min-w-[6rem] text-center">
               <template v-if="match.result">
-                {{ match.result.homeGoals }} – {{ match.result.awayGoals }}
+                <div>{{ match.result.homeGoals }} – {{ match.result.awayGoals }}</div>
+                <div
+                  v-if="extraLine(match.result)"
+                  class="text-xs font-normal text-gray-500 mt-1"
+                  data-testid="match-detail-score-extra"
+                >
+                  {{ extraLine(match.result) }}
+                </div>
               </template>
               <template v-else>
                 {{ formatTime(match.scheduledAt) }}
@@ -307,6 +314,7 @@ import MarketValuesBar from '../components/MarketValuesBar.vue'
 import OutcomeAfterDrawBadge from '../components/OutcomeAfterDrawBadge.vue'
 import PlayerSelectCombobox from '../components/predictions/PlayerSelectCombobox.vue'
 import { getDateLocale } from '../lib/dateLocale.js'
+import { finalScoreDisplay, finalScoreExtraLabel } from '../lib/finalScoreDisplay.js'
 import { resolveOutcomeAfterDrawStatus } from '../lib/outcomeAfterDrawStatus.js'
 
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
@@ -323,6 +331,10 @@ const matchesStore = useMatchesStore()
 const predictionsStore = usePredictionsStore()
 const authStore = useAuthStore()
 const groupFavStore = useGroupFavoritesStore()
+
+function extraLine(result: Match['result']): string | null {
+  return finalScoreExtraLabel(finalScoreDisplay(result)?.extra ?? null, t)
+}
 const insightsRevealStore = useInsightsRevealStore()
 const { showToast } = useToast()
 

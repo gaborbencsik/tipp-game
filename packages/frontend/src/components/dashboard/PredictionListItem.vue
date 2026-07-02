@@ -9,7 +9,13 @@
       <div class="flex items-center gap-2 text-sm font-medium text-gray-800 truncate">
         <TeamBadge :team="match.homeTeam" />
         <span class="text-gray-400 shrink-0">
-          <template v-if="match.result">{{ match.result.homeGoals }}–{{ match.result.awayGoals }}</template>
+          <template v-if="match.result">
+            {{ match.result.homeGoals }}–{{ match.result.awayGoals }}
+            <span
+              v-if="extraLabel"
+              class="text-[10px] text-gray-400 ml-1"
+            >({{ extraLabel }})</span>
+          </template>
           <template v-else>vs</template>
         </span>
         <TeamBadge :team="match.awayTeam" />
@@ -63,6 +69,7 @@ import TeamBadge from '../TeamBadge.vue'
 import type { Match, Prediction } from '../../types/index.js'
 import type { ScoringBuckets } from '../../composables/useMyStats.js'
 import { getDateLocale } from '../../lib/dateLocale.js'
+import { finalScoreDisplay, finalScoreExtraLabel } from '../../lib/finalScoreDisplay.js'
 
 interface Props {
   match: Match
@@ -75,6 +82,8 @@ interface Props {
 const props = defineProps<Props>()
 const emit = defineEmits<{ click: [] }>()
 const { t } = useI18n()
+
+const extraLabel = computed(() => finalScoreExtraLabel(finalScoreDisplay(props.match.result)?.extra ?? null, t))
 
 const pointsClass = computed(() => {
   if (!props.prediction || props.prediction.pointsResult === null) return 'bg-gray-100 text-gray-500'
