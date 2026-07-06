@@ -9,6 +9,7 @@ const {
   mockStatGroupBy, mockStatWhere, mockStatInnerJoin, mockStatFrom,
   mockLeagueWhere, mockLeagueLimit, mockLeagueFrom,
   mockFavWhere, mockFavInnerJoin, mockFavFrom,
+  mockTournamentMaxWhere, mockTournamentMaxFrom,
 } = vi.hoisted(() => ({
   mockLimit: vi.fn(),
   mockMemberWhere: vi.fn(),
@@ -34,6 +35,8 @@ const {
   mockFavWhere: vi.fn(),
   mockFavInnerJoin: vi.fn(),
   mockFavFrom: vi.fn(),
+  mockTournamentMaxWhere: vi.fn(),
+  mockTournamentMaxFrom: vi.fn(),
 }))
 
 vi.mock('../src/db/client.js', () => ({
@@ -59,6 +62,7 @@ vi.mock('../src/db/schema/index.js', () => ({
 vi.mock('drizzle-orm', () => ({
   eq: vi.fn(),
   isNull: vi.fn((col: unknown) => ({ __isNull: col })),
+  isNotNull: vi.fn((col: unknown) => ({ __isNotNull: col })),
   sql: Object.assign(vi.fn(() => 'sql-expr'), { raw: vi.fn(), join: vi.fn(() => 'sql-join') }),
   count: vi.fn(() => 'count-expr'),
   and: vi.fn((...args: unknown[]) => ({ __and: args })),
@@ -86,6 +90,11 @@ function setupStatChain(statRows: unknown[] = []) {
   mockStatFrom.mockReturnValue({ innerJoin: mockStatInnerJoin })
 }
 
+function setupTournamentMaxChain(maxPoints = 0) {
+  mockTournamentMaxWhere.mockResolvedValueOnce([{ maxPoints }])
+  mockTournamentMaxFrom.mockReturnValue({ where: mockTournamentMaxWhere })
+}
+
 function setupFavChain(favRows: unknown[] = []) {
   mockFavWhere.mockResolvedValueOnce(favRows)
   mockFavInnerJoin.mockReturnValue({ where: mockFavWhere })
@@ -100,6 +109,7 @@ function setupLeaderboardSelectChain(
   statRows: unknown[] = [],
   leagueRows: unknown[] = [],
   favRows: unknown[] = [],
+  tournamentMaxPoints = 0,
 ) {
   mockLimit.mockResolvedValueOnce([groupRow])
   mockGroupWhere.mockReturnValue({ limit: mockLimit })
@@ -130,6 +140,7 @@ function setupLeaderboardSelectChain(
   mockLeaderboardFrom.mockReturnValue({ innerJoin: mockInnerJoin })
 
   setupStatChain(statRows)
+  setupTournamentMaxChain(tournamentMaxPoints)
 
   const needsFavQuery = (groupRow as any)?.favoriteTeamDoublePoints && leagueRows.length > 0
   if (needsFavQuery) {
@@ -142,6 +153,7 @@ function setupLeaderboardSelectChain(
     { from: mockLeagueFrom },
     { from: mockLeaderboardFrom },
     { from: mockStatFrom },
+    { from: mockTournamentMaxFrom },
   ]
 
   if (needsFavQuery) {
@@ -479,5 +491,42 @@ describe('getGroupLeaderboard', () => {
 
     expect(result[0]?.matchSuccessRate).toBe(33)
     expect(result[0]?.scorerSuccessRate).toBe(67)
+  })
+
+  // ─── UX-046: tournamentMaxPoints + tournamentSuccessRate ──────────────────
+
+  it('tournamentSuccessRate is null when no visible type has a correctAnswer', async () => {
+    setupLeaderboardSelectChain(GROUP_ROW_NO_CONFIG, MEMBER_ROWS, LEADERBOARD_ROWS, false, [], [], [], 0)
+
+    const result = await getGroupLeaderboard(GROUP_ID, REQUESTER_ID)
+
+    expect(result[0]?.tournamentMaxPoints).toBe(0)
+    expect(result[0]?.tournamentSuccessRate).toBeNull()
+    expect(result[1]?.tournamentSuccessRate).toBeNull()
+  })
+
+  it('tournamentSuccessRate = round(specialPredictionPoints / tournamentMaxPoints * 100)', async () => {
+    const statRows = [
+      { userId: REQUESTER_ID, statPoints: 3 },
+      { userId: 'user-uuid-2', statPoints: 1 },
+    ]
+    setupLeaderboardSelectChain(GROUP_ROW_NO_CONFIG, MEMBER_ROWS, LEADERBOARD_ROWS, false, statRows, [], [], 5)
+
+    const result = await getGroupLeaderboard(GROUP_ID, REQUESTER_ID)
+
+    const alice = result.find(r => r.userId === REQUESTER_ID)
+    const bob = result.find(r => r.userId === 'user-uuid-2')
+    expect(alice?.tournamentMaxPoints).toBe(5)
+    expect(alice?.tournamentSuccessRate).toBe(60)
+    expect(bob?.tournamentMaxPoints).toBe(5)
+    expect(bob?.tournamentSuccessRate).toBe(20)
+  })
+
+  it('every entry shares the same tournamentMaxPoints scalar', async () => {
+    setupLeaderboardSelectChain(GROUP_ROW_NO_CONFIG, MEMBER_ROWS, LEADERBOARD_ROWS, false, [], [], [], 12)
+
+    const result = await getGroupLeaderboard(GROUP_ID, REQUESTER_ID)
+
+    expect(result.map(r => r.tournamentMaxPoints)).toEqual([12, 12])
   })
 })

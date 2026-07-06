@@ -180,4 +180,41 @@ describe('LeaderboardView LS scope persistence', () => {
     const headerText = wrapper.findAll('table thead th').map(th => th.text())
     expect(headerText.some(t => t.includes('Torna'))).toBe(true)
   })
+
+  // ─── UX-046: tournament success rate percentage ───────────────────────────
+
+  it('renders "(NN%)" next to tournament points on desktop when tournamentSuccessRate is set', async () => {
+    mockLeaderboardList.mockResolvedValue([
+      { userId: 'u1', displayName: 'Me', avatarUrl: null, rank: 1, predictionCount: 3, correctCount: 2, totalPoints: 14, matchPoints: 7, scorerBonusPoints: 2, successRate: 67, matchSuccessRate: 33, scorerSuccessRate: 67, specialPredictionPoints: 3, tournamentMaxPoints: 5, tournamentSuccessRate: 60 },
+    ])
+    const wrapper = mount(LeaderboardView)
+    await flushPromises()
+
+    const rowText = wrapper.find('table tbody tr:first-child').text()
+    expect(rowText).toContain('3')
+    expect(rowText).toContain('(60%)')
+  })
+
+  it('omits the percentage when tournamentSuccessRate is null (nothing resolved yet)', async () => {
+    mockLeaderboardList.mockResolvedValue([
+      { userId: 'u1', displayName: 'Me', avatarUrl: null, rank: 1, predictionCount: 3, correctCount: 2, totalPoints: 12, matchPoints: 7, scorerBonusPoints: 2, successRate: 67, matchSuccessRate: 33, scorerSuccessRate: 67, specialPredictionPoints: 3, tournamentMaxPoints: 0, tournamentSuccessRate: null },
+    ])
+    const wrapper = mount(LeaderboardView)
+    await flushPromises()
+
+    const rowText = wrapper.find('table tbody tr:first-child').text()
+    expect(rowText).not.toContain('%)')
+  })
+
+  it('percentage carries a tooltip via title attribute', async () => {
+    mockLeaderboardList.mockResolvedValue([
+      { userId: 'u1', displayName: 'Me', avatarUrl: null, rank: 1, predictionCount: 3, correctCount: 2, totalPoints: 14, matchPoints: 7, scorerBonusPoints: 2, successRate: 67, matchSuccessRate: 33, scorerSuccessRate: 67, specialPredictionPoints: 3, tournamentMaxPoints: 5, tournamentSuccessRate: 60 },
+    ])
+    const wrapper = mount(LeaderboardView)
+    await flushPromises()
+
+    const pctSpan = wrapper.find('table tbody tr:first-child span[title]')
+    expect(pctSpan.exists()).toBe(true)
+    expect(pctSpan.attributes('title')).toContain('kiértékelt')
+  })
 })

@@ -1,4 +1,4 @@
-import { eq, sql, and, or, inArray, isNull } from 'drizzle-orm'
+import { eq, sql, and, or, inArray, isNull, isNotNull } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { users, predictions, groupMembers, groups, groupPredictionPoints, specialPredictions, specialPredictionTypes, groupGlobalTypeSubscriptions, groupLeagues, matches, userLeagueFavorites, teams } from '../db/schema/index.js'
 import type { LeaderboardEntry } from './leaderboard.service.js'
@@ -136,6 +136,29 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
 
   const statPointsByUser = new Map(statPointRows.map(r => [r.userId, Number(r.statPoints)]))
 
+  // UX-046: total possible tournament points from resolved (correctAnswer set)
+  // types visible to this group. Mirrors the type filter used above for the
+  // per-user sum so the ratio is consistent: group-scoped types + subscribed
+  // global types, active only, with a non-empty correctAnswer.
+  const tournamentMaxRows = await db
+    .select({
+      maxPoints: sql<number>`coalesce(sum(${specialPredictionTypes.points}), 0)`,
+    })
+    .from(specialPredictionTypes)
+    .where(and(
+      eq(specialPredictionTypes.isActive, true),
+      isNotNull(specialPredictionTypes.correctAnswer),
+      sql`trim(${specialPredictionTypes.correctAnswer}) <> ''`,
+      or(
+        and(eq(specialPredictionTypes.groupId, groupId), eq(specialPredictionTypes.isGlobal, false)),
+        sql`(${specialPredictionTypes.isGlobal} = true AND ${specialPredictionTypes.id} IN (
+          SELECT ${groupGlobalTypeSubscriptions.globalTypeId} FROM ${groupGlobalTypeSubscriptions}
+          WHERE ${groupGlobalTypeSubscriptions.groupId} = ${groupId}::uuid
+        ))`,
+      ),
+    ))
+  const tournamentMaxPoints = Number(tournamentMaxRows[0]?.maxPoints ?? 0)
+
   // Merge stat points and compute total
   const merged = rows.map(row => {
     const matchAndScorer = Number(row.totalPoints)
@@ -211,6 +234,10 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
       matchSuccessRate: row.matchSuccessRate,
       scorerSuccessRate: row.scorerSuccessRate,
       specialPredictionPoints: row.specialPredictionPoints,
+      tournamentMaxPoints,
+      tournamentSuccessRate: tournamentMaxPoints > 0
+        ? Math.round((row.specialPredictionPoints / tournamentMaxPoints) * 100)
+        : null,
       favoriteTeam: favoritesByUser.get(row.userId) ?? null,
       isPaid: paidByUser.get(row.userId) ?? false,
       isSupporter: row.supporterAt !== null,

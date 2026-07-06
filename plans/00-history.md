@@ -191,3 +191,4 @@
 | UX-042 | Admin torna-tipp kiértékelés körönkénti csapatlistával | Should Have |
 | UX-043 | Knockout meccsek – döntetlen tipp visuális megjelenítése kiértékelés után | Should Have |
 | BUG-011 | Knockout meccs pontszámítás hibás hosszabbításos/tizenegyeses döntésnél | Must Have |
+| UX-046 | Ranglista – Torna oszlopban a megszerzett/maximum pont % desktopon | Should Have |

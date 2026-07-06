@@ -6,12 +6,15 @@ const { mockSelect, mockFrom, mockLeftJoin, mockInnerJoin, mockWhere, mockOrderB
   // the tournament-points query that ends with .groupBy()).
   const makeGroupByResult = () => Object.assign(Promise.resolve([]), { orderBy: mockOrderBy })
   const mockGroupBy = vi.fn(makeGroupByResult)
-  const mockWhere = vi.fn(() => ({ groupBy: mockGroupBy, orderBy: mockOrderBy }))
+  // where must be chainable (.groupBy/.orderBy) AND thenable — UX-046's
+  // tournament-max query ends with .where() as its terminal step.
+  const makeWhereResult = () => Object.assign(Promise.resolve([]), { groupBy: mockGroupBy, orderBy: mockOrderBy })
+  const mockWhere = vi.fn(makeWhereResult)
   const mockInnerJoin = vi.fn(() => ({ where: mockWhere, orderBy: mockOrderBy }))
   const mockLeftJoin = vi.fn(function () {
     return { leftJoin: mockLeftJoin, where: mockWhere, groupBy: mockGroupBy }
   })
-  const mockFrom = vi.fn(() => ({ leftJoin: mockLeftJoin, innerJoin: mockInnerJoin }))
+  const mockFrom = vi.fn(() => ({ leftJoin: mockLeftJoin, innerJoin: mockInnerJoin, where: mockWhere }))
   const mockSelect = vi.fn(() => ({ from: mockFrom }))
   return { mockSelect, mockFrom, mockLeftJoin, mockInnerJoin, mockWhere, mockOrderBy, mockGroupBy }
 })
@@ -46,10 +49,11 @@ describe('getLeaderboard', () => {
     // groupBy result is both awaitable (terminal — used by tournament query)
     // and chainable (.orderBy(...) for the main aggregation query).
     mockGroupBy.mockImplementation(() => Object.assign(Promise.resolve([]), { orderBy: mockOrderBy }))
-    mockWhere.mockReturnValue({ groupBy: mockGroupBy, orderBy: mockOrderBy })
+    // where is also thenable (UX-046 tournament-max query is terminal on where).
+    mockWhere.mockImplementation(() => Object.assign(Promise.resolve([]), { groupBy: mockGroupBy, orderBy: mockOrderBy }))
     mockInnerJoin.mockReturnValue({ where: mockWhere, orderBy: mockOrderBy })
     mockLeftJoin.mockReturnValue({ leftJoin: mockLeftJoin, where: mockWhere, groupBy: mockGroupBy })
-    mockFrom.mockReturnValue({ leftJoin: mockLeftJoin, innerJoin: mockInnerJoin })
+    mockFrom.mockReturnValue({ leftJoin: mockLeftJoin, innerJoin: mockInnerJoin, where: mockWhere })
     mockSelect.mockReturnValue({ from: mockFrom })
   })
 
@@ -167,5 +171,66 @@ describe('getLeaderboard', () => {
     const result = await getLeaderboard()
     expect(result[0].matchSuccessRate).toBeNull()
     expect(result[0].scorerSuccessRate).toBeNull()
+  })
+
+  // ─── UX-046: tournamentMaxPoints + tournamentSuccessRate ───────────────────
+
+  it('tournamentSuccessRate is null when no global type has been resolved', async () => {
+    mockOrderBy.mockResolvedValue([ROW({ userId: 'user-1', totalPoints: 0 })])
+    // favorites (2nd orderBy call) resolves to [] via default in beforeEach for
+    // subsequent calls — reset only affects the first call, so re-establish it.
+    mockOrderBy.mockResolvedValueOnce([ROW({ userId: 'user-1', totalPoints: 0 })])
+    mockOrderBy.mockResolvedValueOnce([])
+    mockGroupBy.mockImplementation(() => Object.assign(Promise.resolve([]), { orderBy: mockOrderBy }))
+    mockWhere.mockImplementation(() => Object.assign(Promise.resolve([{ maxPoints: 0 }]), { groupBy: mockGroupBy, orderBy: mockOrderBy }))
+
+    const result = await getLeaderboard()
+
+    expect(result[0].tournamentMaxPoints).toBe(0)
+    expect(result[0].tournamentSuccessRate).toBeNull()
+  })
+
+  it('tournamentSuccessRate = 100 when user earned every resolved point', async () => {
+    mockOrderBy.mockResolvedValueOnce([ROW({ userId: 'user-1', totalPoints: 0 })])
+    mockOrderBy.mockResolvedValueOnce([])
+    mockGroupBy.mockImplementation(() => Object.assign(Promise.resolve([{ userId: 'user-1', tournamentPoints: 5 }]), { orderBy: mockOrderBy }))
+    mockWhere.mockImplementation(() => Object.assign(Promise.resolve([{ maxPoints: 5 }]), { groupBy: mockGroupBy, orderBy: mockOrderBy }))
+
+    const result = await getLeaderboard()
+
+    expect(result[0].tournamentMaxPoints).toBe(5)
+    expect(result[0].specialPredictionPoints).toBe(5)
+    expect(result[0].tournamentSuccessRate).toBe(100)
+  })
+
+  it('tournamentSuccessRate = round(specialPredictionPoints / max * 100)', async () => {
+    mockOrderBy.mockResolvedValueOnce([ROW({ userId: 'user-1', totalPoints: 0 })])
+    mockOrderBy.mockResolvedValueOnce([])
+    mockGroupBy.mockImplementation(() => Object.assign(Promise.resolve([{ userId: 'user-1', tournamentPoints: 6 }]), { orderBy: mockOrderBy }))
+    mockWhere.mockImplementation(() => Object.assign(Promise.resolve([{ maxPoints: 15 }]), { groupBy: mockGroupBy, orderBy: mockOrderBy }))
+
+    const result = await getLeaderboard()
+
+    expect(result[0].tournamentMaxPoints).toBe(15)
+    expect(result[0].tournamentSuccessRate).toBe(40)
+  })
+
+  it('every entry shares the same tournamentMaxPoints scalar', async () => {
+    mockOrderBy.mockResolvedValueOnce([
+      ROW({ userId: 'user-1', totalPoints: 0 }),
+      ROW({ userId: 'user-2', displayName: 'Bob', totalPoints: 0 }),
+    ])
+    mockOrderBy.mockResolvedValueOnce([])
+    mockGroupBy.mockImplementation(() => Object.assign(Promise.resolve([
+      { userId: 'user-1', tournamentPoints: 6 },
+      { userId: 'user-2', tournamentPoints: 3 },
+    ]), { orderBy: mockOrderBy }))
+    mockWhere.mockImplementation(() => Object.assign(Promise.resolve([{ maxPoints: 10 }]), { groupBy: mockGroupBy, orderBy: mockOrderBy }))
+
+    const result = await getLeaderboard()
+
+    expect(result.map(r => r.tournamentMaxPoints)).toEqual([10, 10])
+    expect(result.find(r => r.userId === 'user-1')?.tournamentSuccessRate).toBe(60)
+    expect(result.find(r => r.userId === 'user-2')?.tournamentSuccessRate).toBe(30)
   })
 })

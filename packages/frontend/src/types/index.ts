@@ -252,7 +252,7 @@ export interface AdminStatsMatch {
   readonly homeTeam: string
   readonly awayTeam: string
   readonly date: string
-  readonly tippedCount: number
+  readonly predictionCount: number
   readonly totalUsers: number
   readonly fillPercent: number
   readonly result: string | null
@@ -312,6 +312,8 @@ export interface LeaderboardEntry {
   readonly matchSuccessRate: number | null
   readonly scorerSuccessRate: number | null
   readonly specialPredictionPoints: number
+  readonly tournamentMaxPoints: number
+  readonly tournamentSuccessRate: number | null
   readonly favoriteTeam?: { readonly countryCode: string; readonly name: string } | null
   readonly isPaid?: boolean
   readonly isSupporter: boolean
@@ -603,4 +605,46 @@ export interface ScoringExplainerResponse {
   readonly default: ScoringConfigFull
   readonly defaultFrozenAt: string | null
   readonly groups: ReadonlyArray<ScoringExplainerGroup>
+}
+
+// ─── ANNOUNCEMENTS ────────────────────────────────────────────────────────────
+
+export type AnnouncementSeverity = 'info' | 'success' | 'warning' | 'critical'
+
+export interface AnnouncementDTO {
+  readonly id: string
+  readonly title: string
+  readonly bodyHtml: string
+  readonly severity: AnnouncementSeverity
+  readonly publishedAt: string
+  readonly expiresAt: string | null
+}
+
+export interface AnnouncementWithReadStatus extends AnnouncementDTO {
+  readonly readAt: string | null
+  readonly retracted: boolean
+}
+
+export interface AnnouncementAdminDTO extends AnnouncementDTO {
+  readonly body: string
+  readonly createdBy: string
+  readonly targetAll: boolean
+  readonly createdAt: string
+  readonly deletedAt: string | null
+}
+
+export interface AnnouncementStats {
+  readonly totalUsers: number
+  readonly seenCount: number
+  readonly dismissRate: number
+}
+
+export type AnnouncementAdminState = 'active' | 'scheduled' | 'expired' | 'deleted'
+
+export interface AnnouncementCreateInput {
+  readonly title: string
+  readonly body: string
+  readonly severity: AnnouncementSeverity
+  readonly publishedAt?: string
+  readonly expiresAt?: string | null
 }

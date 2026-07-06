@@ -6,6 +6,7 @@
 
 | Story ID | Cím | Prioritás | Függőség |
 |----------|-----|-----------|----------|
+| NOTIF-001 | Admin announcement broadcast – in-app modal SSE push-sal és dismiss perzisztenciával | Should Have | — |
 | US-1310 | Match Detail – AI-generált összefoglaló a legeredményesebb játékosokról (player_stats) | Should Have | — |
 | OPS-001 | Strukturált logolás és frontend hibakezelés (MVP) | Should Have | — |
 | OPS-003 | Auto-generált DB schema referencia agentnek és fejlesztőnek | Should Have | — |
@@ -32,4 +33,4 @@
 
 ---
 
-**Haladás: 187 / 198 story kész** — Must Have: 33/33, Should Have: 154/155, Nice to Have: 0/5 (US-937, PUSH-003 won't do)
+**Haladás: 188 / 200 story kész** — Must Have: 33/33, Should Have: 155/157, Nice to Have: 0/5 (US-937, PUSH-003 won't do)

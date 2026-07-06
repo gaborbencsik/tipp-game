@@ -16,6 +16,12 @@ export interface LeaderboardEntry {
   readonly matchSuccessRate: number | null
   readonly scorerSuccessRate: number | null
   readonly specialPredictionPoints: number
+  // UX-046: total available points from resolved (correctAnswer set) global
+  // tournament tip types — same value for every user. `tournamentSuccessRate`
+  // is `null` when nothing has been resolved yet, otherwise the integer % of
+  // `specialPredictionPoints / tournamentMaxPoints`.
+  readonly tournamentMaxPoints: number
+  readonly tournamentSuccessRate: number | null
   readonly favoriteTeam?: { readonly countryCode: string; readonly name: string } | null
   readonly isPaid?: boolean
   readonly isSupporter: boolean
@@ -88,6 +94,21 @@ export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
     : []
   const tournamentByUser = new Map(tournamentRows.map(r => [r.userId, Number(r.tournamentPoints)]))
 
+  // UX-046: total possible tournament points across every resolved global type.
+  // Same scalar for every user (denominator for the per-user tournament success rate).
+  const tournamentMaxRows = await db
+    .select({
+      maxPoints: sql<number>`coalesce(sum(${specialPredictionTypes.points}), 0)`,
+    })
+    .from(specialPredictionTypes)
+    .where(and(
+      eq(specialPredictionTypes.isGlobal, true),
+      eq(specialPredictionTypes.isActive, true),
+      isNotNull(specialPredictionTypes.correctAnswer),
+      sql`trim(${specialPredictionTypes.correctAnswer}) <> ''`,
+    ))
+  const tournamentMaxPoints = Number(tournamentMaxRows[0]?.maxPoints ?? 0)
+
   // Merge match + tournament points and re-sort: tournament points contribute
   // to the displayed total, so the ranking must reflect the combined value.
   const merged = rows.map(row => {
@@ -135,6 +156,10 @@ export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
       matchSuccessRate: row.matchSuccessRate,
       scorerSuccessRate: row.scorerSuccessRate,
       specialPredictionPoints: row.tournamentPoints,
+      tournamentMaxPoints,
+      tournamentSuccessRate: tournamentMaxPoints > 0
+        ? Math.round((row.tournamentPoints / tournamentMaxPoints) * 100)
+        : null,
       favoriteTeam: favoritesByUser.get(row.userId) ?? null,
       isSupporter: row.supporterAt !== null,
     }

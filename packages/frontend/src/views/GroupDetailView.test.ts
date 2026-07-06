@@ -126,6 +126,8 @@ const LEADERBOARD_ENTRY: LeaderboardEntry = {
   matchSuccessRate: 60,
   scorerSuccessRate: 0,
   specialPredictionPoints: 0,
+  tournamentMaxPoints: 0,
+  tournamentSuccessRate: null,
   isSupporter: false,
 }
 
@@ -175,14 +177,14 @@ describe('GroupDetailView', () => {
     expect(wrapper.find('[data-testid="members-tab"]').exists()).toBe(false)
   })
 
-  it('clicking Tagok tab → members-tab visible', async () => {
+  it('clicking Members tab → members-tab visible', async () => {
     const { wrapper } = await mountView([MEMBER_SELF])
     await wrapper.find('[data-testid="tab-members"]').trigger('click')
     await wrapper.vm.$nextTick()
     expect(wrapper.find('[data-testid="members-tab"]').exists()).toBe(true)
   })
 
-  it('clicking Ranglista tab after switching → members-tab hidden', async () => {
+  it('clicking Leaderboard tab after switching → members-tab hidden', async () => {
     const { wrapper } = await mountView([MEMBER_SELF])
     await wrapper.find('[data-testid="tab-members"]').trigger('click')
     await wrapper.vm.$nextTick()
@@ -191,7 +193,7 @@ describe('GroupDetailView', () => {
     expect(wrapper.find('[data-testid="members-tab"]').exists()).toBe(false)
   })
 
-  it('non-admin user → Tagok tab not visible', async () => {
+  it('non-admin user → Members tab not visible', async () => {
     const { wrapper } = await mountView([{ ...MEMBER_SELF, isAdmin: false }])
     expect(wrapper.find('[data-testid="tab-members"]').exists()).toBe(false)
   })
@@ -219,7 +221,7 @@ describe('GroupDetailView', () => {
 
   // ─── Confirm dialog ───────────────────────────────────────────────────────────
 
-  it('clicking Eltávolít → confirm dialog appears', async () => {
+  it('clicking Remove → confirm dialog appears', async () => {
     const { wrapper } = await mountView([MEMBER_SELF, MEMBER_OTHER])
     await wrapper.find('[data-testid="tab-members"]').trigger('click')
     await wrapper.vm.$nextTick()
@@ -232,7 +234,7 @@ describe('GroupDetailView', () => {
     expect(wrapper.find('[data-testid="confirm-dialog"]').exists()).toBe(true)
   })
 
-  it('clicking Mégse → confirm dialog disappears', async () => {
+  it('clicking Cancel → confirm dialog disappears', async () => {
     const { wrapper } = await mountView([MEMBER_SELF, MEMBER_OTHER])
     await wrapper.find('[data-testid="tab-members"]').trigger('click')
     await wrapper.vm.$nextTick()
@@ -246,7 +248,7 @@ describe('GroupDetailView', () => {
     expect(wrapper.find('[data-testid="confirm-dialog"]').exists()).toBe(false)
   })
 
-  it('clicking Eltávolítás → store.removeMember called', async () => {
+  it('clicking Remove confirm → store.removeMember called', async () => {
     const { wrapper, store } = await mountView([MEMBER_SELF, MEMBER_OTHER])
     const removeSpy = vi.spyOn(store, 'removeMember').mockResolvedValue()
     await wrapper.find('[data-testid="tab-members"]').trigger('click')
@@ -261,7 +263,7 @@ describe('GroupDetailView', () => {
     expect(removeSpy).toHaveBeenCalledWith('group-uuid-1', 'user-uuid-2')
   })
 
-  it('clicking Admin/Admin visszavon → store.toggleMemberAdmin called', async () => {
+  it('clicking Admin/Revoke admin → store.toggleMemberAdmin called', async () => {
     const { wrapper, store } = await mountView([MEMBER_SELF, MEMBER_OTHER])
     const toggleSpy = vi.spyOn(store, 'toggleMemberAdmin').mockResolvedValue()
     await wrapper.find('[data-testid="tab-members"]').trigger('click')
@@ -360,7 +362,7 @@ describe('GroupDetailView', () => {
     expect(wrapper.find('[data-testid="invite-section"]').exists()).toBe(false)
   })
 
-  it('clicking Újragenerálás → confirm dialog appears', async () => {
+  it('clicking Regenerate → confirm dialog appears', async () => {
     const { wrapper } = await mountView([MEMBER_SELF])
     await wrapper.find('[data-testid="tab-settings"]').trigger('click')
     await wrapper.vm.$nextTick()
@@ -463,7 +465,7 @@ describe('GroupDetailView', () => {
     expect(deleteSpy).toHaveBeenCalledWith('group-uuid-1')
   })
 
-  // ─── Tippjeim tab – scorer columns (UX-036) ─────────────────────────────────
+  // ─── My predictions tab – scorer columns (UX-036) ─────────────────────────────
 
   async function mountWithMyPredictions(rows: Array<Partial<{
     predictionId: string
@@ -498,7 +500,7 @@ describe('GroupDetailView', () => {
     return { wrapper, store }
   }
 
-  it('Tippjeim table renders new column headers (Match pts, Scorer pick, Scorer pts, Total pts)', async () => {
+  it('My predictions table renders new column headers (Match pts, Scorer pick, Scorer pts, Total pts)', async () => {
     const { wrapper } = await mountWithMyPredictions([{ points: 4, matchPoints: 3, scorerBonusPoints: 1, scorerPickPlayerName: 'Salah' }])
     const table = wrapper.find('[data-testid="my-predictions-tab"] table')
     const headers = table.findAll('thead th').map(th => th.text())
@@ -508,7 +510,7 @@ describe('GroupDetailView', () => {
     expect(headers).toContain('Összes pont')
   })
 
-  it('Tippjeim row shows match points, scorer pick name, scorer points, total points', async () => {
+  it('My predictions row shows match points, scorer pick name, scorer points, total points', async () => {
     const { wrapper } = await mountWithMyPredictions([{ points: 4, matchPoints: 3, scorerBonusPoints: 1, scorerPickPlayerName: 'Salah' }])
     const row = wrapper.find('[data-testid="my-prediction-row"]')
     expect(row.find('[data-testid="my-pred-match-points"]').text()).toBe('3')
@@ -517,13 +519,13 @@ describe('GroupDetailView', () => {
     expect(row.find('[data-testid="my-pred-total-points"]').text()).toContain('4')
   })
 
-  it('Tippjeim row shows em-dash when scorer pick name is null', async () => {
+  it('My predictions row shows em-dash when scorer pick name is null', async () => {
     const { wrapper } = await mountWithMyPredictions([{ points: 3, matchPoints: 3, scorerBonusPoints: 0, scorerPickPlayerName: null }])
     const cell = wrapper.find('[data-testid="my-prediction-row"] [data-testid="my-pred-scorer-name"]')
     expect(cell.text()).toBe('—')
   })
 
-  it('Tippjeim row shows the ×2 badges in match-points and scorer-points columns when doubledByFavorite', async () => {
+  it('My predictions row shows the ×2 badges in match-points and scorer-points columns when doubledByFavorite', async () => {
     const { wrapper } = await mountWithMyPredictions([{ points: 8, matchPoints: 3, scorerBonusPoints: 1, scorerPickPlayerName: 'Mbappé', doubledByFavorite: true }])
     const row = wrapper.find('[data-testid="my-prediction-row"]')
     expect(row.find('[data-testid="match-double-badge"]').exists()).toBe(true)
@@ -532,7 +534,7 @@ describe('GroupDetailView', () => {
     expect(row.find('[data-testid="my-pred-total-points"] [data-testid="double-badge"]').exists()).toBe(false)
   })
 
-  it('Tippjeim new columns are hidden on mobile (hidden md:table-cell)', async () => {
+  it('My predictions new columns are hidden on mobile (hidden md:table-cell)', async () => {
     const { wrapper } = await mountWithMyPredictions([{ points: 4, matchPoints: 3, scorerBonusPoints: 1, scorerPickPlayerName: 'Salah' }])
     const matchPtsHeader = wrapper.find('[data-testid="my-pred-match-points-header"]')
     const scorerHeader = wrapper.find('[data-testid="my-pred-scorer-name-header"]')
