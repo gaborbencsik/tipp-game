@@ -43,6 +43,12 @@
               v-if="showTournamentColumn"
               class="hidden md:table-cell px-1 md:px-2 py-2 md:py-3 text-right whitespace-nowrap"
             >🏆 {{ $t('leaderboard.tournamentPoints') }}</th>
+            <th
+              v-if="showTournamentColumn"
+              class="hidden md:table-cell px-1 md:px-2 py-2 md:py-3 text-right whitespace-nowrap"
+            >
+              <span class="tt-down" :data-tooltip="$t('leaderboard.tournamentSuccessRateTooltip')">{{ $t('leaderboard.successRate') }}</span>
+            </th>
             <th class="pl-1 pr-2 md:pl-2 md:pr-4 py-2 md:py-3 text-right font-semibold whitespace-nowrap">{{ $t('leaderboard.points') }}</th>
           </tr>
         </thead>
@@ -112,12 +118,16 @@
             <td
               v-if="showTournamentColumn"
               class="hidden md:table-cell px-1 md:px-2 py-2 md:py-3 text-right text-gray-500 tabular-nums whitespace-nowrap"
+            >{{ entry.specialPredictionPoints }}</td>
+            <td
+              v-if="showTournamentColumn"
+              class="hidden md:table-cell px-1 md:px-2 py-2 md:py-3 text-right text-gray-500 tabular-nums"
             >
-              {{ entry.specialPredictionPoints }}<span
+              <span
                 v-if="entry.tournamentSuccessRate !== null"
-                class="ml-1 text-xs text-gray-400"
                 :title="$t('leaderboard.tournamentSuccessRateTooltip')"
-              >({{ entry.tournamentSuccessRate }}%)</span>
+              >{{ entry.tournamentSuccessRate }}%</span>
+              <span v-else>—</span>
             </td>
             <td class="pl-1 pr-2 md:pl-2 md:pr-4 py-2 md:py-3 text-right font-bold text-blue-700 tabular-nums">{{ entry.totalPoints }}</td>
           </tr>
