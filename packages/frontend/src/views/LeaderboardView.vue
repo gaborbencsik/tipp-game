@@ -124,7 +124,7 @@
               class="hidden md:table-cell px-1 md:px-2 py-2 md:py-3 text-right text-gray-500 tabular-nums"
             >
               <span
-                v-if="entry.tournamentSuccessRate !== null"
+                v-if="entry.tournamentSuccessRate"
                 :title="$t('leaderboard.tournamentSuccessRateTooltip')"
               >{{ entry.tournamentSuccessRate }}%</span>
               <span v-else>—</span>

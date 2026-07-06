@@ -209,6 +209,19 @@ describe('LeaderboardView LS scope persistence', () => {
     expect(cells.at(-2)).toBe('—')
   })
 
+  it('renders "—" in the tournament % column when tournamentSuccessRate is 0', async () => {
+    mockLeaderboardList.mockResolvedValue([
+      { userId: 'u1', displayName: 'Me', avatarUrl: null, rank: 1, predictionCount: 3, correctCount: 2, totalPoints: 9, matchPoints: 7, scorerBonusPoints: 2, successRate: 67, matchSuccessRate: 33, scorerSuccessRate: 67, specialPredictionPoints: 0, tournamentMaxPoints: 100, tournamentSuccessRate: 0 },
+      // Second entry keeps the column visible (showTournamentColumn is based on entries having specialPredictionPoints > 0).
+      { userId: 'u2', displayName: 'Peer', avatarUrl: null, rank: 2, predictionCount: 3, correctCount: 2, totalPoints: 12, matchPoints: 7, scorerBonusPoints: 2, successRate: 67, matchSuccessRate: 33, scorerSuccessRate: 67, specialPredictionPoints: 3, tournamentMaxPoints: 100, tournamentSuccessRate: 3 },
+    ])
+    const wrapper = mount(LeaderboardView)
+    await flushPromises()
+
+    const cells = wrapper.findAll('table tbody tr:first-child td').map(td => td.text())
+    expect(cells.at(-2)).toBe('—')
+  })
+
   it('tournament percentage carries a tooltip via title attribute', async () => {
     mockLeaderboardList.mockResolvedValue([
       { userId: 'u1', displayName: 'Me', avatarUrl: null, rank: 1, predictionCount: 3, correctCount: 2, totalPoints: 14, matchPoints: 7, scorerBonusPoints: 2, successRate: 67, matchSuccessRate: 33, scorerSuccessRate: 67, specialPredictionPoints: 3, tournamentMaxPoints: 5, tournamentSuccessRate: 60 },
