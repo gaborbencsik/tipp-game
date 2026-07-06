@@ -2,6 +2,7 @@ import { eq, sql, and, or, inArray, isNull, isNotNull } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { users, predictions, groupMembers, groups, groupPredictionPoints, specialPredictions, specialPredictionTypes, groupGlobalTypeSubscriptions, groupLeagues, matches, userLeagueFavorites, teams } from '../db/schema/index.js'
 import type { LeaderboardEntry } from './leaderboard.service.js'
+import { computeTypeMaxPoints } from './tournament-max.service.js'
 
 class AppError extends Error {
   readonly status: number
@@ -139,10 +140,15 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
   // UX-046: total possible tournament points from resolved (correctAnswer set)
   // types visible to this group. Mirrors the type filter used above for the
   // per-user sum so the ratio is consistent: group-scoped types + subscribed
-  // global types, active only, with a non-empty correctAnswer.
-  const tournamentMaxRows = await db
+  // global types, active only, with a non-empty correctAnswer. Per-type max is
+  // computed by `computeTypeMaxPoints` — partial-evaluation aware for tournament
+  // types whose `points` column is 0 in the DB.
+  const tournamentMaxTypeRows = await db
     .select({
-      maxPoints: sql<number>`coalesce(sum(${specialPredictionTypes.points}), 0)`,
+      inputType: specialPredictionTypes.inputType,
+      options: specialPredictionTypes.options,
+      points: specialPredictionTypes.points,
+      correctAnswer: specialPredictionTypes.correctAnswer,
     })
     .from(specialPredictionTypes)
     .where(and(
@@ -157,7 +163,10 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
         ))`,
       ),
     ))
-  const tournamentMaxPoints = Number(tournamentMaxRows[0]?.maxPoints ?? 0)
+  const tournamentMaxPoints = tournamentMaxTypeRows.reduce(
+    (acc, row) => acc + computeTypeMaxPoints(row),
+    0,
+  )
 
   // Merge stat points and compute total
   const merged = rows.map(row => {

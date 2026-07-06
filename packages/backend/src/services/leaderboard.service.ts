@@ -1,6 +1,7 @@
 import { eq, sum, isNull, isNotNull, sql, and, inArray } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { users, predictions, matches, userLeagueFavorites, teams, specialPredictions, specialPredictionTypes } from '../db/schema/index.js'
+import { computeTypeMaxPoints } from './tournament-max.service.js'
 
 export interface LeaderboardEntry {
   readonly rank: number
@@ -95,10 +96,15 @@ export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
   const tournamentByUser = new Map(tournamentRows.map(r => [r.userId, Number(r.tournamentPoints)]))
 
   // UX-046: total possible tournament points across every resolved global type.
-  // Same scalar for every user (denominator for the per-user tournament success rate).
-  const tournamentMaxRows = await db
+  // Per-type max is computed by `computeTypeMaxPoints`, which is partial-evaluation
+  // aware for `all_groups_standing` / `bracket_progression` — the shared scalar
+  // grows as the admin fills in each slice.
+  const tournamentMaxTypeRows = await db
     .select({
-      maxPoints: sql<number>`coalesce(sum(${specialPredictionTypes.points}), 0)`,
+      inputType: specialPredictionTypes.inputType,
+      options: specialPredictionTypes.options,
+      points: specialPredictionTypes.points,
+      correctAnswer: specialPredictionTypes.correctAnswer,
     })
     .from(specialPredictionTypes)
     .where(and(
@@ -107,7 +113,10 @@ export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
       isNotNull(specialPredictionTypes.correctAnswer),
       sql`trim(${specialPredictionTypes.correctAnswer}) <> ''`,
     ))
-  const tournamentMaxPoints = Number(tournamentMaxRows[0]?.maxPoints ?? 0)
+  const tournamentMaxPoints = tournamentMaxTypeRows.reduce(
+    (acc, row) => acc + computeTypeMaxPoints(row),
+    0,
+  )
 
   // Merge match + tournament points and re-sort: tournament points contribute
   // to the displayed total, so the ranking must reflect the combined value.

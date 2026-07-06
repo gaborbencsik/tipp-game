@@ -91,7 +91,13 @@ function setupStatChain(statRows: unknown[] = []) {
 }
 
 function setupTournamentMaxChain(maxPoints = 0) {
-  mockTournamentMaxWhere.mockResolvedValueOnce([{ maxPoints }])
+  // Emit a single simple-type row whose points equals the desired scalar max —
+  // computeTypeMaxPoints falls through to `points` for non-tournament input types,
+  // giving us direct control over the reduced total without simulating full JSON payloads.
+  const rows = maxPoints > 0
+    ? [{ inputType: 'text', options: null, points: maxPoints, correctAnswer: 'x' }]
+    : []
+  mockTournamentMaxWhere.mockResolvedValueOnce(rows)
   mockTournamentMaxFrom.mockReturnValue({ where: mockTournamentMaxWhere })
 }
 

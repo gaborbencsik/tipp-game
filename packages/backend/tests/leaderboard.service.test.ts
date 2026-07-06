@@ -182,7 +182,8 @@ describe('getLeaderboard', () => {
     mockOrderBy.mockResolvedValueOnce([ROW({ userId: 'user-1', totalPoints: 0 })])
     mockOrderBy.mockResolvedValueOnce([])
     mockGroupBy.mockImplementation(() => Object.assign(Promise.resolve([]), { orderBy: mockOrderBy }))
-    mockWhere.mockImplementation(() => Object.assign(Promise.resolve([{ maxPoints: 0 }]), { groupBy: mockGroupBy, orderBy: mockOrderBy }))
+    // tournamentMax query terminates on where() with an empty rows array → sum = 0.
+    mockWhere.mockImplementation(() => Object.assign(Promise.resolve([]), { groupBy: mockGroupBy, orderBy: mockOrderBy }))
 
     const result = await getLeaderboard()
 
@@ -194,7 +195,11 @@ describe('getLeaderboard', () => {
     mockOrderBy.mockResolvedValueOnce([ROW({ userId: 'user-1', totalPoints: 0 })])
     mockOrderBy.mockResolvedValueOnce([])
     mockGroupBy.mockImplementation(() => Object.assign(Promise.resolve([{ userId: 'user-1', tournamentPoints: 5 }]), { orderBy: mockOrderBy }))
-    mockWhere.mockImplementation(() => Object.assign(Promise.resolve([{ maxPoints: 5 }]), { groupBy: mockGroupBy, orderBy: mockOrderBy }))
+    // Simple type (e.g. 'text') with points=5 → computeTypeMaxPoints returns 5.
+    mockWhere.mockImplementation(() => Object.assign(
+      Promise.resolve([{ inputType: 'text', options: null, points: 5, correctAnswer: 'x' }]),
+      { groupBy: mockGroupBy, orderBy: mockOrderBy },
+    ))
 
     const result = await getLeaderboard()
 
@@ -207,7 +212,11 @@ describe('getLeaderboard', () => {
     mockOrderBy.mockResolvedValueOnce([ROW({ userId: 'user-1', totalPoints: 0 })])
     mockOrderBy.mockResolvedValueOnce([])
     mockGroupBy.mockImplementation(() => Object.assign(Promise.resolve([{ userId: 'user-1', tournamentPoints: 6 }]), { orderBy: mockOrderBy }))
-    mockWhere.mockImplementation(() => Object.assign(Promise.resolve([{ maxPoints: 15 }]), { groupBy: mockGroupBy, orderBy: mockOrderBy }))
+    // Two simple types → summed max = 15.
+    mockWhere.mockImplementation(() => Object.assign(Promise.resolve([
+      { inputType: 'text', options: null, points: 10, correctAnswer: 'a' },
+      { inputType: 'dropdown', options: null, points: 5, correctAnswer: 'b' },
+    ]), { groupBy: mockGroupBy, orderBy: mockOrderBy }))
 
     const result = await getLeaderboard()
 
@@ -225,12 +234,60 @@ describe('getLeaderboard', () => {
       { userId: 'user-1', tournamentPoints: 6 },
       { userId: 'user-2', tournamentPoints: 3 },
     ]), { orderBy: mockOrderBy }))
-    mockWhere.mockImplementation(() => Object.assign(Promise.resolve([{ maxPoints: 10 }]), { groupBy: mockGroupBy, orderBy: mockOrderBy }))
+    mockWhere.mockImplementation(() => Object.assign(
+      Promise.resolve([{ inputType: 'text', options: null, points: 10, correctAnswer: 'x' }]),
+      { groupBy: mockGroupBy, orderBy: mockOrderBy },
+    ))
 
     const result = await getLeaderboard()
 
     expect(result.map(r => r.tournamentMaxPoints)).toEqual([10, 10])
     expect(result.find(r => r.userId === 'user-1')?.tournamentSuccessRate).toBe(60)
     expect(result.find(r => r.userId === 'user-2')?.tournamentSuccessRate).toBe(30)
+  })
+
+  it('tournament max sums partial slices of tournament-tip types (regression: 60/6 → 60/100)', async () => {
+    mockOrderBy.mockResolvedValueOnce([ROW({ userId: 'user-1', totalPoints: 0 })])
+    mockOrderBy.mockResolvedValueOnce([])
+    mockGroupBy.mockImplementation(() => Object.assign(Promise.resolve([
+      { userId: 'user-1', tournamentPoints: 60 },
+    ]), { orderBy: mockOrderBy }))
+
+    // Same shape the seeded rows have in production: `points = 0`, real max
+    // comes from the correctAnswer JSON. 12 fully-populated groups → 36p,
+    // last_32 with 32 team slots → 64p. Total 100p, user has 60 → 60%.
+    const codes = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']
+    const allGroupsPayload = {
+      groups: Object.fromEntries(codes.map(c => [c, [`${c}1`, `${c}2`, `${c}3`, `${c}4`]])),
+      best3rds: [],
+    }
+    const bracketPayload = {
+      participants: {
+        last_32: Array.from({ length: 32 }, (_, i) => `t${i}`),
+        last_16: [], qf: [], sf: [], final: [],
+      },
+      champion: null,
+      bronzeWinner: null,
+    }
+    mockWhere.mockImplementation(() => Object.assign(Promise.resolve([
+      {
+        inputType: 'all_groups_standing',
+        options: { groups: codes, teamsPerGroup: 4, best3rdPicks: 0 },
+        points: 0,
+        correctAnswer: JSON.stringify(allGroupsPayload),
+      },
+      {
+        inputType: 'bracket_progression',
+        options: null,
+        points: 0,
+        correctAnswer: JSON.stringify(bracketPayload),
+      },
+    ]), { groupBy: mockGroupBy, orderBy: mockOrderBy }))
+
+    const result = await getLeaderboard()
+
+    expect(result[0].specialPredictionPoints).toBe(60)
+    expect(result[0].tournamentMaxPoints).toBe(100)
+    expect(result[0].tournamentSuccessRate).toBe(60)
   })
 })
