@@ -137,7 +137,7 @@
                   {{ match.homeTeam }} – {{ match.awayTeam }}
                   <span class="text-gray-400 ml-1">{{ formatDate(match.date) }}</span>
                 </td>
-                <td class="px-4 py-2">{{ match.tippedCount }}/{{ match.totalUsers }}</td>
+                <td class="px-4 py-2">{{ match.predictionCount }}/{{ match.totalUsers }}</td>
                 <td class="px-4 py-2">{{ match.fillPercent }}%</td>
                 <td class="px-4 py-2">{{ match.result ?? '–' }}</td>
               </tr>
