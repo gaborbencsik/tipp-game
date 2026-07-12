@@ -9,8 +9,8 @@ const TIMEZONE = 'Europe/Budapest'
 const WINDOW_START_HOUR_BUDAPEST = 17
 const WINDOW_END_HOUR_BUDAPEST = 7
 
-export interface UseUntippedTodayCountReturn {
-  readonly untippedTodayCount: ComputedRef<number>
+export interface UsePendingTodayCountReturn {
+  readonly pendingTodayCount: ComputedRef<number>
 }
 
 interface BudapestParts {
@@ -91,7 +91,7 @@ export function computeWindowBoundsUtc(now: Date): WindowBoundsUtc {
   }
 }
 
-export function useUntippedTodayCount(): UseUntippedTodayCountReturn {
+export function usePendingTodayCount(): UsePendingTodayCountReturn {
   const matchesStore = useMatchesStore()
   const predictionsStore = usePredictionsStore()
   const now = ref(new Date())
@@ -106,7 +106,7 @@ export function useUntippedTodayCount(): UseUntippedTodayCountReturn {
     })
   }
 
-  const untippedTodayCount = computed<number>(() => {
+  const pendingTodayCount = computed<number>(() => {
     const { startUtc, endUtc } = computeWindowBoundsUtc(now.value)
     const startMs = startUtc.getTime()
     const endMs = endUtc.getTime()
@@ -121,5 +121,5 @@ export function useUntippedTodayCount(): UseUntippedTodayCountReturn {
     }).length
   })
 
-  return { untippedTodayCount }
+  return { pendingTodayCount }
 }

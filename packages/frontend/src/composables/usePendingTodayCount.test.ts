@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { useUntippedTodayCount } from './useUntippedTodayCount.js'
+import { usePendingTodayCount } from './usePendingTodayCount.js'
 import { useMatchesStore } from '../stores/matches.store.js'
 import { usePredictionsStore } from '../stores/predictions.store.js'
 import type { Match, Prediction } from '../types/index.js'
@@ -59,7 +59,7 @@ function makePrediction(matchId: string): Prediction {
   }
 }
 
-describe('useUntippedTodayCount', () => {
+describe('usePendingTodayCount', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.useFakeTimers()
@@ -74,9 +74,9 @@ describe('useUntippedTodayCount', () => {
     const matches = useMatchesStore()
     matches.matches = [makeMatch({ id: 'm1', scheduledAt: '2026-06-15T18:00:00.000Z' })]
 
-    const { untippedTodayCount } = useUntippedTodayCount()
+    const { pendingTodayCount } = usePendingTodayCount()
 
-    expect(untippedTodayCount.value).toBe(1)
+    expect(pendingTodayCount.value).toBe(1)
   })
 
   it('counts an un-tipped match scheduled tomorrow 06:00 Budapest (inside window) when now is 08:00 Budapest', () => {
@@ -85,9 +85,9 @@ describe('useUntippedTodayCount', () => {
     // Tomorrow 06:00 Budapest CEST = 04:00 UTC.
     matches.matches = [makeMatch({ id: 'm1', scheduledAt: '2026-06-16T04:00:00.000Z' })]
 
-    const { untippedTodayCount } = useUntippedTodayCount()
+    const { pendingTodayCount } = usePendingTodayCount()
 
-    expect(untippedTodayCount.value).toBe(1)
+    expect(pendingTodayCount.value).toBe(1)
   })
 
   it('does NOT count a match tomorrow 09:00 Budapest (after window end) when now is 08:00 Budapest', () => {
@@ -96,9 +96,9 @@ describe('useUntippedTodayCount', () => {
     // Tomorrow 09:00 Budapest CEST = 07:00 UTC, after the 07:00 Budapest cutoff.
     matches.matches = [makeMatch({ id: 'm1', scheduledAt: '2026-06-16T07:00:00.000Z' })]
 
-    const { untippedTodayCount } = useUntippedTodayCount()
+    const { pendingTodayCount } = usePendingTodayCount()
 
-    expect(untippedTodayCount.value).toBe(0)
+    expect(pendingTodayCount.value).toBe(0)
   })
 
   it('counts an un-tipped match today 06:00 Budapest when now is 02:00 Budapest (still in yesterday-evening window)', () => {
@@ -107,9 +107,9 @@ describe('useUntippedTodayCount', () => {
     // Today 06:00 Budapest CEST = 04:00 UTC.
     matches.matches = [makeMatch({ id: 'm1', scheduledAt: '2026-06-15T04:00:00.000Z' })]
 
-    const { untippedTodayCount } = useUntippedTodayCount()
+    const { pendingTodayCount } = usePendingTodayCount()
 
-    expect(untippedTodayCount.value).toBe(1)
+    expect(pendingTodayCount.value).toBe(1)
   })
 
   it('does NOT count a match that has already kicked off (scheduledAt <= now)', () => {
@@ -118,9 +118,9 @@ describe('useUntippedTodayCount', () => {
     // Today 17:30 Budapest CEST = 15:30 UTC, before now (16:00 UTC).
     matches.matches = [makeMatch({ id: 'm1', scheduledAt: '2026-06-15T15:30:00.000Z' })]
 
-    const { untippedTodayCount } = useUntippedTodayCount()
+    const { pendingTodayCount } = usePendingTodayCount()
 
-    expect(untippedTodayCount.value).toBe(0)
+    expect(pendingTodayCount.value).toBe(0)
   })
 
   it('does NOT count a match that already has a prediction', () => {
@@ -130,9 +130,9 @@ describe('useUntippedTodayCount', () => {
     matches.matches = [makeMatch({ id: 'm1', scheduledAt: '2026-06-15T18:00:00.000Z' })]
     predictions.predictions = [makePrediction('m1')]
 
-    const { untippedTodayCount } = useUntippedTodayCount()
+    const { pendingTodayCount } = usePendingTodayCount()
 
-    expect(untippedTodayCount.value).toBe(0)
+    expect(pendingTodayCount.value).toBe(0)
   })
 
   it('does NOT count a match whose status is not scheduled', () => {
@@ -140,9 +140,9 @@ describe('useUntippedTodayCount', () => {
     const matches = useMatchesStore()
     matches.matches = [makeMatch({ id: 'm1', scheduledAt: '2026-06-15T18:00:00.000Z', status: 'finished' })]
 
-    const { untippedTodayCount } = useUntippedTodayCount()
+    const { pendingTodayCount } = usePendingTodayCount()
 
-    expect(untippedTodayCount.value).toBe(0)
+    expect(pendingTodayCount.value).toBe(0)
   })
 
   it('handles winter time (CET, UTC+1) correctly — match at tomorrow 06:30 Budapest is inside the window', () => {
@@ -151,9 +151,9 @@ describe('useUntippedTodayCount', () => {
     // Tomorrow 06:30 Budapest CET = 05:30 UTC (UTC+1 in winter).
     matches.matches = [makeMatch({ id: 'm1', scheduledAt: '2026-10-27T05:30:00.000Z' })]
 
-    const { untippedTodayCount } = useUntippedTodayCount()
+    const { pendingTodayCount } = usePendingTodayCount()
 
-    expect(untippedTodayCount.value).toBe(1)
+    expect(pendingTodayCount.value).toBe(1)
   })
 
   it('counts only un-tipped matches across a mixed list', () => {
@@ -169,8 +169,8 @@ describe('useUntippedTodayCount', () => {
     ]
     predictions.predictions = [makePrediction('m2')]
 
-    const { untippedTodayCount } = useUntippedTodayCount()
+    const { pendingTodayCount } = usePendingTodayCount()
 
-    expect(untippedTodayCount.value).toBe(2)
+    expect(pendingTodayCount.value).toBe(2)
   })
 })

@@ -56,9 +56,9 @@
             </svg>
             <span v-if="isExpanded" class="flex-1">{{ $t('nav.matches') }}</span>
             <span
-              v-if="isExpanded && untippedTodayCount > 0"
+              v-if="isExpanded && pendingTodayCount > 0"
               class="text-[0.65rem] font-bold bg-amber-400 text-white px-1.5 py-0.5 rounded-full min-w-[1.2rem] text-center"
-            >{{ untippedTodayCount }}</span>
+            >{{ pendingTodayCount }}</span>
           </router-link>
 
           <!-- Torna tippek -->
@@ -167,7 +167,7 @@ import OnboardingOverlay from './OnboardingOverlay.vue'
 import DonationButton from './DonationButton.vue'
 import { useAuthStore } from '../stores/auth.store.js'
 import { useScoringExplainerStore } from '../stores/scoring-explainer.store.js'
-import { useUntippedTodayCount } from '../composables/useUntippedTodayCount.js'
+import { usePendingTodayCount } from '../composables/usePendingTodayCount.js'
 
 const authStore = useAuthStore()
 const scoringExplainerStore = useScoringExplainerStore()
@@ -191,7 +191,7 @@ const showOnboarding = computed((): boolean => {
   return !!authStore.user && !authStore.user.onboardingCompletedAt
 })
 
-const untippedTodayCount = useUntippedTodayCount().untippedTodayCount
+const pendingTodayCount = usePendingTodayCount().pendingTodayCount
 
 async function onOnboardingComplete(): Promise<void> {
   await authStore.completeOnboarding()

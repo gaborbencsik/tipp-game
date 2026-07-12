@@ -74,11 +74,11 @@
       </div>
 
       <div
-        v-if="untippedTodayCount > 0 && !alertBannerDismissed"
+        v-if="pendingTodayCount > 0 && !alertBannerDismissed"
         class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-center gap-2 text-sm text-amber-700"
       >
         <span>⚠️</span>
-        <span><strong>{{ untippedTodayCount }} mérkőzésen</strong> még nem tippeltél ma — a határidő hamarosan lejár!</span>
+        <span><strong>{{ pendingTodayCount }} mérkőzésen</strong> még nem tippeltél ma — a határidő hamarosan lejár!</span>
         <button class="ml-auto text-amber-400 hover:text-amber-600 text-lg leading-none" @click="dismissAlertBanner">&times;</button>
       </div>
 
@@ -448,7 +448,7 @@ import PlayerSelectCombobox from '../components/predictions/PlayerSelectCombobox
 import OutcomeAfterDrawBadge from '../components/OutcomeAfterDrawBadge.vue'
 import { resolveOutcomeAfterDrawStatus, isKnockoutStage } from '../lib/outcomeAfterDrawStatus.js'
 import { usePendingSpecialTips } from '../composables/usePendingSpecialTips.js'
-import { useUntippedTodayCount } from '../composables/useUntippedTodayCount.js'
+import { usePendingTodayCount } from '../composables/usePendingTodayCount.js'
 import { useDayNavigation } from '../composables/useDayNavigation.js'
 import { useLeagueFilter } from '../composables/useLeagueFilter.js'
 import { useMatchEvents, type MatchUpdateEvent } from '../composables/useMatchEvents.js'
@@ -828,7 +828,7 @@ function isToday(dateStr: string): boolean {
   return d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth() && d.getDate() === today.getDate()
 }
 
-const untippedTodayCount = useUntippedTodayCount().untippedTodayCount
+const pendingTodayCount = usePendingTodayCount().pendingTodayCount
 
 const alertBannerDismissed = ref(false)
 
