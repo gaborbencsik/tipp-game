@@ -144,7 +144,7 @@ sbx-create:
 	sbx create --name tipp-game --kit ~/kits/my-kit claude .
 
 sbx-run:
-	sbx run tipp-game
+	sbx run --name tipp-game
 
 sbx-rm:
 	sbx rm tipp-game
