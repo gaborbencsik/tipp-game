@@ -30,8 +30,7 @@
     "openNav": "Navigáció megnyitása",
     "replayOnboarding": "Bemutató újranézése",
     "admin": "Admin",
-    "installApp": "Telepítés főképernyőre",
-    "myNotifications": "Értesítéseim"
+    "installApp": "Telepítés főképernyőre"
   },
   "login": {
     "title": "VB Tippjáték",
@@ -876,89 +875,6 @@
         "Gyorsabb indulás, mert a felület már tárolva van.",
         "Offline alapnézet — ha nincs net, akkor is megnyílik egy üzenettel."
       ]
-    }
-  },
-  "announcements": {
-    "modal": {
-      "ok": "Rendben",
-      "close": "Bezárás",
-      "dialogLabel": "Közlemény"
-    },
-    "severity": {
-      "info": "Információ",
-      "success": "Siker",
-      "warning": "Figyelem",
-      "critical": "Kritikus"
-    },
-    "profile": {
-      "title": "Értesítéseim",
-      "subtitle": "Az utolsó 10 üzenet.",
-      "empty": "Nincsenek értesítéseid.",
-      "seen": "Látva",
-      "retracted": "Visszavonva"
-    },
-    "nav": {
-      "myNotifications": "Értesítéseim"
-    },
-    "admin": {
-      "title": "Közlemények",
-      "newButton": "Új üzenet",
-      "form": {
-        "titleLabel": "Cím",
-        "titlePlaceholder": "Rövid cím",
-        "bodyLabel": "Törzs (markdown)",
-        "bodyPlaceholder": "Írd meg az üzenetet…",
-        "severityLabel": "Súlyosság",
-        "publishedAtLabel": "Publikálás időpontja",
-        "publishImmediately": "Azonnal",
-        "expiresAtLabel": "Lejárat",
-        "expiresIn24h": "+24 óra",
-        "expiresIn7d": "+7 nap",
-        "noExpiry": "Nincs lejárat",
-        "publishButton": "Publikálás",
-        "publishing": "Publikálás…",
-        "editTab": "Szerkesztés",
-        "previewTab": "Előnézet",
-        "titleCounter": "{count}/100",
-        "bodyCounter": "{count}/2000"
-      },
-      "list": {
-        "title": "Cím",
-        "severity": "Súlyosság",
-        "publishedAt": "Publikálva",
-        "expiresAt": "Lejár",
-        "state": "Állapot",
-        "stats": "Statisztika",
-        "actions": "Műveletek",
-        "empty": "Még nincsenek közlemények."
-      },
-      "state": {
-        "active": "Aktív",
-        "scheduled": "Ütemezett",
-        "expired": "Lejárt",
-        "deleted": "Visszavont"
-      },
-      "actions": {
-        "editExpiry": "Lejárat szerkesztése",
-        "saveExpiry": "Mentés",
-        "cancel": "Mégse",
-        "retract": "Visszavonás",
-        "confirmRetract": "Biztos vagy benne? A közlemény azonnal eltűnik a userek elől.",
-        "expand": "Statisztika",
-        "collapse": "Bezárás"
-      },
-      "stats": {
-        "totalUsers": "Elérhető userek",
-        "seenCount": "Látták",
-        "dismissRate": "Elzárási arány"
-      },
-      "filter": {
-        "all": "Mind",
-        "active": "Aktív",
-        "scheduled": "Ütemezett",
-        "expired": "Lejárt",
-        "deleted": "Visszavont"
-      }
     }
   }
 }

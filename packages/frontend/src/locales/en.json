@@ -30,8 +30,7 @@
     "openNav": "Open navigation",
     "replayOnboarding": "Replay intro",
     "admin": "Admin",
-    "installApp": "Install on home screen",
-    "myNotifications": "My notifications"
+    "installApp": "Install on home screen"
   },
   "login": {
     "title": "World Cup Prediction Game",
@@ -876,89 +875,6 @@
         "Faster launch, since the shell is already cached.",
         "Offline base view — even without network, the app opens with a friendly message."
       ]
-    }
-  },
-  "announcements": {
-    "modal": {
-      "ok": "OK",
-      "close": "Close",
-      "dialogLabel": "Announcement"
-    },
-    "severity": {
-      "info": "Info",
-      "success": "Success",
-      "warning": "Warning",
-      "critical": "Critical"
-    },
-    "profile": {
-      "title": "My notifications",
-      "subtitle": "Your last 10 messages.",
-      "empty": "You have no notifications.",
-      "seen": "Seen",
-      "retracted": "Retracted"
-    },
-    "nav": {
-      "myNotifications": "My notifications"
-    },
-    "admin": {
-      "title": "Announcements",
-      "newButton": "New announcement",
-      "form": {
-        "titleLabel": "Title",
-        "titlePlaceholder": "Short title",
-        "bodyLabel": "Body (markdown)",
-        "bodyPlaceholder": "Write the message…",
-        "severityLabel": "Severity",
-        "publishedAtLabel": "Publish at",
-        "publishImmediately": "Immediately",
-        "expiresAtLabel": "Expires at",
-        "expiresIn24h": "+24 hours",
-        "expiresIn7d": "+7 days",
-        "noExpiry": "No expiry",
-        "publishButton": "Publish",
-        "publishing": "Publishing…",
-        "editTab": "Edit",
-        "previewTab": "Preview",
-        "titleCounter": "{count}/100",
-        "bodyCounter": "{count}/2000"
-      },
-      "list": {
-        "title": "Title",
-        "severity": "Severity",
-        "publishedAt": "Published",
-        "expiresAt": "Expires",
-        "state": "State",
-        "stats": "Stats",
-        "actions": "Actions",
-        "empty": "No announcements yet."
-      },
-      "state": {
-        "active": "Active",
-        "scheduled": "Scheduled",
-        "expired": "Expired",
-        "deleted": "Retracted"
-      },
-      "actions": {
-        "editExpiry": "Edit expiry",
-        "saveExpiry": "Save",
-        "cancel": "Cancel",
-        "retract": "Retract",
-        "confirmRetract": "Are you sure? The announcement will disappear from users immediately.",
-        "expand": "Stats",
-        "collapse": "Close"
-      },
-      "stats": {
-        "totalUsers": "Reachable users",
-        "seenCount": "Seen",
-        "dismissRate": "Dismiss rate"
-      },
-      "filter": {
-        "all": "All",
-        "active": "Active",
-        "scheduled": "Scheduled",
-        "expired": "Expired",
-        "deleted": "Retracted"
-      }
     }
   }
 }
