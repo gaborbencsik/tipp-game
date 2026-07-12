@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>UX-045 v2 — Bracket-progresszió kiértékelt nézet (meglévő UI-ra építve)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    .card { box-shadow: 0 1px 2px 0 rgba(0,0,0,0.04), 0 1px 3px 0 rgba(0,0,0,0.06); }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-900 p-6">
+<div class="mx-auto max-w-3xl space-y-8">
+
+  <header class="space-y-2">
+    <div class="text-xs uppercase tracking-wide text-slate-500">UX-045 v2 · mockup</div>
+    <h1 class="text-2xl font-semibold">Kiértékelés a meglévő round-accordion UI-ban</h1>
+    <p class="text-sm text-slate-600">
+      Ugyanaz a szerkezet mint leadáskor (<code>BracketRoundCard</code> + <code>BracketMatchCard</code> + <code>TeamSlotChip</code>).
+      Csak <em>vékony rétegek</em> kerülnek rá: a round-header jobb oldalán a <code>done/total</code> badge helyett
+      <code>helyes/total + pont-pirula</code>; a match-cardokon <em>mindkét</em> csapat-chip
+      zöld (benne van a valós <code>participants[következő_kör]</code> halmazban) vagy piros (nincs benne).
+      A pontos párosítás nem számít — csak az, hogy a user által tippelt csapatok bejutottak-e. Semleges/szürke chip nincs.
+    </p>
+  </header>
+
+  <!-- ==============================================================
+       1. Legfelül: mostani state után egy kis "Kiértékelés" összegző csík
+       (a picker <div> tetejére, az info-card helyére kiértékelt módban)
+       ============================================================== -->
+  <section class="space-y-3">
+    <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">1 · Kiértékelés összegző csík (a picker tetején)</h2>
+
+    <div data-testid="bracket-progression-picker" class="space-y-2">
+      <!-- ÚJ: kiértékelt csík — a jelenlegi kék infocard helyén. Egyetlen sor. -->
+      <div class="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 flex items-center gap-3">
+        <span class="text-lg" aria-hidden="true">🏆</span>
+        <div class="flex-1 min-w-0">
+          <div class="text-xs text-emerald-900 font-semibold">Kiértékelt tipp</div>
+          <div class="text-[11px] text-emerald-800">Nyisd ki a köröket, hogy lásd melyik csapatot találtad el.</div>
+        </div>
+        <span class="inline-flex items-center rounded-full bg-emerald-500 text-white px-3 py-1 text-sm font-bold shadow-sm">
+          27 p
+        </span>
+      </div>
+
+      <!-- Round kártyák: pontosan a meglévő BracketRoundCard szerkezet -->
+      <!-- last_32 (max találat) — kollapszolt -->
+      <section class="rounded-xl bg-white border border-emerald-300 shadow-sm">
+        <button class="w-full flex items-center justify-between px-3 py-3 text-left">
+          <span class="font-semibold text-sm flex items-center gap-1.5 text-slate-800">
+            <span class="text-emerald-500">✓</span>
+            <span>Nyolcaddöntő</span>
+          </span>
+          <!-- ÚJ: pont-pirula a done/total badge MELLÉ, nem helyette -->
+          <span class="flex items-center gap-1.5">
+            <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">16 / 16</span>
+            <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500 text-white">+32 p</span>
+          </span>
+        </button>
+      </section>
+
+      <!-- last_16 (részleges) — kollapszolt -->
+      <section class="rounded-xl bg-white border border-slate-200">
+        <button class="w-full flex items-center justify-between px-3 py-3 text-left">
+          <span class="font-semibold text-sm flex items-center gap-1.5 text-slate-800">
+            <span>Legjobb 16</span>
+          </span>
+          <span class="flex items-center gap-1.5">
+            <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">12 / 16</span>
+            <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500 text-white">+36 p</span>
+          </span>
+        </button>
+      </section>
+
+      <!-- Negyeddöntő — kollapszolt, részleges (amber) -->
+      <section class="rounded-xl bg-white border border-amber-200">
+        <button class="w-full flex items-center justify-between px-3 py-3 text-left">
+          <span class="font-semibold text-sm flex items-center gap-1.5 text-slate-800">
+            <span>Negyeddöntő</span>
+          </span>
+          <span class="flex items-center gap-1.5">
+            <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">4 / 8</span>
+            <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-500 text-white">+16 p</span>
+          </span>
+        </button>
+      </section>
+
+      <!-- Elődöntő — expandált (a lényeg!) -->
+      <section class="rounded-xl bg-white border-2 border-blue-400 ring-4 ring-blue-100 shadow-md">
+        <button class="w-full flex items-center justify-between px-3 py-3 text-left">
+          <span class="font-semibold text-sm flex items-center gap-1.5 text-slate-800">
+            <span>Elődöntő</span>
+          </span>
+          <span class="flex items-center gap-1.5">
+            <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">1 / 4</span>
+            <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-500 text-white">+6 p</span>
+          </span>
+        </button>
+        <div class="px-3 pb-3 border-t border-slate-100 pt-3 space-y-3">
+
+          <!-- SF meccs #1: a user 🇦🇷 vs 🇭🇷 párosítást tippelt → mindkettő bejutott → két zöld chip -->
+          <div data-testid="bracket-match-sf1">
+            <div class="flex items-center gap-1.5 mb-1 ml-0.5">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Elődöntő M1</span>
+              <span class="text-[9px] font-medium px-1.5 py-px rounded-full bg-indigo-50 text-indigo-700">W(QF·M1) ↔ W(QF·M2)</span>
+            </div>
+            <div class="grid items-stretch gap-1.5" style="grid-template-columns: 1fr auto 1fr;">
+              <!-- Team A: bejutott → zöld -->
+              <div class="rounded-lg border-2 border-emerald-500 bg-emerald-50 px-3 py-2 flex items-center gap-2 relative">
+                <span class="text-lg">🇦🇷</span>
+                <span class="flex-1 min-w-0">
+                  <span class="block text-[10px] font-semibold uppercase text-emerald-700">W(QF·M1)</span>
+                  <span class="block text-sm font-medium text-emerald-900 truncate">Argentína</span>
+                </span>
+                <span class="absolute -top-1.5 -right-1.5 inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500 text-white text-xs shadow-sm" aria-label="bejutott">✓</span>
+              </div>
+              <span class="flex items-center justify-center text-[11px] font-bold text-slate-300 px-1">vs</span>
+              <!-- Team B: bejutott → zöld -->
+              <div class="rounded-lg border-2 border-emerald-500 bg-emerald-50 px-3 py-2 flex items-center gap-2 relative">
+                <span class="text-lg">🇭🇷</span>
+                <span class="flex-1 min-w-0">
+                  <span class="block text-[10px] font-semibold uppercase text-emerald-700">W(QF·M2)</span>
+                  <span class="block text-sm font-medium text-emerald-900 truncate">Horvátország</span>
+                </span>
+                <span class="absolute -top-1.5 -right-1.5 inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500 text-white text-xs shadow-sm" aria-label="bejutott">✓</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- SF meccs #2: 🇧🇷 (nem jutott) vs 🇩🇪 (bejutott) → egy piros, egy zöld -->
+          <div>
+            <div class="flex items-center gap-1.5 mb-1 ml-0.5">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Elődöntő M2</span>
+              <span class="text-[9px] font-medium px-1.5 py-px rounded-full bg-indigo-50 text-indigo-700">W(QF·M3) ↔ W(QF·M4)</span>
+            </div>
+            <div class="grid items-stretch gap-1.5" style="grid-template-columns: 1fr auto 1fr;">
+              <!-- Team A: nem jutott → piros -->
+              <div class="rounded-lg border-2 border-rose-400 bg-rose-50 px-3 py-2 flex items-center gap-2 relative">
+                <span class="text-lg">🇧🇷</span>
+                <span class="flex-1 min-w-0">
+                  <span class="block text-[10px] font-semibold uppercase text-rose-700">W(QF·M3)</span>
+                  <span class="block text-sm font-medium text-rose-900 truncate line-through decoration-rose-400">Brazília</span>
+                </span>
+                <span class="absolute -top-1.5 -right-1.5 inline-flex items-center justify-center w-5 h-5 rounded-full bg-rose-500 text-white text-xs shadow-sm" aria-label="nem jutott be">✗</span>
+              </div>
+              <span class="flex items-center justify-center text-[11px] font-bold text-slate-300 px-1">vs</span>
+              <!-- Team B: bejutott → zöld -->
+              <div class="rounded-lg border-2 border-emerald-500 bg-emerald-50 px-3 py-2 flex items-center gap-2 relative">
+                <span class="text-lg">🇩🇪</span>
+                <span class="flex-1 min-w-0">
+                  <span class="block text-[10px] font-semibold uppercase text-emerald-700">W(QF·M4)</span>
+                  <span class="block text-sm font-medium text-emerald-900 truncate">Németország</span>
+                </span>
+                <span class="absolute -top-1.5 -right-1.5 inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500 text-white text-xs shadow-sm" aria-label="bejutott">✓</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Round-level breakdown a body alján — kicsi, magyarázza a pontot -->
+          <div class="mt-2 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+            <span>3 csapat bejutott a döntőbe × 2 p</span>
+            <span class="font-semibold text-slate-700">Összesen +6 p</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Döntő + Bronze — expandált, a Bajnok pick + Bronze mind bent -->
+      <section class="rounded-xl bg-white border border-slate-200">
+        <button class="w-full flex items-center justify-between px-3 py-3 text-left">
+          <span class="font-semibold text-sm flex items-center gap-1.5 text-slate-800">
+            <span>Döntő &amp; Bronzérmes</span>
+          </span>
+          <span class="flex items-center gap-1.5">
+            <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">👑 +10 p</span>
+            <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">🥉 0 p</span>
+          </span>
+        </button>
+        <div class="px-3 pb-3 border-t border-slate-100 pt-3 space-y-3">
+
+          <!-- Döntő meccs -->
+          <div>
+            <div class="flex items-center gap-1.5 mb-1 ml-0.5">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Döntő</span>
+              <span class="text-[9px] font-medium px-1.5 py-px rounded-full bg-indigo-50 text-indigo-700">Bajnok</span>
+            </div>
+            <div class="grid items-stretch gap-1.5" style="grid-template-columns: 1fr auto 1fr;">
+              <!-- User bajnok pick: Argentína — bajnok lett → zöld -->
+              <div class="rounded-lg border-2 border-emerald-500 bg-emerald-50 px-3 py-2 flex items-center gap-2 relative">
+                <span class="text-lg">🇦🇷</span>
+                <span class="flex-1 min-w-0">
+                  <span class="block text-[10px] font-semibold uppercase text-emerald-700">Bajnok tipp</span>
+                  <span class="block text-sm font-medium text-emerald-900 truncate">Argentína</span>
+                </span>
+                <span class="absolute -top-1.5 -right-1.5 inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500 text-white text-xs shadow-sm">👑</span>
+              </div>
+              <span class="flex items-center justify-center text-[11px] font-bold text-slate-300 px-1">vs</span>
+              <!-- Ellenfél: nem lett bajnok → piros -->
+              <div class="rounded-lg border-2 border-rose-400 bg-rose-50 px-3 py-2 flex items-center gap-2 relative">
+                <span class="text-lg">🇫🇷</span>
+                <span class="flex-1 min-w-0">
+                  <span class="block text-[10px] font-semibold uppercase text-rose-700">Döntős</span>
+                  <span class="block text-sm font-medium text-rose-900 truncate line-through decoration-rose-400">Franciaország</span>
+                </span>
+                <span class="absolute -top-1.5 -right-1.5 inline-flex items-center justify-center w-5 h-5 rounded-full bg-rose-500 text-white text-xs shadow-sm">✗</span>
+              </div>
+            </div>
+            <div class="mt-2 flex items-center justify-between text-[11px] text-slate-500">
+              <span>Bajnok tipp helyes</span>
+              <span class="font-semibold text-emerald-700">+10 p</span>
+            </div>
+          </div>
+
+          <!-- Bronze meccs -->
+          <div class="pt-2 border-t border-slate-100">
+            <div class="flex items-center gap-1.5 mb-1 ml-0.5">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Bronzmérkőzés</span>
+              <span class="text-[9px] font-medium px-1.5 py-px rounded-full bg-indigo-50 text-indigo-700">Bronzérmes</span>
+            </div>
+            <div class="grid items-stretch gap-1.5" style="grid-template-columns: 1fr auto 1fr;">
+              <!-- User bronze pick: Portugália — nem lett bronz → piros -->
+              <div class="rounded-lg border-2 border-rose-400 bg-rose-50 px-3 py-2 flex items-center gap-2 relative">
+                <span class="text-lg">🇵🇹</span>
+                <span class="flex-1 min-w-0">
+                  <span class="block text-[10px] font-semibold uppercase text-rose-700">Bronzérmes tipp</span>
+                  <span class="block text-sm font-medium text-rose-900 truncate line-through decoration-rose-400">Portugália</span>
+                </span>
+                <span class="absolute -top-1.5 -right-1.5 inline-flex items-center justify-center w-5 h-5 rounded-full bg-rose-500 text-white text-xs shadow-sm">✗</span>
+              </div>
+              <span class="flex items-center justify-center text-[11px] font-bold text-slate-300 px-1">vs</span>
+              <!-- Ellenfél: bronzérmes lett → zöld -->
+              <div class="rounded-lg border-2 border-emerald-500 bg-emerald-50 px-3 py-2 flex items-center gap-2 relative">
+                <span class="text-lg">🇭🇷</span>
+                <span class="flex-1 min-w-0">
+                  <span class="block text-[10px] font-semibold uppercase text-emerald-700">Bronzérmes</span>
+                  <span class="block text-sm font-medium text-emerald-900 truncate">Horvátország</span>
+                </span>
+                <span class="absolute -top-1.5 -right-1.5 inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500 text-white text-xs shadow-sm">✓</span>
+              </div>
+            </div>
+            <div class="mt-2 flex items-center justify-between text-[11px] text-slate-500">
+              <span title="A bronzérmes tipp jelenleg nem ad pontot." class="cursor-help">Bronze tipp nem pontoz ⓘ</span>
+              <span class="font-semibold text-slate-500">0 p</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- A "sticky bottom" stepper INKÁBB szedjük le kiértékelt módban, mert a save-nak nincs értelme -->
+      <!-- Helyette: opcionális "összes pont" hűvös csík -->
+    </div>
+  </section>
+
+  <!-- ==============================================================
+       2. Kollapszolt kártyák minta-galéria (különböző állapotok)
+       ============================================================== -->
+  <section class="space-y-3">
+    <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">2 · Kollapszolt kártya-állapotok</h2>
+
+    <div class="space-y-2">
+      <!-- Max találat: emerald border, ✓ ikon -->
+      <section class="rounded-xl bg-white border border-emerald-300 shadow-sm">
+        <div class="w-full flex items-center justify-between px-3 py-3">
+          <span class="font-semibold text-sm flex items-center gap-1.5 text-slate-800">
+            <span class="text-emerald-500">✓</span><span>Nyolcaddöntő</span>
+          </span>
+          <span class="flex items-center gap-1.5">
+            <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">16 / 16</span>
+            <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500 text-white">+32 p</span>
+          </span>
+        </div>
+      </section>
+
+      <!-- Részleges: default border, amber pill -->
+      <section class="rounded-xl bg-white border border-slate-200">
+        <div class="w-full flex items-center justify-between px-3 py-3">
+          <span class="font-semibold text-sm text-slate-800">Negyeddöntő</span>
+          <span class="flex items-center gap-1.5">
+            <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">4 / 8</span>
+            <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-500 text-white">+16 p</span>
+          </span>
+        </div>
+      </section>
+
+      <!-- 0 találat: default border, szürke pill -->
+      <section class="rounded-xl bg-white border border-slate-200">
+        <div class="w-full flex items-center justify-between px-3 py-3">
+          <span class="font-semibold text-sm text-slate-800">Döntő</span>
+          <span class="flex items-center gap-1.5">
+            <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">0 / 2</span>
+            <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-500">0 p</span>
+          </span>
+        </div>
+      </section>
+
+      <!-- Részlegesen kiértékelt (admin még nem rögzítette): szaggatott border, "értékelés folyamatban" -->
+      <section class="rounded-xl bg-white border-2 border-dashed border-slate-300 bg-slate-50">
+        <div class="w-full flex items-center justify-between px-3 py-3">
+          <span class="font-semibold text-sm text-slate-500">Elődöntő</span>
+          <span class="flex items-center gap-1.5">
+            <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-400">– / 4</span>
+            <span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-400 italic">értékelés folyamatban</span>
+          </span>
+        </div>
+      </section>
+
+      <!-- Nem tippelte a user: default border, "nincs tipp" -->
+      <section class="rounded-xl bg-white border border-slate-200">
+        <div class="w-full flex items-center justify-between px-3 py-3">
+          <span class="font-semibold text-sm text-slate-800">Elődöntő</span>
+          <span class="flex items-center gap-1.5">
+            <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 italic">nincs tipp</span>
+            <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-500">0 p</span>
+          </span>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  <!-- ==============================================================
+       3. Alul (a jelenlegi save-status sticky helyett)
+       ============================================================== -->
+  <section class="space-y-3">
+    <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">3 · A sticky "save status" csík helyett</h2>
+    <div class="rounded-xl border border-slate-200 bg-white p-4">
+      <p class="text-sm text-slate-600 mb-3">
+        Kiértékelt módban a mostani <em>sticky bottom stepper + save-status</em> csíknak nincs értelme (nincs mit menteni,
+        a haladás 100%-on áll). Két opció:
+      </p>
+      <div class="space-y-2">
+        <!-- opció A -->
+        <div class="rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2.5 flex items-center justify-between">
+          <span class="text-sm font-semibold text-emerald-900">Összesen 27 pont</span>
+          <span class="inline-flex items-center gap-1 text-[11px] text-emerald-700">
+            <span>Bracket · 26</span><span>·</span><span>Bajnok · 10</span><span>·</span><span>Bronze · 0</span>
+          </span>
+        </div>
+        <div class="text-[11px] text-slate-500 italic">Opció A — kompakt összegző csík a sticky helyén.</div>
+
+        <!-- opció B -->
+        <div class="text-[11px] text-slate-500 italic">Opció B — teljesen elrejtjük a sticky csíkot (a fejlécben van a pont, ez elég). Egyszerűbb, kevesebb chrome.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==============================================================
+       4. Mit kell módosítani a meglévő komponensekben
+       ============================================================== -->
+  <section class="space-y-3">
+    <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-500">4 · Változtatások a meglévő komponensekben</h2>
+    <div class="rounded-xl border border-slate-200 bg-white p-4 text-sm space-y-3">
+      <div>
+        <div class="font-semibold text-slate-900">BracketProgressionPicker.vue</div>
+        <ul class="list-disc pl-5 text-slate-600 space-y-0.5">
+          <li>Új prop: <code>correctAnswer?: BracketProgressionCorrectAnswer | null</code>, végigadva a round-cardoknak.</li>
+          <li>Új prop: <code>pointsBreakdown?: BracketBreakdown | null</code> (opcionális; ha megvan, a header-badge helyett a round-cardokba adjuk).</li>
+          <li>Kiértékelt módban a <code>info-card</code> kék tipp-csík helyére a "Kiértékelt tipp · 27 p" emerald csík.</li>
+          <li>Kiértékelt módban a <em>sticky save-status csík</em> ne rendelődjön.</li>
+        </ul>
+      </div>
+      <div>
+        <div class="font-semibold text-slate-900">BracketRoundCard.vue</div>
+        <ul class="list-disc pl-5 text-slate-600 space-y-0.5">
+          <li>Új prop: <code>evaluation?: { matched: number; total: number; points: number } | null</code>.</li>
+          <li>Ha <code>evaluation</code> létezik: a header-badge <code>done/total</code> ⇒ <code>matched/total</code> (emerald/amber/slate), plusz mögé pont-pirula (<code>+X p</code>).</li>
+          <li>A card border-je kiértékelt módban <em>eltér</em> az expand/lock szabályoktól: max találat = emerald-300, nulla = slate-200 (default), részleges = amber-200.</li>
+        </ul>
+      </div>
+      <div>
+        <div class="font-semibold text-slate-900">BracketMatchCard.vue + TeamSlotChip.vue</div>
+        <ul class="list-disc pl-5 text-slate-600 space-y-0.5">
+          <li>Új prop chain: <code>evaluation?: { advancingTeamIds: ReadonlySet&lt;string&gt; } | null</code> — a kör után továbbjutott csapatok halmaza (a <code>correctAnswer.participants[következő_kör]</code>-ből származtatva).</li>
+          <li><em>Minden</em> chip (mind a two team slot) kap színt — nincs semleges/szürke állapot.</li>
+          <li>Ha a chipen ülő csapat benne van a <code>advancingTeamIds</code> halmazban: emerald-2 border + jobb felső ✓ badge.</li>
+          <li>Ha nincs benne: rose-2 border + <code>line-through</code> a csapatnéven + jobb felső ✗ badge.</li>
+          <li>A "tényleges: {csapat}" mini-sort <em>nem</em> mutatjuk — a pontos párosítás irreleváns, csak az számít, hogy a csapat bejutott-e.</li>
+          <li>A chipek <code>disabled</code>-ek maradnak kiértékelt módban (readOnly).</li>
+        </ul>
+      </div>
+      <div>
+        <div class="font-semibold text-slate-900">FinalsAndBronzeCard.vue</div>
+        <ul class="list-disc pl-5 text-slate-600 space-y-0.5">
+          <li>Ugyanaz mint a többi round-card: <code>evaluation</code> prop, header-badge átalakítás — de itt <em>két</em> pirulát mutat (👑 Bajnok +N · 🥉 Bronze 0).</li>
+          <li>A bronze meccs alján egy "Bronze tipp nem pontoz ⓘ" tooltip.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer class="text-xs text-slate-500 pt-4 border-t border-slate-200">
+    Mockup file: <code>plans/design/UX-045-bracket-evaluated-view.mockup-v2.html</code> · A v1 (külön táblázat + bracket-fa) marad referenciaként, de az implementációra ez a v2 a javasolt irány.
+  </footer>
+</div>
+</body>
+</html>
