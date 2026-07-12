@@ -160,3 +160,6 @@ screenshots/
 .playwright-mcp/
 .local
 .claude-logs/
+
+# QMD local search cache
+.qmd-cache/
