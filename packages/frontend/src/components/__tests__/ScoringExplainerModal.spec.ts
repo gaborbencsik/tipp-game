@@ -23,7 +23,7 @@ describe('ScoringExplainerModal', () => {
     setActivePinia(createPinia())
   })
 
-  it('1 csoport — fejléc a csoportnévvel', () => {
+  it('1 group — header with group name', () => {
     const store = useScoringExplainerStore()
     store.isOpen = true
     store.data = makeData({
@@ -33,7 +33,7 @@ describe('ScoringExplainerModal', () => {
     expect(wrapper.text()).toContain('Pulykák pontozása')
   })
 
-  it('2+ csoport — torna tippek és statisztikai szekció megjelenik', () => {
+  it('2+ groups — tournament predictions and statistics section appear', () => {
     const store = useScoringExplainerStore()
     store.isOpen = true
     store.data = makeData({
@@ -47,7 +47,7 @@ describe('ScoringExplainerModal', () => {
     expect(wrapper.text()).toContain('Torna gólkirálya')
   })
 
-  it('match-pontozás — 4 stackelhető szabály jelenik meg', () => {
+  it('match scoring — 4 stackable rules appear', () => {
     const store = useScoringExplainerStore()
     store.isOpen = true
     store.data = makeData()
@@ -58,7 +58,7 @@ describe('ScoringExplainerModal', () => {
     expect(wrapper.text()).toContain('Góllövő tipp talált')
   })
 
-  it('kedvenc csapat ×2 multiplier sor mindig megjelenik a meccs-pontozásban', () => {
+  it('favorite team ×2 multiplier row always appears in match scoring', () => {
     const store = useScoringExplainerStore()
     store.isOpen = true
     store.data = makeData({
@@ -69,7 +69,7 @@ describe('ScoringExplainerModal', () => {
     expect(wrapper.text()).toContain('×2')
   })
 
-  it('ESC bezárja a modalt', async () => {
+  it('ESC closes the modal', async () => {
     const store = useScoringExplainerStore()
     store.isOpen = true
     store.data = makeData()
@@ -79,14 +79,14 @@ describe('ScoringExplainerModal', () => {
     expect(store.isOpen).toBe(false)
   })
 
-  it('isOpen=false → nem renderel semmit', () => {
+  it('isOpen=false → renders nothing', () => {
     const store = useScoringExplainerStore()
     store.isOpen = false
     const wrapper = mount(ScoringExplainerModal)
     expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
   })
 
-  it('mobil kártya layout — minden meccs-szabály külön kártyában megjelenik', () => {
+  it('mobile card layout — every match rule appears in its own card', () => {
     const store = useScoringExplainerStore()
     store.isOpen = true
     store.data = makeData()
@@ -100,7 +100,7 @@ describe('ScoringExplainerModal', () => {
     expect(cards[4]!.text()).toContain('×2')
   })
 
-  it('mobil container `sm:hidden`, desktop táblázat container `hidden sm:block`', () => {
+  it('mobile container `sm:hidden`, desktop table container `hidden sm:block`', () => {
     const store = useScoringExplainerStore()
     store.isOpen = true
     store.data = makeData()

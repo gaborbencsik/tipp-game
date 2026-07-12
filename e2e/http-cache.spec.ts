@@ -22,11 +22,11 @@ const CACHED_ENDPOINTS: ReadonlyArray<CachedEndpoint> = [
   { path: '/api/matches', maxAge: 0, swr: 15 },
 ]
 
-// Két consecutive kérést indítunk addig, amíg ugyanazt az ETag-et nem kapjuk vissza —
-// így biztos, hogy az adott pillanatban a backend-en a body stabilan ugyanaz. Párhuzamos
-// teszt-write-ok (új liga / csapat / játékos) közben más worker módosíthatja a DB-t, ami
-// az ETag-et legitim módon eltolja; a teszt-invariáns "azonos body → 304" csak stabil
-// pillanatban értelmes.
+// We fire two consecutive requests until we get back the same ETag — that way
+// we're sure the backend body is stable at that moment. Concurrent test writes
+// (new league / team / player) from other workers can legitimately shift the
+// ETag; the test invariant "same body → 304" only makes sense in a stable
+// snapshot.
 async function stableEtag(
   request: APIRequestContext,
   path: string,

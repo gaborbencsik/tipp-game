@@ -57,7 +57,7 @@ describe('scoring-explainer.service', () => {
     vi.clearAllMocks()
   })
 
-  it('1-csoport user → 1 elemű groups, helyes config + favoriteTeamDoublePoints', async () => {
+  it('single-group user → groups with 1 element, correct config + favoriteTeamDoublePoints', async () => {
     const groupRow = { id: 'g1', name: 'Pulykák', scoringConfigId: 'cfg-g1', favoriteTeamDoublePoints: true }
     const groupCfg = { ...DEFAULT_CFG, id: 'cfg-g1', isGlobalDefault: false, exactBonusPoints: 4 }
 
@@ -81,7 +81,7 @@ describe('scoring-explainer.service', () => {
     expect(result.groups[0]?.specialTypes).toEqual([])
   })
 
-  it('csoport without scoringConfigId → öröklődő default config', async () => {
+  it('group without scoringConfigId → inherited default config', async () => {
     const groupRow = { id: 'g1', name: 'Default-örökös', scoringConfigId: null, favoriteTeamDoublePoints: false }
 
     mockSelect
@@ -96,7 +96,7 @@ describe('scoring-explainer.service', () => {
     expect(result.groups[0]?.config.correctOutcomePoints).toBe(1)
   })
 
-  it('special tippek: csoport-saját + feliratkozott globális, helyes source címkével', async () => {
+  it('special predictions: group-owned + subscribed global, with correct source label', async () => {
     const groupRow = { id: 'g1', name: 'Pulykák', scoringConfigId: null, favoriteTeamDoublePoints: false }
     const owned = { id: 'sp-owned', name: 'Csoport saját', description: 'd1', points: 5, groupId: 'g1' }
     const subscribed = { id: 'sp-global', name: 'Globális', description: 'd2', points: 7, groupId: null }
@@ -117,7 +117,7 @@ describe('scoring-explainer.service', () => {
     ])
   })
 
-  it('0-csoport user → üres groups array', async () => {
+  it('zero-group user → empty groups array', async () => {
     mockSelect
       .mockReturnValueOnce(configResp([DEFAULT_CFG]))
       .mockReturnValueOnce(userGroupsResp([]))
@@ -133,7 +133,7 @@ describe('isConfigEffectivelyFrozen integration', () => {
     vi.clearAllMocks()
   })
 
-  it('globális default frozen, ha BÁRMELYIK liga starts_at <= now', async () => {
+  it('global default is frozen if ANY league starts_at <= now', async () => {
     mockSelect
       .mockReturnValueOnce(configResp([DEFAULT_CFG]))
       .mockReturnValueOnce(userGroupsResp([]))
@@ -144,7 +144,7 @@ describe('isConfigEffectivelyFrozen integration', () => {
     expect(result.default.frozenAt).toBe(PAST.toISOString())
   })
 
-  it('globális default NEM frozen, ha minden liga starts_at > now vagy null', async () => {
+  it('global default is NOT frozen if every league starts_at > now or null', async () => {
     mockSelect
       .mockReturnValueOnce(configResp([DEFAULT_CFG]))
       .mockReturnValueOnce(userGroupsResp([]))
@@ -155,7 +155,7 @@ describe('isConfigEffectivelyFrozen integration', () => {
     expect(result.default.frozenAt).toBeNull()
   })
 
-  it('per-csoport config frozen csak a csoport ligái alapján', async () => {
+  it('per-group config is frozen based only on that group\'s leagues', async () => {
     const groupRow = { id: 'g1', name: 'Csoport', scoringConfigId: null, favoriteTeamDoublePoints: false }
     mockSelect
       .mockReturnValueOnce(configResp([DEFAULT_CFG]))
@@ -170,7 +170,7 @@ describe('isConfigEffectivelyFrozen integration', () => {
     expect(result.groups[0]?.config.frozenAt).toBe(PAST.toISOString())
   })
 
-  it('csoport NEM frozen, ha csak future liga tartozik hozzá', async () => {
+  it('group is NOT frozen if it only has future leagues', async () => {
     const groupRow = { id: 'g1', name: 'Csoport', scoringConfigId: null, favoriteTeamDoublePoints: false }
     mockSelect
       .mockReturnValueOnce(configResp([DEFAULT_CFG]))
@@ -184,7 +184,7 @@ describe('isConfigEffectivelyFrozen integration', () => {
     expect(result.groups[0]?.configFrozenAt).toBeNull()
   })
 
-  it('üres group_leagues → fallback minden ligára', async () => {
+  it('empty group_leagues → fallback to all leagues', async () => {
     const groupRow = { id: 'g1', name: 'Csoport', scoringConfigId: null, favoriteTeamDoublePoints: false }
     mockSelect
       .mockReturnValueOnce(configResp([DEFAULT_CFG]))
@@ -198,7 +198,7 @@ describe('isConfigEffectivelyFrozen integration', () => {
     expect(result.groups[0]?.configFrozenAt).toBe(PAST.toISOString())
   })
 
-  it('API response 3 mezős config-ot ad vissza, régi mezők nem szerepelnek', async () => {
+  it('API response returns a 3-field config, old fields are not present', async () => {
     mockSelect
       .mockReturnValueOnce(configResp([DEFAULT_CFG]))
       .mockReturnValueOnce(userGroupsResp([]))

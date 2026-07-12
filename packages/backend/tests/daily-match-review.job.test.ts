@@ -117,7 +117,7 @@ describe('runDailyMatchReviewJob', () => {
     )
   })
 
-  it('uses Europe/Budapest naptári napot a scope_key-hez', async () => {
+  it('uses Europe/Budapest calendar day for the scope_key', async () => {
     // 2026-06-11 22:30 UTC = 2026-06-12 00:30 Budapest
     setMatchesQuery([{ id: 'm1', scheduledAt: new Date('2026-06-12T18:00:00Z') }])
     setTargetUsersQuery([{ id: 'u1', missingCount: 1 }])

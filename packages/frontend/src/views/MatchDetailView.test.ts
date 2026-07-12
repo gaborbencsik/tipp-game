@@ -410,7 +410,7 @@ describe('MatchDetailView', () => {
   })
 
   // ─── UX-043: outcomeAfterDraw badge in the locked-tip block ───────────────
-  describe('UX-043 outcomeAfterDraw badge (saját tipp)', () => {
+  describe('UX-043 outcomeAfterDraw badge (own tip)', () => {
     const KNOCKOUT_DRAW_MATCH: Match = {
       id: 'match-ko-draw',
       homeTeam: { id: 'ht-hu', name: 'Magyarország', shortCode: 'HUN', flagUrl: null, teamType: 'national', countryCode: 'hu', marketValueEur: null, transfermarktId: null },
@@ -461,7 +461,7 @@ describe('MatchDetailView', () => {
       expect(badge.text()).toContain('Szerbia')
     })
 
-    it('knockout decisive result → badge marked "inactive" (nem volt döntetlen)', async () => {
+    it('knockout decisive result → badge marked "inactive" (was not a draw)', async () => {
       const { wrapper } = await mountView('match-ko-decisive', [KNOCKOUT_DECISIVE_MATCH], [], [predictionFor('match-ko-decisive', 'penalties_home', 1)])
       const badge = wrapper.find('[data-testid="own-outcome-after-draw"] [data-testid="outcome-after-draw-badge"]')
       expect(badge.attributes('data-status')).toBe('inactive')

@@ -31,7 +31,7 @@ test.describe('Admin tournament evaluation (US-1311)', () => {
   test('admin sets correct answer → triggers evaluation → backend persists answer and audits run', async ({ page }) => {
     // Arrange: create a unique text-typed global type so the test is repeatable.
     const deadline = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-    const typeName = `E2E torna gólkirály ${Date.now()}`
+    const typeName = `E2E tournament top scorer ${Date.now()}`
     const created = await createGlobalSpecialType({
       name: typeName,
       inputType: 'text',

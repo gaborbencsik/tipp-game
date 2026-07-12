@@ -41,7 +41,7 @@ describe('DayNavigator', () => {
     expect(w.emitted('next')).toHaveLength(1)
   })
 
-  it('emits showAll on Összes button click', async () => {
+  it('emits showAll on Show all button click', async () => {
     const w = mountNav()
     await w.find('[data-testid="day-nav-all"]').trigger('click')
     expect(w.emitted('showAll')).toHaveLength(1)
@@ -69,14 +69,14 @@ describe('DayNavigator', () => {
     expect(w.emitted('next')).toBeUndefined()
   })
 
-  it('Összes button has active styling when isShowingAll is true', () => {
+  it('Show all button has active styling when isShowingAll is true', () => {
     const w = mountNav({ isShowingAll: true })
     const btn = w.find('[data-testid="day-nav-all"]')
     expect(btn.classes()).toContain('bg-blue-50')
     expect(btn.classes()).toContain('ring-2')
   })
 
-  it('Összes button has inactive styling when isShowingAll is false', () => {
+  it('Show all button has inactive styling when isShowingAll is false', () => {
     const w = mountNav({ isShowingAll: false })
     const btn = w.find('[data-testid="day-nav-all"]')
     expect(btn.classes()).toContain('bg-white')

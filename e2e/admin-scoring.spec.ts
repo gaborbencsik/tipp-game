@@ -58,7 +58,7 @@ test.describe('Admin scoring config', () => {
     await ensureUser()
   })
 
-  test('admin form: 3 mező megjelenik, érték módosítása mentés után toast + persist', async ({ page }) => {
+  test('admin form: 3 fields visible, value change shows toast + persists after save', async ({ page }) => {
     const before = await getScoringConfig()
     const isFrozen = before.frozenAt !== null && before.frozenAt !== undefined
     const nextOutcome = before.correctOutcomePoints === 1 ? 2 : 1
@@ -133,6 +133,13 @@ test.describe('Admin scoring config', () => {
     await expect(page.getByTestId('field-exactBonusPoints')).toHaveValue(String(nextExact))
     await expect(page.getByTestId('field-extraTimeBonusPoints')).toHaveValue(String(nextET))
 
+    // Poll the backend directly: `mergeUpdated` already proved the PUT response
+    // carried the new values, but under load the follow-up GET can lag briefly
+    // (connection reuse, cache flush). Poll rather than a one-shot fetch so we
+    // don't flake on that transient window.
+    await expect
+      .poll(async () => (await getScoringConfig()).correctOutcomePoints, { timeout: 5000 })
+      .toBe(nextOutcome)
     const after = await getScoringConfig()
     expect(after.correctOutcomePoints).toBe(nextOutcome)
     expect(after.exactBonusPoints).toBe(nextExact)
@@ -153,7 +160,7 @@ test.describe('Admin scoring config', () => {
     }
   })
 
-  test('frozen állapot: ha auto-freeze érvényes, banner látszik és form letiltva', async ({ page }) => {
+  test('frozen state: when auto-freeze is active, banner is shown and form is disabled', async ({ page }) => {
     const cfg = await getScoringConfig()
 
     await injectSession(page)

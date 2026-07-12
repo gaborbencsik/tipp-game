@@ -33,7 +33,7 @@ describe('useScoringExplainerStore', () => {
     vi.clearAllMocks()
   })
 
-  it('open() lazy fetch + isOpen=true sikeres válasznál', async () => {
+  it('open() lazy fetch + isOpen=true on successful response', async () => {
     mockExplainer.mockResolvedValue({ default: {}, defaultFrozenAt: null, groups: [] })
     const store = useScoringExplainerStore()
     await store.open('menu')
@@ -43,7 +43,7 @@ describe('useScoringExplainerStore', () => {
     expect(mockExplainer).toHaveBeenCalledTimes(1)
   })
 
-  it('második open() nem fetch-el (cache)', async () => {
+  it('second open() does not fetch (cache)', async () => {
     mockExplainer.mockResolvedValue({ default: {}, defaultFrozenAt: null, groups: [] })
     const store = useScoringExplainerStore()
     await store.open('menu')
@@ -53,7 +53,7 @@ describe('useScoringExplainerStore', () => {
     expect(store.lastSource).toBe('leaderboard')
   })
 
-  it('fetch hiba → isOpen marad false, error set, toast hívva', async () => {
+  it('fetch error → isOpen stays false, error set, toast called', async () => {
     mockExplainer.mockRejectedValue(new Error('boom'))
     const store = useScoringExplainerStore()
     await store.open('menu')
@@ -70,7 +70,7 @@ describe('useScoringExplainerStore', () => {
     expect(store.isOpen).toBe(false)
   })
 
-  it('open() trackeli a scoring_explainer_opened eseményt', async () => {
+  it('open() tracks the scoring_explainer_opened event', async () => {
     mockExplainer.mockResolvedValue({
       default: {}, defaultFrozenAt: null,
       groups: [{ id: 'g1', name: 'X', config: {}, configFrozenAt: null, favoriteTeamDoublePoints: false, specialTypes: [] }],
@@ -81,7 +81,7 @@ describe('useScoringExplainerStore', () => {
     expect(debugSpy).toHaveBeenCalledWith('[telemetry]', 'scoring_explainer_opened', expect.objectContaining({ source: 'menu', groupCount: '1' }))
   })
 
-  it('close() trackeli a scoring_explainer_closed eseményt durationMs-szel', async () => {
+  it('close() tracks the scoring_explainer_closed event with durationMs', async () => {
     mockExplainer.mockResolvedValue({ default: {}, defaultFrozenAt: null, groups: [] })
     const debugSpy = vi.spyOn(console, 'debug').mockImplementation(() => {})
     const store = useScoringExplainerStore()

@@ -71,14 +71,14 @@ describe('UserMenuButton', () => {
     setActivePinia(createPinia())
   })
 
-  // ─── Avatar megjelenítés ──────────────────────────────────────────────────────
+  // ─── Avatar rendering ─────────────────────────────────────────────────────────
 
-  it('avatar-img látszik ha avatarUrl be van állítva', () => {
+  it('avatar-img is shown when avatarUrl is set', () => {
     const wrapper = mountAsUser({ avatarUrl: 'https://example.com/avatar.png' })
     expect(wrapper.find('[data-testid="avatar-img"]').attributes('src')).toBe('https://example.com/avatar.png')
   })
 
-  it('avatarUrl null esetén DiceBear fallback URL kerül az avatar-img src-be', () => {
+  it('when avatarUrl is null a DiceBear fallback URL is used for avatar-img src', () => {
     const wrapper = mountAsUser({ avatarUrl: null, displayName: 'Test User' })
     const src = wrapper.find('[data-testid="avatar-img"]').attributes('src')
     expect(src).toContain('api.dicebear.com')
@@ -86,7 +86,7 @@ describe('UserMenuButton', () => {
     expect(src).toContain('Test%20User')
   })
 
-  it('DiceBear seed email-re esik vissza ha displayName üres', () => {
+  it('DiceBear seed falls back to email when displayName is empty', () => {
     const pinia = createPinia()
     setActivePinia(pinia)
     vi.mocked(useAuthStore).mockReturnValue({
@@ -100,18 +100,18 @@ describe('UserMenuButton', () => {
 
   // ─── Toggle ───────────────────────────────────────────────────────────────────
 
-  it('dropdown alapból rejtett', () => {
+  it('dropdown is hidden by default', () => {
     const wrapper = mountAsUser()
     expect(wrapper.find('[data-testid="user-menu-dropdown"]').exists()).toBe(false)
   })
 
-  it('avatar gomb kattintás → dropdown megjelenik', async () => {
+  it('avatar button click → dropdown appears', async () => {
     const wrapper = mountAsUser()
     await wrapper.find('[data-testid="user-menu-btn"]').trigger('click')
     expect(wrapper.find('[data-testid="user-menu-dropdown"]').exists()).toBe(true)
   })
 
-  it('második kattintás → dropdown eltűnik (toggle)', async () => {
+  it('second click → dropdown disappears (toggle)', async () => {
     const wrapper = mountAsUser()
     await wrapper.find('[data-testid="user-menu-btn"]').trigger('click')
     expect(wrapper.find('[data-testid="user-menu-dropdown"]').exists()).toBe(true)
@@ -121,7 +121,7 @@ describe('UserMenuButton', () => {
 
   // ─── Backdrop ─────────────────────────────────────────────────────────────────
 
-  it('backdrop kattintás → dropdown bezárul', async () => {
+  it('backdrop click → dropdown closes', async () => {
     const wrapper = mountAsUser()
     await wrapper.find('[data-testid="user-menu-btn"]').trigger('click')
     expect(wrapper.find('[data-testid="user-menu-dropdown"]').exists()).toBe(true)
@@ -129,29 +129,29 @@ describe('UserMenuButton', () => {
     expect(wrapper.find('[data-testid="user-menu-dropdown"]').exists()).toBe(false)
   })
 
-  // ─── Admin láthatóság ─────────────────────────────────────────────────────────
+  // ─── Admin visibility ─────────────────────────────────────────────────────────
 
-  it('nem-admin usernél admin link hiányzik', async () => {
+  it('admin link is missing for non-admin user', async () => {
     const wrapper = mountAsUser()
     await wrapper.find('[data-testid="user-menu-btn"]').trigger('click')
     expect(wrapper.find('[data-testid="menu-admin-matches"]').exists()).toBe(false)
   })
 
-  it('admin usernél admin link látható', async () => {
+  it('admin link is visible for admin user', async () => {
     const wrapper = mountAsAdmin()
     await wrapper.find('[data-testid="user-menu-btn"]').trigger('click')
     expect(wrapper.find('[data-testid="menu-admin-matches"]').exists()).toBe(true)
   })
 
-  it('nem-admin usernél admin link nem látható', async () => {
+  it('admin link is not visible for non-admin user', async () => {
     const wrapper = mountAsUser()
     await wrapper.find('[data-testid="user-menu-btn"]').trigger('click')
     expect(wrapper.find('[data-testid="menu-admin-matches"]').exists()).toBe(false)
   })
 
-  // ─── Akciók ───────────────────────────────────────────────────────────────────
+  // ─── Actions ──────────────────────────────────────────────────────────────────
 
-  it('Kijelentkezés gomb → authStore.logout() meghívódik', async () => {
+  it('Logout button → authStore.logout() is called', async () => {
     const wrapper = mountAsUser()
     await wrapper.find('[data-testid="user-menu-btn"]').trigger('click')
     await wrapper.find('[data-testid="menu-logout"]').trigger('click')

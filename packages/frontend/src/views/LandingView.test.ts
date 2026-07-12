@@ -31,81 +31,81 @@ async function mountLanding() {
   return mount(LandingView, { global: { plugins: [router] } })
 }
 
-describe('LandingView – authentikációs CTA-k', () => {
-  it('a navban jelen van a Bejelentkezés és a Regisztráció link is', async () => {
+describe('LandingView – authentication CTAs', () => {
+  it('both Login and Register links are present in the nav', async () => {
     const wrapper = await mountLanding()
     const loginLinks = wrapper.findAll('a[href="/login"]')
     expect(loginLinks.length).toBeGreaterThanOrEqual(2)
   })
 
-  it('a hero szekció primary CTA-ja a /login-re mutat', async () => {
+  it('hero section primary CTA points to /login', async () => {
     const wrapper = await mountLanding()
     const heroPrimary = wrapper.find('.lp-hero__primary')
     expect(heroPrimary.exists()).toBe(true)
     expect(heroPrimary.attributes('href')).toBe('/login')
   })
 
-  it('a footer CTA row tartalmaz primary és secondary linket /login-re', async () => {
+  it('footer CTA row contains primary and secondary links to /login', async () => {
     const wrapper = await mountLanding()
     expect(wrapper.find('.lp-footer__primary').attributes('href')).toBe('/login')
     expect(wrapper.find('.lp-footer__secondary').attributes('href')).toBe('/login')
   })
 
-  it('a sticky CTA mindig a DOM-ban van (mobilon CSS rejti desktopon)', async () => {
+  it('sticky CTA is always in the DOM (CSS hides it on desktop)', async () => {
     const wrapper = await mountLanding()
     expect(wrapper.find('.lp-sticky-cta').exists()).toBe(true)
     expect(wrapper.find('.lp-sticky-cta__btn').attributes('href')).toBe('/login')
   })
 
-  it('nincs feliratkozási email űrlap a landing oldalon', async () => {
+  it('no email subscription form on the landing page', async () => {
     const wrapper = await mountLanding()
     expect(wrapper.find('input[type="email"]').exists()).toBe(false)
   })
 })
 
-describe('LandingView – alap renderelés', () => {
-  it('a landing oldal megjelenik', async () => {
+describe('LandingView – basic rendering', () => {
+  it('landing page is rendered', async () => {
     const wrapper = await mountLanding()
     expect(wrapper.find('.lp').exists()).toBe(true)
   })
 
-  it('nav logo szövege megjelenik', async () => {
+  it('nav logo text is shown', async () => {
     const wrapper = await mountLanding()
     expect(wrapper.text()).toContain('VB Tippjáték')
   })
 
-  it('hero title megjelenik (tippverseny copy)', async () => {
+  it('hero title is shown (tippverseny copy)', async () => {
     const wrapper = await mountLanding()
     expect(wrapper.text()).toContain('tippverseny')
   })
 
-  it('a 6 funkció kártya mind megjelenik', async () => {
+  it('all 6 feature cards are shown', async () => {
     const wrapper = await mountLanding()
     expect(wrapper.findAll('.lp-feat-card')).toHaveLength(6)
   })
 
-  it('a kedvenc csapat × dupla pont funkció szerepel', async () => {
+  it('favorite team × double points feature is present', async () => {
     const wrapper = await mountLanding()
     expect(wrapper.text()).toContain('Kedvenc csapat ×2')
   })
 
-  it('a speciális tippek funkció szerepel', async () => {
+  it('special predictions feature is present', async () => {
     const wrapper = await mountLanding()
     expect(wrapper.text()).toContain('Speciális tippek')
   })
 
-  it('a pontrendszer értékei a tényleges defaultot tükrözik (3/2/1/0)', async () => {
+  it('scoring values reflect the actual default (3/2/1/0)', async () => {
     const wrapper = await mountLanding()
     const ptsCells = wrapper.findAll('.lp-score-pts').map(el => el.text().trim())
     expect(ptsCells).toEqual(['3', '2', '1', '0'])
   })
 
-  it('a FAQ 6 elemet tartalmaz', async () => {
+  it('FAQ contains 6 items', async () => {
     const wrapper = await mountLanding()
     expect(wrapper.findAll('.lp-faq__item')).toHaveLength(6)
   })
 
-  it('a community szekció CTA-ja /login-re visz', async () => {
+  it('community section CTA leads to /login', async () => {
     const wrapper = await mountLanding()
     expect(wrapper.find('.lp-community__cta').attributes('href')).toBe('/login')
   })

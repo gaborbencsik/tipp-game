@@ -2,22 +2,22 @@ import { test, expect } from '@playwright/test'
 import { injectSession } from './helpers/auth.js'
 import { ensureUser } from './helpers/api.js'
 
-// UX-045: kiértékelt bracket_progression view.
-// Route-mock szinten fed le: a picker az admin által beállított `correctAnswer`
-// alapján kirajzolja az "Kiértékelt tipp" összegző csíkot, a round-kártyák pont-pirulát
-// mutatnak, és a chip-ek zöld/piros színt kapnak aszerint, hogy a csapat benne van-e
-// az adott kör tényleges résztvevő-halmazában.
+// UX-045: evaluated bracket_progression view.
+// Covered at the route-mock level: based on the `correctAnswer` set by the admin,
+// the picker renders the "Evaluated tip" summary strip, the round cards show a
+// points pill, and the chips get green/red colors according to whether the team
+// is in the actual participant set of the given round.
 //
-// A backend-oldali seed-elést szándékosan kerüljük — a `bracket_progression` inputType
-// jelenleg globálisan egy migration-seed-ből érkezik, ezért a stack-en végigvitt E2E
-// costos lenne. Itt csak a render-wire-t igazoljuk: a TournamentTipsView leszármazottja
-// helyesen köti át a `correctAnswer` JSON-t a BracketProgressionPicker → BracketRoundCard
-// → BracketMatchCard → TeamSlotChip láncba.
+// We deliberately avoid backend-side seeding — the `bracket_progression` inputType
+// currently comes from a global migration seed, so a full-stack E2E would be
+// costly. Here we only verify the render wiring: the TournamentTipsView subtree
+// correctly threads the `correctAnswer` JSON through the BracketProgressionPicker
+// → BracketRoundCard → BracketMatchCard → TeamSlotChip chain.
 
 const TOURNAMENT_TIPS_TYPE = 'bracket_progression'
 const GROUP_STANDINGS_TYPE = 'all_groups_standing'
 
-// Toy csapatok — 4 db, ezek töltik a two-way last_32 kiindulást és a következő köröket.
+// Toy teams — 4 of them; they populate the two-way last_32 starting lineup and the next rounds.
 const TEAM_A = { id: 'team-A', name: 'Alpha', shortCode: 'ALP', flagUrl: null, group: 'A', teamType: 'national', countryCode: 'AL' }
 const TEAM_B = { id: 'team-B', name: 'Beta', shortCode: 'BET', flagUrl: null, group: 'B', teamType: 'national', countryCode: 'BE' }
 const TEAM_C = { id: 'team-C', name: 'Gamma', shortCode: 'GAM', flagUrl: null, group: 'C', teamType: 'national', countryCode: 'GA' }
@@ -25,7 +25,7 @@ const TEAM_D = { id: 'team-D', name: 'Delta', shortCode: 'DEL', flagUrl: null, g
 
 const TEAMS = [TEAM_A, TEAM_B, TEAM_C, TEAM_D]
 
-// Minimál toy templátum: 2× last_32 → 1× last_16 → 1× final (+ egy bronze meccs a döntőhöz).
+// Minimal toy template: 2× last_32 → 1× last_16 → 1× final (+ a bronze match for the final).
 const TOY_TEMPLATE = {
   matches: [
     { id: 'l32_m1', round: 'last_32', slotA: 'W_A1', slotB: 'W_B1', winnerTo: 'l16_m1' },
@@ -37,7 +37,7 @@ const TOY_TEMPLATE = {
   ],
 } as const
 
-// Kell egy group_standings tipp, hogy a picker ne a lock-gate-en álljon meg.
+// A group_standings tip is needed so that the picker doesn't stop at the lock gate.
 const GROUP_STANDINGS_ANSWER = {
   groups: {
     A: ['team-A', null, null, null],
@@ -48,7 +48,7 @@ const GROUP_STANDINGS_ANSWER = {
   best3rds: [] as string[],
 }
 
-// User tippje: A, C, A (a bracket-en végig A megy).
+// User's tip: A, C, A (A goes through the whole bracket).
 const USER_BRACKET_ANSWER = {
   winners: {
     l32_m1: 'team-A',
@@ -60,9 +60,9 @@ const USER_BRACKET_ANSWER = {
   },
 }
 
-// Admin által beállított tényleges résztvevők: last_32-ben A és D (B és C kiestek);
-// last_16-ban A jutott csak tovább; final-be A és D. A user az l32_m1-nél A-ra tippelt
-// (bejutott) és l32_m2-nél C-re (nem jutott be) → last_32-ben matched = 1 team.
+// Actual participants set by the admin: in last_32, A and D (B and C were eliminated);
+// only A advanced to last_16; A and D are in the final. The user tipped A at l32_m1
+// (advanced) and C at l32_m2 (did not advance) → in last_32, matched = 1 team.
 const CORRECT_ANSWER = {
   participants: {
     last_32: ['team-A', 'team-D'],
@@ -75,7 +75,7 @@ const CORRECT_ANSWER = {
   bronzeWinner: null,
 }
 
-// Backend `SpecialPredictionWithType` shape-nek megfelelő két tipp sor.
+// Two tip rows matching the backend `SpecialPredictionWithType` shape.
 function buildTipsPayload(): unknown[] {
   const nowIso = new Date().toISOString()
   return [
@@ -112,7 +112,7 @@ function buildTipsPayload(): unknown[] {
       maxPoints: 100,
       answer: JSON.stringify(USER_BRACKET_ANSWER),
       answerLabel: null,
-      // `points !== null` a kiértékelt ág feltétele a view-ban.
+      // `points !== null` is the condition for the evaluated branch in the view.
       points: 12,
       correctAnswer: JSON.stringify(CORRECT_ANSWER),
       correctAnswerLabel: null,
@@ -129,7 +129,7 @@ test.describe('UX-045: evaluated bracket_progression view', () => {
   })
 
   test('renders evaluated summary, points pill, and green/red chips', async ({ page }) => {
-    // Mock: az összes /api/tournament-tips és /api/teams választ a saját payload-unk adja.
+    // Mock: all /api/tournament-tips and /api/teams responses come from our own payload.
     await page.route('**/api/tournament-tips/access', route =>
       route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ hasAccess: true }) }),
     )
@@ -146,12 +146,12 @@ test.describe('UX-045: evaluated bracket_progression view', () => {
     const bracketCard = page.getByTestId('tournament-tip-type-bracket')
     await expect(bracketCard).toBeVisible({ timeout: 5000 })
 
-    // 1) Evaluated summary strip a kék "info card" helyett.
+    // 1) Evaluated summary strip instead of the blue "info card".
     const evaluatedSummary = bracketCard.getByTestId('bracket-evaluated-summary')
     await expect(evaluatedSummary).toBeVisible()
-    // Az összpont a breakdown-ból (userSetForRound: last_32 = slotA∪slotB az összes l32
-    // meccsen a group standings alapján = {A,B,C,D}; magasabb körökben pedig a felhasználó
-    // előző kör-beli winner-halmaza):
+    // Total points from the breakdown (userSetForRound: last_32 = slotA∪slotB across all
+    // l32 matches based on group standings = {A,B,C,D}; in higher rounds it's the user's
+    // previous-round winner set):
     //   last_32:  {A,B,C,D} ∩ {A,D} = 2  × 2p = 4
     //   last_16:  {A,C} (l32 winners) ∩ {A} = 1 × 3p = 3
     //   qf/sf:    pending → 0
@@ -162,23 +162,23 @@ test.describe('UX-045: evaluated bracket_progression view', () => {
     await expect(totalPill).toBeVisible()
     await expect(totalPill).toContainText('25')
 
-    // A régi tipp info-csík ne jelenjen meg kiértékelt módban.
+    // The old tip info strip should not appear in evaluated mode.
     await expect(bracketCard.locator('text=💡')).toHaveCount(0)
 
-    // 2) Round-kártyák pont-pirulái.
+    // 2) Points pills on the round cards.
     // last_32: 2 matched × 2p → amber pill "+4 p"
     const l32Points = bracketCard.getByTestId('bracket-round-points-last_32')
     await expect(l32Points).toBeVisible()
     await expect(l32Points).toContainText('+4')
-    // last_16: 1/1 matched (target-limitre a picker 16-tal számol, tehát részleges) → "+3 p"
+    // last_16: 1/1 matched (the picker uses target-limit 16 so it's partial) → "+3 p"
     const l16Points = bracketCard.getByTestId('bracket-round-points-last_16')
     await expect(l16Points).toBeVisible()
     await expect(l16Points).toContainText('+3')
-    // qf/sf: pending (correct.participants üres) → nincs pill.
+    // qf/sf: pending (correct.participants is empty) → no pill.
     await expect(bracketCard.getByTestId('bracket-round-points-qf')).toHaveCount(0)
     await expect(bracketCard.getByTestId('bracket-round-points-sf')).toHaveCount(0)
 
-    // 3) Final/bronze fejléc: bajnok-pirula "+10" (eltalálta) és bronze "0 p".
+    // 3) Final/bronze header: champion pill "+10" (correct) and bronze "0 p".
     const finalsCard = bracketCard.getByTestId('bracket-finals-bronze')
     const championPill = finalsCard.getByTestId('bracket-final-champion-pill')
     await expect(championPill).toBeVisible()
@@ -187,14 +187,14 @@ test.describe('UX-045: evaluated bracket_progression view', () => {
     await expect(bronzePill).toBeVisible()
     await expect(bronzePill).toContainText('0 p')
 
-    // 4) Chip színek a nyitott last_32 körben.
-    // Alapból `last_32` van kinyitva (BracketProgressionPicker default).
-    // team-A benne van a last_32 résztvevőkben → chip zöld (border-emerald-500).
-    // team-B nincs → piros. team-C nincs → piros. team-D benne van → zöld.
+    // 4) Chip colors in the currently-open last_32 round.
+    // By default `last_32` is expanded (BracketProgressionPicker default).
+    // team-A is in the last_32 participants → green chip (border-emerald-500).
+    // team-B is not → red. team-C is not → red. team-D is in → green.
     const l32M1 = bracketCard.getByTestId('bracket-match-l32_m1')
     await expect(l32M1).toBeVisible()
-    // A slot-code a picker `slotLabelFor` helper alapján generálódik — 'W_A1' → 'W A1' stb.
-    // Ehelyett stabilabb a színt jelző border class-ra ellenőrizni.
+    // The slot-code is generated based on the picker's `slotLabelFor` helper — 'W_A1' → 'W A1' etc.
+    // Instead it's more stable to check the color-indicating border class.
     const chipA = l32M1.locator('[data-testid^="team-slot-"]').first()
     const chipB = l32M1.locator('[data-testid^="team-slot-"]').nth(1)
     await expect(chipA).toHaveClass(/border-emerald-500/)
@@ -206,7 +206,7 @@ test.describe('UX-045: evaluated bracket_progression view', () => {
     await expect(chipC).toHaveClass(/border-red-500/)
     await expect(chipD).toHaveClass(/border-emerald-500/)
 
-    // 5) A sticky save-status bar ne jelenjen meg kiértékelt módban.
+    // 5) The sticky save-status bar should not appear in evaluated mode.
     await expect(bracketCard.getByTestId('bracket-progression-sticky')).toHaveCount(0)
   })
 })

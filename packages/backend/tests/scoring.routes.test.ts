@@ -26,7 +26,7 @@ import { app } from '../src/app.js'
 describe('GET /api/scoring/explainer', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('200 valid tokennel', async () => {
+  it('200 with a valid token', async () => {
     mockGetScoringExplainer.mockResolvedValue({ default: { exactScore: 3 }, defaultFrozenAt: null, groups: [] })
     const res = await request(app.callback()).get('/api/scoring/explainer').set('Authorization', 'Bearer valid')
     expect(res.status).toBe(200)
@@ -34,7 +34,7 @@ describe('GET /api/scoring/explainer', () => {
     expect(mockGetScoringExplainer).toHaveBeenCalledWith('user-1')
   })
 
-  it('401 token nélkül', async () => {
+  it('401 without a token', async () => {
     const res = await request(app.callback()).get('/api/scoring/explainer')
     expect(res.status).toBe(401)
   })

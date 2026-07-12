@@ -106,26 +106,26 @@ describe('GroupsView', () => {
     mockRouteQuery.value = {}
   })
 
-  it('üres állapotban empty-state jelenik meg', () => {
+  it('empty state shows the empty-state placeholder', () => {
     const wrapper = mountView()
     expect(wrapper.find('[data-testid="empty-state"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="groups-list"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="spinner"]').exists()).toBe(false)
   })
 
-  it('üres állapotban \"Csoport létrehozása\" CTA gomb látható', () => {
+  it('empty state shows a "Csoport létrehozása" CTA button', () => {
     const wrapper = mountView()
     const btn = wrapper.find('[data-testid="create-group-btn"]')
     expect(btn.exists()).toBe(true)
     expect(btn.text()).toBe('Csoport létrehozása')
   })
 
-  it('üres állapotban Csatlakozás gomb is látható', () => {
+  it('empty state also shows the Join button', () => {
     const wrapper = mountView()
     expect(wrapper.find('[data-testid="empty-join-btn"]').exists()).toBe(true)
   })
 
-  it('csoportok esetén groups-list jelenik meg és nem empty-state', () => {
+  it('with groups the groups-list is shown and empty-state is not', () => {
     mockStoreState.groups = [SAMPLE_GROUP]
     const wrapper = mountView()
     expect(wrapper.find('[data-testid="groups-list"]').exists()).toBe(true)
@@ -144,24 +144,24 @@ describe('GroupsView', () => {
     expect(wrapper.text()).not.toContain('VB 2026')
   })
 
-  it('az oldalon az \"Csoportok\" fejléc látható', () => {
+  it('the "Csoportok" heading is visible on the page', () => {
     const wrapper = mountView()
     expect(wrapper.text()).toContain('Csoportok')
   })
 
-  it('create-group-btn kattintásra megjelenik a create-form', async () => {
+  it('clicking create-group-btn shows the create-form', async () => {
     const wrapper = mountView()
     await wrapper.find('[data-testid="create-group-btn"]').trigger('click')
     expect(wrapper.find('[data-testid="create-form"]').exists()).toBe(true)
   })
 
-  it('empty-join-btn kattintásra megjelenik a join-form', async () => {
+  it('clicking empty-join-btn shows the join-form', async () => {
     const wrapper = mountView()
     await wrapper.find('[data-testid="empty-join-btn"]').trigger('click')
     expect(wrapper.find('[data-testid="join-form"]').exists()).toBe(true)
   })
 
-  it('create form submit → store.createGroup hívva', async () => {
+  it('create form submit → store.createGroup called', async () => {
     mockCreateGroup.mockResolvedValue(SAMPLE_GROUP)
     const wrapper = mountView()
     await wrapper.find('[data-testid="create-group-btn"]').trigger('click')
@@ -172,7 +172,7 @@ describe('GroupsView', () => {
     expect(mockCreateGroup).toHaveBeenCalledWith({ name: 'Barátok', description: null, leagueId: 'l-1' })
   })
 
-  it('join form submit → store.joinGroup hívva', async () => {
+  it('join form submit → store.joinGroup called', async () => {
     mockStoreState.groups = [SAMPLE_GROUP]
     mockJoinGroup.mockResolvedValue(SAMPLE_GROUP)
     const wrapper = mountView()
@@ -184,7 +184,7 @@ describe('GroupsView', () => {
     expect(mockJoinGroup).toHaveBeenCalledWith({ inviteCode: 'ABCD1234' })
   })
 
-  it('rank badge megjelenik ha userRank nem null', () => {
+  it('rank badge is shown when userRank is not null', () => {
     mockStoreState.groups = [{ ...SAMPLE_GROUP, userRank: 3 }]
     const wrapper = mountView()
     const badge = wrapper.find('[data-testid="rank-badge"]')
@@ -192,13 +192,13 @@ describe('GroupsView', () => {
     expect(badge.text()).toBe('#3')
   })
 
-  it('rank badge nem jelenik meg ha userRank null', () => {
+  it('rank badge is not shown when userRank is null', () => {
     mockStoreState.groups = [{ ...SAMPLE_GROUP, userRank: null }]
     const wrapper = mountView()
     expect(wrapper.find('[data-testid="rank-badge"]').exists()).toBe(false)
   })
 
-  it('inviteError=notFound query → banner megjelenik a fordított szöveggel', () => {
+  it('inviteError=notFound query → banner appears with the translated text', () => {
     mockRouteQuery.value = { inviteError: 'notFound' }
     const wrapper = mountView()
     const banner = wrapper.find('[data-testid="invite-error-banner"]')
@@ -206,25 +206,25 @@ describe('GroupsView', () => {
     expect(banner.text()).toContain('A meghívó link már nem érvényes.')
   })
 
-  it('inviteError=alreadyMember → banner az "Already a member" üzenetet mutatja', () => {
+  it('inviteError=alreadyMember → banner shows the "Already a member" message', () => {
     mockRouteQuery.value = { inviteError: 'alreadyMember' }
     const wrapper = mountView()
     expect(wrapper.find('[data-testid="invite-error-banner"]').text()).toContain('Már tagja vagy a csoportnak.')
   })
 
-  it('érvénytelen inviteError értéknél nincs banner', () => {
+  it('no banner for an invalid inviteError value', () => {
     mockRouteQuery.value = { inviteError: 'notARealKey' }
     const wrapper = mountView()
     expect(wrapper.find('[data-testid="invite-error-banner"]').exists()).toBe(false)
   })
 
-  it('inviteError query nélkül nincs banner', () => {
+  it('no banner without an inviteError query', () => {
     mockRouteQuery.value = {}
     const wrapper = mountView()
     expect(wrapper.find('[data-testid="invite-error-banner"]').exists()).toBe(false)
   })
 
-  it('dismiss gomb router.replace-szel törli az inviteError query-t', async () => {
+  it('dismiss button clears the inviteError query via router.replace', async () => {
     mockRouteQuery.value = { inviteError: 'generic', other: 'keep' }
     const wrapper = mountView()
     await wrapper.find('[data-testid="invite-error-dismiss"]').trigger('click')

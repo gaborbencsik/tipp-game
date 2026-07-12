@@ -103,9 +103,9 @@ describe('PlayerSelectCombobox', () => {
     expect(wrapper.find('img').exists()).toBe(false)
   })
 
-  // ─── SCORER-002 prop bővítések ──────────────────────────────────────────────
+  // ─── SCORER-002 prop extensions ─────────────────────────────────────────────
 
-  it('restrictToTeams: csak a megadott csapatok játékosait tölti be (két API hívás)', async () => {
+  it('restrictToTeams: loads only players of the specified teams (two API calls)', async () => {
     const HOME = { id: 't-home', name: 'Magyarország', shortCode: 'HUN', flagUrl: null }
     const AWAY = { id: 't-away', name: 'Argentína', shortCode: 'ARG', flagUrl: null }
     playersListMock.mockImplementation(async (_token: string, _leagueId?: string, teamId?: string) => {
@@ -134,7 +134,7 @@ describe('PlayerSelectCombobox', () => {
     expect(input.value).toBe('')
   })
 
-  it('restrictToTeams: a dropdown csapatonként csoportosít fejlécekkel', async () => {
+  it('restrictToTeams: the dropdown groups by team with headers', async () => {
     const HOME = { id: 't-home', name: 'Magyarország', shortCode: 'HUN', flagUrl: 'hun.svg' }
     const AWAY = { id: 't-away', name: 'Argentína', shortCode: 'ARG', flagUrl: 'arg.svg' }
     playersListMock.mockImplementation(async (_t: string, _l?: string, teamId?: string) => {
@@ -154,7 +154,7 @@ describe('PlayerSelectCombobox', () => {
     expect(groupHeaders[1]?.text()).toContain('Argentína')
   })
 
-  it('allowExplicitClear: a dropdown alján "törlés" sor megjelenik kiválasztott érték esetén', async () => {
+  it('allowExplicitClear: a "clear" row appears at the bottom of the dropdown when a value is selected', async () => {
     playersListMock.mockResolvedValue([
       { id: UUID, name: 'Vinicius Jr.', teamId: 't1', teamName: 'Brazil', teamShortCode: 'BRA' },
     ])
@@ -168,7 +168,7 @@ describe('PlayerSelectCombobox', () => {
     expect(clearItem.exists()).toBe(true)
   })
 
-  it('allowExplicitClear: a "törlés" sorra kattintva null-ra ürül a modelValue', async () => {
+  it('allowExplicitClear: clicking the "clear" row empties modelValue to null', async () => {
     playersListMock.mockResolvedValue([
       { id: UUID, name: 'Vinicius Jr.', teamId: 't1', teamName: 'Brazil', teamShortCode: 'BRA' },
     ])
@@ -183,7 +183,7 @@ describe('PlayerSelectCombobox', () => {
     expect(events?.[events.length - 1]?.[0]).toBeNull()
   })
 
-  it('showPlayerMeta=true: pozíció + mezszám megjelenik a sorban', async () => {
+  it('showPlayerMeta=true: position + shirt number appear in the row', async () => {
     playersListMock.mockResolvedValue([
       { id: UUID, name: 'Szoboszlai D.', teamId: 't1', teamName: 'HUN', teamShortCode: 'HUN', position: 'FW', shirtNumber: 10 },
     ])
@@ -198,7 +198,7 @@ describe('PlayerSelectCombobox', () => {
     expect(li.text()).toContain('#10')
   })
 
-  it('showPlayerMeta=false (default): pozíció és mezszám nincs renderelve', async () => {
+  it('showPlayerMeta=false (default): position and shirt number are not rendered', async () => {
     playersListMock.mockResolvedValue([
       { id: UUID, name: 'Szoboszlai D.', teamId: 't1', teamName: 'HUN', teamShortCode: 'HUN', position: 'FW', shirtNumber: 10 },
     ])
@@ -212,7 +212,7 @@ describe('PlayerSelectCombobox', () => {
     expect(li.text()).not.toContain('#10')
   })
 
-  it('size=compact: trigger magassága h-8', async () => {
+  it('size=compact: trigger height is h-8', async () => {
     playersListMock.mockResolvedValue([
       { id: UUID, name: 'X', teamId: 't1', teamName: 'T', teamShortCode: 'T' },
     ])
@@ -223,7 +223,7 @@ describe('PlayerSelectCombobox', () => {
     expect(trigger.classes()).toContain('h-8')
   })
 
-  it('size=comfortable: trigger magassága h-10', async () => {
+  it('size=comfortable: trigger height is h-10', async () => {
     playersListMock.mockResolvedValue([
       { id: UUID, name: 'X', teamId: 't1', teamName: 'T', teamShortCode: 'T' },
     ])

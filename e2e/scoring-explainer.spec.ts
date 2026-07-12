@@ -7,7 +7,7 @@ test.describe('Scoring Explainer modal', () => {
     await ensureUser()
   })
 
-  test('Bejelentkezett user a ranglistáról nyitja a modalt → látja a saját csoportja szabályait → bezárja', async ({ page }) => {
+  test('Logged-in user opens the modal from the leaderboard → sees their own group rules → closes it', async ({ page }) => {
     await injectSession(page)
     await page.goto('/app/leaderboard')
 
@@ -19,7 +19,7 @@ test.describe('Scoring Explainer modal', () => {
     await expect(page.getByTestId('scoring-explainer-modal')).not.toBeVisible()
   })
 
-  test('Főmenüből nyitva — címsor megjelenik', async ({ page }) => {
+  test('Opened from the main menu — heading is visible', async ({ page }) => {
     await injectSession(page)
     await page.goto('/app/matches')
 
