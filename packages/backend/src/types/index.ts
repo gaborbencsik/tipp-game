@@ -261,7 +261,7 @@ export interface AdminStatsMatch {
   readonly homeTeam: string
   readonly awayTeam: string
   readonly date: string
-  readonly tippedCount: number
+  readonly predictionCount: number
   readonly totalUsers: number
   readonly fillPercent: number
   readonly result: string | null

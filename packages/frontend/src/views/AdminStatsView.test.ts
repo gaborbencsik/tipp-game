@@ -34,8 +34,8 @@ const {
   }),
   mockStatsMatches: vi.fn().mockResolvedValue({
     matches: [
-      { matchId: 'm1', homeTeam: 'Germany', awayTeam: 'France', date: '2026-06-15T18:00:00Z', tippedCount: 8, totalUsers: 10, fillPercent: 80, result: '2-1' },
-      { matchId: 'm2', homeTeam: 'Spain', awayTeam: 'Italy', date: '2026-06-16T20:00:00Z', tippedCount: 3, totalUsers: 10, fillPercent: 30, result: null },
+      { matchId: 'm1', homeTeam: 'Germany', awayTeam: 'France', date: '2026-06-15T18:00:00Z', predictionCount: 8, totalUsers: 10, fillPercent: 80, result: '2-1' },
+      { matchId: 'm2', homeTeam: 'Spain', awayTeam: 'Italy', date: '2026-06-16T20:00:00Z', predictionCount: 3, totalUsers: 10, fillPercent: 30, result: null },
     ],
   }),
 }))

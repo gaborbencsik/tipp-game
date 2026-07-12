@@ -103,7 +103,7 @@ export async function getAdminStatsMatches(): Promise<AdminStatsMatchesResponse>
       scheduledAt: matches.scheduledAt,
       homeTeamName: sql<string>`ht.name`,
       awayTeamName: sql<string>`at.name`,
-      tippedCount: sql<number>`count(${predictions.id})`,
+      predictionCount: sql<number>`count(${predictions.id})`,
       homeGoals: matchResults.homeGoals,
       awayGoals: matchResults.awayGoals,
     })
@@ -121,9 +121,9 @@ export async function getAdminStatsMatches(): Promise<AdminStatsMatchesResponse>
     homeTeam: r.homeTeamName,
     awayTeam: r.awayTeamName,
     date: new Date(r.scheduledAt).toISOString(),
-    tippedCount: Number(r.tippedCount),
+    predictionCount: Number(r.predictionCount),
     totalUsers,
-    fillPercent: totalUsers > 0 ? Math.round((Number(r.tippedCount) / totalUsers) * 100) : 0,
+    fillPercent: totalUsers > 0 ? Math.round((Number(r.predictionCount) / totalUsers) * 100) : 0,
     result: r.homeGoals != null && r.awayGoals != null ? `${r.homeGoals}-${r.awayGoals}` : null,
   }))
 
