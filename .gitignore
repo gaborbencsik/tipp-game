@@ -160,6 +160,8 @@ screenshots/
 .playwright-mcp/
 .local
 .claude-logs/
+.kit
+scripts/kit-build-claude.sh
 
 # QMD local search cache
 .qmd-cache/
