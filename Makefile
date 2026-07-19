@@ -152,16 +152,6 @@ KIT_DIR  := .kit
 # from the repo if missing (see sbx-create).
 SCRIPT   := scripts/kit-build-claude.sh
 
-.PHONY: help sbx-create sbx-create-local sbx-run sbx-rm
-
-help:
-	@echo "Available commands:"
-	@echo ""
-	@echo "    make sbx-create         Download spec + script from the repo, inject API key, create the sbx environment"
-	@echo "    make sbx-create-local   Same, but use the local working-tree script + spec (no download; for testing)"
-	@echo "    make sbx-run            Start the sbx environment"
-	@echo "    make sbx-rm             Remove the sbx environment"
-
 # Always download the latest build script from the repo so every run uses a
 # fresh copy, then run it (downloads the spec + injects the API key) and create
 # the sandbox from the built kit dir.
