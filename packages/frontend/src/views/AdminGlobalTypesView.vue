@@ -141,6 +141,13 @@
             @submit="v => setAnswerValue = v"
           />
         </div>
+        <div v-else-if="setAnswerInputType === 'player_select'" class="mb-3">
+          <PlayerSelectCombobox
+            :model-value="setAnswerValue || null"
+            :show-player-meta="true"
+            @update:model-value="v => setAnswerValue = v ?? ''"
+          />
+        </div>
         <input
           v-else
           v-model="setAnswerValue"
@@ -189,6 +196,7 @@ import { useAdminGlobalTypesStore } from '../stores/admin-global-types.store.js'
 import { api } from '../api/index.js'
 import { supabase } from '../lib/supabase.js'
 import GroupStandingsPicker from '../components/predictions/GroupStandingsPicker.vue'
+import PlayerSelectCombobox from '../components/predictions/PlayerSelectCombobox.vue'
 import type { AllGroupsStandingOptions, SpecialPredictionOptions, SpecialPredictionType, SpecialTypeInput, Team } from '../types/index.js'
 import { getDateLocale } from '../lib/dateLocale.js'
 
