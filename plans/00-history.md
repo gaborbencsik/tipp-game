@@ -192,3 +192,4 @@
 | UX-043 | Knockout meccsek – döntetlen tipp visuális megjelenítése kiértékelés után | Should Have |
 | BUG-011 | Knockout meccs pontszámítás hibás hosszabbításos/tizenegyeses döntésnél | Must Have |
 | UX-046 | Ranglista – Torna oszlopban a megszerzett/maximum pont % desktopon | Should Have |
+| UX-047 | Bracket döntő/bronz – „A te tipped" sor a kiértékelt nézetben (bajnok-tipp egyértelműsítése) | Should Have |

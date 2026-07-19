@@ -31,14 +31,36 @@
       >{{ doneCount }} / 2</span>
     </button>
     <div v-if="expanded" class="px-3 pb-3 border-t border-slate-100 pt-3 space-y-4">
-      <BracketMatchCard
-        v-if="finalMatch"
-        :match="finalMatch"
-        :team-map="teamMap"
-        :advancing-team-ids="finalMatchAdvancingIds"
-        :is-read-only="isReadOnly"
-        @pick="(matchId, teamId) => $emit('pick', matchId, teamId)"
-      />
+      <div v-if="finalMatch">
+        <BracketMatchCard
+          :match="finalMatch"
+          :team-map="teamMap"
+          :advancing-team-ids="finalMatchAdvancingIds"
+          :is-read-only="isReadOnly"
+          @pick="(matchId, teamId) => $emit('pick', matchId, teamId)"
+        />
+        <div
+          v-if="isEvaluated && userChampionPick"
+          class="mt-1.5 flex items-center justify-center gap-2 rounded-lg border px-3 py-1.5"
+          :class="userPickRowClass"
+          :data-testid="'bracket-final-user-pick'"
+        >
+          <span :class="userPickIconClass" aria-hidden="true">{{ userPickIcon }}</span>
+          <span
+            class="text-sm font-semibold flex items-center gap-1.5"
+            :class="userPickTextClass"
+            :aria-label="$t('bracketProgression.yourChampionPick', { team: userChampionTeam?.shortCode ?? '' })"
+          >
+            <img
+              v-if="userChampionTeam?.flagUrl"
+              :src="userChampionTeam.flagUrl"
+              :alt="userChampionTeam.name"
+              class="w-5 h-3.5 object-cover rounded-sm flex-shrink-0"
+            />
+            <span>{{ userChampionTeam?.shortCode ?? '?' }}</span>
+          </span>
+        </div>
+      </div>
       <BracketMatchCard
         v-if="bronzeMatch"
         :match="bronzeMatch"
@@ -136,6 +158,38 @@ const bronzeMatchAdvancingIds = computed<ReadonlySet<string> | null>(() => {
 })
 
 const championHit = computed(() => !!props.evaluation?.champion.hit)
+
+// UX-047: the user's champion pick is the team they selected as the final's winner.
+const userChampionPick = computed<string | null>(() => finalMatch.value?.winnerId ?? null)
+const userChampionTeam = computed<Team | null>(() =>
+  userChampionPick.value ? (props.teamMap.get(userChampionPick.value) ?? null) : null,
+)
+
+// Pending: finalists are evaluated but the champion is not yet set (championId == null).
+const userPickPending = computed(() => isEvaluated.value && !props.championId)
+const userPickHit = computed(
+  () => !!props.championId && userChampionPick.value === props.championId,
+)
+
+const userPickIcon = computed(() => {
+  if (userPickPending.value) return '⏳'
+  return userPickHit.value ? '✓' : '✗'
+})
+
+const userPickIconClass = computed(() => {
+  if (userPickPending.value) return 'text-slate-400'
+  return userPickHit.value ? 'text-emerald-600' : 'text-red-600'
+})
+
+const userPickRowClass = computed(() => {
+  if (userPickPending.value) return 'border-slate-200 bg-slate-50'
+  return userPickHit.value ? 'border-emerald-300 bg-emerald-50' : 'border-red-300 bg-red-50'
+})
+
+const userPickTextClass = computed(() => {
+  if (userPickPending.value) return 'text-slate-500'
+  return userPickHit.value ? 'text-emerald-900' : 'text-red-900 line-through decoration-red-400'
+})
 
 const championPillClass = computed(() =>
   championHit.value ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-500',

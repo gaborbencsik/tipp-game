@@ -741,6 +741,7 @@
     "waiting": "waiting for {slot}",
     "lockedHint": "Pick {round} match {match} first",
     "actualWinner": "actual winner",
+    "yourChampionPick": "Your champion pick: {team}",
     "slotWinner": "{tag} winner",
     "slotLoser": "{tag} loser",
     "orphanToast": "Your group-standings tip changed — {n} winner picks were cleared.",

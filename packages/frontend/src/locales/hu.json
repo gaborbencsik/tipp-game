@@ -741,6 +741,7 @@
     "waiting": "vár {slot}",
     "lockedHint": "Pickeld előbb a {round} {match}. mérkőzést",
     "actualWinner": "tényleges győztes",
+    "yourChampionPick": "A bajnok-tipped: {team}",
     "slotWinner": "{tag} győztes",
     "slotLoser": "{tag} vesztes",
     "orphanToast": "A csoport-tipped módosult — {n} győztes-pick törlésre került.",

@@ -33,4 +33,4 @@
 
 ---
 
-**Haladás: 188 / 200 story kész** — Must Have: 33/33, Should Have: 155/157, Nice to Have: 0/5 (US-937, PUSH-003 won't do)
+**Haladás: 189 / 200 story kész** — Must Have: 33/33, Should Have: 156/157, Nice to Have: 0/5 (US-937, PUSH-003 won't do)
