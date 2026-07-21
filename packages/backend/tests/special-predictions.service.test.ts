@@ -285,6 +285,31 @@ describe('getMyPredictions', () => {
     expect(result[0]?.correctAnswer).toBe('Mbappé')
     expect(result[0]?.correctAnswerLabel).toBeNull()
   })
+
+  it('skips team batch lookup when team_select answer is a JSON array (not a single UUID)', async () => {
+    const typeRow = { ...TYPE_ROW_TEAM_SELECT, deadline: PAST, correctAnswer: null }
+    const jsonArrayAnswer = JSON.stringify([
+      'f25deedc-432a-4d46-891b-9a86edd40196',
+      'bbca557a-a8dc-4339-8b4c-347403e19668',
+    ])
+    const predRow = { ...PRED_ROW, typeId: typeRow.id, answer: jsonArrayAnswer }
+    // 1. group, 2. member, 3. group types, 4. global types, 5. predictions
+    // No 6th teams batch select: the non-UUID answer must be filtered out, else
+    // inArray casts the JSON string to uuid and Postgres 500s.
+    setupSelectSequence([
+      [GROUP_ROW],
+      [MEMBER_ROW],
+      [typeRow],
+      [],
+      [predRow],
+    ])
+
+    const result = await getMyPredictions(GROUP_ID, USER_ID)
+
+    expect(mockSelect).toHaveBeenCalledTimes(5)
+    expect(result[0]?.answer).toBe(jsonArrayAnswer)
+    expect(result[0]?.answerLabel).toBeNull()
+  })
 })
 
 // ─── upsertPrediction ────────────────────────────────────────────────────────

@@ -5,6 +5,8 @@ import { countPlayersForLeague } from './players.service.js'
 import { resolvePlayerDisplayName } from './player-display-name.js'
 import type { SpecialPredictionInput, SpecialPredictionInputType, SpecialPredictionWithType } from '../types/index.js'
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 class AppError extends Error {
   readonly status: number
   constructor(status: number, message: string) {
@@ -81,12 +83,12 @@ export async function getMyPredictions(
   for (const t of allTypes) {
     const pred = predByTypeId.get(t.id)
     if (t.inputType === 'team_select') {
-      if (pred?.answer) teamIds.push(pred.answer)
-      if (t.correctAnswer) teamIds.push(t.correctAnswer)
+      if (pred?.answer && UUID_RE.test(pred.answer)) teamIds.push(pred.answer)
+      if (t.correctAnswer && UUID_RE.test(t.correctAnswer)) teamIds.push(t.correctAnswer)
     }
     if (t.inputType === 'player_select') {
-      if (pred?.answer) playerIds.push(pred.answer)
-      if (t.correctAnswer) playerIds.push(t.correctAnswer)
+      if (pred?.answer && UUID_RE.test(pred.answer)) playerIds.push(pred.answer)
+      if (t.correctAnswer && UUID_RE.test(t.correctAnswer)) playerIds.push(t.correctAnswer)
     }
   }
 
@@ -205,7 +207,6 @@ export async function upsertPrediction(
   let resolvedAnswerLabel: string | null = null
 
   if (type.inputType === 'team_select') {
-    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
     if (!UUID_RE.test(answer)) {
       throw new AppError(400, 'Invalid team id')
     }
@@ -230,7 +231,6 @@ export async function upsertPrediction(
     const playerCount = leagueId ? await countPlayersForLeague(leagueId) : 0
 
     if (playerCount > 0) {
-      const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
       if (!UUID_RE.test(answer)) {
         throw new AppError(400, 'Invalid player id')
       }
