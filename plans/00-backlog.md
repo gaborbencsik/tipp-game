@@ -27,10 +27,16 @@
 | UX-029 | Pontozási szabályzat modal – polished error state | Nice to Have | ~~UX-028~~ |
 | UX-032 | Torna tippek – lejárt deadline után is mutassa a tippet (read-only lock) | Should Have | — |
 | SEC-002 | HMAC-aláírt meghívó URL-ek | Nice to Have | — |
+| US-948 | Admin liga-oldal (frontend) – liga-lista státusz badge-dzsel + archiválás/visszaállítás | Should Have | ~~US-940~~ |
+| US-949 | Ligák DB-alapúvá tétele (backend-1) – sync-runner env→DB migráció + liga sync-mezők | Should Have | — |
+| US-950 | Admin liga-CRUD kiterjesztés (backend-2) – sync-mezők a create/update-ben | Should Have | US-949 |
+| US-951 | Admin liga-menedzsment UI (frontend) – liga létrehozás/szerkesztés sync-mezőkkel | Should Have | US-948, US-950 |
+| US-952 | Több liga egy csoportban – csoport több ligára is feliratkozhat | Should Have | — |
+| US-953 | Egyedi meccs behúzása csoportba – admin más ligából is választhat meccset tippelésre | Should Have | US-952 |
 
 > UX-019 felülírva — UX-020 implementálja a frissített, mockup-alapú 5 lépéses onboardingot.
 > US-1307 felülírva — UX-030 a Match Detail oldalon (insights alatt) jeleníti meg a Transfermarkt csapatértékeket, nem a Match Pulse-ban.
 
 ---
 
-**Haladás: 189 / 200 story kész** — Must Have: 33/33, Should Have: 156/157, Nice to Have: 0/5 (US-937, PUSH-003 won't do)
+**Haladás: 190 / 200 story kész** — Must Have: 33/33, Should Have: 157/157, Nice to Have: 0/5 (US-937, PUSH-003 won't do)

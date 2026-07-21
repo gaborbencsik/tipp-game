@@ -33,6 +33,7 @@ router.get('/api/matches', authMiddleware, withHttpCache({ maxAge: 0, swr: 15 })
     ...(status ? { status: status as MatchStatus } : {}),
     ...(leagueId ? { leagueId } : {}),
     ...(leagueIds && leagueIds.length > 0 ? { leagueIds } : {}),
+    ...(ctx.query['includeArchivedLeagues'] === 'true' ? { includeArchivedLeagues: true } : {}),
   }
   ctx.body = await getMatches(filters)
 })

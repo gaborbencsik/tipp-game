@@ -1,5 +1,5 @@
 import { alias } from 'drizzle-orm/pg-core'
-import { and, eq, inArray, isNull } from 'drizzle-orm'
+import { and, eq, inArray, isNull, or } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { matches, teams, venues, matchResults, leagues, players } from '../db/schema/index.js'
 import { calculateAndSavePoints, calculateAndSaveGroupPoints } from './scoring.service.js'
@@ -24,6 +24,12 @@ export async function getMatches(filters: MatchesFilters = {}): Promise<Match[]>
   if (filters.leagueId) conditions.push(eq(matches.leagueId, filters.leagueId))
   if (filters.leagueIds && filters.leagueIds.length > 0) {
     conditions.push(inArray(matches.leagueId, [...filters.leagueIds]))
+  }
+  if (!filters.includeArchivedLeagues) {
+    // Hide archived leagues' matches by default; matches without a league
+    // (leagueId IS NULL) must not be excluded by the join filter.
+    const archivedFilter = or(isNull(matches.leagueId), isNull(leagues.archivedAt))
+    if (archivedFilter) conditions.push(archivedFilter)
   }
 
   const rows = await db

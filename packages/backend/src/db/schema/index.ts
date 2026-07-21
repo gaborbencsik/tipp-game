@@ -34,7 +34,7 @@ export const specialPredictionInputTypeEnum = pgEnum(
 )
 
 export const auditActionEnum = pgEnum('audit_action', [
-  'create', 'update', 'delete', 'result_set', 'ban', 'role_change', 'push_send', 'group_member_paid_set', 'user_supporter_set'
+  'create', 'update', 'delete', 'result_set', 'ban', 'role_change', 'push_send', 'group_member_paid_set', 'user_supporter_set', 'league_archive', 'league_restore'
 ])
 
 export const pushNotificationTypeEnum = pgEnum('push_notification_type', [
@@ -163,9 +163,12 @@ export const leagues = pgTable('leagues', {
   name:      varchar('name', { length: 100 }).notNull(),
   shortName: varchar('short_name', { length: 20 }).notNull(),
   startsAt:  timestamp('starts_at', { withTimezone: true }),
+  archivedAt: timestamp('archived_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-})
+}, (t) => ({
+  archivedAtIdx: index('leagues_archived_at_idx').on(t.archivedAt),
+}))
 
 // ─── MATCHES ──────────────────────────────────────────────────────────────────
 

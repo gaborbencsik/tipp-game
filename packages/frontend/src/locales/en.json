@@ -230,6 +230,17 @@
       "supporterToggle": "Supporter",
       "supporterToggleOn": "Mark as supporter",
       "supporterToggleOff": "Unmark as supporter"
+    },
+    "leagues": {
+      "title": "Manage leagues",
+      "name": "Name",
+      "shortName": "Short name",
+      "status": "Status",
+      "actions": "Actions",
+      "archive": "Archive",
+      "restore": "Restore",
+      "archivedBadge": "Archived",
+      "archiveConfirm": "Are you sure you want to archive this league? It will disappear from active surfaces, but all data is kept."
     }
   },
   "groupDetail": {

@@ -454,8 +454,8 @@ export const api = {
         }),
     },
     leagues: {
-      list: (token: string) =>
-        request<League[]>('/admin/leagues', {
+      list: (token: string, includeArchived = false) =>
+        request<League[]>(`/admin/leagues${includeArchived ? '?includeArchived=true' : ''}`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
       create: (token: string, input: LeagueInput) =>
@@ -473,6 +473,16 @@ export const api = {
       delete: (token: string, id: string) =>
         request<void>(`/admin/leagues/${id}`, {
           method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      archive: (token: string, id: string) =>
+        request<League>(`/admin/leagues/${id}/archive`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      restore: (token: string, id: string) =>
+        request<League>(`/admin/leagues/${id}/restore`, {
+          method: 'POST',
           headers: { Authorization: `Bearer ${token}` },
         }),
     },

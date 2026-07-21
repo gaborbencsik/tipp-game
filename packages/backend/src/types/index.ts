@@ -136,6 +136,7 @@ export interface MatchesFilters {
   readonly status?: MatchStatus
   readonly leagueId?: string
   readonly leagueIds?: readonly string[]
+  readonly includeArchivedLeagues?: boolean
 }
 
 export interface MatchInput {
@@ -498,6 +499,7 @@ export interface League {
   readonly id: string
   readonly name: string
   readonly shortName: string
+  readonly archivedAt: string | null
   readonly createdAt: string
   readonly updatedAt: string
 }

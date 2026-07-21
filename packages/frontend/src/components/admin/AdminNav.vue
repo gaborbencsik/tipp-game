@@ -22,6 +22,7 @@ const links: ReadonlyArray<AdminNavLink> = [
   { to: '/admin/stats', label: 'Statisztikák' },
   { to: '/admin/matches', label: 'Mérkőzések' },
   { to: '/admin/teams', label: 'Csapatok' },
+  { to: '/admin/leagues', label: 'Ligák' },
   { to: '/admin/players', label: 'Játékosok' },
   { to: '/admin/users', label: 'Felhasználók' },
   { to: '/admin/scoring', label: 'Pontrendszer' },

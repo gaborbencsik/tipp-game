@@ -230,6 +230,17 @@
       "supporterToggle": "Lelkes támogató",
       "supporterToggleOn": "Támogatónak jelölés",
       "supporterToggleOff": "Támogató jelölés visszavonása"
+    },
+    "leagues": {
+      "title": "Ligák kezelése",
+      "name": "Név",
+      "shortName": "Rövidítés",
+      "status": "Állapot",
+      "actions": "Műveletek",
+      "archive": "Archiválás",
+      "restore": "Visszaállítás",
+      "archivedBadge": "Archivált",
+      "archiveConfirm": "Biztosan archiválod ezt a ligát? Eltűnik az aktív felületekről, de az adatok megmaradnak."
     }
   },
   "groupDetail": {

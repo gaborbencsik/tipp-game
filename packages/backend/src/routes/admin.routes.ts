@@ -13,6 +13,8 @@ import {
   createLeague,
   updateLeague,
   deleteLeague,
+  archiveLeague,
+  restoreLeague,
 } from '../services/leagues.service.js'
 import {
   getPlayers,
@@ -87,7 +89,8 @@ adminRouter.delete('/teams/:id', async (ctx) => {
 // ─── Leagues ─────────────────────────────────────────────────────────────────
 
 adminRouter.get('/leagues', async (ctx) => {
-  ctx.body = await getLeagues()
+  const includeArchived = ctx.query['includeArchived'] === 'true'
+  ctx.body = await getLeagues({ includeArchived })
 })
 
 adminRouter.post('/leagues', async (ctx) => {
@@ -104,6 +107,16 @@ adminRouter.put('/leagues/:id', async (ctx) => {
 adminRouter.delete('/leagues/:id', async (ctx) => {
   await deleteLeague(ctx.params['id'] as string)
   ctx.status = 204
+})
+
+adminRouter.post('/leagues/:id/archive', async (ctx) => {
+  const dbUser = await upsertUser(ctx.state.user)
+  ctx.body = await archiveLeague(ctx.params['id'] as string, dbUser.id)
+})
+
+adminRouter.post('/leagues/:id/restore', async (ctx) => {
+  const dbUser = await upsertUser(ctx.state.user)
+  ctx.body = await restoreLeague(ctx.params['id'] as string, dbUser.id)
 })
 
 // ─── Matches ──────────────────────────────────────────────────────────────────
