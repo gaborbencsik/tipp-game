@@ -113,6 +113,16 @@
                 {{ $t('admin.leagues.edit') }}
               </button>
               <button
+                :data-testid="`league-sync-now-btn-${league.id}`"
+                :disabled="!canSync(league) || syncingId === league.id"
+                :title="syncDisabledReason(league)"
+                class="px-2 py-1 bg-indigo-600 text-white rounded text-sm disabled:opacity-40 disabled:cursor-not-allowed"
+                @click="handleSync(league.id)"
+              >
+                <span v-if="syncingId === league.id">{{ $t('admin.leagues.syncNowRunning') }}</span>
+                <span v-else>{{ $t('admin.leagues.syncNow') }}</span>
+              </button>
+              <button
                 v-if="league.status === 'archived'"
                 :data-testid="`league-restore-btn-${league.id}`"
                 class="px-2 py-1 bg-blue-600 text-white rounded text-sm"
@@ -149,6 +159,7 @@ const { t } = useI18n()
 
 const showForm = ref(false)
 const editingId = ref<string | null>(null)
+const syncingId = ref<string | null>(null)
 const formData = ref<{
   name: string
   shortName: string
@@ -219,5 +230,24 @@ async function handleArchive(id: string): Promise<void> {
 
 async function handleRestore(id: string): Promise<void> {
   await store.restoreLeague(id)
+}
+
+function canSync(league: League): boolean {
+  return league.status === 'active' && league.externalId != null
+}
+
+function syncDisabledReason(league: League): string {
+  if (league.status === 'archived') return t('admin.leagues.syncDisabledArchived')
+  if (league.externalId == null) return t('admin.leagues.syncDisabledNoExternalId')
+  return t('admin.leagues.syncNow')
+}
+
+async function handleSync(id: string): Promise<void> {
+  syncingId.value = id
+  try {
+    await store.syncLeague(id)
+  } finally {
+    syncingId.value = null
+  }
 }
 </script>

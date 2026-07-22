@@ -16,6 +16,7 @@ import {
   archiveLeague,
   restoreLeague,
 } from '../services/leagues.service.js'
+import { runLeagueSync } from '../services/league-sync.service.js'
 import {
   getPlayers,
   getPlayerById,
@@ -117,6 +118,11 @@ adminRouter.post('/leagues/:id/archive', async (ctx) => {
 adminRouter.post('/leagues/:id/restore', async (ctx) => {
   const dbUser = await upsertUser(ctx.state.user)
   ctx.body = await restoreLeague(ctx.params['id'] as string, dbUser.id)
+})
+
+adminRouter.post('/leagues/:id/sync', async (ctx) => {
+  const dbUser = await upsertUser(ctx.state.user)
+  ctx.body = await runLeagueSync(ctx.params['id'] as string, dbUser.id)
 })
 
 // ─── Matches ──────────────────────────────────────────────────────────────────

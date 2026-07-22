@@ -257,7 +257,11 @@
         "save": "Save",
         "cancel": "Cancel"
       },
-      "archiveConfirm": "Are you sure you want to archive this league? It will disappear from active surfaces, but all data is kept."
+      "archiveConfirm": "Are you sure you want to archive this league? It will disappear from active surfaces, but all data is kept.",
+      "syncNow": "Sync now",
+      "syncNowRunning": "Syncing…",
+      "syncDisabledArchived": "An archived league cannot be synced",
+      "syncDisabledNoExternalId": "No external id configured"
     }
   },
   "groupDetail": {

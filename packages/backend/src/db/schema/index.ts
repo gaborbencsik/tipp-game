@@ -34,7 +34,7 @@ export const specialPredictionInputTypeEnum = pgEnum(
 )
 
 export const auditActionEnum = pgEnum('audit_action', [
-  'create', 'update', 'delete', 'result_set', 'ban', 'role_change', 'push_send', 'group_member_paid_set', 'user_supporter_set', 'league_archive', 'league_restore'
+  'create', 'update', 'delete', 'result_set', 'ban', 'role_change', 'push_send', 'group_member_paid_set', 'user_supporter_set', 'league_archive', 'league_restore', 'league_sync_run'
 ])
 
 export const pushNotificationTypeEnum = pgEnum('push_notification_type', [

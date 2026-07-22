@@ -8,6 +8,7 @@ const {
   mockArchiveLeague,
   mockRestoreLeague,
   mockUpsertUser,
+  mockRunLeagueSync,
   mockAuthMiddleware,
   mockAdminMiddleware,
 } = vi.hoisted(() => ({
@@ -17,6 +18,7 @@ const {
   mockArchiveLeague: vi.fn(),
   mockRestoreLeague: vi.fn(),
   mockUpsertUser: vi.fn(),
+  mockRunLeagueSync: vi.fn(),
   mockAuthMiddleware: vi.fn(async (_ctx: unknown, next: () => Promise<void>) => next()),
   mockAdminMiddleware: vi.fn(async (_ctx: unknown, next: () => Promise<void>) => next()),
 }))
@@ -28,6 +30,10 @@ vi.mock('../src/services/leagues.service.js', () => ({
   deleteLeague: vi.fn(),
   archiveLeague: mockArchiveLeague,
   restoreLeague: mockRestoreLeague,
+}))
+
+vi.mock('../src/services/league-sync.service.js', () => ({
+  runLeagueSync: mockRunLeagueSync,
 }))
 
 vi.mock('../src/services/user.service.js', () => ({
@@ -223,5 +229,45 @@ describe('POST /api/admin/leagues/:id/restore', () => {
     await expect(invoke('/api/admin/leagues/:id/restore', 'POST', ctx)).rejects.toMatchObject({
       status: 404,
     })
+  })
+})
+
+describe('POST /api/admin/leagues/:id/sync', () => {
+  const SUMMARY = { matchesUpserted: 10, teamsUpserted: 5, playersUpserted: 9, errors: [] }
+
+  beforeEach(() => {
+    vi.resetAllMocks()
+    mockUpsertUser.mockResolvedValue(ACTOR)
+  })
+
+  it('triggers runLeagueSync with the actor id and returns the summary', async () => {
+    mockRunLeagueSync.mockResolvedValue(SUMMARY)
+    const ctx: Record<string, unknown> = { params: { id: 'league-uuid-1' }, state: { user: {} } }
+
+    await invoke('/api/admin/leagues/:id/sync', 'POST', ctx)
+
+    expect(mockRunLeagueSync).toHaveBeenCalledWith('league-uuid-1', ACTOR.id)
+    expect(ctx.body).toEqual(SUMMARY)
+  })
+
+  it('propagates 404 from service for unknown league', async () => {
+    mockRunLeagueSync.mockRejectedValue(Object.assign(new Error('League not found'), { status: 404 }))
+    const ctx: Record<string, unknown> = { params: { id: 'nope' }, state: { user: {} } }
+
+    await expect(invoke('/api/admin/leagues/:id/sync', 'POST', ctx)).rejects.toMatchObject({ status: 404 })
+  })
+
+  it('propagates 400 when the league has no external id', async () => {
+    mockRunLeagueSync.mockRejectedValue(Object.assign(new Error('no external id'), { status: 400 }))
+    const ctx: Record<string, unknown> = { params: { id: 'league-uuid-1' }, state: { user: {} } }
+
+    await expect(invoke('/api/admin/leagues/:id/sync', 'POST', ctx)).rejects.toMatchObject({ status: 400 })
+  })
+
+  it('propagates 409 for an archived league', async () => {
+    mockRunLeagueSync.mockRejectedValue(Object.assign(new Error('archived'), { status: 409 }))
+    const ctx: Record<string, unknown> = { params: { id: 'league-uuid-1' }, state: { user: {} } }
+
+    await expect(invoke('/api/admin/leagues/:id/sync', 'POST', ctx)).rejects.toMatchObject({ status: 409 })
   })
 })

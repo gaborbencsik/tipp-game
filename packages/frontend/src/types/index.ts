@@ -585,6 +585,13 @@ export interface LeagueInput {
   readonly fixtureAllowlist?: readonly number[] | null
 }
 
+export interface LeagueSyncSummary {
+  readonly matchesUpserted: number
+  readonly teamsUpserted: number
+  readonly playersUpserted: number
+  readonly errors: readonly string[]
+}
+
 export interface UserLeagueFavorite {
   readonly id: string
   readonly userId: string

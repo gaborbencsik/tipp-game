@@ -1,6 +1,6 @@
 import { eq, sql, and, isNotNull } from 'drizzle-orm'
 import { db } from '../db/client.js'
-import { teams, players, playerStats } from '../db/schema/index.js'
+import { teams, players, playerStats, matches } from '../db/schema/index.js'
 import type { FootballApiClient } from './football-api.service.js'
 import { FootballApiRateLimitError } from './football-api.service.js'
 import type { ApiFootballSquadPlayer, ApiFootballPlayerEntry, ApiFootballPlayerStat, PlayerSyncResult } from '../types/index.js'
@@ -13,7 +13,7 @@ export function filterValidStats(statistics: readonly ApiFootballPlayerStat[]): 
 
 const SEASONS = [2025, 2026] as const
 
-interface NationalTeamRow {
+interface TeamRow {
   readonly id: string
   readonly externalId: number
 }
@@ -25,22 +25,53 @@ export async function syncPlayers(client: FootballApiClient): Promise<PlayerSync
     .where(and(isNotNull(teams.externalId), eq(teams.teamType, 'national')))
 
   const teamsWithExtId = nationalTeams.filter(
-    (t): t is NationalTeamRow => t.externalId !== null
+    (t): t is TeamRow => t.externalId !== null
   )
 
+  return syncPlayersForTeams(client, teamsWithExtId, SEASONS)
+}
+
+// League-scoped variant (US-956): syncs players for EVERY team in the league —
+// regardless of teamType, so club leagues are covered — using the league's own
+// season instead of the global hardcoded SEASONS. Teams are derived via matches
+// (there is no teams.leagueId; a team belongs to a league through its fixtures).
+export async function syncPlayersForLeague(
+  client: FootballApiClient,
+  leagueId: string,
+  season: number
+): Promise<PlayerSyncResult> {
+  const rows = await db
+    .selectDistinct({ id: teams.id, externalId: teams.externalId })
+    .from(teams)
+    .innerJoin(
+      matches,
+      sql`(${matches.homeTeamId} = ${teams.id} OR ${matches.awayTeamId} = ${teams.id})`
+    )
+    .where(and(eq(matches.leagueId, leagueId), isNotNull(teams.externalId)))
+
+  const leagueTeams = rows.filter((t): t is TeamRow => t.externalId !== null)
+
+  return syncPlayersForTeams(client, leagueTeams, [season])
+}
+
+async function syncPlayersForTeams(
+  client: FootballApiClient,
+  teamsToSync: readonly TeamRow[],
+  seasons: readonly number[]
+): Promise<PlayerSyncResult> {
   let inserted = 0
   let updated = 0
   let statsUpserted = 0
   let skipped = 0
   const errors: string[] = []
 
-  for (const team of teamsWithExtId) {
+  for (const team of teamsToSync) {
     try {
       const squadResult = await syncSquadForTeam(client, team)
       inserted += squadResult.inserted
       updated += squadResult.updated
 
-      const statsResult = await syncStatsForTeam(client, team)
+      const statsResult = await syncStatsForTeam(client, team, seasons)
       statsUpserted += statsResult.statsUpserted
     } catch (err: unknown) {
       if (err instanceof FootballApiRateLimitError) {
@@ -59,7 +90,7 @@ export async function syncPlayers(client: FootballApiClient): Promise<PlayerSync
 
 async function syncSquadForTeam(
   client: FootballApiClient,
-  team: NationalTeamRow
+  team: TeamRow
 ): Promise<{ inserted: number; updated: number }> {
   const response = await client.fetchSquad({ team: team.externalId })
   if (response.response.length === 0) return { inserted: 0, updated: 0 }
@@ -124,11 +155,12 @@ async function upsertPlayerFromSquad(
 
 async function syncStatsForTeam(
   client: FootballApiClient,
-  team: NationalTeamRow
+  team: TeamRow,
+  seasons: readonly number[]
 ): Promise<{ statsUpserted: number }> {
   let statsUpserted = 0
 
-  for (const season of SEASONS) {
+  for (const season of seasons) {
     let page = 1
     let totalPages = 1
 

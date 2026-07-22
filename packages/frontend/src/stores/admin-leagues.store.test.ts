@@ -13,6 +13,7 @@ const {
   mockLeaguesRestore,
   mockLeaguesCreate,
   mockLeaguesUpdate,
+  mockLeaguesSync,
 } = vi.hoisted(() => ({
   mockGetSession: vi.fn().mockResolvedValue({
     data: { session: { access_token: 'mock-token' } },
@@ -22,6 +23,7 @@ const {
   mockLeaguesRestore: vi.fn(),
   mockLeaguesCreate: vi.fn(),
   mockLeaguesUpdate: vi.fn(),
+  mockLeaguesSync: vi.fn(),
 }))
 
 vi.mock('@/lib/supabase', () => ({
@@ -43,6 +45,7 @@ vi.mock('@/api/index', () => ({
         delete: vi.fn(),
         archive: mockLeaguesArchive,
         restore: mockLeaguesRestore,
+        sync: mockLeaguesSync,
       },
     },
   },
@@ -83,6 +86,7 @@ describe('admin-leagues.store', () => {
     mockLeaguesRestore.mockReset()
     mockLeaguesCreate.mockReset()
     mockLeaguesUpdate.mockReset()
+    mockLeaguesSync.mockReset()
     mockGetSession.mockResolvedValue({ data: { session: { access_token: 'mock-token' } } })
   })
 
@@ -179,5 +183,23 @@ describe('admin-leagues.store', () => {
     await store.fetchLeagues()
     await store.updateLeague('league-1', { season: 9999 })
     expect(store.error).toBe('season out of range')
+  })
+
+  it('syncLeague() → calls api.sync and returns the summary', async () => {
+    const summary = { matchesUpserted: 10, teamsUpserted: 5, playersUpserted: 9, errors: [] }
+    mockLeaguesSync.mockResolvedValue(summary)
+    const store = useAdminLeaguesStore()
+    const result = await store.syncLeague('league-1')
+    expect(mockLeaguesSync).toHaveBeenCalledWith('mock-token', 'league-1')
+    expect(result).toEqual(summary)
+    expect(store.error).toBeNull()
+  })
+
+  it('syncLeague() error → error set, returns null', async () => {
+    mockLeaguesSync.mockRejectedValue(new Error('Archived league cannot be synced'))
+    const store = useAdminLeaguesStore()
+    const result = await store.syncLeague('league-2')
+    expect(store.error).toBe('Archived league cannot be synced')
+    expect(result).toBeNull()
   })
 })

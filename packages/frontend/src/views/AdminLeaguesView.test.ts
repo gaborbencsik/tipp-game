@@ -11,13 +11,14 @@ vi.mock('vue-router', async (importOriginal) => {
   return { ...actual, useRouter: () => ({ push: vi.fn() }) }
 })
 
-const { mockGetSession, mockLeaguesList, mockLeaguesArchive, mockLeaguesRestore, mockLeaguesCreate, mockLeaguesUpdate } = vi.hoisted(() => ({
+const { mockGetSession, mockLeaguesList, mockLeaguesArchive, mockLeaguesRestore, mockLeaguesCreate, mockLeaguesUpdate, mockLeaguesSync } = vi.hoisted(() => ({
   mockGetSession: vi.fn().mockResolvedValue({ data: { session: { access_token: 'mock-token' } } }),
   mockLeaguesList: vi.fn().mockResolvedValue([]),
   mockLeaguesArchive: vi.fn().mockResolvedValue(undefined),
   mockLeaguesRestore: vi.fn().mockResolvedValue(undefined),
   mockLeaguesCreate: vi.fn().mockResolvedValue(undefined),
   mockLeaguesUpdate: vi.fn().mockResolvedValue(undefined),
+  mockLeaguesSync: vi.fn().mockResolvedValue({ matchesUpserted: 0, teamsUpserted: 0, playersUpserted: 0, errors: [] }),
 }))
 
 vi.mock('@/lib/supabase', () => ({
@@ -39,6 +40,7 @@ vi.mock('@/api/index', () => ({
         delete: vi.fn(),
         archive: mockLeaguesArchive,
         restore: mockLeaguesRestore,
+        sync: mockLeaguesSync,
       },
     },
   },
@@ -89,6 +91,7 @@ describe('AdminLeaguesView', () => {
     mockLeaguesRestore.mockReset().mockResolvedValue(undefined)
     mockLeaguesCreate.mockReset().mockResolvedValue(undefined)
     mockLeaguesUpdate.mockReset().mockResolvedValue(undefined)
+    mockLeaguesSync.mockReset().mockResolvedValue({ matchesUpserted: 0, teamsUpserted: 0, playersUpserted: 0, errors: [] })
     mockGetSession.mockResolvedValue({ data: { session: { access_token: 'mock-token' } } })
     vi.stubGlobal('confirm', vi.fn().mockReturnValue(true))
   })
@@ -210,5 +213,28 @@ describe('AdminLeaguesView', () => {
     await wrapper.find('[data-testid="league-form"]').trigger('submit')
     await flushPromises()
     expect(mockLeaguesCreate).not.toHaveBeenCalled()
+  })
+
+  it('sync-now button is disabled for an archived league', async () => {
+    const { wrapper } = await mountView([{ ...ARCHIVED, externalId: 1 }])
+    const btn = wrapper.find('[data-testid="league-sync-now-btn-league-2"]')
+    expect(btn.exists()).toBe(true)
+    expect((btn.element as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it('sync-now button is disabled when external id is missing', async () => {
+    const { wrapper } = await mountView([{ ...ACTIVE, externalId: null }])
+    const btn = wrapper.find('[data-testid="league-sync-now-btn-league-1"]')
+    expect(btn.exists()).toBe(true)
+    expect((btn.element as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it('sync-now button calls store.syncLeague for a syncable league', async () => {
+    const { wrapper } = await mountView([{ ...ACTIVE, externalId: 39, season: 2026 }])
+    const btn = wrapper.find('[data-testid="league-sync-now-btn-league-1"]')
+    expect((btn.element as HTMLButtonElement).disabled).toBe(false)
+    await btn.trigger('click')
+    await flushPromises()
+    expect(mockLeaguesSync).toHaveBeenCalledWith('mock-token', 'league-1')
   })
 })

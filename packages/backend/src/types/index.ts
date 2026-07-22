@@ -590,6 +590,15 @@ export interface SyncRunResult {
   readonly partial: boolean
 }
 
+// US-956: summary of a single per-league on-demand sync (match+team via runSync,
+// then league-scoped players). Returned to the admin UI for feedback.
+export interface LeagueSyncSummary {
+  readonly matchesUpserted: number
+  readonly teamsUpserted: number
+  readonly playersUpserted: number
+  readonly errors: readonly string[]
+}
+
 export interface ApiFootballFixtureStatus {
   readonly short: string
   readonly long: string

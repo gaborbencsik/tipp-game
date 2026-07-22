@@ -526,6 +526,13 @@
       "when": 1788000000018,
       "tag": "0074_league_status_sync_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 75,
+      "version": "7",
+      "when": 1788000000019,
+      "tag": "0075_league_sync_run_audit",
+      "breakpoints": true
     }
   ]
 }

@@ -257,7 +257,11 @@
         "save": "Mentés",
         "cancel": "Mégse"
       },
-      "archiveConfirm": "Biztosan archiválod ezt a ligát? Eltűnik az aktív felületekről, de az adatok megmaradnak."
+      "archiveConfirm": "Biztosan archiválod ezt a ligát? Eltűnik az aktív felületekről, de az adatok megmaradnak.",
+      "syncNow": "Szinkronizálj most",
+      "syncNowRunning": "Szinkronizálás folyamatban…",
+      "syncDisabledArchived": "Archivált liga nem szinkronizálható",
+      "syncDisabledNoExternalId": "Nincs beállítva külső azonosító (external_id)"
     }
   },
   "groupDetail": {

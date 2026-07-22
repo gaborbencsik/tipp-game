@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { supabase } from '../lib/supabase.js'
 import { api } from '../api/index.js'
 import { useToastStore } from './toast.store.js'
-import type { League, LeagueInput } from '../types/index.js'
+import type { League, LeagueInput, LeagueSyncSummary } from '../types/index.js'
 
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
 
@@ -91,5 +91,24 @@ export const useAdminLeaguesStore = defineStore('admin-leagues', () => {
     }
   }
 
-  return { leagues, isLoading, error, fetchLeagues, archiveLeague, restoreLeague, createLeague, updateLeague }
+  async function syncLeague(id: string): Promise<LeagueSyncSummary | null> {
+    error.value = null
+    const toast = useToastStore()
+    try {
+      const token = await getAccessToken()
+      const summary = await api.admin.leagues.sync(token, id)
+      toast.addToast(
+        `Szinkron kész: ${summary.matchesUpserted} meccs, ${summary.teamsUpserted} csapat, ${summary.playersUpserted} játékos`,
+        'success',
+      )
+      return summary
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Ismeretlen hiba'
+      error.value = msg
+      toast.addToast(`Hiba: ${msg}`, 'error')
+      return null
+    }
+  }
+
+  return { leagues, isLoading, error, fetchLeagues, archiveLeague, restoreLeague, createLeague, updateLeague, syncLeague }
 })

@@ -1,6 +1,6 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-07-22 (US-951 lezárva: admin liga-menedzsment UI create/edit sync-mezőkkel)
+> Utoljára frissítve: 2026-07-22 (US-956 lezárva: per-liga on-demand szinkron az admin UI-ból)
 
 ## Nyitott story-k
 
@@ -30,12 +30,12 @@
 | US-952 | Több liga egy csoportban – csoport több ligára is feliratkozhat | Should Have | — |
 | US-953 | Egyedi meccs behúzása csoportba – admin más ligából is választhat meccset tippelésre | Should Have | US-952 |
 | US-954 | Archivált liga esetén a torna tippek ne jelenjenek meg a mostani formában | Should Have | ~~US-940~~ |
-| US-955 | Ranglista – az „Összesített” (globális) nézet eltávolítása | Should Have | — |
-| US-956 | Per-liga on-demand szinkron (meccs + csapat + játékos) az admin UI-ból | Should Have | ~~US-949~~, ~~US-950~~, ~~US-951~~ |
+| US-955 | Ranglista – az „Összesített" (globális) nézet eltávolítása | Should Have | — |
+| US-957 | Per-liga szinkronizáció ki/bekapcsolása az admin szinkron oldalról | Should Have | ~~US-949~~, ~~US-950~~, ~~US-951~~ |
 
 > UX-019 felülírva — UX-020 implementálja a frissített, mockup-alapú 5 lépéses onboardingot.
 > US-1307 felülírva — UX-030 a Match Detail oldalon (insights alatt) jeleníti meg a Transfermarkt csapatértékeket, nem a Match Pulse-ban.
 
 ---
 
-**Haladás: 194 / 200 story kész** — Must Have: 33/33, Should Have: 161/161, Nice to Have: 0/5 (US-937, PUSH-003 won't do)
+**Haladás: 196 / 201 story nyitott** — Must Have: 33/33, Should Have: 162/162, Nice to Have: 0/5 + 1/1 (US-957 nyitott)
