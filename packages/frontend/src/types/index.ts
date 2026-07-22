@@ -561,6 +561,13 @@ export interface League {
   readonly shortName: string
   readonly status: 'active' | 'archived'
   readonly archivedAt: string | null
+  readonly startsAt: string | null
+  readonly syncEnabled: boolean
+  readonly externalId: number | null
+  readonly season: number | null
+  readonly syncFrom: string | null
+  readonly syncTo: string | null
+  readonly fixtureAllowlist: readonly number[] | null
   readonly createdAt: string
   readonly updatedAt: string
 }
@@ -568,6 +575,14 @@ export interface League {
 export interface LeagueInput {
   readonly name: string
   readonly shortName: string
+  readonly status?: 'active' | 'archived'
+  readonly startsAt?: string | null
+  readonly syncEnabled?: boolean
+  readonly externalId?: number | null
+  readonly season?: number | null
+  readonly syncFrom?: string | null
+  readonly syncTo?: string | null
+  readonly fixtureAllowlist?: readonly number[] | null
 }
 
 export interface UserLeagueFavorite {

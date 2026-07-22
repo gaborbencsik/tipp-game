@@ -11,11 +11,13 @@ vi.mock('vue-router', async (importOriginal) => {
   return { ...actual, useRouter: () => ({ push: vi.fn() }) }
 })
 
-const { mockGetSession, mockLeaguesList, mockLeaguesArchive, mockLeaguesRestore } = vi.hoisted(() => ({
+const { mockGetSession, mockLeaguesList, mockLeaguesArchive, mockLeaguesRestore, mockLeaguesCreate, mockLeaguesUpdate } = vi.hoisted(() => ({
   mockGetSession: vi.fn().mockResolvedValue({ data: { session: { access_token: 'mock-token' } } }),
   mockLeaguesList: vi.fn().mockResolvedValue([]),
   mockLeaguesArchive: vi.fn().mockResolvedValue(undefined),
   mockLeaguesRestore: vi.fn().mockResolvedValue(undefined),
+  mockLeaguesCreate: vi.fn().mockResolvedValue(undefined),
+  mockLeaguesUpdate: vi.fn().mockResolvedValue(undefined),
 }))
 
 vi.mock('@/lib/supabase', () => ({
@@ -32,8 +34,8 @@ vi.mock('@/api/index', () => ({
     admin: {
       leagues: {
         list: mockLeaguesList,
-        create: vi.fn(),
-        update: vi.fn(),
+        create: mockLeaguesCreate,
+        update: mockLeaguesUpdate,
         delete: vi.fn(),
         archive: mockLeaguesArchive,
         restore: mockLeaguesRestore,
@@ -48,6 +50,13 @@ const ACTIVE: League = {
   shortName: 'WC2026',
   status: 'active',
   archivedAt: null,
+  startsAt: null,
+  syncEnabled: false,
+  externalId: null,
+  season: null,
+  syncFrom: null,
+  syncTo: null,
+  fixtureAllowlist: null,
   createdAt: '2026-07-21T00:00:00.000Z',
   updatedAt: '2026-07-21T00:00:00.000Z',
 }
@@ -78,6 +87,8 @@ describe('AdminLeaguesView', () => {
     mockLeaguesList.mockReset().mockResolvedValue([])
     mockLeaguesArchive.mockReset().mockResolvedValue(undefined)
     mockLeaguesRestore.mockReset().mockResolvedValue(undefined)
+    mockLeaguesCreate.mockReset().mockResolvedValue(undefined)
+    mockLeaguesUpdate.mockReset().mockResolvedValue(undefined)
     mockGetSession.mockResolvedValue({ data: { session: { access_token: 'mock-token' } } })
     vi.stubGlobal('confirm', vi.fn().mockReturnValue(true))
   })
@@ -138,5 +149,66 @@ describe('AdminLeaguesView', () => {
     await flushPromises()
     expect(window.confirm).not.toHaveBeenCalled()
     expect(mockLeaguesRestore).toHaveBeenCalledWith('mock-token', 'league-2')
+  })
+
+  it('create button opens the form', async () => {
+    const { wrapper } = await mountView([])
+    expect(wrapper.find('[data-testid="league-form"]').exists()).toBe(false)
+    await wrapper.find('[data-testid="league-create-btn"]').trigger('click')
+    expect(wrapper.find('[data-testid="league-form"]').exists()).toBe(true)
+  })
+
+  it('create form submit calls store.create with status and syncEnabled as separate fields', async () => {
+    mockLeaguesCreate.mockResolvedValue({ ...ACTIVE, id: 'new', name: 'Premier League', shortName: 'PL' })
+    const { wrapper } = await mountView([])
+    await wrapper.find('[data-testid="league-create-btn"]').trigger('click')
+    await wrapper.find('[data-testid="league-form-name"]').setValue('Premier League')
+    await wrapper.find('[data-testid="league-form-short-name"]').setValue('PL')
+    await wrapper.find('[data-testid="league-form-status"]').setValue('archived')
+    await wrapper.find('[data-testid="league-form-sync-enabled"]').setValue(true)
+    await wrapper.find('[data-testid="league-form-external-id"]').setValue('42')
+    await wrapper.find('[data-testid="league-form-season"]').setValue('2026')
+    await wrapper.find('[data-testid="league-form"]').trigger('submit')
+    await flushPromises()
+    expect(mockLeaguesCreate).toHaveBeenCalledWith('mock-token', {
+      name: 'Premier League',
+      shortName: 'PL',
+      status: 'archived',
+      syncEnabled: true,
+      externalId: 42,
+      season: 2026,
+    })
+  })
+
+  it('edit button prefills the form and submit calls store.update with id', async () => {
+    const withData: League = { ...ARCHIVED, externalId: 7, season: 2024, syncEnabled: true }
+    mockLeaguesUpdate.mockResolvedValue(withData)
+    const { wrapper } = await mountView([withData])
+    await wrapper.find('[data-testid="league-edit-btn-league-2"]').trigger('click')
+    const form = wrapper.find('[data-testid="league-form"]')
+    expect(form.exists()).toBe(true)
+    expect((wrapper.find('[data-testid="league-form-name"]').element as HTMLInputElement).value).toBe('Euro 2024')
+    expect((wrapper.find('[data-testid="league-form-status"]').element as HTMLSelectElement).value).toBe('archived')
+    expect((wrapper.find('[data-testid="league-form-sync-enabled"]').element as HTMLInputElement).checked).toBe(true)
+    await wrapper.find('[data-testid="league-form-name"]').setValue('Euro 2028')
+    await form.trigger('submit')
+    await flushPromises()
+    expect(mockLeaguesUpdate).toHaveBeenCalledWith('mock-token', 'league-2', expect.objectContaining({
+      name: 'Euro 2028',
+      shortName: 'WC2026',
+      status: 'archived',
+      syncEnabled: true,
+      externalId: 7,
+      season: 2024,
+    }))
+  })
+
+  it('does not submit when name or shortName is empty', async () => {
+    const { wrapper } = await mountView([])
+    await wrapper.find('[data-testid="league-create-btn"]').trigger('click')
+    await wrapper.find('[data-testid="league-form-short-name"]').setValue('PL')
+    await wrapper.find('[data-testid="league-form"]').trigger('submit')
+    await flushPromises()
+    expect(mockLeaguesCreate).not.toHaveBeenCalled()
   })
 })

@@ -11,6 +11,8 @@ const {
   mockLeaguesList,
   mockLeaguesArchive,
   mockLeaguesRestore,
+  mockLeaguesCreate,
+  mockLeaguesUpdate,
 } = vi.hoisted(() => ({
   mockGetSession: vi.fn().mockResolvedValue({
     data: { session: { access_token: 'mock-token' } },
@@ -18,6 +20,8 @@ const {
   mockLeaguesList: vi.fn(),
   mockLeaguesArchive: vi.fn(),
   mockLeaguesRestore: vi.fn(),
+  mockLeaguesCreate: vi.fn(),
+  mockLeaguesUpdate: vi.fn(),
 }))
 
 vi.mock('@/lib/supabase', () => ({
@@ -34,8 +38,8 @@ vi.mock('@/api/index', () => ({
     admin: {
       leagues: {
         list: mockLeaguesList,
-        create: vi.fn(),
-        update: vi.fn(),
+        create: mockLeaguesCreate,
+        update: mockLeaguesUpdate,
         delete: vi.fn(),
         archive: mockLeaguesArchive,
         restore: mockLeaguesRestore,
@@ -52,6 +56,13 @@ const ACTIVE: League = {
   shortName: 'WC2026',
   status: 'active',
   archivedAt: null,
+  startsAt: null,
+  syncEnabled: false,
+  externalId: null,
+  season: null,
+  syncFrom: null,
+  syncTo: null,
+  fixtureAllowlist: null,
   createdAt: '2026-07-21T00:00:00.000Z',
   updatedAt: '2026-07-21T00:00:00.000Z',
 }
@@ -70,6 +81,8 @@ describe('admin-leagues.store', () => {
     mockLeaguesList.mockReset()
     mockLeaguesArchive.mockReset()
     mockLeaguesRestore.mockReset()
+    mockLeaguesCreate.mockReset()
+    mockLeaguesUpdate.mockReset()
     mockGetSession.mockResolvedValue({ data: { session: { access_token: 'mock-token' } } })
   })
 
@@ -123,5 +136,48 @@ describe('admin-leagues.store', () => {
     await store.fetchLeagues()
     await store.archiveLeague('league-1')
     expect(store.error).toBe('League not found')
+  })
+
+  it('createLeague() → new league appended to list', async () => {
+    mockLeaguesList.mockResolvedValue([])
+    const created: League = { ...ACTIVE, id: 'league-3', name: 'Premier League', shortName: 'PL' }
+    mockLeaguesCreate.mockResolvedValue(created)
+    const store = useAdminLeaguesStore()
+    await store.fetchLeagues()
+    await store.createLeague({ name: 'Premier League', shortName: 'PL', status: 'active', syncEnabled: false })
+    expect(mockLeaguesCreate).toHaveBeenCalledWith('mock-token', {
+      name: 'Premier League', shortName: 'PL', status: 'active', syncEnabled: false,
+    })
+    expect(store.leagues.find(l => l.id === 'league-3')).toEqual(created)
+  })
+
+  it('createLeague() error → error set, list unchanged', async () => {
+    mockLeaguesList.mockResolvedValue([ACTIVE])
+    mockLeaguesCreate.mockRejectedValue(new Error('externalId already exists'))
+    const store = useAdminLeaguesStore()
+    await store.fetchLeagues()
+    await store.createLeague({ name: 'X', shortName: 'X' })
+    expect(store.error).toBe('externalId already exists')
+    expect(store.leagues).toEqual([ACTIVE])
+  })
+
+  it('updateLeague() → league replaced with server response in list', async () => {
+    mockLeaguesList.mockResolvedValue([ACTIVE])
+    const updated: League = { ...ACTIVE, name: 'World Cup 2030', season: 2030 }
+    mockLeaguesUpdate.mockResolvedValue(updated)
+    const store = useAdminLeaguesStore()
+    await store.fetchLeagues()
+    await store.updateLeague('league-1', { name: 'World Cup 2030', season: 2030 })
+    expect(mockLeaguesUpdate).toHaveBeenCalledWith('mock-token', 'league-1', { name: 'World Cup 2030', season: 2030 })
+    expect(store.leagues.find(l => l.id === 'league-1')).toEqual(updated)
+  })
+
+  it('updateLeague() error → error set', async () => {
+    mockLeaguesList.mockResolvedValue([ACTIVE])
+    mockLeaguesUpdate.mockRejectedValue(new Error('season out of range'))
+    const store = useAdminLeaguesStore()
+    await store.fetchLeagues()
+    await store.updateLeague('league-1', { season: 9999 })
+    expect(store.error).toBe('season out of range')
   })
 })

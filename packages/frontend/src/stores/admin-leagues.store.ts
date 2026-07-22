@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { supabase } from '../lib/supabase.js'
 import { api } from '../api/index.js'
 import { useToastStore } from './toast.store.js'
-import type { League } from '../types/index.js'
+import type { League, LeagueInput } from '../types/index.js'
 
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
 
@@ -61,5 +61,35 @@ export const useAdminLeaguesStore = defineStore('admin-leagues', () => {
     }
   }
 
-  return { leagues, isLoading, error, fetchLeagues, archiveLeague, restoreLeague }
+  async function createLeague(input: LeagueInput): Promise<void> {
+    error.value = null
+    const toast = useToastStore()
+    try {
+      const token = await getAccessToken()
+      const created = await api.admin.leagues.create(token, input)
+      leagues.value = [...leagues.value, created]
+      toast.addToast('Liga létrehozva', 'success')
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Ismeretlen hiba'
+      error.value = msg
+      toast.addToast(`Hiba: ${msg}`, 'error')
+    }
+  }
+
+  async function updateLeague(id: string, input: Partial<LeagueInput>): Promise<void> {
+    error.value = null
+    const toast = useToastStore()
+    try {
+      const token = await getAccessToken()
+      const updated = await api.admin.leagues.update(token, id, input)
+      leagues.value = leagues.value.map(l => (l.id === id ? updated : l))
+      toast.addToast('Liga frissítve', 'success')
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Ismeretlen hiba'
+      error.value = msg
+      toast.addToast(`Hiba: ${msg}`, 'error')
+    }
+  }
+
+  return { leagues, isLoading, error, fetchLeagues, archiveLeague, restoreLeague, createLeague, updateLeague }
 })

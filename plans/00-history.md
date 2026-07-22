@@ -197,3 +197,4 @@
 | US-949 | Ligák DB-alapúvá tétele (backend-1) – sync-runner env→DB migráció + liga sync-mezők | Should Have |
 | US-950 | Admin liga-CRUD kiterjesztés (backend-2) – sync-mezők a create/update-ben | Should Have |
 | US-948 | Admin liga-oldal (frontend) – liga-lista státusz badge-dzsel + archiválás/visszaállítás | Should Have |
+| US-951 | Admin liga-menedzsment UI (frontend) – liga létrehozás/szerkesztés sync-mezőkkel | Should Have |

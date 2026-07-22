@@ -242,6 +242,21 @@
       "archivedBadge": "Archived",
       "activeBadge": "Active",
       "empty": "No leagues yet.",
+      "create": "New league",
+      "edit": "Edit",
+      "form": {
+        "name": "Name",
+        "shortName": "Short name",
+        "externalId": "External API id",
+        "season": "Season",
+        "status": "Status",
+        "statusActive": "Active",
+        "statusArchived": "Archived",
+        "syncEnabled": "Sync enabled",
+        "syncArchivedHint": "While archived, sync does not run regardless of this toggle.",
+        "save": "Save",
+        "cancel": "Cancel"
+      },
       "archiveConfirm": "Are you sure you want to archive this league? It will disappear from active surfaces, but all data is kept."
     }
   },

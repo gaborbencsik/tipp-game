@@ -242,6 +242,21 @@
       "archivedBadge": "Archivált",
       "activeBadge": "Aktív",
       "empty": "Még nincs egyetlen liga sem.",
+      "create": "Új liga",
+      "edit": "Szerkesztés",
+      "form": {
+        "name": "Név",
+        "shortName": "Rövid név",
+        "externalId": "Külső API-azonosító",
+        "season": "Szezon",
+        "status": "Státusz",
+        "statusActive": "Aktív",
+        "statusArchived": "Archivált",
+        "syncEnabled": "Szinkronizáció bekapcsolva",
+        "syncArchivedHint": "Archivált státusz mellett a szinkronizáció nem fut, bármit is mutat a kapcsoló.",
+        "save": "Mentés",
+        "cancel": "Mégse"
+      },
       "archiveConfirm": "Biztosan archiválod ezt a ligát? Eltűnik az aktív felületekről, de az adatok megmaradnak."
     }
   },
