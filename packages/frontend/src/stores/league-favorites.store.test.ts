@@ -139,7 +139,7 @@ describe('league-favorites.store', () => {
       isAdmin: false,
       userRank: null,
       favoriteTeamDoublePoints: false,
-      league: leagueId ? { id: leagueId, name: shortName, shortName } : null,
+      league: leagueId ? { id: leagueId, name: shortName, shortName, status: 'active' as const } : null,
       createdAt: '',
     }
   }

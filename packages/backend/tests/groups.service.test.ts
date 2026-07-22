@@ -237,7 +237,7 @@ describe('createGroup', () => {
       .mockReturnValueOnce(makeSelectChain([{ count: 0 }]))   // createdCount
       .mockReturnValueOnce(makeSelectChain([]))                // inviteCode uniqueness
       .mockReturnValueOnce(makeSelectChain([]))                // globalTypes query (none)
-      .mockReturnValueOnce(makeSelectChain([{ id: 'l-1', name: 'VB 2026', shortName: 'VB' }]))  // fetchGroupLeague
+      .mockReturnValueOnce(makeSelectChain([{ id: 'l-1', name: 'VB 2026', shortName: 'VB', status: 'active' }]))  // fetchGroupLeague
 
     const insertFn = vi.fn()
     const returningFn = vi.fn().mockResolvedValue([GROUP_ROW])
@@ -250,7 +250,7 @@ describe('createGroup', () => {
 
     const result = await createGroup({ name: 'Barátok', leagueId: 'l-1' }, USER_ID)
     expect(result).toMatchObject({ name: 'Barátok', memberCount: 1, isAdmin: true })
-    expect(result.league).toEqual({ id: 'l-1', name: 'VB 2026', shortName: 'VB' })
+    expect(result.league).toEqual({ id: 'l-1', name: 'VB 2026', shortName: 'VB', status: 'active' })
   })
 
   it('valid input → inviteCode is generated', async () => {

@@ -452,6 +452,19 @@ describe('MatchesView', () => {
     expect(matchesStore.leagueFilter).toBe('l2')
   })
 
+  it('archived league is not offered as a filter option', async () => {
+    mockGroupsGroups.push(
+      { id: 'g1', name: 'A', description: null, inviteCode: 'X', inviteActive: true, createdBy: 'u1', memberCount: 2, isAdmin: false, userRank: null, favoriteTeamDoublePoints: false, league: { id: 'l1', name: 'World Cup 2026', shortName: 'WC26', status: 'active' }, createdAt: '2026-01-01T00:00:00.000Z' } as unknown as import('@/types/index').Group,
+      { id: 'g2', name: 'B', description: null, inviteCode: 'Y', inviteActive: true, createdBy: 'u1', memberCount: 3, isAdmin: false, userRank: null, favoriteTeamDoublePoints: false, league: { id: 'l2', name: 'Euro 2026', shortName: 'EU26', status: 'active' }, createdAt: '2026-01-01T00:00:00.000Z' } as unknown as import('@/types/index').Group,
+      { id: 'g3', name: 'C', description: null, inviteCode: 'Z', inviteActive: true, createdBy: 'u1', memberCount: 4, isAdmin: false, userRank: null, favoriteTeamDoublePoints: false, league: { id: 'l3', name: 'Old Cup 2022', shortName: 'OC22', status: 'archived' }, createdAt: '2026-01-01T00:00:00.000Z' } as unknown as import('@/types/index').Group,
+    )
+    const { wrapper } = await mountView([MATCH_SCHEDULED])
+    const values = wrapper.find('[data-testid="league-filter"]').findAll('option').map(o => o.attributes('value'))
+    expect(values).toContain('l1')
+    expect(values).toContain('l2')
+    expect(values).not.toContain('l3')
+  })
+
   it('selecting "Összes liga" resets leagueFilter to null', async () => {
     mockGroupsGroups.push(
       { id: 'g1', name: 'A', description: null, inviteCode: 'X', inviteActive: true, createdBy: 'u1', memberCount: 2, isAdmin: false, userRank: null, favoriteTeamDoublePoints: false, league: { id: 'l1', name: 'World Cup 2026', shortName: 'WC26' }, createdAt: '2026-01-01T00:00:00.000Z' } as unknown as import('@/types/index').Group,
@@ -481,7 +494,7 @@ describe('MatchesView', () => {
     mockGroupsGroups.push({
       id: 'g1', name: 'Test', description: null, inviteCode: 'X', inviteActive: true,
       createdBy: 'u1', memberCount: 2, isAdmin: false, userRank: null, favoriteTeamDoublePoints: false,
-      league: { id: 'l1', name: 'World Cup 2026', shortName: 'WC26' },
+      league: { id: 'l1', name: 'World Cup 2026', shortName: 'WC26', status: 'active' },
       createdAt: '2026-01-01T00:00:00.000Z',
     })
     const { matchesStore } = await mountView([MATCH_SCHEDULED])
@@ -490,8 +503,8 @@ describe('MatchesView', () => {
 
   it('2 groups with same league → leagueFilter auto-set to that league', async () => {
     mockGroupsGroups.push(
-      { id: 'g1', name: 'A', description: null, inviteCode: 'X', inviteActive: true, createdBy: 'u1', memberCount: 2, isAdmin: false, userRank: null, favoriteTeamDoublePoints: false, league: { id: 'l1', name: 'WC', shortName: 'WC' }, createdAt: '2026-01-01T00:00:00.000Z' },
-      { id: 'g2', name: 'B', description: null, inviteCode: 'Y', inviteActive: true, createdBy: 'u1', memberCount: 3, isAdmin: false, userRank: null, favoriteTeamDoublePoints: false, league: { id: 'l1', name: 'WC', shortName: 'WC' }, createdAt: '2026-01-01T00:00:00.000Z' },
+      { id: 'g1', name: 'A', description: null, inviteCode: 'X', inviteActive: true, createdBy: 'u1', memberCount: 2, isAdmin: false, userRank: null, favoriteTeamDoublePoints: false, league: { id: 'l1', name: 'WC', shortName: 'WC', status: 'active' }, createdAt: '2026-01-01T00:00:00.000Z' },
+      { id: 'g2', name: 'B', description: null, inviteCode: 'Y', inviteActive: true, createdBy: 'u1', memberCount: 3, isAdmin: false, userRank: null, favoriteTeamDoublePoints: false, league: { id: 'l1', name: 'WC', shortName: 'WC', status: 'active' }, createdAt: '2026-01-01T00:00:00.000Z' },
     )
     const { matchesStore } = await mountView([MATCH_SCHEDULED])
     expect(matchesStore.leagueFilter).toBe('l1')
@@ -499,8 +512,8 @@ describe('MatchesView', () => {
 
   it('2 groups with different leagues → leagueFilter stays null', async () => {
     mockGroupsGroups.push(
-      { id: 'g1', name: 'A', description: null, inviteCode: 'X', inviteActive: true, createdBy: 'u1', memberCount: 2, isAdmin: false, userRank: null, favoriteTeamDoublePoints: false, league: { id: 'l1', name: 'WC', shortName: 'WC' }, createdAt: '2026-01-01T00:00:00.000Z' },
-      { id: 'g2', name: 'B', description: null, inviteCode: 'Y', inviteActive: true, createdBy: 'u1', memberCount: 3, isAdmin: false, userRank: null, favoriteTeamDoublePoints: false, league: { id: 'l2', name: 'Euro', shortName: 'EU' }, createdAt: '2026-01-01T00:00:00.000Z' },
+      { id: 'g1', name: 'A', description: null, inviteCode: 'X', inviteActive: true, createdBy: 'u1', memberCount: 2, isAdmin: false, userRank: null, favoriteTeamDoublePoints: false, league: { id: 'l1', name: 'WC', shortName: 'WC', status: 'active' }, createdAt: '2026-01-01T00:00:00.000Z' },
+      { id: 'g2', name: 'B', description: null, inviteCode: 'Y', inviteActive: true, createdBy: 'u1', memberCount: 3, isAdmin: false, userRank: null, favoriteTeamDoublePoints: false, league: { id: 'l2', name: 'Euro', shortName: 'EU', status: 'active' }, createdAt: '2026-01-01T00:00:00.000Z' },
     )
     const { matchesStore } = await mountView([MATCH_SCHEDULED])
     expect(matchesStore.leagueFilter).toBeNull()

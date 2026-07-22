@@ -27,9 +27,9 @@ function generateInviteCode(): string {
   return code
 }
 
-async function fetchGroupLeague(groupId: string): Promise<{ id: string; name: string; shortName: string } | null> {
+async function fetchGroupLeague(groupId: string): Promise<{ id: string; name: string; shortName: string; status: 'active' | 'archived' } | null> {
   const rows = await db
-    .select({ id: leagues.id, name: leagues.name, shortName: leagues.shortName })
+    .select({ id: leagues.id, name: leagues.name, shortName: leagues.shortName, status: leagues.status })
     .from(groupLeagues)
     .innerJoin(leagues, eq(groupLeagues.leagueId, leagues.id))
     .where(eq(groupLeagues.groupId, groupId))
@@ -42,7 +42,7 @@ function toApiGroup(
   memberCount: number,
   isAdmin: boolean,
   userRank: number | null = null,
-  groupLeague: { id: string; name: string; shortName: string } | null = null,
+  groupLeague: { id: string; name: string; shortName: string; status: 'active' | 'archived' } | null = null,
 ): Group {
   return {
     id: row.id,

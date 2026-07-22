@@ -283,7 +283,7 @@ export interface Group {
   readonly isAdmin: boolean
   readonly userRank: number | null
   readonly favoriteTeamDoublePoints: boolean
-  readonly league: { readonly id: string; readonly name: string; readonly shortName: string } | null
+  readonly league: { readonly id: string; readonly name: string; readonly shortName: string; readonly status: 'active' | 'archived' } | null
   readonly createdAt: string
 }
 

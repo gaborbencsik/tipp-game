@@ -503,7 +503,7 @@ type UserLeague = { readonly id: string; readonly name: string; readonly shortNa
 const userLeagues = computed<readonly UserLeague[]>(() => {
   const seen = new Map<string, UserLeague>()
   for (const g of groupsStore.groups) {
-    if (g.league && !seen.has(g.league.id)) seen.set(g.league.id, g.league)
+    if (g.league && g.league.status !== 'archived' && !seen.has(g.league.id)) seen.set(g.league.id, g.league)
   }
   return [...seen.values()]
 })
