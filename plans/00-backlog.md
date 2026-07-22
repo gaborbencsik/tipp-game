@@ -1,6 +1,6 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-07-02 (BUG-011 lezárva: knockout meccs pontszámítás ET/PK)
+> Utoljára frissítve: 2026-07-22 (US-950 lezárva: liga-CRUD sync-mezők backend)
 
 ## Nyitott story-k
 
@@ -28,17 +28,16 @@
 | UX-032 | Torna tippek – lejárt deadline után is mutassa a tippet (read-only lock) | Should Have | — |
 | SEC-002 | HMAC-aláírt meghívó URL-ek | Nice to Have | — |
 | US-948 | Admin liga-oldal (frontend) – liga-lista státusz badge-dzsel + archiválás/visszaállítás | Should Have | ~~US-940~~, US-949 |
-| US-950 | Admin liga-CRUD kiterjesztés (backend-2) – sync-mezők a create/update-ben | Should Have | ~~US-949~~ |
-| US-951 | Admin liga-menedzsment UI (frontend) – liga létrehozás/szerkesztés sync-mezőkkel | Should Have | US-948, US-950 |
+| US-951 | Admin liga-menedzsment UI (frontend) – liga létrehozás/szerkesztés sync-mezőkkel | Should Have | US-948, ~~US-950~~ |
 | US-952 | Több liga egy csoportban – csoport több ligára is feliratkozhat | Should Have | — |
 | US-953 | Egyedi meccs behúzása csoportba – admin más ligából is választhat meccset tippelésre | Should Have | US-952 |
 | US-954 | Archivált liga esetén a torna tippek ne jelenjenek meg a mostani formában | Should Have | ~~US-940~~ |
 | US-955 | Ranglista – az „Összesített” (globális) nézet eltávolítása | Should Have | — |
-| US-956 | Per-liga on-demand szinkron (meccs + csapat + játékos) az admin UI-ból | Should Have | ~~US-949~~, US-950, US-951 |
+| US-956 | Per-liga on-demand szinkron (meccs + csapat + játékos) az admin UI-ból | Should Have | ~~US-949~~, ~~US-950~~, US-951 |
 
 > UX-019 felülírva — UX-020 implementálja a frissített, mockup-alapú 5 lépéses onboardingot.
 > US-1307 felülírva — UX-030 a Match Detail oldalon (insights alatt) jeleníti meg a Transfermarkt csapatértékeket, nem a Match Pulse-ban.
 
 ---
 
-**Haladás: 191 / 200 story kész** — Must Have: 33/33, Should Have: 158/158, Nice to Have: 0/5 (US-937, PUSH-003 won't do)
+**Haladás: 192 / 200 story kész** — Must Have: 33/33, Should Have: 159/159, Nice to Have: 0/5 (US-937, PUSH-003 won't do)

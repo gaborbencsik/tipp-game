@@ -195,3 +195,4 @@
 | UX-047 | Bracket döntő/bronz – „A te tipped" sor a kiértékelt nézetben (bajnok-tipp egyértelműsítése) | Should Have |
 | US-940 | Liga archiválása (soft-hide) – lezárt torna elrejtése aktív felületekről adatvesztés nélkül | Should Have |
 | US-949 | Ligák DB-alapúvá tétele (backend-1) – sync-runner env→DB migráció + liga sync-mezők | Should Have |
+| US-950 | Admin liga-CRUD kiterjesztés (backend-2) – sync-mezők a create/update-ben | Should Have |

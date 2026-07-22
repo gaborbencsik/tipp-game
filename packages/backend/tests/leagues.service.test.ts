@@ -43,6 +43,8 @@ vi.mock('../src/db/client.js', () => ({
 
 import {
   getLeagues,
+  createLeague,
+  updateLeague,
   archiveLeague,
   restoreLeague,
 } from '../src/services/leagues.service.js'
@@ -236,3 +238,153 @@ describe('restoreLeague', () => {
     expect(result.status).toBe('active')
   })
 })
+
+// ─── createLeague ─────────────────────────────────────────────────────────────
+
+describe('createLeague', () => {
+  beforeEach(() => {
+    vi.resetAllMocks()
+    // uniqueness check: select().from().where().limit() → no conflict
+    setupSelectChain([])
+    // insert().values().returning()
+    mockReturning.mockResolvedValue([LEAGUE_ROW])
+    mockValues.mockReturnValue({ returning: mockReturning })
+    mockInsert.mockReturnValue({ values: mockValues })
+  })
+
+  it('persists all sync fields and maps them back', async () => {
+    const syncedRow = {
+      ...LEAGUE_ROW,
+      syncEnabled: true,
+      externalId: 1,
+      season: 2026,
+      syncFrom: new Date('2026-06-01T00:00:00.000Z'),
+      syncTo: new Date('2026-07-31T00:00:00.000Z'),
+      fixtureAllowlist: [10, 11],
+    }
+    mockReturning.mockResolvedValue([syncedRow])
+
+    const result = await createLeague({
+      name: 'World Cup 2026',
+      shortName: 'WC2026',
+      syncEnabled: true,
+      externalId: 1,
+      season: 2026,
+      syncFrom: '2026-06-01T00:00:00.000Z',
+      syncTo: '2026-07-31T00:00:00.000Z',
+      fixtureAllowlist: [10, 11],
+    })
+
+    const [values] = mockValues.mock.calls[0] as [Record<string, unknown>]
+    expect(values['syncEnabled']).toBe(true)
+    expect(values['externalId']).toBe(1)
+    expect(values['season']).toBe(2026)
+    expect(values['fixtureAllowlist']).toEqual([10, 11])
+    expect(result.externalId).toBe(1)
+    expect(result.season).toBe(2026)
+    expect(result.syncEnabled).toBe(true)
+    expect(result.syncFrom).toBe('2026-06-01T00:00:00.000Z')
+    expect(result.fixtureAllowlist).toEqual([10, 11])
+  })
+
+  it('defaults: syncEnabled false and status active when omitted', async () => {
+    await createLeague({ name: 'L', shortName: 'L' })
+
+    const [values] = mockValues.mock.calls[0] as [Record<string, unknown>]
+    expect(values['syncEnabled']).toBe(false)
+    expect(values['status']).toBe('active')
+  })
+
+  it('rejects duplicate externalId with 409', async () => {
+    // uniqueness check returns an existing row
+    mockLimit.mockResolvedValue([{ id: 'other' }])
+    mockSelectWhere.mockReturnValue({ limit: mockLimit })
+
+    await expect(
+      createLeague({ name: 'L', shortName: 'L', externalId: 1 }),
+    ).rejects.toMatchObject({ status: 409 })
+  })
+
+  it('rejects season out of range with 422', async () => {
+    await expect(
+      createLeague({ name: 'L', shortName: 'L', season: 1900 }),
+    ).rejects.toMatchObject({ status: 422 })
+  })
+
+  it('rejects syncFrom after syncTo with 422', async () => {
+    await expect(
+      createLeague({
+        name: 'L',
+        shortName: 'L',
+        syncFrom: '2026-08-01T00:00:00.000Z',
+        syncTo: '2026-06-01T00:00:00.000Z',
+      }),
+    ).rejects.toMatchObject({ status: 422 })
+  })
+
+  it('rejects syncEnabled true without externalId with 422', async () => {
+    await expect(
+      createLeague({ name: 'L', shortName: 'L', syncEnabled: true }),
+    ).rejects.toMatchObject({ status: 422 })
+  })
+
+  it('rejects non-positive fixtureAllowlist entries with 422', async () => {
+    await expect(
+      createLeague({ name: 'L', shortName: 'L', fixtureAllowlist: [1, -3] }),
+    ).rejects.toMatchObject({ status: 422 })
+  })
+})
+
+// ─── updateLeague ─────────────────────────────────────────────────────────────
+
+describe('updateLeague', () => {
+  beforeEach(() => {
+    vi.resetAllMocks()
+    setupSelectChain([])
+    setupUpdateChain([LEAGUE_ROW])
+  })
+
+  it('partial update: only provided fields are set', async () => {
+    setupUpdateChain([{ ...LEAGUE_ROW, syncEnabled: true, externalId: 5 }])
+
+    await updateLeague('league-uuid-1', { syncEnabled: true, externalId: 5 })
+
+    const [setArg] = mockSet.mock.calls[0] as [Record<string, unknown>]
+    expect(setArg['syncEnabled']).toBe(true)
+    expect(setArg['externalId']).toBe(5)
+    expect(setArg).not.toHaveProperty('name')
+    expect(setArg).not.toHaveProperty('shortName')
+  })
+
+  it('rejects duplicate externalId on another league with 409', async () => {
+    mockLimit.mockResolvedValue([{ id: 'another-league' }])
+    mockSelectWhere.mockReturnValue({ limit: mockLimit })
+
+    await expect(
+      updateLeague('league-uuid-1', { externalId: 1 }),
+    ).rejects.toMatchObject({ status: 409 })
+  })
+
+  it('allows the same externalId on the same league (no conflict)', async () => {
+    mockLimit.mockResolvedValue([{ id: 'league-uuid-1' }])
+    mockSelectWhere.mockReturnValue({ limit: mockLimit })
+    setupUpdateChain([{ ...LEAGUE_ROW, externalId: 1 }])
+
+    const result = await updateLeague('league-uuid-1', { externalId: 1 })
+    expect(result.externalId).toBe(1)
+  })
+
+  it('rejects season out of range with 422', async () => {
+    await expect(
+      updateLeague('league-uuid-1', { season: 3000 }),
+    ).rejects.toMatchObject({ status: 422 })
+  })
+
+  it('non-existing league → AppError 404', async () => {
+    setupUpdateChain([])
+    await expect(
+      updateLeague('nope', { name: 'X' }),
+    ).rejects.toMatchObject({ status: 404 })
+  })
+})
+
