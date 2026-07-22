@@ -23,22 +23,33 @@
         </tr>
       </thead>
       <tbody>
+        <tr v-if="store.leagues.length === 0">
+          <td data-testid="leagues-empty" colspan="4" class="p-6 text-center text-gray-400">
+            {{ $t('admin.leagues.empty') }}
+          </td>
+        </tr>
         <tr v-for="league in store.leagues" :key="league.id" data-testid="league-row">
           <td class="p-2 border">{{ league.name }}</td>
           <td class="p-2 border">{{ league.shortName }}</td>
           <td class="p-2 border">
             <span
-              v-if="league.archivedAt"
+              v-if="league.status === 'archived'"
               data-testid="league-archived-badge"
               class="inline-block px-2 py-0.5 text-xs font-medium rounded bg-gray-200 text-gray-600"
             >
               {{ $t('admin.leagues.archivedBadge') }}
             </span>
-            <span v-else class="text-gray-400 text-sm">–</span>
+            <span
+              v-else
+              data-testid="league-active-badge"
+              class="inline-block px-2 py-0.5 text-xs font-medium rounded bg-green-100 text-green-700"
+            >
+              {{ $t('admin.leagues.activeBadge') }}
+            </span>
           </td>
           <td class="p-2 border">
             <button
-              v-if="league.archivedAt"
+              v-if="league.status === 'archived'"
               :data-testid="`league-restore-btn-${league.id}`"
               class="px-2 py-1 bg-blue-600 text-white rounded text-sm"
               @click="handleRestore(league.id)"

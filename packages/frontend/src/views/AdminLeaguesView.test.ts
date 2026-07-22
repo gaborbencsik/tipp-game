@@ -46,12 +46,19 @@ const ACTIVE: League = {
   id: 'league-1',
   name: 'World Cup 2026',
   shortName: 'WC2026',
+  status: 'active',
   archivedAt: null,
   createdAt: '2026-07-21T00:00:00.000Z',
   updatedAt: '2026-07-21T00:00:00.000Z',
 }
 
-const ARCHIVED: League = { ...ACTIVE, id: 'league-2', name: 'Euro 2024', archivedAt: '2026-07-21T10:00:00.000Z' }
+const ARCHIVED: League = {
+  ...ACTIVE,
+  id: 'league-2',
+  name: 'Euro 2024',
+  status: 'archived',
+  archivedAt: '2026-07-21T10:00:00.000Z',
+}
 
 function buildRouter() {
   return buildTestRouter({ '/admin/leagues': AdminLeaguesView })
@@ -87,6 +94,18 @@ describe('AdminLeaguesView', () => {
     expect(badges).toHaveLength(1)
   })
 
+  it('shows active badge only on active rows', async () => {
+    const { wrapper } = await mountView([ACTIVE, ARCHIVED])
+    const badges = wrapper.findAll('[data-testid="league-active-badge"]')
+    expect(badges).toHaveLength(1)
+  })
+
+  it('renders an empty-state row when there are no leagues', async () => {
+    const { wrapper } = await mountView([])
+    expect(wrapper.find('[data-testid="leagues-empty"]').exists()).toBe(true)
+    expect(wrapper.findAll('[data-testid="league-row"]')).toHaveLength(0)
+  })
+
   it('shows archive button on active league, restore button on archived league', async () => {
     const { wrapper } = await mountView([ACTIVE, ARCHIVED])
     expect(wrapper.find('[data-testid="league-archive-btn-league-1"]').exists()).toBe(true)
@@ -96,7 +115,7 @@ describe('AdminLeaguesView', () => {
   })
 
   it('archive button confirms then calls archive endpoint', async () => {
-    mockLeaguesArchive.mockResolvedValue({ ...ACTIVE, archivedAt: '2026-07-21T11:00:00.000Z' })
+    mockLeaguesArchive.mockResolvedValue({ ...ACTIVE, status: 'archived', archivedAt: '2026-07-21T11:00:00.000Z' })
     const { wrapper } = await mountView([ACTIVE])
     await wrapper.find('[data-testid="league-archive-btn-league-1"]').trigger('click')
     await flushPromises()
@@ -113,7 +132,7 @@ describe('AdminLeaguesView', () => {
   })
 
   it('restore button calls restore endpoint without confirm', async () => {
-    mockLeaguesRestore.mockResolvedValue({ ...ARCHIVED, archivedAt: null })
+    mockLeaguesRestore.mockResolvedValue({ ...ARCHIVED, status: 'active', archivedAt: null })
     const { wrapper } = await mountView([ARCHIVED])
     await wrapper.find('[data-testid="league-restore-btn-league-2"]').trigger('click')
     await flushPromises()

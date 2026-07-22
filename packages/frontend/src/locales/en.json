@@ -240,6 +240,8 @@
       "archive": "Archive",
       "restore": "Restore",
       "archivedBadge": "Archived",
+      "activeBadge": "Active",
+      "empty": "No leagues yet.",
       "archiveConfirm": "Are you sure you want to archive this league? It will disappear from active surfaces, but all data is kept."
     }
   },

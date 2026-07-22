@@ -35,7 +35,7 @@ US-955 (globális ranglista nézet eltávolítása)  [önálló]
 |-------|---------|-----|-----------|
 | US-940 | ✅ | Liga archiválás (soft-hide) | — |
 | US-949 | ✅ | Ligák DB-alapúvá tétele (backend-1) | — |
-| US-948 |  | Admin liga-oldal (frontend) – státusz badge + archiválás/restore | ✅US-940, ✅US-949 |
+| US-948 | ✅ | Admin liga-oldal (frontend) – státusz badge + archiválás/restore | ✅US-940, ✅US-949 |
 | US-950 | ✅ | Liga-CRUD kiterjesztés (backend-2) – sync-mezők a create/update-ben | ✅US-949 |
 | US-951 |  | Admin liga-menedzsment UI – létrehozás/szerkesztés sync-mezőkkel | US-948, US-950 |
 | US-952 |  | Több liga egy csoportban | — |

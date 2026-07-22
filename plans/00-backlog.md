@@ -1,6 +1,6 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-07-22 (US-950 lezárva: liga-CRUD sync-mezők backend)
+> Utoljára frissítve: 2026-07-22 (US-948 lezárva: admin liga-oldal frontend)
 
 ## Nyitott story-k
 
@@ -27,8 +27,7 @@
 | UX-029 | Pontozási szabályzat modal – polished error state | Nice to Have | ~~UX-028~~ |
 | UX-032 | Torna tippek – lejárt deadline után is mutassa a tippet (read-only lock) | Should Have | — |
 | SEC-002 | HMAC-aláírt meghívó URL-ek | Nice to Have | — |
-| US-948 | Admin liga-oldal (frontend) – liga-lista státusz badge-dzsel + archiválás/visszaállítás | Should Have | ~~US-940~~, US-949 |
-| US-951 | Admin liga-menedzsment UI (frontend) – liga létrehozás/szerkesztés sync-mezőkkel | Should Have | US-948, ~~US-950~~ |
+| US-951 | Admin liga-menedzsment UI (frontend) – liga létrehozás/szerkesztés sync-mezőkkel | Should Have | ~~US-948~~, ~~US-950~~ |
 | US-952 | Több liga egy csoportban – csoport több ligára is feliratkozhat | Should Have | — |
 | US-953 | Egyedi meccs behúzása csoportba – admin más ligából is választhat meccset tippelésre | Should Have | US-952 |
 | US-954 | Archivált liga esetén a torna tippek ne jelenjenek meg a mostani formában | Should Have | ~~US-940~~ |
@@ -40,4 +39,4 @@
 
 ---
 
-**Haladás: 192 / 200 story kész** — Must Have: 33/33, Should Have: 159/159, Nice to Have: 0/5 (US-937, PUSH-003 won't do)
+**Haladás: 193 / 200 story kész** — Must Have: 33/33, Should Have: 160/160, Nice to Have: 0/5 (US-937, PUSH-003 won't do)

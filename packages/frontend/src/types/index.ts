@@ -559,6 +559,7 @@ export interface League {
   readonly id: string
   readonly name: string
   readonly shortName: string
+  readonly status: 'active' | 'archived'
   readonly archivedAt: string | null
   readonly createdAt: string
   readonly updatedAt: string

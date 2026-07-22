@@ -240,6 +240,8 @@
       "archive": "Archiválás",
       "restore": "Visszaállítás",
       "archivedBadge": "Archivált",
+      "activeBadge": "Aktív",
+      "empty": "Még nincs egyetlen liga sem.",
       "archiveConfirm": "Biztosan archiválod ezt a ligát? Eltűnik az aktív felületekről, de az adatok megmaradnak."
     }
   },

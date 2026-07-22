@@ -50,12 +50,19 @@ const ACTIVE: League = {
   id: 'league-1',
   name: 'World Cup 2026',
   shortName: 'WC2026',
+  status: 'active',
   archivedAt: null,
   createdAt: '2026-07-21T00:00:00.000Z',
   updatedAt: '2026-07-21T00:00:00.000Z',
 }
 
-const ARCHIVED: League = { ...ACTIVE, id: 'league-2', name: 'Euro 2024', archivedAt: '2026-07-21T10:00:00.000Z' }
+const ARCHIVED: League = {
+  ...ACTIVE,
+  id: 'league-2',
+  name: 'Euro 2024',
+  status: 'archived',
+  archivedAt: '2026-07-21T10:00:00.000Z',
+}
 
 describe('admin-leagues.store', () => {
   beforeEach(() => {
