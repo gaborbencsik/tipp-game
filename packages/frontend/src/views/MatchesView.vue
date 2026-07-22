@@ -160,7 +160,7 @@
                 <router-link :to="`/app/matches/${match.id}`" class="block">
                   <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-medium uppercase tracking-wide text-gray-500">
-                      {{ stageLabel(match.stage) }}
+                      <span v-if="showStageLabel(match)" data-testid="match-stage-label">{{ stageLabel(match.stage) }}</span>
                       <span v-if="match.groupName"> – {{ $t('matches.groupLabel', { name: match.groupName }) }}</span>
                     </span>
                     <span class="text-xs font-bold px-2 py-0.5 rounded inline-flex items-center gap-1" :class="statusClass(match.status)">
@@ -284,7 +284,7 @@
             <router-link :to="`/app/matches/${match.id}`" class="block">
               <div class="flex items-center justify-between mb-2">
                 <span class="text-xs font-medium uppercase tracking-wide text-gray-500">
-                  {{ stageLabel(match.stage) }}
+                  <span v-if="showStageLabel(match)" data-testid="match-stage-label">{{ stageLabel(match.stage) }}</span>
                   <span v-if="match.groupName"> – {{ $t('matches.groupLabel', { name: match.groupName }) }}</span>
                 </span>
                 <span class="text-xs font-bold px-2 py-0.5 rounded" :class="statusClass(match.status)">
@@ -947,6 +947,12 @@ function stageLabel(stage: MatchStage): string {
     case 'third_place': return t('stage.thirdPlace')
     case 'final': return t('stage.final')
   }
+}
+
+// US-958: the stage label only makes sense for mixed-structure leagues; for pure
+// league/cup leagues every match is the same phase, so the label is noise.
+function showStageLabel(match: Match): boolean {
+  return match.league?.type === 'mixed'
 }
 
 function formatTime(iso: string): string {

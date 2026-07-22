@@ -64,7 +64,7 @@ const MATCH_FINISHED: Match = {
   homeTeam: { id: 'ht1', name: 'Spain', shortCode: 'ESP', flagUrl: null, teamType: 'national' as const, countryCode: 'es', marketValueEur: null, transfermarktId: null },
   awayTeam: { id: 'at1', name: 'Italy', shortCode: 'ITA', flagUrl: null, teamType: 'national' as const, countryCode: 'it', marketValueEur: null, transfermarktId: null },
   venue: { name: 'Estadio Nacional', city: 'Madrid', country: null, imageUrl: null },
-  league: null,
+  league: { id: 'league-wc', name: 'World Cup', shortName: 'WC', type: 'mixed' },
   stage: 'group',
   groupName: 'B',
   matchNumber: 2,

@@ -30,7 +30,7 @@ export const useLeagueFavoritesStore = defineStore('leagueFavorites', () => {
     for (const g of groupsStore.groups) {
       if (g.league) userLeagueIds.add(g.league.id)
     }
-    return leagues.value.filter(l => userLeagueIds.has(l.id))
+    return leagues.value.filter(l => userLeagueIds.has(l.id) && l.status !== 'archived')
   })
 
   async function fetchFavorites(): Promise<void> {

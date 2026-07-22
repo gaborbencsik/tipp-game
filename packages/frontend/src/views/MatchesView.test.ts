@@ -317,6 +317,20 @@ describe('MatchesView', () => {
       await flushPromises()
       expect(matchesStore.stageFilter).toBeNull()
     })
+
+    it('shows the stage label on cards when the match league is mixed', async () => {
+      mockGroupsGroups.push(groupWithLeagueType('mixed', 'l-default'))
+      const mixedMatch = { ...MATCH_SCHEDULED, league: { ...DEFAULT_LEAGUE, type: 'mixed' as const } }
+      const { wrapper } = await mountView([mixedMatch])
+      expect(wrapper.find('[data-testid="match-stage-label"]').exists()).toBe(true)
+    })
+
+    it('hides the stage label on cards when the match league is not mixed', async () => {
+      mockGroupsGroups.push(groupWithLeagueType('league', 'l-default'))
+      const leagueMatch = { ...MATCH_SCHEDULED, league: { ...DEFAULT_LEAGUE, type: 'league' as const } }
+      const { wrapper } = await mountView([leagueMatch])
+      expect(wrapper.find('[data-testid="match-stage-label"]').exists()).toBe(false)
+    })
   })
 
   it('error → error message displayed', async () => {

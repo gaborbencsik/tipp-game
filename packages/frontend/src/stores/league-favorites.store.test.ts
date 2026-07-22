@@ -188,4 +188,16 @@ describe('league-favorites.store', () => {
     await store.fetchLeagues()
     expect(store.userLeagues).toEqual([])
   })
+
+  it('userLeagues excludes archived leagues', async () => {
+    mockLeaguesList.mockResolvedValue([
+      { id: 'l1', name: 'VB', shortName: 'VB', status: 'archived', createdAt: '', updatedAt: '' },
+      { id: 'l2', name: 'NB I', shortName: 'NB I', status: 'active', createdAt: '', updatedAt: '' },
+    ])
+    const groups = useGroupsStore()
+    groups.groups = [makeGroup('g1', 'l1'), makeGroup('g2', 'l2')]
+    const store = useLeagueFavoritesStore()
+    await store.fetchLeagues()
+    expect(store.userLeagues.map(l => l.id)).toEqual(['l2'])
+  })
 })

@@ -23,7 +23,7 @@
 
         <div class="flex items-center justify-between mb-4">
           <span class="text-sm font-medium text-gray-500 uppercase tracking-wide">
-            {{ stageLabel(match.stage) }}
+            <span v-if="match.league?.type === 'mixed'">{{ stageLabel(match.stage) }}</span>
             <span v-if="match.groupName"> – {{ $t('matches.groupLabel', { name: match.groupName }) }}</span>
           </span>
           <span
