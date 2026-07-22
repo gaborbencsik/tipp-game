@@ -24,7 +24,7 @@ vi.mock('../src/services/tournament-tips-replication.service.js', () => ({
   replicateUserTipsToGroup: mockReplicateUserTipsToGroup,
 }))
 
-import { getMyGroups, createGroup, joinGroup, getGroupMembers, removeMember, setMemberAdmin, setMemberPaidStatus, regenerateInviteCode, setInviteActive, deleteGroup, setGroupLeague } from '../src/services/groups.service.js'
+import { getMyGroups, createGroup, joinGroup, getGroupMembers, removeMember, setMemberAdmin, setMemberPaidStatus, regenerateInviteCode, setInviteActive, deleteGroup, addGroupLeague, removeGroupLeague } from '../src/services/groups.service.js'
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
 
@@ -219,14 +219,14 @@ describe('createGroup', () => {
 
   it('user already has 20 groups → AppError 422', async () => {
     mockSelect.mockReturnValueOnce(makeSelectChain([{ count: 20 }]))
-    await expect(createGroup({ name: 'Új', leagueId: 'l-1' }, USER_ID)).rejects.toMatchObject({
+    await expect(createGroup({ name: 'Új', leagueIds: ['l-1'] }, USER_ID)).rejects.toMatchObject({
       status: 422,
       message: 'Maximum number of created groups reached',
     })
   })
 
-  it('empty leagueId → AppError 422', async () => {
-    await expect(createGroup({ name: 'Új', leagueId: '' }, USER_ID)).rejects.toMatchObject({
+  it('empty leagueIds → AppError 422', async () => {
+    await expect(createGroup({ name: 'Új', leagueIds: [] }, USER_ID)).rejects.toMatchObject({
       status: 422,
       message: 'A league must be selected',
     })
@@ -237,7 +237,7 @@ describe('createGroup', () => {
       .mockReturnValueOnce(makeSelectChain([{ count: 0 }]))   // createdCount
       .mockReturnValueOnce(makeSelectChain([]))                // inviteCode uniqueness
       .mockReturnValueOnce(makeSelectChain([]))                // globalTypes query (none)
-      .mockReturnValueOnce(makeSelectChain([{ id: 'l-1', name: 'VB 2026', shortName: 'VB', status: 'active' }]))  // fetchGroupLeague
+      .mockReturnValueOnce(makeSelectChain([{ id: 'l-1', name: 'VB 2026', shortName: 'VB', status: 'active' }]))  // fetchGroupLeagues
 
     const insertFn = vi.fn()
     const returningFn = vi.fn().mockResolvedValue([GROUP_ROW])
@@ -248,9 +248,9 @@ describe('createGroup', () => {
     insertFn.mockReturnValueOnce({ values: leagueValuesFn })
     mockInsert.mockImplementation(insertFn)
 
-    const result = await createGroup({ name: 'Barátok', leagueId: 'l-1' }, USER_ID)
+    const result = await createGroup({ name: 'Barátok', leagueIds: ['l-1'] }, USER_ID)
     expect(result).toMatchObject({ name: 'Barátok', memberCount: 1, isAdmin: true })
-    expect(result.league).toEqual({ id: 'l-1', name: 'VB 2026', shortName: 'VB', status: 'active' })
+    expect(result.leagues).toEqual([{ id: 'l-1', name: 'VB 2026', shortName: 'VB', status: 'active' }])
   })
 
   it('valid input → inviteCode is generated', async () => {
@@ -269,7 +269,7 @@ describe('createGroup', () => {
     insertFn.mockReturnValueOnce({ values: leagueValuesFn })
     mockInsert.mockImplementation(insertFn)
 
-    const result = await createGroup({ name: 'Barátok', leagueId: 'l-1' }, USER_ID)
+    const result = await createGroup({ name: 'Barátok', leagueIds: ['l-1'] }, USER_ID)
     expect(typeof result.inviteCode).toBe('string')
     expect(result.inviteCode.length).toBeGreaterThan(0)
   })
@@ -282,7 +282,7 @@ describe('createGroup', () => {
       .mockReturnValueOnce(makeSelectChain([]))                // inviteCode uniqueness
       .mockReturnValueOnce(makeSelectChain(globalTypes))       // globalTypes query
       .mockReturnValueOnce(makeSelectChain([{ first: firstMatch }])) // league first match
-      .mockReturnValueOnce(makeSelectChain([{ id: 'l-1', name: 'VB 2026', shortName: 'VB' }]))  // fetchGroupLeague
+      .mockReturnValueOnce(makeSelectChain([{ id: 'l-1', name: 'VB 2026', shortName: 'VB' }]))  // fetchGroupLeagues
 
     const insertFn = vi.fn()
     const returningFn = vi.fn().mockResolvedValue([GROUP_ROW])
@@ -295,7 +295,7 @@ describe('createGroup', () => {
     insertFn.mockReturnValueOnce({ values: leagueValuesFn })                                       // groupLeagues insert
     mockInsert.mockImplementation(insertFn)
 
-    await createGroup({ name: 'Barátok', leagueId: 'l-1' }, USER_ID)
+    await createGroup({ name: 'Barátok', leagueIds: ['l-1'] }, USER_ID)
     expect(insertFn).toHaveBeenCalledTimes(4)
     expect(subscriptionValuesFn).toHaveBeenCalledWith([
       { groupId: 'group-uuid-1', globalTypeId: 'gt-1', deadlineOverride: firstMatch },
@@ -308,7 +308,7 @@ describe('createGroup', () => {
       .mockReturnValueOnce(makeSelectChain([{ count: 0 }]))
       .mockReturnValueOnce(makeSelectChain([]))
       .mockReturnValueOnce(makeSelectChain([]))                // globalTypes: empty
-      .mockReturnValueOnce(makeSelectChain([{ id: 'l-1', name: 'VB 2026', shortName: 'VB' }]))  // fetchGroupLeague
+      .mockReturnValueOnce(makeSelectChain([{ id: 'l-1', name: 'VB 2026', shortName: 'VB' }]))  // fetchGroupLeagues
 
     const insertFn = vi.fn()
     const returningFn = vi.fn().mockResolvedValue([GROUP_ROW])
@@ -319,8 +319,35 @@ describe('createGroup', () => {
     insertFn.mockReturnValueOnce({ values: leagueValuesFn })
     mockInsert.mockImplementation(insertFn)
 
-    await createGroup({ name: 'Barátok', leagueId: 'l-1' }, USER_ID)
+    await createGroup({ name: 'Barátok', leagueIds: ['l-1'] }, USER_ID)
     expect(insertFn).toHaveBeenCalledTimes(3)
+  })
+
+  it('multiple leagueIds → bulk insert with dedupe', async () => {
+    mockSelect
+      .mockReturnValueOnce(makeSelectChain([{ count: 0 }]))   // createdCount
+      .mockReturnValueOnce(makeSelectChain([]))                // inviteCode uniqueness
+      .mockReturnValueOnce(makeSelectChain([]))                // globalTypes (none)
+      .mockReturnValueOnce(makeSelectChain([                    // fetchGroupLeagues
+        { id: 'l-1', name: 'VB 2026', shortName: 'VB', status: 'active' },
+        { id: 'l-2', name: 'NB I', shortName: 'NB I', status: 'active' },
+      ]))
+
+    const insertFn = vi.fn()
+    const returningFn = vi.fn().mockResolvedValue([GROUP_ROW])
+    const memberValuesFn = vi.fn().mockResolvedValue(undefined)
+    const leagueValuesFn = vi.fn().mockResolvedValue(undefined)
+    insertFn.mockReturnValueOnce({ values: vi.fn().mockReturnValue({ returning: returningFn }) })
+    insertFn.mockReturnValueOnce({ values: memberValuesFn })
+    insertFn.mockReturnValueOnce({ values: leagueValuesFn })
+    mockInsert.mockImplementation(insertFn)
+
+    const result = await createGroup({ name: 'Barátok', leagueIds: ['l-1', 'l-2', 'l-1'] }, USER_ID)
+    expect(leagueValuesFn).toHaveBeenCalledWith([
+      { groupId: 'group-uuid-1', leagueId: 'l-1' },
+      { groupId: 'group-uuid-1', leagueId: 'l-2' },
+    ])
+    expect(result.leagues).toHaveLength(2)
   })
 })
 
@@ -745,41 +772,108 @@ describe('deleteGroup', () => {
   })
 })
 
-// ─── setGroupLeague ───────────────────────────────────────────────────────────
+// ─── addGroupLeague / removeGroupLeague ─────────────────────────────────────────
 
-describe('setGroupLeague', () => {
+describe('addGroupLeague', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('throws 422 if group already has a league', async () => {
-    // group lookup
-    mockSelect.mockReturnValueOnce(makeSelectChain([GROUP_ROW]))
-    // membership check
-    mockSelect.mockReturnValueOnce(makeSelectChain([MEMBER_ROW_ADMIN]))
-    // existing leagues check — has a row
-    mockSelect.mockReturnValueOnce(makeSelectChain([{ id: 'gl-1' }]))
+  it('inserts league when not already present (idempotent-safe)', async () => {
+    mockSelect
+      .mockReturnValueOnce(makeSelectChain([GROUP_ROW]))          // assertGroupAdmin: group
+      .mockReturnValueOnce(makeSelectChain([MEMBER_ROW_ADMIN]))   // assertGroupAdmin: membership
+      .mockReturnValueOnce(makeSelectChain([{ id: 'league-new' }])) // league existence
+      .mockReturnValueOnce(makeSelectChain([]))                    // existing groupLeagues (none)
+      .mockReturnValueOnce(makeSelectChain([{ leagueId: 'league-new' }])) // recalc: leagueRows
+      .mockReturnValueOnce(makeSelectChain([{ first: null }]))     // recalc: firstMatch
+      .mockReturnValueOnce(makeSelectChain([{ id: 'league-new', name: 'VB 2026', shortName: 'VB', status: 'active' }])) // fetchGroupLeagues
+      .mockReturnValueOnce(makeSelectChain([{ count: 3 }]))        // member count
 
-    await expect(setGroupLeague('group-uuid-1', USER_ID, 'league-new'))
-      .rejects.toMatchObject({ status: 422, message: 'League already set' })
-  })
-
-  it('inserts league if group has no league yet', async () => {
-    // group lookup
-    mockSelect.mockReturnValueOnce(makeSelectChain([GROUP_ROW]))
-    // membership check
-    mockSelect.mockReturnValueOnce(makeSelectChain([MEMBER_ROW_ADMIN]))
-    // existing leagues check — empty
-    mockSelect.mockReturnValueOnce(makeSelectChain([]))
-    // insert groupLeagues
     const leagueValuesFn = vi.fn().mockResolvedValue(undefined)
     mockInsert.mockReturnValueOnce({ values: leagueValuesFn })
-    // fetchGroupLeague
-    mockSelect.mockReturnValueOnce(makeSelectChain([{ id: 'league-new', name: 'VB 2026', shortName: 'VB' }]))
-    // member count
-    mockSelect.mockReturnValueOnce(makeSelectChain([{ count: 3 }]))
+    const { setFn } = makeUpdateChain([])
+    mockUpdate.mockReturnValueOnce({ set: setFn })
 
-    const result = await setGroupLeague('group-uuid-1', USER_ID, 'league-new')
-
-    expect(result.league).toEqual({ id: 'league-new', name: 'VB 2026', shortName: 'VB' })
+    const result = await addGroupLeague('group-uuid-1', 'league-new', USER_ID)
     expect(mockInsert).toHaveBeenCalledOnce()
+    expect(result.leagues).toEqual([{ id: 'league-new', name: 'VB 2026', shortName: 'VB', status: 'active' }])
+  })
+
+  it('is idempotent — does not insert when league already present', async () => {
+    mockSelect
+      .mockReturnValueOnce(makeSelectChain([GROUP_ROW]))
+      .mockReturnValueOnce(makeSelectChain([MEMBER_ROW_ADMIN]))
+      .mockReturnValueOnce(makeSelectChain([{ id: 'league-new' }]))
+      .mockReturnValueOnce(makeSelectChain([{ id: 'gl-1' }]))       // existing groupLeagues (present)
+      .mockReturnValueOnce(makeSelectChain([{ id: 'league-new', name: 'VB', shortName: 'VB', status: 'active' }]))
+      .mockReturnValueOnce(makeSelectChain([{ count: 3 }]))
+
+    await addGroupLeague('group-uuid-1', 'league-new', USER_ID)
+    expect(mockInsert).not.toHaveBeenCalled()
+  })
+
+  it('unknown league → 404', async () => {
+    mockSelect
+      .mockReturnValueOnce(makeSelectChain([GROUP_ROW]))
+      .mockReturnValueOnce(makeSelectChain([MEMBER_ROW_ADMIN]))
+      .mockReturnValueOnce(makeSelectChain([]))                    // league existence: none
+
+    await expect(addGroupLeague('group-uuid-1', 'nope', USER_ID))
+      .rejects.toMatchObject({ status: 404, message: 'League not found' })
+  })
+
+  it('non-admin → 403', async () => {
+    mockSelect
+      .mockReturnValueOnce(makeSelectChain([GROUP_ROW]))
+      .mockReturnValueOnce(makeSelectChain([MEMBER_ROW_TARGET]))   // not admin
+
+    await expect(addGroupLeague('group-uuid-1', 'league-new', USER_ID))
+      .rejects.toMatchObject({ status: 403 })
+  })
+})
+
+describe('removeGroupLeague', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('removes league when more than one present', async () => {
+    mockSelect
+      .mockReturnValueOnce(makeSelectChain([GROUP_ROW]))          // assertGroupAdmin: group
+      .mockReturnValueOnce(makeSelectChain([MEMBER_ROW_ADMIN]))   // assertGroupAdmin: membership
+      .mockReturnValueOnce(makeSelectChain([{ leagueId: 'l-1' }, { leagueId: 'l-2' }])) // currentLeagues
+      .mockReturnValueOnce(makeSelectChain([{ leagueId: 'l-2' }]))  // recalc: leagueRows
+      .mockReturnValueOnce(makeSelectChain([{ first: null }]))      // recalc: firstMatch
+      .mockReturnValueOnce(makeSelectChain([{ id: 'l-2', name: 'NB I', shortName: 'NB I', status: 'active' }])) // fetchGroupLeagues
+      .mockReturnValueOnce(makeSelectChain([{ count: 3 }]))         // member count
+
+    const deleteChain = makeDeleteChain()
+    mockDelete.mockReturnValueOnce(deleteChain)
+    const { setFn } = makeUpdateChain([])
+    mockUpdate.mockReturnValueOnce({ set: setFn })
+
+    const result = await removeGroupLeague('group-uuid-1', 'l-1', USER_ID)
+    expect(mockDelete).toHaveBeenCalledOnce()
+    expect(result.leagues).toEqual([{ id: 'l-2', name: 'NB I', shortName: 'NB I', status: 'active' }])
+  })
+
+  it('last-league guard → 422', async () => {
+    mockSelect
+      .mockReturnValueOnce(makeSelectChain([GROUP_ROW]))
+      .mockReturnValueOnce(makeSelectChain([MEMBER_ROW_ADMIN]))
+      .mockReturnValueOnce(makeSelectChain([{ leagueId: 'l-1' }]))  // only one league
+
+    await expect(removeGroupLeague('group-uuid-1', 'l-1', USER_ID))
+      .rejects.toMatchObject({ status: 422, message: 'Cannot remove the last league' })
+    expect(mockDelete).not.toHaveBeenCalled()
+  })
+
+  it('removing a non-present league is idempotent (no delete)', async () => {
+    mockSelect
+      .mockReturnValueOnce(makeSelectChain([GROUP_ROW]))
+      .mockReturnValueOnce(makeSelectChain([MEMBER_ROW_ADMIN]))
+      .mockReturnValueOnce(makeSelectChain([{ leagueId: 'l-1' }, { leagueId: 'l-2' }]))
+      .mockReturnValueOnce(makeSelectChain([{ id: 'l-1', name: 'VB', shortName: 'VB', status: 'active' }, { id: 'l-2', name: 'NB I', shortName: 'NB I', status: 'active' }]))
+      .mockReturnValueOnce(makeSelectChain([{ count: 3 }]))
+
+    await removeGroupLeague('group-uuid-1', 'other', USER_ID)
+    expect(mockDelete).not.toHaveBeenCalled()
   })
 })

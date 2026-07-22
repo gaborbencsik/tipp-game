@@ -395,36 +395,52 @@
       <div class="mt-8 max-w-md">
         <h3 class="text-base font-semibold text-gray-800 mb-1">{{ $t('groupDetail.leagueTitle') }}</h3>
         <p class="text-sm text-gray-500 mb-3">{{ $t('groupDetail.leagueDesc') }}</p>
-        <template v-if="currentGroup?.league">
-          <p class="text-sm text-gray-900">{{ currentGroup.league.name }}</p>
-        </template>
-        <template v-else>
-          <select
-            v-model="leagueDraft"
-            :class="[
-              'w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500',
-              !leagueDraft ? 'text-gray-400' : 'text-gray-900'
-            ]"
+        <div v-if="currentGroup" class="flex flex-col gap-2">
+          <div
+            v-for="league in currentGroup.leagues"
+            :key="league.id"
+            data-testid="group-league-chip"
+            class="flex items-center justify-between gap-2 px-3 py-2 border border-gray-200 rounded-lg text-sm"
           >
-            <option value="" disabled>{{ $t('groups.leaguePlaceholder') }}</option>
-            <option v-for="league in leagueStore.leagues" :key="league.id" :value="league.id">
-              {{ league.name }}
-            </option>
-          </select>
-          <div class="flex items-center gap-4 mt-3">
+            <span class="text-gray-900">{{ league.name }}</span>
+            <button
+              v-if="currentUserIsGroupAdmin && currentGroup.leagues.length > 1"
+              type="button"
+              data-testid="group-league-remove-btn"
+              class="text-xs text-red-600 hover:text-red-700 disabled:opacity-50"
+              :disabled="leagueSaveStatus === 'saving'"
+              @click="removeLeague(league.id)"
+            >
+              {{ $t('groups.leagues.remove') }}
+            </button>
+          </div>
+          <div v-if="currentUserIsGroupAdmin && addableLeagues.length > 0" class="flex items-center gap-2 mt-1">
+            <select
+              v-model="leagueDraft"
+              data-testid="group-league-add-select"
+              :class="[
+                'flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500',
+                !leagueDraft ? 'text-gray-400' : 'text-gray-900'
+              ]"
+            >
+              <option value="" disabled>{{ $t('groups.leaguePlaceholder') }}</option>
+              <option v-for="league in addableLeagues" :key="league.id" :value="league.id">
+                {{ league.name }}
+              </option>
+            </select>
             <button
               type="button"
-              data-testid="leagues-submit"
+              data-testid="group-league-add-btn"
               class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
               :disabled="leagueSaveStatus === 'saving' || !leagueDraft"
-              @click="submitLeagues"
+              @click="addLeague"
             >
-              {{ $t('common.save') }}
+              {{ $t('groups.leagues.add') }}
             </button>
-            <span v-if="leagueSaveStatus === 'saved'" class="text-sm text-green-600">{{ $t('common.saved') }}</span>
-            <span v-else-if="leagueSaveStatus === 'error'" class="text-sm text-red-600">{{ $t('groupDetail.leagueSaveError') }}</span>
           </div>
-        </template>
+          <span v-if="leagueSaveStatus === 'saved'" class="text-sm text-green-600">{{ $t('common.saved') }}</span>
+          <span v-else-if="leagueSaveStatus === 'error'" class="text-sm text-red-600">{{ $t('groupDetail.leagueSaveError') }}</span>
+        </div>
       </div>
 
       <!-- Hivatalos speciális tippek kezelése (admin) -->
@@ -751,7 +767,7 @@
             <div v-if="sp.inputType === 'team_select'" class="mb-2">
               <TeamSelectDropdown
                 :model-value="sp.answer ?? null"
-                :league-id="currentGroup?.league?.id ?? null"
+                :league-id="primaryLeagueId"
                 :answer-label="sp.answerLabel ?? null"
                 @update:model-value="v => onSpecialAnswerChange(sp, v)"
               />
@@ -759,7 +775,7 @@
             <div v-else-if="sp.inputType === 'player_select'" class="mb-2">
               <PlayerSelectCombobox
                 :model-value="sp.answer ?? null"
-                :league-id="currentGroup?.league?.id ?? null"
+                :league-id="primaryLeagueId"
                 :answer-label="sp.answerLabel ?? null"
                 @update:model-value="v => onSpecialAnswerChange(sp, v)"
               />
@@ -809,14 +825,14 @@
         <div v-if="setAnswerInputType === 'team_select'" class="mb-3">
           <TeamSelectDropdown
             :model-value="setAnswerValue || null"
-            :league-id="currentGroup?.league?.id ?? null"
+            :league-id="primaryLeagueId"
             @update:model-value="v => { setAnswerValue = v ?? '' }"
           />
         </div>
         <div v-else-if="setAnswerInputType === 'player_select'" class="mb-3">
           <PlayerSelectCombobox
             :model-value="setAnswerValue || null"
-            :league-id="currentGroup?.league?.id ?? null"
+            :league-id="primaryLeagueId"
             @update:model-value="v => { setAnswerValue = v ?? '' }"
           />
         </div>
@@ -1041,6 +1057,7 @@ async function loadNameCachesIfNeeded(): Promise<void> {
 
 const groupName = computed(() => groupsStore.groups.find(g => g.id === groupId)?.name ?? t('nav.groups'))
 const currentGroup = computed(() => groupsStore.groups.find(g => g.id === groupId))
+const primaryLeagueId = computed(() => currentGroup.value?.leagues[0]?.id ?? null)
 const members = computed(() => groupsStore.membersMap[groupId] ?? [])
 const currentUserIsGroupAdmin = computed(() =>
   groupsStore.membersMap[groupId]?.some(m => m.userId === authStore.user?.id && m.isAdmin) ?? false,
@@ -1204,11 +1221,28 @@ async function toggleFavDoublePoints(): Promise<void> {
 const leagueDraft = ref('')
 const leagueSaveStatus = ref<'idle' | 'saving' | 'saved' | 'error'>('idle')
 
-async function submitLeagues(): Promise<void> {
+const addableLeagues = computed(() => {
+  const current = new Set((currentGroup.value?.leagues ?? []).map(l => l.id))
+  return leagueStore.leagues.filter(l => l.status !== 'archived' && !current.has(l.id))
+})
+
+async function addLeague(): Promise<void> {
   if (!leagueDraft.value) return
   leagueSaveStatus.value = 'saving'
   try {
-    await groupsStore.setGroupLeague(groupId, leagueDraft.value)
+    await groupsStore.addGroupLeague(groupId, leagueDraft.value)
+    leagueDraft.value = ''
+    leagueSaveStatus.value = 'saved'
+    setTimeout(() => { leagueSaveStatus.value = 'idle' }, 3000)
+  } catch {
+    leagueSaveStatus.value = 'error'
+  }
+}
+
+async function removeLeague(leagueId: string): Promise<void> {
+  leagueSaveStatus.value = 'saving'
+  try {
+    await groupsStore.removeGroupLeague(groupId, leagueId)
     leagueSaveStatus.value = 'saved'
     setTimeout(() => { leagueSaveStatus.value = 'idle' }, 3000)
   } catch {
@@ -1487,7 +1521,6 @@ onMounted(async () => {
       await groupsStore.fetchSpecialTypes(groupId)
       await groupsStore.fetchGlobalSubscriptions(groupId)
       await leagueStore.fetchLeagues()
-      leagueDraft.value = currentGroup.value?.league?.id ?? ''
       await loadTemplatesIfNeeded()
       await loadNameCachesIfNeeded()
     }

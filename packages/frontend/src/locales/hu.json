@@ -212,6 +212,13 @@
     "leagueLabel": "Liga",
     "leaguePlaceholder": "Válassz ligát...",
     "leagueRequired": "Válassz ki egy ligát",
+    "leagues": {
+      "label": "Ligák",
+      "add": "Liga hozzáadása",
+      "remove": "Liga eltávolítása",
+      "minOne": "A csoportnak legalább egy ligája kell legyen.",
+      "lastRemoveError": "Az utolsó ligát nem lehet eltávolítani."
+    },
     "memberCount": "{count} tag",
     "inviteInactive": "Meghívó inaktív",
     "emptyState": "Még nem vagy egyetlen csoport tagja sem.",

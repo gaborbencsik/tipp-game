@@ -183,7 +183,9 @@ interface UserLeague {
 const userLeagues = computed<readonly UserLeague[]>(() => {
   const seen = new Map<string, UserLeague>()
   for (const g of groupsStore.groups) {
-    if (g.league && !seen.has(g.league.id)) seen.set(g.league.id, g.league)
+    for (const l of g.leagues) {
+      if (!seen.has(l.id)) seen.set(l.id, l)
+    }
   }
   return [...seen.values()]
 })

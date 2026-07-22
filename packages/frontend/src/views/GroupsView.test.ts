@@ -90,7 +90,7 @@ const SAMPLE_GROUP: Group = {
   isAdmin: true,
   userRank: null,
   favoriteTeamDoublePoints: false,
-  league: { id: 'l-1', name: 'VB 2026', shortName: 'VB', status: 'active', type: 'league' },
+  leagues: [{ id: 'l-1', name: 'VB 2026', shortName: 'VB', status: 'active', type: 'league' }],
   createdAt: '2026-01-01T00:00:00.000Z',
 }
 
@@ -139,7 +139,7 @@ describe('GroupsView', () => {
   })
 
   it('group card shows nothing extra when group has no league', () => {
-    mockStoreState.groups = [{ ...SAMPLE_GROUP, league: null }]
+    mockStoreState.groups = [{ ...SAMPLE_GROUP, leagues: [] }]
     const wrapper = mountView()
     expect(wrapper.text()).not.toContain('VB 2026')
   })
@@ -169,7 +169,7 @@ describe('GroupsView', () => {
     const vm = wrapper.vm as unknown as { createName: string; onCreateSubmit: () => Promise<void> }
     vm.createName = 'Barátok'
     await vm.onCreateSubmit()
-    expect(mockCreateGroup).toHaveBeenCalledWith({ name: 'Barátok', description: null, leagueId: 'l-1' })
+    expect(mockCreateGroup).toHaveBeenCalledWith({ name: 'Barátok', description: null, leagueIds: ['l-1'] })
   })
 
   it('join form submit → store.joinGroup called', async () => {

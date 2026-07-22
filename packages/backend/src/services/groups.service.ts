@@ -1,4 +1,4 @@
-import { and, eq, isNull, sql, min } from 'drizzle-orm'
+import { and, eq, isNull, sql, min, inArray } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { groups, groupMembers, users, specialPredictionTypes, groupGlobalTypeSubscriptions, groupLeagues, leagues, matches, auditLogs } from '../db/schema/index.js'
 import type { Group, GroupInput, GroupMember, LeagueType } from '../types/index.js'
@@ -27,14 +27,14 @@ function generateInviteCode(): string {
   return code
 }
 
-async function fetchGroupLeague(groupId: string): Promise<{ id: string; name: string; shortName: string; status: 'active' | 'archived'; type: LeagueType } | null> {
-  const rows = await db
+type GroupLeague = { id: string; name: string; shortName: string; status: 'active' | 'archived'; type: LeagueType }
+
+async function fetchGroupLeagues(groupId: string): Promise<GroupLeague[]> {
+  return db
     .select({ id: leagues.id, name: leagues.name, shortName: leagues.shortName, status: leagues.status, type: leagues.type })
     .from(groupLeagues)
     .innerJoin(leagues, eq(groupLeagues.leagueId, leagues.id))
     .where(eq(groupLeagues.groupId, groupId))
-    .limit(1)
-  return rows[0] ?? null
 }
 
 function toApiGroup(
@@ -42,7 +42,7 @@ function toApiGroup(
   memberCount: number,
   isAdmin: boolean,
   userRank: number | null = null,
-  groupLeague: { id: string; name: string; shortName: string; status: 'active' | 'archived'; type: LeagueType } | null = null,
+  groupLeaguesList: GroupLeague[] = [],
 ): Group {
   return {
     id: row.id,
@@ -55,7 +55,7 @@ function toApiGroup(
     isAdmin,
     userRank,
     favoriteTeamDoublePoints: row.favoriteTeamDoublePoints,
-    league: groupLeague,
+    leagues: groupLeaguesList,
     createdAt: row.createdAt.toISOString(),
   }
 }
@@ -80,7 +80,7 @@ export async function getMyGroups(userId: string): Promise<Group[]> {
       .where(eq(groupMembers.groupId, group.id))
     const memberCount = countRows[0]?.count ?? 0
 
-    const league = await fetchGroupLeague(group.id)
+    const league = await fetchGroupLeagues(group.id)
 
     let userRank: number | null = null
     try {
@@ -97,7 +97,8 @@ export async function getMyGroups(userId: string): Promise<Group[]> {
 }
 
 export async function createGroup(input: GroupInput, userId: string): Promise<Group> {
-  if (!input.leagueId) {
+  const leagueIds = Array.from(new Set(input.leagueIds ?? [])).filter((id) => id.length > 0)
+  if (leagueIds.length === 0) {
     throw new AppError(422, 'A league must be selected')
   }
 
@@ -154,7 +155,7 @@ export async function createGroup(input: GroupInput, userId: string): Promise<Gr
     const firstMatchRow = await db
       .select({ first: min(matches.scheduledAt) })
       .from(matches)
-      .where(and(eq(matches.leagueId, input.leagueId), isNull(matches.deletedAt)))
+      .where(and(inArray(matches.leagueId, leagueIds), isNull(matches.deletedAt)))
     const deadlineOverride = firstMatchRow[0]?.first ?? null
 
     await db
@@ -167,11 +168,11 @@ export async function createGroup(input: GroupInput, userId: string): Promise<Gr
       .onConflictDoNothing()
   }
 
-  await db.insert(groupLeagues).values({ groupId: group.id, leagueId: input.leagueId })
+  await db.insert(groupLeagues).values(leagueIds.map((leagueId) => ({ groupId: group.id, leagueId })))
 
   await replicateUserTipsToGroup(userId, group.id)
 
-  const league = await fetchGroupLeague(group.id)
+  const league = await fetchGroupLeagues(group.id)
 
   return toApiGroup(group, 1, true, null, league)
 }
@@ -218,7 +219,7 @@ export async function joinGroup(inviteCode: string, userId: string): Promise<Gro
     .where(eq(groupMembers.groupId, group.id))
   const memberCount = memberCountRows[0]?.count ?? 1
 
-  const league = await fetchGroupLeague(group.id)
+  const league = await fetchGroupLeagues(group.id)
   return toApiGroup(group, memberCount, false, null, league)
 }
 
@@ -458,7 +459,7 @@ export async function regenerateInviteCode(groupId: string, requesterId: string)
   const updatedGroup = updated[0]
   if (!updatedGroup) throw new AppError(500, 'Failed to regenerate invite code')
 
-  const league = await fetchGroupLeague(group.id)
+  const league = await fetchGroupLeagues(group.id)
   return toApiGroup(updatedGroup, memberCount, true, null, league)
 }
 
@@ -474,7 +475,7 @@ export async function setInviteActive(groupId: string, active: boolean, requeste
   const updatedGroup = updated[0]
   if (!updatedGroup) throw new AppError(500, 'Failed to update invite status')
 
-  const league2 = await fetchGroupLeague(group.id)
+  const league2 = await fetchGroupLeagues(group.id)
   return toApiGroup(updatedGroup, memberCount, true, null, league2)
 }
 
@@ -540,20 +541,32 @@ export async function updateGroupSettings(
     .from(groupMembers)
     .where(eq(groupMembers.groupId, groupId))
 
-  const league = await fetchGroupLeague(groupId)
+  const league = await fetchGroupLeagues(groupId)
 
   return toApiGroup(updated[0]!, countRows[0]?.count ?? 0, true, null, league)
 }
 
-export async function setGroupLeague(
-  groupId: string,
-  userId: string,
-  leagueId: string,
-): Promise<Group> {
-  if (!leagueId) {
-    throw new AppError(422, 'A league must be selected')
-  }
+async function recalcGroupSpecialDeadlines(groupId: string): Promise<void> {
+  const leagueRows = await db
+    .select({ leagueId: groupLeagues.leagueId })
+    .from(groupLeagues)
+    .where(eq(groupLeagues.groupId, groupId))
+  const leagueIds = leagueRows.map((r) => r.leagueId)
+  if (leagueIds.length === 0) return
 
+  const firstMatchRow = await db
+    .select({ first: min(matches.scheduledAt) })
+    .from(matches)
+    .where(and(inArray(matches.leagueId, leagueIds), isNull(matches.deletedAt)))
+  const deadlineOverride = firstMatchRow[0]?.first ?? null
+
+  await db
+    .update(groupGlobalTypeSubscriptions)
+    .set({ deadlineOverride })
+    .where(eq(groupGlobalTypeSubscriptions.groupId, groupId))
+}
+
+async function assertGroupAdmin(groupId: string, userId: string): Promise<typeof groups.$inferSelect> {
   const groupRows = await db
     .select()
     .from(groups)
@@ -568,23 +581,72 @@ export async function setGroupLeague(
     .limit(1)
   if (!memberRows[0]?.isAdmin) throw new AppError(403, 'Not authorized')
 
-  const existingLeagues = await db
-    .select({ id: groupLeagues.id })
-    .from(groupLeagues)
-    .where(eq(groupLeagues.groupId, groupId))
-    .limit(1)
-  if (existingLeagues.length > 0) {
-    throw new AppError(422, 'League already set')
-  }
+  return groupRows[0]
+}
 
-  await db.insert(groupLeagues).values({ groupId, leagueId })
-
-  const league = await fetchGroupLeague(groupId)
-
+async function buildGroupResponse(row: typeof groups.$inferSelect): Promise<Group> {
+  const league = await fetchGroupLeagues(row.id)
   const countRows = await db
     .select({ count: sql<number>`count(*)::int` })
     .from(groupMembers)
-    .where(eq(groupMembers.groupId, groupId))
+    .where(eq(groupMembers.groupId, row.id))
+  return toApiGroup(row, countRows[0]?.count ?? 0, true, null, league)
+}
 
-  return toApiGroup(groupRows[0], countRows[0]?.count ?? 0, true, null, league)
+export async function addGroupLeague(
+  groupId: string,
+  leagueId: string,
+  userId: string,
+): Promise<Group> {
+  if (!leagueId) {
+    throw new AppError(422, 'A league must be selected')
+  }
+
+  const group = await assertGroupAdmin(groupId, userId)
+
+  const leagueRows = await db
+    .select({ id: leagues.id })
+    .from(leagues)
+    .where(eq(leagues.id, leagueId))
+    .limit(1)
+  if (!leagueRows[0]) throw new AppError(404, 'League not found')
+
+  const existing = await db
+    .select({ id: groupLeagues.id })
+    .from(groupLeagues)
+    .where(and(eq(groupLeagues.groupId, groupId), eq(groupLeagues.leagueId, leagueId)))
+    .limit(1)
+  if (existing.length === 0) {
+    await db.insert(groupLeagues).values({ groupId, leagueId })
+    await recalcGroupSpecialDeadlines(groupId)
+  }
+
+  return buildGroupResponse(group)
+}
+
+export async function removeGroupLeague(
+  groupId: string,
+  leagueId: string,
+  userId: string,
+): Promise<Group> {
+  const group = await assertGroupAdmin(groupId, userId)
+
+  const currentLeagues = await db
+    .select({ leagueId: groupLeagues.leagueId })
+    .from(groupLeagues)
+    .where(eq(groupLeagues.groupId, groupId))
+
+  const hasLeague = currentLeagues.some((r) => r.leagueId === leagueId)
+  if (hasLeague && currentLeagues.length <= 1) {
+    throw new AppError(422, 'Cannot remove the last league')
+  }
+
+  if (hasLeague) {
+    await db
+      .delete(groupLeagues)
+      .where(and(eq(groupLeagues.groupId, groupId), eq(groupLeagues.leagueId, leagueId)))
+    await recalcGroupSpecialDeadlines(groupId)
+  }
+
+  return buildGroupResponse(group)
 }

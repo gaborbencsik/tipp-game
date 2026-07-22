@@ -86,7 +86,7 @@ const GROUP: Group = {
   isAdmin: true,
   userRank: null,
   favoriteTeamDoublePoints: false,
-  league: { id: 'l-1', name: 'VB 2026', shortName: 'VB', status: 'active', type: 'league' },
+  leagues: [{ id: 'l-1', name: 'VB 2026', shortName: 'VB', status: 'active', type: 'league' }],
   createdAt: '2026-01-01T00:00:00.000Z',
 }
 
@@ -336,7 +336,7 @@ describe('GroupDetailView', () => {
   })
 
   it('header shows nothing when group has no league', async () => {
-    const noLeagueGroup: Group = { ...GROUP, league: null }
+    const noLeagueGroup: Group = { ...GROUP, leagues: [] }
     const { wrapper } = await mountView([], [], [noLeagueGroup])
     expect(wrapper.text()).not.toContain('VB 2026')
   })
@@ -407,20 +407,25 @@ describe('GroupDetailView', () => {
 
   // ─── League lock ───────────────────────────────────────────────────────────
 
-  it('league section shows read-only name when league is already set', async () => {
+  // ─── League management (US-952) ────────────────────────────────────────────
+
+  it('league section shows league chips', async () => {
     const { wrapper } = await mountView([MEMBER_SELF])
     await wrapper.find('[data-testid="tab-settings"]').trigger('click')
     await wrapper.vm.$nextTick()
     expect(wrapper.text()).toContain('VB 2026')
-    expect(wrapper.find('[data-testid="leagues-submit"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="group-league-chip"]').exists()).toBe(true)
   })
 
-  it('league section shows dropdown when no league is set', async () => {
-    const groupNoLeague: Group = { ...GROUP, league: null }
-    const { wrapper } = await mountView([MEMBER_SELF], [], [groupNoLeague])
+  it('admin sees a remove button when the group has multiple leagues', async () => {
+    const multiLeagueGroup: Group = { ...GROUP, leagues: [
+      { id: 'l-1', name: 'VB 2026', shortName: 'VB', status: 'active', type: 'league' },
+      { id: 'l-2', name: 'NB I', shortName: 'NB I', status: 'active', type: 'league' },
+    ] }
+    const { wrapper } = await mountView([MEMBER_SELF], [], [multiLeagueGroup])
     await wrapper.find('[data-testid="tab-settings"]').trigger('click')
     await wrapper.vm.$nextTick()
-    expect(wrapper.find('[data-testid="leagues-submit"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="group-league-remove-btn"]').exists()).toBe(true)
   })
 
   // ─── Delete group ─────────────────────────────────────────────────────────────

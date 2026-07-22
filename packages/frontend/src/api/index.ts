@@ -228,10 +228,15 @@ export const api = {
         body: JSON.stringify(settings),
         headers: { Authorization: `Bearer ${token}` },
       }),
-    setLeague: (token: string, groupId: string, leagueId: string) =>
+    addLeague: (token: string, groupId: string, leagueId: string) =>
       request<Group>(`/groups/${groupId}/leagues`, {
-        method: 'PUT',
+        method: 'POST',
         body: JSON.stringify({ leagueId }),
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+    removeLeague: (token: string, groupId: string, leagueId: string) =>
+      request<Group>(`/groups/${groupId}/leagues/${leagueId}`, {
+        method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       }),
     specialTypes: {

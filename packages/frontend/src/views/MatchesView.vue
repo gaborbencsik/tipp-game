@@ -505,7 +505,9 @@ type UserLeague = { readonly id: string; readonly name: string; readonly shortNa
 const userLeagues = computed<readonly UserLeague[]>(() => {
   const seen = new Map<string, UserLeague>()
   for (const g of groupsStore.groups) {
-    if (g.league && g.league.status !== 'archived' && !seen.has(g.league.id)) seen.set(g.league.id, g.league)
+    for (const l of g.leagues) {
+      if (l.status !== 'archived' && !seen.has(l.id)) seen.set(l.id, l)
+    }
   }
   return [...seen.values()]
 })
@@ -664,7 +666,7 @@ onMounted(async () => {
   }
 
   const userLeagueIdSet = new Set(
-    groupsStore.groups.map(g => g.league?.id).filter((id): id is string => Boolean(id)),
+    groupsStore.groups.flatMap(g => g.leagues.map(l => l.id)),
   )
   const userLeagueIds = [...userLeagueIdSet]
 

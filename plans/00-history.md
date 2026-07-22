@@ -201,3 +201,4 @@
 | US-956 | Per-liga on-demand szinkron (meccs + csapat + játékos) az admin UI-ból | Should Have |
 | US-957 | Per-liga szinkronizáció ki/bekapcsolása az admin szinkron oldalról | Should Have |
 | US-958 | Liga-típus (liga/kupa/vegyes) + fázis-szűrő láthatóság a Mérkőzések oldalon | Should Have |
+| US-952 | Több liga egy csoportban – csoport több ligára is feliratkozhat | Should Have |

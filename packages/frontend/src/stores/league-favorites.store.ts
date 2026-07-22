@@ -28,7 +28,7 @@ export const useLeagueFavoritesStore = defineStore('leagueFavorites', () => {
     const groupsStore = useGroupsStore()
     const userLeagueIds = new Set<string>()
     for (const g of groupsStore.groups) {
-      if (g.league) userLeagueIds.add(g.league.id)
+      for (const l of g.leagues) userLeagueIds.add(l.id)
     }
     return leagues.value.filter(l => userLeagueIds.has(l.id) && l.status !== 'archived')
   })

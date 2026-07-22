@@ -54,21 +54,23 @@
             maxlength="200"
             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-          <div v-if="leagueStore.leagues.length > 1" data-testid="league-select" class="flex flex-col gap-1">
-            <span class="text-sm font-medium text-gray-700">{{ $t('groups.leagueLabel') }}</span>
-            <select
-              v-model="selectedLeagueId"
-              required
-              :class="[
-                'w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500',
-                !selectedLeagueId ? 'text-gray-400' : 'text-gray-900'
-              ]"
+          <div v-if="selectableLeagues.length > 1" data-testid="group-leagues-multiselect" class="flex flex-col gap-1">
+            <span class="text-sm font-medium text-gray-700">{{ $t('groups.leagues.label') }}</span>
+            <label
+              v-for="league in selectableLeagues"
+              :key="league.id"
+              class="flex items-center gap-2 text-sm text-gray-900"
             >
-              <option value="" disabled>{{ $t('groups.leaguePlaceholder') }}</option>
-              <option v-for="league in leagueStore.leagues" :key="league.id" :value="league.id">
-                {{ league.name }}
-              </option>
-            </select>
+              <input
+                type="checkbox"
+                :value="league.id"
+                :checked="selectedLeagueIds.includes(league.id)"
+                data-testid="group-league-checkbox"
+                class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                @change="toggleLeague(league.id)"
+              />
+              {{ league.name }}
+            </label>
           </div>
           <p v-if="createError" data-testid="create-error" class="text-red-600 text-xs">{{ createError }}</p>
           <div class="flex gap-2 justify-end">
@@ -169,7 +171,14 @@
                 <span v-if="group.isAdmin" class="text-xs px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded font-medium">admin</span>
               </div>
               <p v-if="group.description" class="text-xs text-gray-500 mt-0.5">{{ group.description }}</p>
-              <p v-if="group.league" class="text-xs text-gray-500 mt-0.5">{{ group.league.name }}</p>
+              <div v-if="group.leagues.length > 0" class="flex flex-wrap gap-1 mt-0.5">
+                <span
+                  v-for="league in group.leagues"
+                  :key="league.id"
+                  data-testid="group-league-chip"
+                  class="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded"
+                >{{ league.name }}</span>
+              </div>
               <div v-if="group.inviteActive" class="flex items-center gap-2 mt-1.5" @click.prevent>
                 <span class="font-mono text-xs text-gray-500 tracking-widest" data-testid="invite-code">{{ group.inviteCode }}</span>
                 <button
@@ -239,10 +248,21 @@ const isSubmitting = ref(false)
 const createName = ref('')
 const createDescription = ref('')
 const createError = ref<string | null>(null)
-const selectedLeagueId = ref('')
+const selectedLeagueIds = ref<string[]>([])
 const joinCode = ref('')
 const joinError = ref<string | null>(null)
 const copiedState = ref(new Map<string, 'code' | 'url'>())
+
+const selectableLeagues = computed(() => leagueStore.leagues.filter(l => l.status !== 'archived'))
+
+function toggleLeague(leagueId: string): void {
+  const idx = selectedLeagueIds.value.indexOf(leagueId)
+  if (idx >= 0) {
+    selectedLeagueIds.value = selectedLeagueIds.value.filter(id => id !== leagueId)
+  } else {
+    selectedLeagueIds.value = [...selectedLeagueIds.value, leagueId]
+  }
+}
 
 function setCopied(groupId: string, type: 'code' | 'url'): void {
   copiedState.value = new Map(copiedState.value).set(groupId, type)
@@ -278,7 +298,7 @@ function closeCreateForm(): void {
   createName.value = ''
   createDescription.value = ''
   createError.value = null
-  selectedLeagueId.value = ''
+  selectedLeagueIds.value = []
 }
 
 function closeJoinForm(): void {
@@ -289,11 +309,11 @@ function closeJoinForm(): void {
 
 async function onCreateSubmit(): Promise<void> {
   createError.value = null
-  const leagueId = leagueStore.leagues.length === 1
-    ? leagueStore.leagues[0]!.id
-    : selectedLeagueId.value
-  if (!leagueId) {
-    createError.value = t('groups.leagueRequired')
+  const leagueIds = selectableLeagues.value.length === 1
+    ? [selectableLeagues.value[0]!.id]
+    : selectedLeagueIds.value
+  if (leagueIds.length === 0) {
+    createError.value = t('groups.leagues.minOne')
     return
   }
   isSubmitting.value = true
@@ -301,7 +321,7 @@ async function onCreateSubmit(): Promise<void> {
     await store.createGroup({
       name: createName.value.trim(),
       description: createDescription.value.trim() || null,
-      leagueId,
+      leagueIds,
     })
     closeCreateForm()
   } catch (err) {

@@ -100,7 +100,7 @@ const GROUP_A: Group = {
   isAdmin: true,
   userRank: null,
   favoriteTeamDoublePoints: false,
-  league: { id: 'l-1', name: 'VB 2026', shortName: 'VB', status: 'active', type: 'league' },
+  leagues: [{ id: 'l-1', name: 'VB 2026', shortName: 'VB', status: 'active', type: 'league' }],
   createdAt: '2026-01-01T00:00:00.000Z',
 }
 
@@ -115,7 +115,7 @@ const GROUP_B: Group = {
   isAdmin: false,
   userRank: null,
   favoriteTeamDoublePoints: false,
-  league: { id: 'l-1', name: 'VB 2026', shortName: 'VB', status: 'active', type: 'league' },
+  leagues: [{ id: 'l-1', name: 'VB 2026', shortName: 'VB', status: 'active', type: 'league' }],
   createdAt: '2026-02-01T00:00:00.000Z',
 }
 
@@ -191,7 +191,7 @@ describe('groups.store', () => {
     mockGroupsCreate.mockResolvedValue(GROUP_B)
     const store = useGroupsStore()
     await store.fetchMyGroups()
-    await store.createGroup({ name: 'Munkások', leagueId: 'l-1' })
+    await store.createGroup({ name: 'Munkások', leagueIds: ['l-1'] })
     expect(store.groups).toHaveLength(2)
     expect(store.groups[1]).toEqual(GROUP_B)
   })
@@ -199,14 +199,14 @@ describe('groups.store', () => {
   it('createGroup() → returns created group', async () => {
     mockGroupsCreate.mockResolvedValue(GROUP_A)
     const store = useGroupsStore()
-    const result = await store.createGroup({ name: 'Barátok', leagueId: 'l-1' })
+    const result = await store.createGroup({ name: 'Barátok', leagueIds: ['l-1'] })
     expect(result).toEqual(GROUP_A)
   })
 
   it('createGroup() error → throws', async () => {
     mockGroupsCreate.mockRejectedValue(new Error('Maximum number of created groups reached'))
     const store = useGroupsStore()
-    await expect(store.createGroup({ name: 'Hatodik', leagueId: 'l-1' })).rejects.toThrow('Maximum number of created groups reached')
+    await expect(store.createGroup({ name: 'Hatodik', leagueIds: ['l-1'] })).rejects.toThrow('Maximum number of created groups reached')
   })
 
   // ─── joinGroup ────────────────────────────────────────────────────────────────
