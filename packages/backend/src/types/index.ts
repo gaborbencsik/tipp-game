@@ -499,6 +499,8 @@ export interface League {
   readonly id: string
   readonly name: string
   readonly shortName: string
+  readonly status: 'active' | 'archived'
+  // Derived from status for backward-compat until US-948 migrates the frontend to status.
   readonly archivedAt: string | null
   readonly createdAt: string
   readonly updatedAt: string

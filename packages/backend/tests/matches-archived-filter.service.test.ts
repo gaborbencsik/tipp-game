@@ -51,7 +51,7 @@ describe('getMatches archived-league filter', () => {
     mockOrderBy.mockResolvedValue([])
   })
 
-  it('default → adds an OR(leagueId IS NULL, leagues.archivedAt IS NULL) condition', async () => {
+  it('default → adds an OR(leagueId IS NULL, leagues.status = active) condition', async () => {
     await getMatches()
 
     // exactly one or() built for the archived filter, with two operands

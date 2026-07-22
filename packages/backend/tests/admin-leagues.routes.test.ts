@@ -46,12 +46,13 @@ const ACTIVE_LEAGUE: League = {
   id: 'league-uuid-1',
   name: 'World Cup 2026',
   shortName: 'WC2026',
+  status: 'active',
   archivedAt: null,
   createdAt: '2026-07-21T00:00:00.000Z',
   updatedAt: '2026-07-21T00:00:00.000Z',
 }
 
-const ARCHIVED_LEAGUE: League = { ...ACTIVE_LEAGUE, archivedAt: '2026-07-21T10:00:00.000Z' }
+const ARCHIVED_LEAGUE: League = { ...ACTIVE_LEAGUE, status: 'archived', archivedAt: '2026-07-21T10:00:00.000Z' }
 
 function getHandler(
   path: string,

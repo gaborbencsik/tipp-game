@@ -56,7 +56,13 @@ const LEAGUE_ROW = {
   name: 'World Cup 2026',
   shortName: 'WC2026',
   startsAt: null,
-  archivedAt: null as Date | null,
+  status: 'active' as 'active' | 'archived',
+  syncEnabled: false,
+  externalId: null as number | null,
+  season: null as number | null,
+  syncFrom: null as Date | null,
+  syncTo: null as Date | null,
+  fixtureAllowlist: null as number[] | null,
   createdAt: NOW,
   updatedAt: NOW,
 }
@@ -94,7 +100,7 @@ describe('getLeagues', () => {
     setupSelectChain([])
   })
 
-  it('default (no options) → filters archivedAt IS NULL via where', async () => {
+  it('default (no options) → filters status = active via where', async () => {
     mockSelectWhere.mockReturnValue({ orderBy: mockOrderBy })
     mockOrderBy.mockResolvedValue([LEAGUE_ROW])
 
@@ -102,24 +108,26 @@ describe('getLeagues', () => {
 
     expect(mockSelectWhere).toHaveBeenCalledOnce()
     expect(result).toHaveLength(1)
+    expect(result[0]?.status).toBe('active')
     expect(result[0]?.archivedAt).toBeNull()
   })
 
   it('includeArchived: true → no where filter, returns all leagues', async () => {
     mockFrom.mockReturnValue({ orderBy: mockOrderBy })
-    const archivedRow = { ...LEAGUE_ROW, id: 'l2', archivedAt: NOW }
+    const archivedRow = { ...LEAGUE_ROW, id: 'l2', status: 'archived' as const }
     mockOrderBy.mockResolvedValue([LEAGUE_ROW, archivedRow])
 
     const result = await getLeagues({ includeArchived: true })
 
     expect(mockSelectWhere).not.toHaveBeenCalled()
     expect(result).toHaveLength(2)
+    expect(result[1]?.status).toBe('archived')
     expect(result[1]?.archivedAt).toBe(NOW.toISOString())
   })
 
-  it('maps archivedAt to ISO string when set', async () => {
+  it('maps archived status to a derived archivedAt ISO string', async () => {
     mockFrom.mockReturnValue({ orderBy: mockOrderBy })
-    mockOrderBy.mockResolvedValue([{ ...LEAGUE_ROW, archivedAt: NOW }])
+    mockOrderBy.mockResolvedValue([{ ...LEAGUE_ROW, status: 'archived' }])
 
     const result = await getLeagues({ includeArchived: true })
 
@@ -142,16 +150,17 @@ describe('archiveLeague', () => {
     })
   })
 
-  it('active league → sets archivedAt, writes audit log, returns updated league', async () => {
+  it('active league → sets status archived, writes audit log, returns updated league', async () => {
     setupSelectChain([LEAGUE_ROW])
-    setupUpdateChain([{ ...LEAGUE_ROW, archivedAt: NOW }])
+    setupUpdateChain([{ ...LEAGUE_ROW, status: 'archived' }])
     setupInsertChain()
 
     const result = await archiveLeague('league-uuid-1', ACTOR_ID)
 
     expect(mockSet).toHaveBeenCalledOnce()
     const [setArg] = mockSet.mock.calls[0] as [Record<string, unknown>]
-    expect(setArg['archivedAt']).toBeInstanceOf(Date)
+    expect(setArg['status']).toBe('archived')
+    expect(result.status).toBe('archived')
     expect(result.archivedAt).toBe(NOW.toISOString())
 
     expect(mockValues).toHaveBeenCalledOnce()
@@ -164,8 +173,8 @@ describe('archiveLeague', () => {
     })
   })
 
-  it('already archived → idempotent: does not overwrite timestamp, no audit log', async () => {
-    const alreadyArchived = { ...LEAGUE_ROW, archivedAt: NOW }
+  it('already archived → idempotent: no update, no audit log', async () => {
+    const alreadyArchived = { ...LEAGUE_ROW, status: 'archived' as const }
     setupSelectChain([alreadyArchived])
     setupInsertChain()
 
@@ -173,7 +182,7 @@ describe('archiveLeague', () => {
 
     expect(mockUpdate).not.toHaveBeenCalled()
     expect(mockInsert).not.toHaveBeenCalled()
-    expect(result.archivedAt).toBe(NOW.toISOString())
+    expect(result.status).toBe('archived')
   })
 })
 
@@ -192,17 +201,18 @@ describe('restoreLeague', () => {
     })
   })
 
-  it('archived league → nulls archivedAt, writes audit log, returns updated league', async () => {
-    const archived = { ...LEAGUE_ROW, archivedAt: NOW }
+  it('archived league → sets status active, writes audit log, returns updated league', async () => {
+    const archived = { ...LEAGUE_ROW, status: 'archived' as const }
     setupSelectChain([archived])
-    setupUpdateChain([{ ...LEAGUE_ROW, archivedAt: null }])
+    setupUpdateChain([{ ...LEAGUE_ROW, status: 'active' }])
     setupInsertChain()
 
     const result = await restoreLeague('league-uuid-1', ACTOR_ID)
 
     expect(mockSet).toHaveBeenCalledOnce()
     const [setArg] = mockSet.mock.calls[0] as [Record<string, unknown>]
-    expect(setArg['archivedAt']).toBeNull()
+    expect(setArg['status']).toBe('active')
+    expect(result.status).toBe('active')
     expect(result.archivedAt).toBeNull()
 
     expect(mockValues).toHaveBeenCalledOnce()
@@ -223,6 +233,6 @@ describe('restoreLeague', () => {
 
     expect(mockUpdate).not.toHaveBeenCalled()
     expect(mockInsert).not.toHaveBeenCalled()
-    expect(result.archivedAt).toBeNull()
+    expect(result.status).toBe('active')
   })
 })

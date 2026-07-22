@@ -28,7 +28,7 @@ export async function getMatches(filters: MatchesFilters = {}): Promise<Match[]>
   if (!filters.includeArchivedLeagues) {
     // Hide archived leagues' matches by default; matches without a league
     // (leagueId IS NULL) must not be excluded by the join filter.
-    const archivedFilter = or(isNull(matches.leagueId), isNull(leagues.archivedAt))
+    const archivedFilter = or(isNull(matches.leagueId), eq(leagues.status, 'active'))
     if (archivedFilter) conditions.push(archivedFilter)
   }
 

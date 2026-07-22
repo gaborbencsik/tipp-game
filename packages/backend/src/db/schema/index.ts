@@ -53,6 +53,9 @@ export const pushSkippedReasonEnum = pgEnum('push_skipped_reason', [
 
 export const waitlistSourceEnum = pgEnum('waitlist_source', ['hero', 'footer', 'admin'])
 
+// Extensible: only 'active'/'archived' in scope now; new states (e.g. 'draft') may be added later.
+export const leagueStatusEnum = pgEnum('league_status', ['active', 'archived'])
+
 export const insightTypeEnum = pgEnum('insight_type', [
   'raw_stats',
   'defense',
@@ -163,11 +166,21 @@ export const leagues = pgTable('leagues', {
   name:      varchar('name', { length: 100 }).notNull(),
   shortName: varchar('short_name', { length: 20 }).notNull(),
   startsAt:  timestamp('starts_at', { withTimezone: true }),
-  archivedAt: timestamp('archived_at', { withTimezone: true }),
+  // status: visibility state (supersedes the former archived_at column).
+  status:    leagueStatusEnum('status').notNull().default('active'),
+  // syncEnabled: independent sync toggle. Only leagues with syncEnabled=true AND
+  // status='active' are synced — an archived league is NEVER synced.
+  syncEnabled: boolean('sync_enabled').notNull().default(false),
+  externalId:  integer('external_id').unique(),
+  season:      smallint('season'),
+  syncFrom:    timestamp('sync_from', { withTimezone: true }),
+  syncTo:      timestamp('sync_to', { withTimezone: true }),
+  fixtureAllowlist: integer('fixture_allowlist').array(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({
-  archivedAtIdx: index('leagues_archived_at_idx').on(t.archivedAt),
+  statusIdx:      index('leagues_status_idx').on(t.status),
+  syncEnabledIdx: index('leagues_sync_enabled_idx').on(t.syncEnabled),
 }))
 
 // ─── MATCHES ──────────────────────────────────────────────────────────────────

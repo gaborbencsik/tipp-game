@@ -1,4 +1,4 @@
-import { eq, isNull } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { leagues, auditLogs } from '../db/schema/index.js'
 import type { League, LeagueInput } from '../types/index.js'
@@ -15,7 +15,7 @@ class AppError extends Error {
 export async function getLeagues(options?: { includeArchived?: boolean }): Promise<League[]> {
   const rows = options?.includeArchived
     ? await db.select().from(leagues).orderBy(leagues.name)
-    : await db.select().from(leagues).where(isNull(leagues.archivedAt)).orderBy(leagues.name)
+    : await db.select().from(leagues).where(eq(leagues.status, 'active')).orderBy(leagues.name)
   return rows.map(toLeague)
 }
 
@@ -56,12 +56,11 @@ export async function archiveLeague(id: string, actorId: string): Promise<League
   const current = existing[0]
   if (!current) throw new AppError(404, 'League not found')
 
-  if (current.archivedAt) return toLeague(current)
+  if (current.status === 'archived') return toLeague(current)
 
-  const archivedAt = new Date()
   const rows = await db
     .update(leagues)
-    .set({ archivedAt, updatedAt: new Date() })
+    .set({ status: 'archived', updatedAt: new Date() })
     .where(eq(leagues.id, id))
     .returning()
 
@@ -73,8 +72,8 @@ export async function archiveLeague(id: string, actorId: string): Promise<League
     action: 'league_archive',
     entityType: 'league',
     entityId: id,
-    previousValue: { archivedAt: null },
-    newValue: { archivedAt: archivedAt.toISOString() },
+    previousValue: { status: 'active' },
+    newValue: { status: 'archived' },
   })
 
   return toLeague(row)
@@ -85,11 +84,11 @@ export async function restoreLeague(id: string, actorId: string): Promise<League
   const current = existing[0]
   if (!current) throw new AppError(404, 'League not found')
 
-  if (!current.archivedAt) return toLeague(current)
+  if (current.status === 'active') return toLeague(current)
 
   const rows = await db
     .update(leagues)
-    .set({ archivedAt: null, updatedAt: new Date() })
+    .set({ status: 'active', updatedAt: new Date() })
     .where(eq(leagues.id, id))
     .returning()
 
@@ -101,8 +100,8 @@ export async function restoreLeague(id: string, actorId: string): Promise<League
     action: 'league_restore',
     entityType: 'league',
     entityId: id,
-    previousValue: { archivedAt: current.archivedAt.toISOString() },
-    newValue: { archivedAt: null },
+    previousValue: { status: 'archived' },
+    newValue: { status: 'active' },
   })
 
   return toLeague(row)
@@ -113,7 +112,8 @@ function toLeague(row: typeof leagues.$inferSelect): League {
     id: row.id,
     name: row.name,
     shortName: row.shortName,
-    archivedAt: row.archivedAt?.toISOString() ?? null,
+    status: row.status,
+    archivedAt: row.status === 'archived' ? row.updatedAt.toISOString() : null,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   }

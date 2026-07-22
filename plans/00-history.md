@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 185 story kész (Must Have: 32/32, Should Have: 153/153)
+> 186 story kész (Must Have: 32/32, Should Have: 154/154)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -194,3 +194,4 @@
 | UX-046 | Ranglista – Torna oszlopban a megszerzett/maximum pont % desktopon | Should Have |
 | UX-047 | Bracket döntő/bronz – „A te tipped" sor a kiértékelt nézetben (bajnok-tipp egyértelműsítése) | Should Have |
 | US-940 | Liga archiválása (soft-hide) – lezárt torna elrejtése aktív felületekről adatvesztés nélkül | Should Have |
+| US-949 | Ligák DB-alapúvá tétele (backend-1) – sync-runner env→DB migráció + liga sync-mezők | Should Have |

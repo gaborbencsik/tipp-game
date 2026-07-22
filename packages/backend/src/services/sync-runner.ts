@@ -1,3 +1,6 @@
+import { and, eq } from 'drizzle-orm'
+import { db } from '../db/client.js'
+import { leagues } from '../db/schema/index.js'
 import { runSync } from './sync.service.js'
 import { buildConfig, createFootballApiClient } from './football-api.service.js'
 import type { SyncMode, SyncRunResult } from '../types/index.js'
@@ -16,56 +19,49 @@ export interface ConfiguredLeagueDescriptor {
   readonly season: number
 }
 
-interface LeagueEnvSpec {
-  readonly name: string
-  readonly externalIdEnv: string
-  readonly internalIdEnv: string
-  readonly season: number
-  readonly dateRange?: { readonly from: string; readonly to: string }
-  readonly fixtureAllowlist?: readonly number[]
+// Only leagues with sync_enabled = true AND status = 'active' are synced.
+// HARD RULE: an archived league is NEVER synced, even if sync_enabled = true.
+async function getSyncableLeagues(): Promise<(typeof leagues.$inferSelect)[]> {
+  return db
+    .select()
+    .from(leagues)
+    .where(and(eq(leagues.syncEnabled, true), eq(leagues.status, 'active')))
 }
 
-const LEAGUE_SPECS: readonly LeagueEnvSpec[] = [
-  { name: 'VB', externalIdEnv: 'FOOTBALL_API_WC_LEAGUE_ID', internalIdEnv: 'FOOTBALL_INTERNAL_WC_LEAGUE_ID', season: 2026 },
-]
-
-function getConfiguredLeagues(): LeagueConfig[] {
+async function getConfiguredLeagues(): Promise<LeagueConfig[]> {
+  const rows = await getSyncableLeagues()
   const result: LeagueConfig[] = []
-  for (const spec of LEAGUE_SPECS) {
-    const externalId = process.env[spec.externalIdEnv]
-    if (!externalId) continue
-
-    const internalId = process.env[spec.internalIdEnv]
-    if (!internalId) continue
-
+  for (const row of rows) {
+    if (row.externalId === null || row.season === null) continue
+    const dateRange =
+      row.syncFrom && row.syncTo
+        ? { from: row.syncFrom.toISOString(), to: row.syncTo.toISOString() }
+        : undefined
     result.push({
-      externalId: Number(externalId),
-      season: spec.season,
-      internalId,
-      ...(spec.dateRange ? { dateRange: spec.dateRange } : {}),
-      ...(spec.fixtureAllowlist ? { fixtureAllowlist: spec.fixtureAllowlist } : {}),
+      externalId: row.externalId,
+      internalId: row.id,
+      season: row.season,
+      ...(dateRange ? { dateRange } : {}),
+      ...(row.fixtureAllowlist ? { fixtureAllowlist: row.fixtureAllowlist } : {}),
     })
   }
   return result
 }
 
-export function getConfiguredLeagueDescriptors(): ConfiguredLeagueDescriptor[] {
+export async function getConfiguredLeagueDescriptors(): Promise<ConfiguredLeagueDescriptor[]> {
+  const rows = await getSyncableLeagues()
   const descriptors: ConfiguredLeagueDescriptor[] = []
-  for (const spec of LEAGUE_SPECS) {
-    const externalId = process.env[spec.externalIdEnv]
-    if (!externalId) continue
-
-    const internalId = process.env[spec.internalIdEnv]
-    if (!internalId) continue
-    descriptors.push({ name: spec.name, externalId: Number(externalId), season: spec.season })
+  for (const row of rows) {
+    if (row.externalId === null || row.season === null) continue
+    descriptors.push({ name: row.shortName, externalId: row.externalId, season: row.season })
   }
   return descriptors
 }
 
 export async function runAllLeagues(mode: SyncMode): Promise<SyncRunResult[]> {
-  const leaguesToRun = getConfiguredLeagues()
+  const leaguesToRun = await getConfiguredLeagues()
   if (leaguesToRun.length === 0) {
-    throw new Error('No leagues configured. Set FOOTBALL_API_*_LEAGUE_ID and matching FOOTBALL_INTERNAL_*_LEAGUE_ID.')
+    throw new Error('No active leagues in DB. Enable sync on a league (sync_enabled = true, status = active) with external_id and season set.')
   }
 
   const config = buildConfig()

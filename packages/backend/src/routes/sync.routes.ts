@@ -36,7 +36,7 @@ syncRouter.get('/settings', async (ctx) => {
     rawStatsSkipFresh: state.rawStatsSkipFresh,
     insightsSyncEnabled: state.insightsSyncEnabled,
     lastInsightsSyncAt: state.lastInsightsSyncAt,
-    configuredLeagues: getConfiguredLeagueDescriptors(),
+    configuredLeagues: await getConfiguredLeagueDescriptors(),
   }
 })
 
