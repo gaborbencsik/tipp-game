@@ -30,21 +30,54 @@
         <p class="text-xs text-gray-400 mt-1">{{ syncModeHelp }}</p>
       </div>
 
-      <!-- Configured leagues chips -->
-      <div v-if="configuredLeagues.length > 0" class="mb-3">
+      <!-- Configured leagues + per-league sync toggle (US-957) -->
+      <div v-if="leagues.length > 0" class="mb-3" data-testid="configured-leagues-section">
         <p class="text-xs text-gray-600 mb-1">Konfigurált ligák:</p>
-        <div class="flex flex-wrap gap-1.5" data-testid="configured-leagues">
-          <span
-            v-for="league in configuredLeagues"
-            :key="league.externalId"
-            class="px-2 py-0.5 text-xs bg-blue-50 text-blue-700 rounded border border-blue-100"
+        <div class="space-y-1.5">
+          <div
+            v-for="league in leagues"
+            :key="league.id"
+            class="flex items-center gap-2 flex-wrap text-sm"
           >
-            {{ league.name }} <span class="text-blue-400">({{ league.season }})</span>
-          </span>
+            <label class="relative inline-flex items-center" :class="isLeagueSyncDisabled(league) ? 'cursor-not-allowed' : 'cursor-pointer'">
+              <input
+                :data-testid="`league-sync-toggle-${league.id}`"
+                type="checkbox"
+                class="sr-only peer"
+                :checked="league.syncEnabled"
+                :disabled="isLeagueSyncDisabled(league) || leagueSyncLoading[league.id]"
+                @change="toggleLeagueSyncEnabled(league)"
+              />
+              <div class="w-9 h-5 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600 peer-disabled:opacity-50"></div>
+            </label>
+            <span class="font-medium text-gray-700">{{ league.name }}</span>
+            <span class="text-gray-400 text-xs">({{ league.season ?? '—' }})</span>
+            <span
+              :data-testid="`league-sync-status-${league.id}`"
+              class="text-xs"
+              :class="leagueStatusClass(league)"
+              :title="leagueStatusTooltip(league)"
+            >{{ leagueStatusLabel(league) }}</span>
+            <svg
+              v-if="leagueSyncLoading[league.id]"
+              :data-testid="`league-sync-loading-${league.id}`"
+              class="w-3 h-3 animate-spin text-blue-600"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+            </svg>
+            <span
+              v-if="leagueSyncError[league.id]"
+              :data-testid="`league-sync-error-${league.id}`"
+              class="text-xs text-red-600"
+            >Hiba a szinkronizáció ki/bekapcsolásakor: {{ leagueSyncError[league.id] }}</span>
+          </div>
         </div>
       </div>
       <p v-else class="text-xs text-amber-600 mb-3">
-        Nincs konfigurált liga (állítsd be a FOOTBALL_INTERNAL_*_LEAGUE_ID env változókat).
+        Nincs konfigurált liga (vegyél fel ligát az admin liga-szerkesztőben).
       </p>
 
       <!-- Last run + API quota -->
@@ -371,7 +404,7 @@ import AdminNav from '../components/admin/AdminNav.vue'
 import { supabase } from '../lib/supabase.js'
 import { api } from '../api/index.js'
 import { getDateLocale } from '../lib/dateLocale.js'
-import type { Match } from '../types/index.js'
+import type { Match, League } from '../types/index.js'
 
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
 
@@ -381,12 +414,6 @@ interface SyncResult {
   resultsUpserted: number
   errors: string[]
   partial: boolean
-}
-
-interface ConfiguredLeague {
-  name: string
-  externalId: number
-  season: number
 }
 
 const SYNC_MODE_HELP: Record<string, string> = {
@@ -465,7 +492,34 @@ const selectedInsightMatchId = ref('')
 const lastSyncAt = ref<Date | null>(null)
 const apiCallsToday = ref(0)
 const syncInProgress = ref(false)
-const configuredLeagues = ref<ConfiguredLeague[]>([])
+
+const leagues = ref<League[]>([])
+const leagueSyncLoading = ref<Record<string, boolean>>({})
+const leagueSyncError = ref<Record<string, string>>({})
+
+function isLeagueSyncDisabled(league: League): boolean {
+  return league.status === 'archived' || league.externalId === null
+}
+
+function leagueStatusLabel(league: League): string {
+  if (league.status === 'archived') return 'Archivált'
+  if (league.externalId === null) return 'Hiányzó externalId'
+  if (league.season === null) return '⚠ Hiányzó season'
+  return 'Szinkronizálható'
+}
+
+function leagueStatusClass(league: League): string {
+  if (isLeagueSyncDisabled(league)) return 'text-gray-400'
+  if (league.season === null) return 'text-amber-600'
+  return 'text-green-600'
+}
+
+function leagueStatusTooltip(league: League): string {
+  if (league.status === 'archived') return 'Archivált ligák nem szinkronizálhatók'
+  if (league.externalId === null) return 'Ez a liga nem szinkronizálható: hiányzik az externalId'
+  if (league.season === null) return 'A season nincs beállítva; a liga az ütemezett futásból kimarad, amíg be nem állítod az admin liga-szerkesztőben'
+  return ''
+}
 
 const syncModeHelp = computed((): string => SYNC_MODE_HELP[syncMode.value] ?? '')
 
@@ -506,7 +560,34 @@ async function loadSettings(): Promise<void> {
   lastRawStatsSyncAt.value = data.lastRawStatsSyncAt ? new Date(data.lastRawStatsSyncAt) : null
   insightsEnabled.value = data.insightsSyncEnabled ?? false
   lastInsightsSyncAt.value = data.lastInsightsSyncAt ? new Date(data.lastInsightsSyncAt) : null
-  configuredLeagues.value = data.configuredLeagues ?? []
+}
+
+async function loadLeagues(): Promise<void> {
+  const token = await getToken()
+  leagues.value = await api.admin.leagues.list(token, true)
+}
+
+async function toggleLeagueSyncEnabled(league: League): Promise<void> {
+  if (isLeagueSyncDisabled(league) || leagueSyncLoading.value[league.id]) return
+  const newValue = !league.syncEnabled
+  const idx = leagues.value.findIndex(l => l.id === league.id)
+  if (idx === -1) return
+  leagueSyncError.value = { ...leagueSyncError.value, [league.id]: '' }
+  leagues.value[idx] = { ...league, syncEnabled: newValue }
+  leagueSyncLoading.value = { ...leagueSyncLoading.value, [league.id]: true }
+  try {
+    const token = await getToken()
+    await api.admin.leagues.update(token, league.id, { syncEnabled: newValue })
+  } catch (err) {
+    leagues.value[idx] = { ...league, syncEnabled: league.syncEnabled }
+    const message = err instanceof Error ? err.message : 'Ismeretlen hiba'
+    leagueSyncError.value = { ...leagueSyncError.value, [league.id]: message }
+    setTimeout(() => {
+      leagueSyncError.value = { ...leagueSyncError.value, [league.id]: '' }
+    }, 3000)
+  } finally {
+    leagueSyncLoading.value = { ...leagueSyncLoading.value, [league.id]: false }
+  }
 }
 
 async function updateMode(): Promise<void> {
@@ -732,6 +813,7 @@ async function triggerInsightsTranslate(): Promise<void> {
 
 onMounted(async () => {
   await loadSettings()
+  await loadLeagues()
   await loadInsightsUsage()
   await loadScheduledMatches()
 })

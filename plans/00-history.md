@@ -199,3 +199,4 @@
 | US-948 | Admin liga-oldal (frontend) – liga-lista státusz badge-dzsel + archiválás/visszaállítás | Should Have |
 | US-951 | Admin liga-menedzsment UI (frontend) – liga létrehozás/szerkesztés sync-mezőkkel | Should Have |
 | US-956 | Per-liga on-demand szinkron (meccs + csapat + játékos) az admin UI-ból | Should Have |
+| US-957 | Per-liga szinkronizáció ki/bekapcsolása az admin szinkron oldalról | Should Have |

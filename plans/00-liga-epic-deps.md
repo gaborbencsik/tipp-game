@@ -44,7 +44,7 @@ US-955 (globális ranglista nézet eltávolítása)  [önálló]
 | US-954 |  | Archivált liga → torna tippek elrejtése | ✅US-940 |
 | US-955 |  | „Összesített" (globális) ranglista nézet eltávolítása | — |
 | US-956 | ✅ | Per-liga on-demand szinkron az admin UI-ból | ✅US-949, ✅US-950, ✅US-951 |
-| US-957 |  | Per-liga sync ki/bekapcsolás az admin szinkron oldalról | ✅US-949, ✅US-950, ✅US-951 |
+| US-957 | ✅ | Per-liga sync ki/bekapcsolás az admin szinkron oldalról | ✅US-949, ✅US-950, ✅US-951 |
 
 ## Kritikus lánc
 

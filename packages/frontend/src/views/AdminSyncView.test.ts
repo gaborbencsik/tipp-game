@@ -22,6 +22,8 @@ const {
   mockRunInsightsTranslate,
   mockGetInsightsUsage,
   mockMatchesList,
+  mockLeaguesList,
+  mockLeaguesUpdate,
 } = vi.hoisted(() => ({
   mockGetSession: vi.fn().mockResolvedValue({
     data: { session: { access_token: 'mock-token' } },
@@ -57,6 +59,8 @@ const {
     last7Days: [],
   }),
   mockMatchesList: vi.fn().mockResolvedValue([]),
+  mockLeaguesList: vi.fn().mockResolvedValue([]),
+  mockLeaguesUpdate: vi.fn().mockResolvedValue({}),
 }))
 
 vi.mock('@/lib/supabase', () => ({
@@ -86,6 +90,10 @@ vi.mock('@/api/index', () => ({
         runInsights: (...args: unknown[]) => mockRunInsights(...args),
         runInsightsTranslate: (...args: unknown[]) => mockRunInsightsTranslate(...args),
         getInsightsUsage: (...args: unknown[]) => mockGetInsightsUsage(...args),
+      },
+      leagues: {
+        list: (...args: unknown[]) => mockLeaguesList(...args),
+        update: (...args: unknown[]) => mockLeaguesUpdate(...args),
       },
     },
   },
@@ -122,6 +130,8 @@ async function mountView(settingsOverride?: Record<string, unknown>) {
 describe('AdminSyncView', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockLeaguesList.mockResolvedValue([])
+    mockLeaguesUpdate.mockResolvedValue({})
     mockGetSettings.mockResolvedValue({
       mode: 'adaptive',
       lastSuccessfulSyncAt: null,
@@ -238,22 +248,22 @@ describe('AdminSyncView', () => {
       expect(wrapper.text()).toContain('Off módban nem fut')
     })
 
-    it('renders configured leagues as chips', async () => {
-      const wrapper = await mountView({
-        configuredLeagues: [
-          { name: 'VB', externalId: 1, season: 2026 },
-          { name: 'NB I', externalId: 848, season: 2025 },
-        ],
-      })
-      const chips = wrapper.find('[data-testid="configured-leagues"]')
-      expect(chips.exists()).toBe(true)
-      expect(chips.text()).toContain('VB')
-      expect(chips.text()).toContain('2026')
-      expect(chips.text()).toContain('NB I')
-      expect(chips.text()).toContain('2025')
+    it('renders configured leagues with per-league toggles', async () => {
+      mockLeaguesList.mockResolvedValue([
+        { id: 'lg-1', name: 'World Cup', shortName: 'VB', status: 'active', archivedAt: null, startsAt: null, syncEnabled: true, externalId: 1, season: 2026, syncFrom: null, syncTo: null, fixtureAllowlist: null, createdAt: '', updatedAt: '' },
+        { id: 'lg-2', name: 'NB I', shortName: 'NBI', status: 'active', archivedAt: null, startsAt: null, syncEnabled: false, externalId: 848, season: 2025, syncFrom: null, syncTo: null, fixtureAllowlist: null, createdAt: '', updatedAt: '' },
+      ])
+      const wrapper = await mountView()
+      const section = wrapper.find('[data-testid="configured-leagues-section"]')
+      expect(section.exists()).toBe(true)
+      expect(section.text()).toContain('World Cup')
+      expect(section.text()).toContain('NB I')
+      expect(wrapper.find('[data-testid="league-sync-toggle-lg-1"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="league-sync-toggle-lg-2"]').exists()).toBe(true)
     })
 
     it('shows warning when no leagues are configured', async () => {
+      mockLeaguesList.mockResolvedValue([])
       const wrapper = await mountView({ configuredLeagues: [] })
       expect(wrapper.text()).toContain('Nincs konfigurált liga')
     })
@@ -479,6 +489,92 @@ describe('AdminSyncView', () => {
       await wrapper.find('[data-testid="insights-translate-btn"]').trigger('click')
       await flushPromises()
       expect(wrapper.find('[data-testid="insights-error"]').text()).toContain('Daily LLM limit exceeded')
+    })
+  })
+
+  describe('per-league sync toggle (US-957)', () => {
+    function league(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+      return {
+        id: 'lg-1',
+        name: 'World Cup',
+        shortName: 'VB',
+        status: 'active',
+        archivedAt: null,
+        startsAt: null,
+        syncEnabled: true,
+        externalId: 1,
+        season: 2026,
+        syncFrom: null,
+        syncTo: null,
+        fixtureAllowlist: null,
+        createdAt: '2026-01-01T00:00:00Z',
+        updatedAt: '2026-01-01T00:00:00Z',
+        ...overrides,
+      }
+    }
+
+    it('loads leagues via admin.leagues.list including archived', async () => {
+      await mountView()
+      expect(mockLeaguesList).toHaveBeenCalledWith('mock-token', true)
+    })
+
+    it('renders a toggle for each configured league reflecting syncEnabled', async () => {
+      mockLeaguesList.mockResolvedValue([
+        league({ id: 'lg-1', syncEnabled: true }),
+        league({ id: 'lg-2', name: 'NB I', shortName: 'NBI', externalId: 848, syncEnabled: false }),
+      ])
+      const wrapper = await mountView()
+      const section = wrapper.find('[data-testid="configured-leagues-section"]')
+      expect(section.exists()).toBe(true)
+      const t1 = wrapper.find('[data-testid="league-sync-toggle-lg-1"]')
+      const t2 = wrapper.find('[data-testid="league-sync-toggle-lg-2"]')
+      expect((t1.element as HTMLInputElement).checked).toBe(true)
+      expect((t2.element as HTMLInputElement).checked).toBe(false)
+    })
+
+    it('toggling calls leagues.update with new syncEnabled and keeps state', async () => {
+      mockLeaguesList.mockResolvedValue([league({ id: 'lg-1', syncEnabled: false })])
+      const wrapper = await mountView()
+      const toggle = wrapper.find('[data-testid="league-sync-toggle-lg-1"]')
+      await toggle.trigger('change')
+      expect(mockLeaguesUpdate).toHaveBeenCalledWith('mock-token', 'lg-1', { syncEnabled: true })
+      await flushPromises()
+      expect((toggle.element as HTMLInputElement).checked).toBe(true)
+      expect(wrapper.find('[data-testid="league-sync-error-lg-1"]').exists()).toBe(false)
+    })
+
+    it('rolls back and shows error when update fails', async () => {
+      mockLeaguesList.mockResolvedValue([league({ id: 'lg-1', syncEnabled: false })])
+      mockLeaguesUpdate.mockRejectedValue(new Error('externalId is required'))
+      const wrapper = await mountView()
+      const toggle = wrapper.find('[data-testid="league-sync-toggle-lg-1"]')
+      await toggle.trigger('change')
+      await flushPromises()
+      expect((toggle.element as HTMLInputElement).checked).toBe(false)
+      const err = wrapper.find('[data-testid="league-sync-error-lg-1"]')
+      expect(err.exists()).toBe(true)
+      expect(err.text()).toContain('externalId is required')
+    })
+
+    it('disables toggle for archived leagues', async () => {
+      mockLeaguesList.mockResolvedValue([league({ id: 'lg-1', status: 'archived' })])
+      const wrapper = await mountView()
+      const toggle = wrapper.find('[data-testid="league-sync-toggle-lg-1"]')
+      expect(toggle.attributes('disabled')).toBeDefined()
+    })
+
+    it('disables toggle when externalId is missing', async () => {
+      mockLeaguesList.mockResolvedValue([league({ id: 'lg-1', externalId: null })])
+      const wrapper = await mountView()
+      const toggle = wrapper.find('[data-testid="league-sync-toggle-lg-1"]')
+      expect(toggle.attributes('disabled')).toBeDefined()
+      expect(wrapper.find('[data-testid="league-sync-status-lg-1"]').text()).toContain('externalId')
+    })
+
+    it('shows season warning when season is null', async () => {
+      mockLeaguesList.mockResolvedValue([league({ id: 'lg-1', season: null })])
+      const wrapper = await mountView()
+      expect(wrapper.find('[data-testid="league-sync-status-lg-1"]').text()).toContain('season')
     })
   })
 })
