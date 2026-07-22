@@ -51,6 +51,7 @@ const ACTIVE: League = {
   name: 'World Cup 2026',
   shortName: 'WC2026',
   status: 'active',
+  type: 'league',
   archivedAt: null,
   startsAt: null,
   syncEnabled: false,
@@ -177,10 +178,30 @@ describe('AdminLeaguesView', () => {
       name: 'Premier League',
       shortName: 'PL',
       status: 'archived',
+      type: 'league',
       syncEnabled: true,
       externalId: 42,
       season: 2026,
     })
+  })
+
+  it('create form submit sends the selected league type', async () => {
+    mockLeaguesCreate.mockResolvedValue({ ...ACTIVE, id: 'new', type: 'mixed' })
+    const { wrapper } = await mountView([])
+    await wrapper.find('[data-testid="league-create-btn"]').trigger('click')
+    await wrapper.find('[data-testid="league-form-name"]').setValue('World Cup')
+    await wrapper.find('[data-testid="league-form-short-name"]').setValue('VB')
+    await wrapper.find('[data-testid="league-form-type"]').setValue('mixed')
+    await wrapper.find('[data-testid="league-form"]').trigger('submit')
+    await flushPromises()
+    expect(mockLeaguesCreate).toHaveBeenCalledWith('mock-token', expect.objectContaining({ type: 'mixed' }))
+  })
+
+  it('edit form prefills the league type from the league', async () => {
+    const mixed: League = { ...ACTIVE, type: 'mixed' }
+    const { wrapper } = await mountView([mixed])
+    await wrapper.find('[data-testid="league-edit-btn-league-1"]').trigger('click')
+    expect((wrapper.find('[data-testid="league-form-type"]').element as HTMLSelectElement).value).toBe('mixed')
   })
 
   it('edit button prefills the form and submit calls store.update with id', async () => {

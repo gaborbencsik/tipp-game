@@ -1,6 +1,6 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-07-22 (US-957 lezárva: per-liga sync toggle az admin szinkron oldalon)
+> Utoljára frissítve: 2026-07-22 (US-958 lezárva: liga-típus + fázis-szűrő láthatóság)
 
 ## Nyitott story-k
 
@@ -31,11 +31,10 @@
 | US-953 | Egyedi meccs behúzása csoportba – admin más ligából is választhat meccset tippelésre | Should Have | US-952 |
 | US-954 | Archivált liga esetén a torna tippek ne jelenjenek meg a mostani formában | Should Have | ~~US-940~~ |
 | US-955 | Ranglista – az „Összesített" (globális) nézet eltávolítása | Should Have | — |
-| US-958 | Liga-típus (liga/kupa/vegyes) + fázis-szűrő láthatóság a Mérkőzések oldalon | Should Have | ~~US-948~~, ~~US-950~~, ~~US-951~~ |
 
 > UX-019 felülírva — UX-020 implementálja a frissített, mockup-alapú 5 lépéses onboardingot.
 > US-1307 felülírva — UX-030 a Match Detail oldalon (insights alatt) jeleníti meg a Transfermarkt csapatértékeket, nem a Match Pulse-ban.
 
 ---
 
-**Haladás: 197 / 202 story nyitott** — Must Have: 33/33, Should Have: 163/163, Nice to Have: 0/5
+**Haladás: 198 / 202 story nyitott** — Must Have: 33/33, Should Have: 164/164, Nice to Have: 0/5

@@ -30,6 +30,10 @@ function validateSyncFields(input: Partial<LeagueInput>): { syncFrom?: Date | nu
     throw new AppError(422, "status must be 'active' or 'archived'")
   }
 
+  if (input.type !== undefined && input.type !== 'league' && input.type !== 'cup' && input.type !== 'mixed') {
+    throw new AppError(422, "type must be 'league', 'cup' or 'mixed'")
+  }
+
   if (
     input.season !== undefined &&
     input.season !== null &&
@@ -93,6 +97,7 @@ export async function createLeague(input: LeagueInput): Promise<League> {
       name: input.name,
       shortName: input.shortName,
       status: input.status ?? 'active',
+      type: input.type ?? 'league',
       startsAt: input.startsAt != null ? parseDate(input.startsAt, 'startsAt') : null,
       syncEnabled,
       externalId,
@@ -119,6 +124,7 @@ export async function updateLeague(id: string, input: Partial<LeagueInput>): Pro
       ...(input.name !== undefined && { name: input.name }),
       ...(input.shortName !== undefined && { shortName: input.shortName }),
       ...(input.status !== undefined && { status: input.status }),
+      ...(input.type !== undefined && { type: input.type }),
       ...(input.startsAt !== undefined && {
         startsAt: input.startsAt != null ? parseDate(input.startsAt, 'startsAt') : null,
       }),
@@ -207,6 +213,7 @@ function toLeague(row: typeof leagues.$inferSelect): League {
     name: row.name,
     shortName: row.shortName,
     status: row.status,
+    type: row.type,
     archivedAt: row.status === 'archived' ? row.updatedAt.toISOString() : null,
     startsAt: row.startsAt ? row.startsAt.toISOString() : null,
     syncEnabled: row.syncEnabled,

@@ -52,6 +52,14 @@
           </select>
         </div>
         <div>
+          <label class="block text-sm font-medium mb-1">{{ $t('admin.leagues.form.type') }}</label>
+          <select v-model="formData.type" data-testid="league-form-type" class="w-full border rounded px-2 py-1">
+            <option value="league">{{ $t('admin.leagues.form.typeLeague') }}</option>
+            <option value="cup">{{ $t('admin.leagues.form.typeCup') }}</option>
+            <option value="mixed">{{ $t('admin.leagues.form.typeMixed') }}</option>
+          </select>
+        </div>
+        <div>
           <label class="flex items-center gap-2 text-sm font-medium">
             <input v-model="formData.syncEnabled" type="checkbox" data-testid="league-form-sync-enabled" />
             {{ $t('admin.leagues.form.syncEnabled') }}
@@ -150,7 +158,7 @@
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAdminLeaguesStore } from '../stores/admin-leagues.store.js'
-import type { League, LeagueInput } from '../types/index.js'
+import type { League, LeagueInput, LeagueType } from '../types/index.js'
 import AppLayout from '../components/AppLayout.vue'
 import AdminNav from '../components/admin/AdminNav.vue'
 
@@ -166,8 +174,9 @@ const formData = ref<{
   externalId: string
   season: string
   status: 'active' | 'archived'
+  type: LeagueType
   syncEnabled: boolean
-}>({ name: '', shortName: '', externalId: '', season: '', status: 'active', syncEnabled: false })
+}>({ name: '', shortName: '', externalId: '', season: '', status: 'active', type: 'league', syncEnabled: false })
 
 onMounted(() => {
   void store.fetchLeagues()
@@ -175,7 +184,7 @@ onMounted(() => {
 
 function openNewForm(): void {
   editingId.value = null
-  formData.value = { name: '', shortName: '', externalId: '', season: '', status: 'active', syncEnabled: false }
+  formData.value = { name: '', shortName: '', externalId: '', season: '', status: 'active', type: 'league', syncEnabled: false }
   showForm.value = true
 }
 
@@ -187,6 +196,7 @@ function openEditForm(league: League): void {
     externalId: league.externalId != null ? String(league.externalId) : '',
     season: league.season != null ? String(league.season) : '',
     status: league.status,
+    type: league.type,
     syncEnabled: league.syncEnabled,
   }
   showForm.value = true
@@ -206,6 +216,7 @@ async function submitForm(): Promise<void> {
     name,
     shortName,
     status: formData.value.status,
+    type: formData.value.type,
     syncEnabled: formData.value.syncEnabled,
     externalId: formData.value.externalId.trim() === '' ? null : Number(formData.value.externalId),
     season: formData.value.season.trim() === '' ? null : Number(formData.value.season),

@@ -59,6 +59,7 @@ const LEAGUE_ROW = {
   shortName: 'WC2026',
   startsAt: null,
   status: 'active' as 'active' | 'archived',
+  type: 'league' as 'league' | 'cup' | 'mixed',
   syncEnabled: false,
   externalId: null as number | null,
   season: null as number | null,
@@ -295,6 +296,29 @@ describe('createLeague', () => {
     expect(values['status']).toBe('active')
   })
 
+  it('defaults type to league when omitted, persists explicit type', async () => {
+    await createLeague({ name: 'L', shortName: 'L' })
+    const [defaultValues] = mockValues.mock.calls[0] as [Record<string, unknown>]
+    expect(defaultValues['type']).toBe('league')
+
+    vi.resetAllMocks()
+    setupSelectChain([])
+    mockReturning.mockResolvedValue([{ ...LEAGUE_ROW, type: 'mixed' }])
+    mockValues.mockReturnValue({ returning: mockReturning })
+    mockInsert.mockReturnValue({ values: mockValues })
+    const result = await createLeague({ name: 'L', shortName: 'L', type: 'mixed' })
+    const [mixedValues] = mockValues.mock.calls[0] as [Record<string, unknown>]
+    expect(mixedValues['type']).toBe('mixed')
+    expect(result.type).toBe('mixed')
+  })
+
+  it('rejects invalid type with 422', async () => {
+    await expect(
+      // @ts-expect-error invalid enum value
+      createLeague({ name: 'L', shortName: 'L', type: 'bogus' }),
+    ).rejects.toMatchObject({ status: 422 })
+  })
+
   it('rejects duplicate externalId with 409', async () => {
     // uniqueness check returns an existing row
     mockLimit.mockResolvedValue([{ id: 'other' }])
@@ -354,6 +378,14 @@ describe('updateLeague', () => {
     expect(setArg['externalId']).toBe(5)
     expect(setArg).not.toHaveProperty('name')
     expect(setArg).not.toHaveProperty('shortName')
+  })
+
+  it('updates the type field when provided', async () => {
+    setupUpdateChain([{ ...LEAGUE_ROW, type: 'mixed' }])
+    const result = await updateLeague('league-uuid-1', { type: 'mixed' })
+    const [setArg] = mockSet.mock.calls[0] as [Record<string, unknown>]
+    expect(setArg['type']).toBe('mixed')
+    expect(result.type).toBe('mixed')
   })
 
   it('rejects duplicate externalId on another league with 409', async () => {

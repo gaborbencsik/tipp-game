@@ -293,7 +293,7 @@ describe('MatchDetailView', () => {
   describe('UX-016 favorite indicator', () => {
     const MATCH_WITH_LEAGUE: Match = {
       ...MATCH_SCHEDULED,
-      league: { id: 'league-wc', name: 'World Cup', shortName: 'WC' },
+      league: { id: 'league-wc', name: 'World Cup', shortName: 'WC', type: 'league' },
     }
 
     it('does not render the indicator when nobody favors either team', async () => {

@@ -200,3 +200,4 @@
 | US-951 | Admin liga-menedzsment UI (frontend) – liga létrehozás/szerkesztés sync-mezőkkel | Should Have |
 | US-956 | Per-liga on-demand szinkron (meccs + csapat + játékos) az admin UI-ból | Should Have |
 | US-957 | Per-liga szinkronizáció ki/bekapcsolása az admin szinkron oldalról | Should Have |
+| US-958 | Liga-típus (liga/kupa/vegyes) + fázis-szűrő láthatóság a Mérkőzések oldalon | Should Have |

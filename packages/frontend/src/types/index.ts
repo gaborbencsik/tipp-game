@@ -20,6 +20,7 @@ export interface ApiErrorResponse {
 
 export type MatchStatus = 'scheduled' | 'live' | 'finished' | 'cancelled'
 export type MatchStage = 'group' | 'round_of_32' | 'round_of_16' | 'quarter_final' | 'semi_final' | 'third_place' | 'final'
+export type LeagueType = 'league' | 'cup' | 'mixed'
 
 export interface MatchTeam {
   readonly id: string
@@ -55,7 +56,7 @@ export interface Match {
   readonly homeTeam: MatchTeam
   readonly awayTeam: MatchTeam
   readonly venue: MatchVenue | null
-  readonly league: { id: string; name: string; shortName: string } | null
+  readonly league: { id: string; name: string; shortName: string; type: LeagueType } | null
   readonly stage: MatchStage
   readonly groupName: string | null
   readonly matchNumber: number | null
@@ -273,7 +274,7 @@ export interface Group {
   readonly isAdmin: boolean
   readonly userRank: number | null
   readonly favoriteTeamDoublePoints: boolean
-  readonly league: { readonly id: string; readonly name: string; readonly shortName: string; readonly status: 'active' | 'archived' } | null
+  readonly league: { readonly id: string; readonly name: string; readonly shortName: string; readonly status: 'active' | 'archived'; readonly type: LeagueType } | null
   readonly createdAt: string
 }
 
@@ -560,6 +561,7 @@ export interface League {
   readonly name: string
   readonly shortName: string
   readonly status: 'active' | 'archived'
+  readonly type: LeagueType
   readonly archivedAt: string | null
   readonly startsAt: string | null
   readonly syncEnabled: boolean
@@ -576,6 +578,7 @@ export interface LeagueInput {
   readonly name: string
   readonly shortName: string
   readonly status?: 'active' | 'archived'
+  readonly type?: LeagueType
   readonly startsAt?: string | null
   readonly syncEnabled?: boolean
   readonly externalId?: number | null

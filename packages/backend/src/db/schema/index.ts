@@ -56,6 +56,10 @@ export const waitlistSourceEnum = pgEnum('waitlist_source', ['hero', 'footer', '
 // Extensible: only 'active'/'archived' in scope now; new states (e.g. 'draft') may be added later.
 export const leagueStatusEnum = pgEnum('league_status', ['active', 'archived'])
 
+// League structure type. Controls whether the phase filter (group vs. knockout)
+// is shown on the Matches page — only 'mixed' leagues have both stages.
+export const leagueTypeEnum = pgEnum('league_type', ['league', 'cup', 'mixed'])
+
 export const insightTypeEnum = pgEnum('insight_type', [
   'raw_stats',
   'defense',
@@ -168,6 +172,8 @@ export const leagues = pgTable('leagues', {
   startsAt:  timestamp('starts_at', { withTimezone: true }),
   // status: visibility state (supersedes the former archived_at column).
   status:    leagueStatusEnum('status').notNull().default('active'),
+  // type: league structure — drives the Matches-page phase filter visibility.
+  type:      leagueTypeEnum('league_type').notNull().default('league'),
   // syncEnabled: independent sync toggle. Only leagues with syncEnabled=true AND
   // status='active' are synced — an archived league is NEVER synced.
   syncEnabled: boolean('sync_enabled').notNull().default(false),

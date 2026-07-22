@@ -1,7 +1,7 @@
 import { and, eq, isNull, sql, min } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { groups, groupMembers, users, specialPredictionTypes, groupGlobalTypeSubscriptions, groupLeagues, leagues, matches, auditLogs } from '../db/schema/index.js'
-import type { Group, GroupInput, GroupMember } from '../types/index.js'
+import type { Group, GroupInput, GroupMember, LeagueType } from '../types/index.js'
 import { getGroupLeaderboard } from './group-leaderboard.service.js'
 import { replicateUserTipsToGroup } from './tournament-tips-replication.service.js'
 
@@ -27,9 +27,9 @@ function generateInviteCode(): string {
   return code
 }
 
-async function fetchGroupLeague(groupId: string): Promise<{ id: string; name: string; shortName: string; status: 'active' | 'archived' } | null> {
+async function fetchGroupLeague(groupId: string): Promise<{ id: string; name: string; shortName: string; status: 'active' | 'archived'; type: LeagueType } | null> {
   const rows = await db
-    .select({ id: leagues.id, name: leagues.name, shortName: leagues.shortName, status: leagues.status })
+    .select({ id: leagues.id, name: leagues.name, shortName: leagues.shortName, status: leagues.status, type: leagues.type })
     .from(groupLeagues)
     .innerJoin(leagues, eq(groupLeagues.leagueId, leagues.id))
     .where(eq(groupLeagues.groupId, groupId))
@@ -42,7 +42,7 @@ function toApiGroup(
   memberCount: number,
   isAdmin: boolean,
   userRank: number | null = null,
-  groupLeague: { id: string; name: string; shortName: string; status: 'active' | 'archived' } | null = null,
+  groupLeague: { id: string; name: string; shortName: string; status: 'active' | 'archived'; type: LeagueType } | null = null,
 ): Group {
   return {
     id: row.id,

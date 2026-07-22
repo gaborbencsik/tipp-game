@@ -74,7 +74,7 @@ export async function getMatches(filters: MatchesFilters = {}): Promise<Match[]>
         }
       : null,
     league: row.leagues
-      ? { id: row.leagues.id, name: row.leagues.name, shortName: row.leagues.shortName }
+      ? { id: row.leagues.id, name: row.leagues.name, shortName: row.leagues.shortName, type: row.leagues.type }
       : null,
     stage: row.matches.stage,
     groupName: row.matches.groupName ?? null,

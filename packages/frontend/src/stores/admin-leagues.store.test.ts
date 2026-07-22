@@ -58,6 +58,7 @@ const ACTIVE: League = {
   name: 'World Cup 2026',
   shortName: 'WC2026',
   status: 'active',
+  type: 'league',
   archivedAt: null,
   startsAt: null,
   syncEnabled: false,

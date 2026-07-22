@@ -31,6 +31,7 @@
       <!-- Desktop: segmented control + league select -->
       <div v-if="initialDataLoaded && !hasNoUserLeague" class="hidden md:flex items-center gap-3 mb-6">
         <SegmentedControl
+          v-if="hasMixedLeague"
           :options="stageFilterOptions"
           :model-value="matchesStore.stageFilter"
           @update:model-value="matchesStore.stageFilter = $event as StageFilterValue | null"
@@ -53,6 +54,7 @@
       <!-- Mobile: compact selects -->
       <div v-if="initialDataLoaded && !hasNoUserLeague" class="flex md:hidden gap-2 mb-4">
         <select
+          v-if="hasMixedLeague"
           :value="matchesStore.stageFilter ?? ''"
           class="flex-1 h-10 px-3 text-sm text-gray-900 bg-gray-50 border border-gray-300 rounded-lg transition-all duration-150 focus:border-blue-500 focus:bg-white focus:ring-3 focus:ring-blue-500/10 focus:outline-none"
           @change="matchesStore.stageFilter = (($event.target as HTMLSelectElement).value || null) as StageFilterValue | null"
@@ -429,7 +431,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, nextTick, computed } from 'vue'
+import { onMounted, ref, nextTick, computed, watchEffect } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useMatchesStore } from '../stores/matches.store.js'
 import type { StageFilterValue } from '../stores/matches.store.js'
@@ -438,7 +440,7 @@ import { useGroupsStore } from '../stores/groups.store.js'
 import { useLeagueFavoritesStore } from '../stores/league-favorites.store.js'
 import { useGroupFavoritesStore, type FavoriteMember } from '../stores/group-favorites.store.js'
 import { useAuthStore } from '../stores/auth.store.js'
-import type { Match, MatchDateGroup, MatchOutcome, MatchStage, MatchStatus } from '../types/index.js'
+import type { Match, MatchDateGroup, MatchOutcome, MatchStage, MatchStatus, LeagueType } from '../types/index.js'
 import AppLayout from '../components/AppLayout.vue'
 import TeamBadge from '../components/TeamBadge.vue'
 import SpecialPendingBanner from '../components/SpecialPendingBanner.vue'
@@ -498,7 +500,7 @@ const initialDataLoaded = ref(false)
 // a list-view-ban nem érvényesülnek; ha hibázik a hívás, az alapérték 1 marad).
 const extraTimeBonusPoints = ref<number>(1)
 
-type UserLeague = { readonly id: string; readonly name: string; readonly shortName: string }
+type UserLeague = { readonly id: string; readonly name: string; readonly shortName: string; readonly type: LeagueType }
 
 const userLeagues = computed<readonly UserLeague[]>(() => {
   const seen = new Map<string, UserLeague>()
@@ -506,6 +508,15 @@ const userLeagues = computed<readonly UserLeague[]>(() => {
     if (g.league && g.league.status !== 'archived' && !seen.has(g.league.id)) seen.set(g.league.id, g.league)
   }
   return [...seen.values()]
+})
+
+// US-958: the phase filter (group vs. knockout) only makes sense for mixed-structure
+// leagues. Show it iff at least one of the user's leagues is 'mixed'; otherwise hide it
+// and keep the stage filter cleared so a stale value can't keep matches hidden.
+const hasMixedLeague = computed((): boolean => userLeagues.value.some(l => l.type === 'mixed'))
+
+watchEffect(() => {
+  if (!hasMixedLeague.value && matchesStore.stageFilter !== null) matchesStore.stageFilter = null
 })
 
 const hasNoUserLeague = computed((): boolean => userLeagues.value.length === 0)
