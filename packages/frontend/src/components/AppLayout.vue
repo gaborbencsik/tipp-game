@@ -127,6 +127,7 @@
           </router-link>
 
           <button
+            v-if="isScoringRulesEnabled"
             type="button"
             data-testid="nav-scoring-explainer"
             class="flex items-center gap-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors text-left"
@@ -170,7 +171,9 @@ import { useAuthStore } from '../stores/auth.store.js'
 import { useScoringExplainerStore } from '../stores/scoring-explainer.store.js'
 import { useTournamentTipsStore } from '../stores/tournamentTips.store.js'
 import { usePendingTodayCount } from '../composables/usePendingTodayCount.js'
+import { useScoringRulesConfig } from '../composables/useScoringRulesConfig.js'
 
+const { isScoringRulesEnabled } = useScoringRulesConfig()
 const authStore = useAuthStore()
 const scoringExplainerStore = useScoringExplainerStore()
 const tournamentTipsStore = useTournamentTipsStore()

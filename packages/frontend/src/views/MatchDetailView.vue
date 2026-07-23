@@ -85,7 +85,7 @@
         <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
           <div class="flex items-center gap-2 mb-3">
             <h2 class="text-sm font-semibold text-gray-600">{{ $t('matchDetail.tipTitle') }}</h2>
-            <ScoringExplainerTrigger source="match-tip" variant="icon" />
+            <ScoringExplainerTrigger v-if="isScoringRulesEnabled" source="match-tip" variant="icon" />
           </div>
 
           <!-- Tippelhető meccs -->
@@ -306,6 +306,9 @@ import { supabase } from '../lib/supabase.js'
 import type { Match, MatchOutcome, MatchPrediction, MatchStage, MatchStatus, MatchOdds } from '../types/index.js'
 import AppLayout from '../components/AppLayout.vue'
 import ScoringExplainerTrigger from '../components/ScoringExplainerTrigger.vue'
+import { useScoringRulesConfig } from '../composables/useScoringRulesConfig.js'
+
+const { isScoringRulesEnabled } = useScoringRulesConfig()
 import TeamBadge from '../components/TeamBadge.vue'
 import VenueBanner from '../components/VenueBanner.vue'
 import MatchPredictionsList from '../components/MatchPredictionsList.vue'

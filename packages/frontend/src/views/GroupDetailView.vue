@@ -12,7 +12,7 @@
       </router-link>
       <div class="min-w-0 flex items-center gap-2">
         <h1 class="text-xl md:text-2xl font-bold text-gray-900 truncate">{{ groupName }}</h1>
-        <ScoringExplainerTrigger source="group" variant="icon" />
+        <ScoringExplainerTrigger v-if="isScoringRulesEnabled" source="group" variant="icon" />
       </div>
     </div>
 
@@ -1060,6 +1060,9 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import AppLayout from '../components/AppLayout.vue'
 import ScoringExplainerTrigger from '../components/ScoringExplainerTrigger.vue'
+import { useScoringRulesConfig } from '../composables/useScoringRulesConfig.js'
+
+const { isScoringRulesEnabled } = useScoringRulesConfig()
 import { formatRelativeDeadline } from '../lib/deadline.js'
 import TeamSelectDropdown from '../components/predictions/TeamSelectDropdown.vue'
 import PlayerSelectCombobox from '../components/predictions/PlayerSelectCombobox.vue'

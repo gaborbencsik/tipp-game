@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase.js'
 import { api } from '../api/index.js'
 import { useToastStore } from './toast.store.js'
 import { useAuthStore } from './auth.store.js'
+import { useScoringRulesConfig } from '../composables/useScoringRulesConfig.js'
 import type { ScoringExplainerResponse } from '../types/index.js'
 
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
@@ -30,6 +31,10 @@ export const useScoringExplainerStore = defineStore('scoringExplainer', () => {
   const openedAt = ref<number | null>(null)
 
   async function open(source: ScoringExplainerSource): Promise<void> {
+    if (!useScoringRulesConfig().isScoringRulesEnabled) {
+      console.debug('[ScoringExplainer] disabled, ignoring open() call')
+      return
+    }
     lastSource.value = source
     if (data.value) {
       isOpen.value = true

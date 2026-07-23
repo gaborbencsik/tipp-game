@@ -4,7 +4,7 @@
       <header class="mb-6">
         <div class="flex items-center gap-2 mb-1">
           <h1 class="text-2xl font-semibold text-gray-900">{{ $t('tournamentTips.title') }}</h1>
-          <ScoringExplainerTrigger source="special-tip" variant="icon" />
+          <ScoringExplainerTrigger v-if="isScoringRulesEnabled" source="special-tip" variant="icon" />
         </div>
         <p class="text-sm text-gray-600">{{ $t('tournamentTips.description') }}</p>
       </header>
@@ -241,6 +241,9 @@ import { ref, onMounted, onUnmounted, reactive, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppLayout from '../components/AppLayout.vue'
 import ScoringExplainerTrigger from '../components/ScoringExplainerTrigger.vue'
+import { useScoringRulesConfig } from '../composables/useScoringRulesConfig.js'
+
+const { isScoringRulesEnabled } = useScoringRulesConfig()
 import TeamSelectDropdown from '../components/predictions/TeamSelectDropdown.vue'
 import PlayerSelectCombobox from '../components/predictions/PlayerSelectCombobox.vue'
 import UpsetSpecialPicker from '../components/predictions/UpsetSpecialPicker.vue'

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 
 const { mockExplainer } = vi.hoisted(() => ({ mockExplainer: vi.fn() }))
@@ -31,6 +31,11 @@ describe('useScoringExplainerStore', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
+    vi.stubEnv('VITE_SCORING_RULES_ENABLED', 'true')
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
   })
 
   it('open() lazy fetch + isOpen=true on successful response', async () => {
@@ -88,5 +93,14 @@ describe('useScoringExplainerStore', () => {
     await store.open('menu')
     store.close()
     expect(debugSpy).toHaveBeenCalledWith('[telemetry]', 'scoring_explainer_closed', expect.objectContaining({ durationMs: expect.any(Number) }))
+  })
+
+  it('open() is a no-op when the scoring-rules flag is disabled', async () => {
+    vi.stubEnv('VITE_SCORING_RULES_ENABLED', 'false')
+    mockExplainer.mockResolvedValue({ default: {}, defaultFrozenAt: null, groups: [] })
+    const store = useScoringExplainerStore()
+    await store.open('menu')
+    expect(store.isOpen).toBe(false)
+    expect(mockExplainer).not.toHaveBeenCalled()
   })
 })

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import AppLayout from '@/components/AppLayout.vue'
@@ -90,5 +90,30 @@ describe('AppLayout — US-954 tournament-tips nav visibility', () => {
     const wrapper = mountLayout()
     await flushPromises()
     expect(wrapper.find('[data-testid="nav-tournament-tips"]').exists()).toBe(false)
+  })
+})
+
+describe('AppLayout — UX-049 scoring-rules feature toggle', () => {
+  beforeEach(() => {
+    mockFetchAccess.mockClear().mockResolvedValue(undefined)
+    hasAccessRef.value = null
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  it('shows the scoring-explainer nav item when the flag is enabled', async () => {
+    vi.stubEnv('VITE_SCORING_RULES_ENABLED', 'true')
+    const wrapper = mountLayout()
+    await flushPromises()
+    expect(wrapper.find('[data-testid="nav-scoring-explainer"]').exists()).toBe(true)
+  })
+
+  it('hides the scoring-explainer nav item when the flag is disabled', async () => {
+    vi.stubEnv('VITE_SCORING_RULES_ENABLED', 'false')
+    const wrapper = mountLayout()
+    await flushPromises()
+    expect(wrapper.find('[data-testid="nav-scoring-explainer"]').exists()).toBe(false)
   })
 })

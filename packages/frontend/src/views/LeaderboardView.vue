@@ -3,7 +3,7 @@
     <div class="flex items-center justify-between mb-6">
       <div class="flex items-center gap-3">
         <h1 class="text-2xl font-bold text-gray-900">{{ $t('leaderboard.title') }}</h1>
-        <ScoringExplainerTrigger source="leaderboard" variant="link" />
+        <ScoringExplainerTrigger v-if="isScoringRulesEnabled" source="leaderboard" variant="link" />
       </div>
       <select
         v-if="groupsStore.groups.length > 0"
@@ -145,6 +145,9 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppLayout from '../components/AppLayout.vue'
 import ScoringExplainerTrigger from '../components/ScoringExplainerTrigger.vue'
+import { useScoringRulesConfig } from '../composables/useScoringRulesConfig.js'
+
+const { isScoringRulesEnabled } = useScoringRulesConfig()
 import { dicebearUrl } from '../lib/avatar.js'
 import { useGroupsStore } from '../stores/groups.store.js'
 import { useAuthStore } from '../stores/auth.store.js'
