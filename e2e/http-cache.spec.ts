@@ -18,7 +18,6 @@ const CACHED_ENDPOINTS: ReadonlyArray<CachedEndpoint> = [
   { path: '/api/scoring/explainer', maxAge: 600, swr: 1200 },
   { path: '/api/stat-prediction-templates', maxAge: 600, swr: 1200 },
   // OPS-006: revalidate-only (max-age=0 + ETag) on dynamic lists
-  { path: '/api/leaderboard', maxAge: 0, swr: 30 },
   { path: '/api/matches', maxAge: 0, swr: 15 },
 ]
 

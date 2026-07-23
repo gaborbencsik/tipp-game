@@ -274,6 +274,29 @@ export interface AdminStatsMatchesResponse {
   readonly matches: AdminStatsMatch[]
 }
 
+// US-955: shared leaderboard row shape. Lives here so per-group and (formerly)
+// global leaderboard services can both reference it without importing each other.
+export interface LeaderboardEntry {
+  readonly rank: number
+  readonly userId: string
+  readonly displayName: string
+  readonly avatarUrl: string | null
+  readonly totalPoints: number
+  readonly predictionCount: number
+  readonly correctCount: number
+  readonly matchPoints: number
+  readonly scorerBonusPoints: number
+  readonly successRate: number | null
+  readonly matchSuccessRate: number | null
+  readonly scorerSuccessRate: number | null
+  readonly specialPredictionPoints: number
+  readonly tournamentMaxPoints: number
+  readonly tournamentSuccessRate: number | null
+  readonly favoriteTeam?: { readonly countryCode: string; readonly name: string } | null
+  readonly isPaid?: boolean
+  readonly isSupporter: boolean
+}
+
 export interface Group {
   readonly id: string
   readonly name: string

@@ -203,3 +203,4 @@
 | US-958 | Liga-típus (liga/kupa/vegyes) + fázis-szűrő láthatóság a Mérkőzések oldalon | Should Have |
 | US-952 | Több liga egy csoportban – csoport több ligára is feliratkozhat | Should Have |
 | US-953 | Egyedi meccs behúzása csoportba – admin más ligából is választhat meccset tippelésre | Should Have |
+| US-955 | Ranglista – az „Összesített" (globális) nézet eltávolítása | Should Have |

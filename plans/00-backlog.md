@@ -1,6 +1,17 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-07-23 (UX-049 hozzáadva: pontozási szabályzat feature toggle)
+> Utoljára frissítve: 2026-07-23 (US-955 lezárva; fókusz: US-954, US-956, UX-048, UX-049)
+
+## 🎯 Jelenlegi fókusz
+
+A legutóbb felvett story-k — ezek az aktív munka. Deklarált függőségeik mind KÉSZ, így egymást nem blokkolják, de van egy fájl-szintű koordináció.
+
+| Story ID | Cím | Prioritás | Függőség | Megjegyzés |
+|----------|-----|-----------|----------|------------|
+| US-954 | Archivált liga esetén a torna tippek ne jelenjenek meg a mostani formában | Should Have | ~~US-940~~ | önálló |
+| US-956 | Csoport pontozás kikapcsolása és csoportos recalc gomb | Should Have | ~~US-952~~ | folyamatban (uncommitted munka) |
+| UX-048 | Match Detail oldalon a tippek CSV exportálása | Should Have | — | önálló |
+| UX-049 | Pontozási szabályzat feature toggle — config flag-gel elrejtés | Nice to Have | ~~UX-028~~ | `LeaderboardView.vue` — US-955 kész, indítható |
 
 ## Nyitott story-k
 
@@ -28,14 +39,15 @@
 | UX-032 | Torna tippek – lejárt deadline után is mutassa a tippet (read-only lock) | Should Have | — |
 | SEC-002 | HMAC-aláírt meghívó URL-ek | Nice to Have | — |
 | US-954 | Archivált liga esetén a torna tippek ne jelenjenek meg a mostani formában | Should Have | ~~US-940~~ |
-| US-955 | Ranglista – az „Összesített" (globális) nézet eltávolítása | Should Have | — |
 | US-956 | Csoport pontozás kikapcsolása és csoportos recalc gomb | Should Have | ~~US-952~~ |
 | UX-048 | Match Detail oldalon a tippek CSV exportálása | Should Have | — |
 | UX-049 | Pontozási szabályzat feature toggle — config flag-gel elrejtés | Nice to Have | ~~UX-028~~ |
+| US-959 | Csoport-létrehozás: egyetlen aktív liga is jelenjen meg a liga-választóban (archivált kizárva) | Should Have | — |
+| US-960 | Mérkőzések oldal: kézzel behúzott (ligán kívüli) meccsek eltűnnek az aktív liga-szűrő miatt | Should Have | ~~US-953~~ |
 
 > UX-019 felülírva — UX-020 implementálja a frissített, mockup-alapú 5 lépéses onboardingot.
 > US-1307 felülírva — UX-030 a Match Detail oldalon (insights alatt) jeleníti meg a Transfermarkt csapatértékeket, nem a Match Pulse-ban.
 
 ---
 
-**Haladás: 201 / 204 story nyitott** — Must Have: 33/33, Should Have: 166/167, Nice to Have: 0/6
+**Haladás: 202 / 206 story nyitott** — Must Have: 33/33, Should Have: 167/169, Nice to Have: 0/6

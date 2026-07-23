@@ -5,10 +5,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 
-const { mockLeaderboardList, mockGroupLeaderboard, mockGroupsList, mockGroupsState } = vi.hoisted(() => ({
-  mockLeaderboardList: vi.fn().mockResolvedValue([]),
+const { mockGroupLeaderboard, mockGroupsList, mockGroupsState } = vi.hoisted(() => ({
   mockGroupLeaderboard: vi.fn().mockResolvedValue([]),
   mockGroupsList: vi.fn().mockResolvedValue([]),
+  // `groups` is mutated by fetchMyGroups; the real store is reactive Pinia state,
+  // so the mock must be reactive too or template re-renders never fire.
   mockGroupsState: { groups: [] as import('@/types/index').Group[] },
 }))
 
@@ -23,19 +24,22 @@ vi.mock('@/lib/supabase', () => ({
 
 vi.mock('@/api/index', () => ({
   api: {
-    leaderboard: { get: mockLeaderboardList, list: mockLeaderboardList },
     groups: { mine: mockGroupsList, leaderboard: mockGroupLeaderboard },
   },
 }))
 
-vi.mock('@/stores/groups.store', () => ({
-  useGroupsStore: () => ({
-    get groups() { return mockGroupsState.groups },
-    fetchMyGroups: vi.fn(async () => {
-      mockGroupsState.groups = await mockGroupsList()
+vi.mock('@/stores/groups.store', async () => {
+  const { reactive } = await import('vue')
+  const state = reactive(mockGroupsState)
+  return {
+    useGroupsStore: () => ({
+      get groups() { return state.groups },
+      fetchMyGroups: vi.fn(async () => {
+        state.groups = await mockGroupsList()
+      }),
     }),
-  }),
-}))
+  }
+})
 
 vi.mock('@/stores/auth.store', () => ({
   useAuthStore: () => ({ user: { id: 'u1' } }),
@@ -56,14 +60,25 @@ const SCOPE_KEY = 'leaderboard_scope'
 const G1 = { id: 'g1', name: 'Group One' } as unknown as import('@/types/index').Group
 const G2 = { id: 'g2', name: 'Group Two' } as unknown as import('@/types/index').Group
 
-describe('LeaderboardView LS scope persistence', () => {
+describe('LeaderboardView group scope', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     localStorage.clear()
     mockGroupsState.groups = []
+    mockGroupLeaderboard.mockClear()
+    mockGroupsList.mockReset()
     mockGroupsList.mockResolvedValue([G1, G2])
-    mockLeaderboardList.mockResolvedValue([])
     mockGroupLeaderboard.mockResolvedValue([])
+  })
+
+  it('defaults to the first group and loads its leaderboard when no LS value', async () => {
+    const wrapper = mount(LeaderboardView)
+    await flushPromises()
+
+    const select = wrapper.find('[data-testid="leaderboard-scope-select"]')
+    expect(select.exists()).toBe(true)
+    expect((select.element as HTMLSelectElement).value).toBe('g1')
+    expect(mockGroupLeaderboard).toHaveBeenCalledWith('t', 'g1')
   })
 
   it('restores selectedScope from LS when stored value matches a known group', async () => {
@@ -71,44 +86,56 @@ describe('LeaderboardView LS scope persistence', () => {
     const wrapper = mount(LeaderboardView)
     await flushPromises()
 
-    const select = wrapper.find('select')
-    expect(select.exists()).toBe(true)
+    const select = wrapper.find('[data-testid="leaderboard-scope-select"]')
     expect((select.element as HTMLSelectElement).value).toBe('g2')
     expect(mockGroupLeaderboard).toHaveBeenCalledWith('t', 'g2')
   })
 
-  it('keeps global when LS has "global"', async () => {
+  it('falls back to the first group when LS has stale "global"', async () => {
     localStorage.setItem(SCOPE_KEY, 'global')
     const wrapper = mount(LeaderboardView)
     await flushPromises()
 
-    const select = wrapper.find('select')
-    expect((select.element as HTMLSelectElement).value).toBe('global')
+    const select = wrapper.find('[data-testid="leaderboard-scope-select"]')
+    expect((select.element as HTMLSelectElement).value).toBe('g1')
+    expect(mockGroupLeaderboard).toHaveBeenCalledWith('t', 'g1')
   })
 
-  it('clears LS and stays global when stored group no longer exists', async () => {
+  it('clears LS and falls back to the first group when stored group no longer exists', async () => {
     localStorage.setItem(SCOPE_KEY, 'gone')
     const wrapper = mount(LeaderboardView)
     await flushPromises()
 
-    expect(localStorage.getItem(SCOPE_KEY)).toBeNull()
-    const select = wrapper.find('select')
-    expect((select.element as HTMLSelectElement).value).toBe('global')
+    const select = wrapper.find('[data-testid="leaderboard-scope-select"]')
+    expect((select.element as HTMLSelectElement).value).toBe('g1')
+    // LS is rewritten to the resolved first group by the selectedScope watcher.
+    expect(localStorage.getItem(SCOPE_KEY)).toBe('g1')
   })
 
   it('writes LS when user changes scope', async () => {
     const wrapper = mount(LeaderboardView)
     await flushPromises()
 
-    const select = wrapper.find('select')
-    await select.setValue('g1')
+    const select = wrapper.find('[data-testid="leaderboard-scope-select"]')
+    await select.setValue('g2')
     await flushPromises()
 
-    expect(localStorage.getItem(SCOPE_KEY)).toBe('g1')
+    expect(localStorage.getItem(SCOPE_KEY)).toBe('g2')
+    expect(mockGroupLeaderboard).toHaveBeenCalledWith('t', 'g2')
+  })
+
+  it('shows the no-groups empty state and no select when user has no groups', async () => {
+    mockGroupsList.mockResolvedValue([])
+    const wrapper = mount(LeaderboardView)
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="leaderboard-no-groups"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="leaderboard-scope-select"]').exists()).toBe(false)
+    expect(mockGroupLeaderboard).not.toHaveBeenCalled()
   })
 
   it('table thead visible on mobile, all data columns visible (UX-025)', async () => {
-    mockLeaderboardList.mockResolvedValue([
+    mockGroupLeaderboard.mockResolvedValue([
       { userId: 'u1', displayName: 'Me', avatarUrl: null, rank: 1, predictionCount: 4, correctCount: 1, totalPoints: 1, matchPoints: 1, scorerBonusPoints: 0, successRate: 25, matchSuccessRate: 25, scorerSuccessRate: 0, specialPredictionPoints: 0 },
     ])
     const wrapper = mount(LeaderboardView)
@@ -118,8 +145,8 @@ describe('LeaderboardView LS scope persistence', () => {
     expect(thead.exists()).toBe(true)
     expect(thead.classes()).not.toContain('hidden')
 
-    // UX-034: 8 columns on desktop when no tournament points
-    // (rank, player, P/M, %, match, match%, scorer, scorer%, points = 9 actually).
+    // UX-034: 9 columns on desktop when no tournament points
+    // (rank, player, P/M, %, match, match%, scorer, scorer%, points).
     const headerCells = wrapper.findAll('table thead th')
     expect(headerCells.length).toBe(9)
 
@@ -130,7 +157,7 @@ describe('LeaderboardView LS scope persistence', () => {
   // ─── UX-034: new column structure ──────────────────────────────────────────
 
   it('renders successRate / matchPoints / scorerBonusPoints columns; no tips/correct', async () => {
-    mockLeaderboardList.mockResolvedValue([
+    mockGroupLeaderboard.mockResolvedValue([
       { userId: 'u1', displayName: 'Me', avatarUrl: null, rank: 1, predictionCount: 3, correctCount: 2, totalPoints: 9, matchPoints: 7, scorerBonusPoints: 2, successRate: 67, matchSuccessRate: 33, scorerSuccessRate: 67, specialPredictionPoints: 0 },
     ])
     const wrapper = mount(LeaderboardView)
@@ -150,7 +177,7 @@ describe('LeaderboardView LS scope persistence', () => {
   })
 
   it('renders em-dash when predictionCount is 0', async () => {
-    mockLeaderboardList.mockResolvedValue([
+    mockGroupLeaderboard.mockResolvedValue([
       { userId: 'u1', displayName: 'Me', avatarUrl: null, rank: 1, predictionCount: 0, correctCount: 0, totalPoints: 0, matchPoints: 0, scorerBonusPoints: 0, successRate: null, matchSuccessRate: null, scorerSuccessRate: null, specialPredictionPoints: 0 },
     ])
     const wrapper = mount(LeaderboardView)
@@ -160,7 +187,7 @@ describe('LeaderboardView LS scope persistence', () => {
   })
 
   it('hides tournament column when all entries have specialPredictionPoints = 0', async () => {
-    mockLeaderboardList.mockResolvedValue([
+    mockGroupLeaderboard.mockResolvedValue([
       { userId: 'u1', displayName: 'Me', avatarUrl: null, rank: 1, predictionCount: 3, correctCount: 2, totalPoints: 9, matchPoints: 7, scorerBonusPoints: 2, successRate: 67, matchSuccessRate: 33, scorerSuccessRate: 67, specialPredictionPoints: 0 },
     ])
     const wrapper = mount(LeaderboardView)
@@ -171,7 +198,7 @@ describe('LeaderboardView LS scope persistence', () => {
   })
 
   it('shows tournament column when any entry has specialPredictionPoints > 0', async () => {
-    mockLeaderboardList.mockResolvedValue([
+    mockGroupLeaderboard.mockResolvedValue([
       { userId: 'u1', displayName: 'Me', avatarUrl: null, rank: 1, predictionCount: 3, correctCount: 2, totalPoints: 14, matchPoints: 7, scorerBonusPoints: 2, successRate: 67, matchSuccessRate: 33, scorerSuccessRate: 67, specialPredictionPoints: 5 },
     ])
     const wrapper = mount(LeaderboardView)
@@ -184,7 +211,7 @@ describe('LeaderboardView LS scope persistence', () => {
   // ─── UX-046: tournament success rate percentage ───────────────────────────
 
   it('renders the tournament % in its own column when tournamentSuccessRate is set', async () => {
-    mockLeaderboardList.mockResolvedValue([
+    mockGroupLeaderboard.mockResolvedValue([
       { userId: 'u1', displayName: 'Me', avatarUrl: null, rank: 1, predictionCount: 3, correctCount: 2, totalPoints: 14, matchPoints: 7, scorerBonusPoints: 2, successRate: 67, matchSuccessRate: 33, scorerSuccessRate: 67, specialPredictionPoints: 3, tournamentMaxPoints: 5, tournamentSuccessRate: 60 },
     ])
     const wrapper = mount(LeaderboardView)
@@ -198,7 +225,7 @@ describe('LeaderboardView LS scope persistence', () => {
   })
 
   it('renders "—" in the tournament % column when tournamentSuccessRate is null (nothing resolved yet)', async () => {
-    mockLeaderboardList.mockResolvedValue([
+    mockGroupLeaderboard.mockResolvedValue([
       { userId: 'u1', displayName: 'Me', avatarUrl: null, rank: 1, predictionCount: 3, correctCount: 2, totalPoints: 12, matchPoints: 7, scorerBonusPoints: 2, successRate: 67, matchSuccessRate: 33, scorerSuccessRate: 67, specialPredictionPoints: 3, tournamentMaxPoints: 0, tournamentSuccessRate: null },
     ])
     const wrapper = mount(LeaderboardView)
@@ -210,7 +237,7 @@ describe('LeaderboardView LS scope persistence', () => {
   })
 
   it('renders "—" in the tournament % column when tournamentSuccessRate is 0', async () => {
-    mockLeaderboardList.mockResolvedValue([
+    mockGroupLeaderboard.mockResolvedValue([
       { userId: 'u1', displayName: 'Me', avatarUrl: null, rank: 1, predictionCount: 3, correctCount: 2, totalPoints: 9, matchPoints: 7, scorerBonusPoints: 2, successRate: 67, matchSuccessRate: 33, scorerSuccessRate: 67, specialPredictionPoints: 0, tournamentMaxPoints: 100, tournamentSuccessRate: 0 },
       // Second entry keeps the column visible (showTournamentColumn is based on entries having specialPredictionPoints > 0).
       { userId: 'u2', displayName: 'Peer', avatarUrl: null, rank: 2, predictionCount: 3, correctCount: 2, totalPoints: 12, matchPoints: 7, scorerBonusPoints: 2, successRate: 67, matchSuccessRate: 33, scorerSuccessRate: 67, specialPredictionPoints: 3, tournamentMaxPoints: 100, tournamentSuccessRate: 3 },
@@ -223,7 +250,7 @@ describe('LeaderboardView LS scope persistence', () => {
   })
 
   it('tournament percentage carries a tooltip via title attribute', async () => {
-    mockLeaderboardList.mockResolvedValue([
+    mockGroupLeaderboard.mockResolvedValue([
       { userId: 'u1', displayName: 'Me', avatarUrl: null, rank: 1, predictionCount: 3, correctCount: 2, totalPoints: 14, matchPoints: 7, scorerBonusPoints: 2, successRate: 67, matchSuccessRate: 33, scorerSuccessRate: 67, specialPredictionPoints: 3, tournamentMaxPoints: 5, tournamentSuccessRate: 60 },
     ])
     const wrapper = mount(LeaderboardView)

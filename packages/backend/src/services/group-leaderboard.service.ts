@@ -1,7 +1,7 @@
 import { eq, sql, and, or, inArray, isNull, isNotNull } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { users, predictions, groupMembers, groups, groupPredictionPoints, specialPredictions, specialPredictionTypes, groupGlobalTypeSubscriptions, groupLeagues, groupMatches, matches, userLeagueFavorites, teams } from '../db/schema/index.js'
-import type { LeaderboardEntry } from './leaderboard.service.js'
+import type { LeaderboardEntry } from '../types/index.js'
 import { computeTypeMaxPoints } from './tournament-max.service.js'
 
 class AppError extends Error {

@@ -8,17 +8,20 @@
       <select
         v-if="groupsStore.groups.length > 0"
         v-model="selectedScope"
+        data-testid="leaderboard-scope-select"
         class="h-10 px-3 text-sm text-gray-900 bg-gray-50 border border-gray-300 rounded-lg transition-all duration-150 focus:border-blue-500 focus:bg-white focus:ring-3 focus:ring-blue-500/10 focus:outline-none"
         @change="onScopeChange"
       >
-        <option value="global">{{ $t('leaderboard.global') }}</option>
         <option v-for="group in groupsStore.groups" :key="group.id" :value="group.id">
           {{ group.name }}
         </option>
       </select>
     </div>
 
-    <div v-if="isLoading" class="text-gray-500">{{ $t('common.loading') }}</div>
+    <div v-if="groupsStore.groups.length === 0" data-testid="leaderboard-no-groups" class="text-gray-500">
+      {{ $t('leaderboard.noGroups') }}
+    </div>
+    <div v-else-if="isLoading" class="text-gray-500">{{ $t('common.loading') }}</div>
     <div v-else-if="error" class="text-red-600">{{ error }}</div>
     <div v-else-if="entries.length === 0" class="text-gray-500">{{ $t('leaderboard.empty') }}</div>
     <div v-else class="bg-white rounded-xl shadow-sm overflow-hidden">
@@ -143,7 +146,6 @@ import { useI18n } from 'vue-i18n'
 import AppLayout from '../components/AppLayout.vue'
 import ScoringExplainerTrigger from '../components/ScoringExplainerTrigger.vue'
 import { dicebearUrl } from '../lib/avatar.js'
-import { useLeaderboardStore } from '../stores/leaderboard.store.js'
 import { useGroupsStore } from '../stores/groups.store.js'
 import { useAuthStore } from '../stores/auth.store.js'
 import { useMatchEvents } from '../composables/useMatchEvents.js'
@@ -170,18 +172,17 @@ async function getAccessToken(): Promise<string> {
   return data.session?.access_token ?? ''
 }
 
-const leaderboardStore = useLeaderboardStore()
 const groupsStore = useGroupsStore()
 const authStore = useAuthStore()
 
-const selectedScope = ref<string>('global')
+const selectedScope = ref<string>('')
 const groupEntries = ref<LeaderboardEntry[]>([])
 const groupIsLoading = ref(false)
 const groupError = ref<string | null>(null)
 
-const isLoading = computed(() => selectedScope.value === 'global' ? leaderboardStore.isLoading : groupIsLoading.value)
-const error = computed(() => selectedScope.value === 'global' ? leaderboardStore.error : groupError.value)
-const entries = computed(() => selectedScope.value === 'global' ? leaderboardStore.entries : groupEntries.value)
+const isLoading = computed(() => groupIsLoading.value)
+const error = computed(() => groupError.value)
+const entries = computed(() => groupEntries.value)
 const showTournamentColumn = computed(() => entries.value.some(e => (e.specialPredictionPoints ?? 0) > 0))
 
 async function loadGroupLeaderboard(groupId: string): Promise<void> {
@@ -198,18 +199,14 @@ async function loadGroupLeaderboard(groupId: string): Promise<void> {
 }
 
 async function onScopeChange(): Promise<void> {
-  if (selectedScope.value === 'global') {
-    void leaderboardStore.fetchLeaderboard()
-  } else {
-    await loadGroupLeaderboard(selectedScope.value)
-  }
+  await loadGroupLeaderboard(selectedScope.value)
 }
 
 onMounted(async () => {
-  await Promise.all([
-    leaderboardStore.fetchLeaderboard(),
-    groupsStore.groups.length === 0 ? groupsStore.fetchMyGroups() : Promise.resolve(),
-  ])
+  if (groupsStore.groups.length === 0) {
+    await groupsStore.fetchMyGroups()
+  }
+  if (groupsStore.groups.length === 0) return
 
   let stored: string | null = null
   try {
@@ -217,21 +214,25 @@ onMounted(async () => {
   } catch {
     stored = null
   }
-  if (stored === 'global') {
-    selectedScope.value = 'global'
-  } else if (stored && groupsStore.groups.some(g => g.id === stored)) {
+  // Stale-guard: a persisted 'global' (removed scope) or an id of a group the
+  // user no longer belongs to must fall back to the first group, never break.
+  if (stored && groupsStore.groups.some(g => g.id === stored)) {
     selectedScope.value = stored
-    await loadGroupLeaderboard(stored)
-  } else if (stored) {
-    try {
-      localStorage.removeItem(LEADERBOARD_SCOPE_LS_KEY)
-    } catch {
-      // ignore
+  } else {
+    if (stored) {
+      try {
+        localStorage.removeItem(LEADERBOARD_SCOPE_LS_KEY)
+      } catch {
+        // ignore
+      }
     }
+    selectedScope.value = groupsStore.groups[0]!.id
   }
+  await loadGroupLeaderboard(selectedScope.value)
 })
 
 watch(selectedScope, (val) => {
+  if (!val) return
   try {
     localStorage.setItem(LEADERBOARD_SCOPE_LS_KEY, val)
   } catch {
@@ -242,10 +243,8 @@ watch(selectedScope, (val) => {
 useMatchEvents({
   onMatchUpdate: () => {
     // A match status / score change can shift the standings — refetch the
-    // currently visible scope so the user sees the new ranking immediately.
-    if (selectedScope.value === 'global') {
-      void leaderboardStore.fetchLeaderboard()
-    } else {
+    // currently visible group scope so the user sees the new ranking immediately.
+    if (selectedScope.value) {
       void loadGroupLeaderboard(selectedScope.value)
     }
   },

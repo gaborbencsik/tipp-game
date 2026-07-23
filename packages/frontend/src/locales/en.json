@@ -402,7 +402,6 @@
   },
   "leaderboard": {
     "title": "Leaderboard",
-    "global": "Overall",
     "rank": "#",
     "player": "Player",
     "scoredFraction": "Successful tips",
@@ -416,7 +415,8 @@
     "tournamentSuccessRateTooltip": "Points earned out of tournament tips resolved so far",
     "points": "Points",
     "you": "(you)",
-    "empty": "No leaderboard data yet."
+    "empty": "No leaderboard data yet.",
+    "noGroups": "Join or create a group to see the leaderboard."
   },
   "profile": {
     "title": "Profile",

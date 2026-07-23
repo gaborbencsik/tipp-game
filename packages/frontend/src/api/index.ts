@@ -671,12 +671,6 @@ export const api = {
         }),
     },
   },
-  leaderboard: {
-    get: (token: string) =>
-      request<LeaderboardEntry[]>('/leaderboard', {
-        headers: { Authorization: `Bearer ${token}` },
-      }),
-  },
   waitlist: {
     subscribe: (email: string, source: 'hero' | 'footer', website: string, elapsed: number) =>
       request<{ message: string }>('/waitlist', {

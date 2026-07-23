@@ -402,7 +402,6 @@
   },
   "leaderboard": {
     "title": "Ranglista",
-    "global": "Összesített",
     "rank": "#",
     "player": "Játékos",
     "scoredFraction": "Sikeres tippek",
@@ -416,7 +415,8 @@
     "tournamentSuccessRateTooltip": "Megszerzett pont az eddig kiértékelt torna tippekből",
     "points": "Pont",
     "you": "(te)",
-    "empty": "Még nincs ranglista adat."
+    "empty": "Még nincs ranglista adat.",
+    "noGroups": "Csatlakozz vagy hozz létre egy csoportot a ranglista megtekintéséhez."
   },
   "profile": {
     "title": "Profil",
