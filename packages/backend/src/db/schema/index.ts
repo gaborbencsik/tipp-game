@@ -317,6 +317,7 @@ export const groups = pgTable('groups', {
   createdBy:       uuid('created_by').notNull().references(() => users.id),
   scoringConfigId: uuid('scoring_config_id').references(() => scoringConfigs.id),
   favoriteTeamDoublePoints: boolean('favorite_team_double_points').notNull().default(false),
+  scoringEnabled:  boolean('scoring_enabled').notNull().default(true),
   createdAt:       timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt:       timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   deletedAt:       timestamp('deleted_at', { withTimezone: true }),

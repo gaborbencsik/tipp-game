@@ -308,6 +308,7 @@ export interface Group {
   readonly isAdmin: boolean
   readonly userRank: number | null
   readonly favoriteTeamDoublePoints: boolean
+  readonly scoringEnabled: boolean
   readonly leagues: ReadonlyArray<{ readonly id: string; readonly name: string; readonly shortName: string; readonly status: 'active' | 'archived'; readonly type: LeagueType }>
   readonly handPickedMatchIds: ReadonlyArray<string>
   readonly createdAt: string

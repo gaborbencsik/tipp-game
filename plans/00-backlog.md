@@ -1,6 +1,6 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-07-23 (US-954 lezárva; fókusz: US-956, UX-048, UX-049)
+> Utoljára frissítve: 2026-07-23 (US-956 lezárva; fókusz: UX-048, UX-049)
 
 ## 🎯 Jelenlegi fókusz
 
@@ -8,7 +8,6 @@ A legutóbb felvett story-k — ezek az aktív munka. Deklarált függőségeik 
 
 | Story ID | Cím | Prioritás | Függőség | Megjegyzés |
 |----------|-----|-----------|----------|------------|
-| US-956 | Csoport pontozás kikapcsolása és csoportos recalc gomb | Should Have | ~~US-952~~ | folyamatban (uncommitted munka) |
 | UX-048 | Match Detail oldalon a tippek CSV exportálása | Should Have | — | önálló |
 | UX-049 | Pontozási szabályzat feature toggle — config flag-gel elrejtés | Nice to Have | ~~UX-028~~ | `LeaderboardView.vue` — US-955 kész, indítható |
 
@@ -37,7 +36,6 @@ A legutóbb felvett story-k — ezek az aktív munka. Deklarált függőségeik 
 | UX-029 | Pontozási szabályzat modal – polished error state | Nice to Have | ~~UX-028~~ |
 | UX-032 | Torna tippek – lejárt deadline után is mutassa a tippet (read-only lock) | Should Have | — |
 | SEC-002 | HMAC-aláírt meghívó URL-ek | Nice to Have | — |
-| US-956 | Csoport pontozás kikapcsolása és csoportos recalc gomb | Should Have | ~~US-952~~ |
 | UX-048 | Match Detail oldalon a tippek CSV exportálása | Should Have | — |
 | UX-049 | Pontozási szabályzat feature toggle — config flag-gel elrejtés | Nice to Have | ~~UX-028~~ |
 
@@ -46,4 +44,4 @@ A legutóbb felvett story-k — ezek az aktív munka. Deklarált függőségeik 
 
 ---
 
-**Haladás: 203 / 206 story kész** — Must Have: 33/33, Should Have: 170/170, Nice to Have: 0/6
+**Haladás: 204 / 206 story kész** — Must Have: 33/33, Should Have: 171/171, Nice to Have: 0/6

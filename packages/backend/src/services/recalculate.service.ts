@@ -1,6 +1,6 @@
-import { eq } from 'drizzle-orm'
+import { eq, inArray } from 'drizzle-orm'
 import { db } from '../db/client.js'
-import { matchResults, predictions, groupPredictionPoints, groupMembers } from '../db/schema/index.js'
+import { matchResults, matches, predictions, groupPredictionPoints, groupMembers, groupLeagues, groupMatches } from '../db/schema/index.js'
 import { calculateAndSavePoints, calculateAndSaveGroupPoints } from './scoring.service.js'
 import { markRecalcStarted, markRecalcFinished } from './sync-state.service.js'
 import type { MatchOutcome, RecalcResult } from '../types/index.js'
@@ -21,9 +21,32 @@ export async function recalculateAll(opts: RecalculateOptions = {}): Promise<Rec
     })
     .from(matchResults)
 
+  // Per-group recalc: restrict to matches relevant to the group — either
+  // belonging to one of the group's leagues, or hand-picked into the group.
+  let allowedMatchIds: Set<string> | null = null
+  if (opts.groupId) {
+    const leagueMatchRows = await db
+      .select({ matchId: matches.id })
+      .from(matches)
+      .innerJoin(groupLeagues, eq(matches.leagueId, groupLeagues.leagueId))
+      .where(eq(groupLeagues.groupId, opts.groupId))
+    const handPickedRows = await db
+      .select({ matchId: groupMatches.matchId })
+      .from(groupMatches)
+      .where(eq(groupMatches.groupId, opts.groupId))
+    allowedMatchIds = new Set([
+      ...leagueMatchRows.map(r => r.matchId),
+      ...handPickedRows.map(r => r.matchId),
+    ])
+  }
+
   let predictionsUpdated = 0
+  let matchesRecalculated = 0
 
   for (const row of results) {
+    if (allowedMatchIds && !allowedMatchIds.has(row.matchId)) continue
+    matchesRecalculated++
+
     const result = {
       homeGoals: row.homeGoals,
       awayGoals: row.awayGoals,
@@ -73,7 +96,7 @@ export async function recalculateAll(opts: RecalculateOptions = {}): Promise<Rec
   }
 
   return {
-    matchesRecalculated: results.length,
+    matchesRecalculated,
     predictionsUpdated,
     durationMs: Date.now() - startedAt,
     groupId: opts.groupId ?? null,

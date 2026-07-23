@@ -3,12 +3,13 @@ import { authMiddleware } from '../middleware/auth.middleware.js'
 import { createRateLimit } from '../middleware/rateLimit.middleware.js'
 import { withHttpCache } from '../middleware/http-cache.middleware.js'
 import { upsertUser } from '../services/user.service.js'
-import { getMyGroups, createGroup, joinGroup, getGroupMembers, removeMember, setMemberAdmin, regenerateInviteCode, setInviteActive, deleteGroup, updateGroupSettings, addGroupLeague, removeGroupLeague } from '../services/groups.service.js'
+import { getMyGroups, createGroup, joinGroup, getGroupMembers, removeMember, setMemberAdmin, regenerateInviteCode, setInviteActive, deleteGroup, updateGroupSettings, addGroupLeague, removeGroupLeague, assertGroupAdmin } from '../services/groups.service.js'
 import { getGroupLeaderboard } from '../services/group-leaderboard.service.js'
 import { getMyGroupPredictions } from '../services/group-my-predictions.service.js'
 import { addGroupMatch, removeGroupMatch, getGroupEffectiveMatches } from '../services/group-matches.service.js'
 import { getGroupConfigWithImpact, setGroupConfig, overrideGroupConfig } from '../services/scoring-config.service.js'
 import { startRecalculation } from '../services/recalculate.service.js'
+import { getRecalcStatus } from '../services/sync-state.service.js'
 import type { GroupInput, JoinGroupInput, ScoringConfigInput } from '../types/index.js'
 
 const router = new Router()
@@ -199,7 +200,33 @@ router.patch('/api/groups/:groupId/settings', authMiddleware, async (ctx) => {
   if (typeof body.favoriteTeamDoublePoints === 'boolean') {
     settings.favoriteTeamDoublePoints = body.favoriteTeamDoublePoints
   }
+  if (typeof body.scoringEnabled === 'boolean') {
+    settings.scoringEnabled = body.scoringEnabled
+  }
   ctx.body = await updateGroupSettings(ctx.params.groupId, dbUser.id, settings)
+})
+
+// US-956: per-group recalculation of all relevant matches.
+router.post('/api/groups/:groupId/recalculate', authMiddleware, async (ctx) => {
+  const dbUser = await upsertUser(ctx.state.user)
+  await assertGroupAdmin(ctx.params.groupId, dbUser.id)
+  const acquired = await startRecalculation({ groupId: ctx.params.groupId })
+  if (!acquired) {
+    ctx.status = 409
+    ctx.body = { error: 'Recalculation already in progress' }
+    return
+  }
+  ctx.status = 202
+  ctx.body = { status: 'started' }
+})
+
+router.get('/api/groups/:groupId/recalculate-status', authMiddleware, async (ctx) => {
+  const dbUser = await upsertUser(ctx.state.user)
+  await assertGroupAdmin(ctx.params.groupId, dbUser.id)
+  const status = await getRecalcStatus()
+  // Only surface the last result if it belongs to THIS group's recalc.
+  const lastResult = status.lastResult?.groupId === ctx.params.groupId ? status.lastResult : null
+  ctx.body = { status: status.status, lastResult }
 })
 
 router.post('/api/groups/:groupId/leagues', authMiddleware, async (ctx) => {

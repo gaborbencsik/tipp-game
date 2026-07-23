@@ -211,6 +211,7 @@ export async function calculateAndSaveGroupPoints(
           groupId: groupMembers.groupId,
           scoringConfigId: groups.scoringConfigId,
           favoriteTeamDoublePoints: groups.favoriteTeamDoublePoints,
+          scoringEnabled: groups.scoringEnabled,
           config: scoringConfigs,
         })
         .from(groupMembers)
@@ -225,7 +226,11 @@ export async function calculateAndSaveGroupPoints(
         ))
 
       await Promise.all(
-        userGroups.map(({ groupId, scoringConfigId, favoriteTeamDoublePoints, config }) => {
+        userGroups.map(({ groupId, scoringConfigId, favoriteTeamDoublePoints, scoringEnabled, config }) => {
+          // US-956: skip scoring entirely for groups with scoring disabled.
+          // Existing group_prediction_points rows are left untouched.
+          if (scoringEnabled === false) return Promise.resolve()
+
           const allowedLeagues = groupLeagueMap.get(groupId)
           if (allowedLeagues && allowedLeagues.size > 0 && !handPickedGroupIds.has(groupId)) {
             if (!matchRow.leagueId || !allowedLeagues.has(matchRow.leagueId)) return Promise.resolve()

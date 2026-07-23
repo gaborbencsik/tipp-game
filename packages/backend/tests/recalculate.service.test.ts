@@ -34,6 +34,22 @@ function mockPredictionsForMatch(predictions: Array<{ id: string; userId?: strin
   mockDb.select.mockReturnValueOnce({ from })
 }
 
+// Per-group recalc first resolves the set of relevant matches:
+//   1) matches joined to group_leagues, 2) hand-picked group_matches.
+function mockGroupAllowedMatches(
+  leagueMatchIds: Array<{ matchId: string }>,
+  handPickedIds: Array<{ matchId: string }>,
+): void {
+  const leagueWhere = vi.fn().mockResolvedValue(leagueMatchIds)
+  const leagueInnerJoin = vi.fn().mockReturnValue({ where: leagueWhere })
+  const leagueFrom = vi.fn().mockReturnValue({ innerJoin: leagueInnerJoin })
+  mockDb.select.mockReturnValueOnce({ from: leagueFrom })
+
+  const hpWhere = vi.fn().mockResolvedValue(handPickedIds)
+  const hpFrom = vi.fn().mockReturnValue({ where: hpWhere })
+  mockDb.select.mockReturnValueOnce({ from: hpFrom })
+}
+
 describe('recalculate.service', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -73,8 +89,10 @@ describe('recalculate.service', () => {
 
     it('skips global scoring when groupId provided (only group recalc)', async () => {
       mockMatchResults([{ matchId: 'm1', homeGoals: 1, awayGoals: 0, outcomeAfterDraw: null }])
+      // group's relevant matches: m1 via league, none hand-picked
+      mockGroupAllowedMatches([{ matchId: 'm1' }], [])
       // group members select
-      mockPredictionsForMatch([{ userId: 'u1' }])
+      mockPredictionsForMatch([{ id: 'x', userId: 'u1' }])
       // match predictions select
       mockPredictionsForMatch([{ id: 'p1', userId: 'u1' }, { id: 'p2', userId: 'u2' }])
       const deleteWhere = vi.fn().mockResolvedValue(undefined)
@@ -86,6 +104,30 @@ describe('recalculate.service', () => {
       expect(result.groupId).toBe('g1')
       expect(scoringMocks.calculateAndSavePoints).not.toHaveBeenCalled()
       expect(scoringMocks.calculateAndSaveGroupPoints).toHaveBeenCalledOnce()
+    })
+
+    it('per-group recalc processes ALL relevant group matches (2+ matches)', async () => {
+      mockMatchResults([
+        { matchId: 'm1', homeGoals: 1, awayGoals: 0, outcomeAfterDraw: null },
+        { matchId: 'm2', homeGoals: 2, awayGoals: 2, outcomeAfterDraw: null },
+        { matchId: 'm3', homeGoals: 0, awayGoals: 1, outcomeAfterDraw: null },
+      ])
+      // group relevant: m1, m2 via league; m3 NOT in group → excluded
+      mockGroupAllowedMatches([{ matchId: 'm1' }, { matchId: 'm2' }], [])
+      // m1: members + predictions
+      mockPredictionsForMatch([{ id: 'x', userId: 'u1' }])
+      mockPredictionsForMatch([{ id: 'p1', userId: 'u1' }])
+      // m2: members + predictions
+      mockPredictionsForMatch([{ id: 'y', userId: 'u1' }])
+      mockPredictionsForMatch([{ id: 'p2', userId: 'u1' }])
+      const deleteWhere = vi.fn().mockResolvedValue(undefined)
+      mockDb.delete.mockReturnValue({ where: deleteWhere })
+
+      const result = await recalculateAll({ groupId: 'g1' })
+
+      expect(result.matchesRecalculated).toBe(2)
+      expect(scoringMocks.calculateAndSaveGroupPoints).toHaveBeenCalledTimes(2)
+      expect(result.predictionsUpdated).toBe(2)
     })
   })
 

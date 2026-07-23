@@ -94,6 +94,7 @@ describe('ProfileView', () => {
       isAdmin: true,
       userRank: null,
       favoriteTeamDoublePoints: false,
+      scoringEnabled: true,
       league: { id: leagueId, name: shortName, shortName },
       leagues: [{ id: leagueId, name: shortName, shortName, status: 'active', type: 'league' }],
       createdAt: '2026-01-01T00:00:00Z',

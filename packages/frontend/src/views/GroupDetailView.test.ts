@@ -68,6 +68,9 @@ vi.mock('@/api/index', () => ({
       matches: mockGroupsMatches,
       addMatch: mockGroupsAddMatch,
       removeMatch: mockGroupsRemoveMatch,
+      updateSettings: vi.fn().mockResolvedValue({}),
+      recalculate: vi.fn().mockResolvedValue({ status: 'started' }),
+      recalculateStatus: vi.fn().mockResolvedValue({ status: 'idle', lastResult: null }),
     },
     predictions: { mine: vi.fn(), upsert: vi.fn() },
     matches: { list: mockMatchesList },
@@ -97,6 +100,7 @@ const GROUP: Group = {
   isAdmin: true,
   userRank: null,
   favoriteTeamDoublePoints: false,
+  scoringEnabled: true,
   leagues: [{ id: 'l-1', name: 'VB 2026', shortName: 'VB', status: 'active', type: 'league' }],
   createdAt: '2026-01-01T00:00:00.000Z',
 }
@@ -483,6 +487,45 @@ describe('GroupDetailView', () => {
     await wrapper.find('[data-testid="delete-confirm-ok"]').trigger('click')
     await flushPromises()
     expect(deleteSpy).toHaveBeenCalledWith('group-uuid-1')
+  })
+
+  // ─── US-956: scoring toggle + per-group recalc ─────────────────────────────────
+
+  it('scoring toggle visible on settings tab and reflects scoringEnabled', async () => {
+    const { wrapper } = await mountView([MEMBER_SELF])
+    await wrapper.find('[data-testid="tab-settings"]').trigger('click')
+    await wrapper.vm.$nextTick()
+    const toggle = wrapper.find('[data-testid="group-scoring-toggle"]')
+    expect(toggle.exists()).toBe(true)
+    expect(toggle.attributes('aria-checked')).toBe('true')
+  })
+
+  it('clicking scoring toggle → updateGroupScoringEnabled(false)', async () => {
+    const { wrapper, store } = await mountView([MEMBER_SELF])
+    const spy = vi.spyOn(store, 'updateGroupScoringEnabled').mockResolvedValue()
+    await wrapper.find('[data-testid="tab-settings"]').trigger('click')
+    await wrapper.vm.$nextTick()
+    await wrapper.find('[data-testid="group-scoring-toggle"]').trigger('click')
+    await flushPromises()
+    expect(spy).toHaveBeenCalledWith('group-uuid-1', false)
+  })
+
+  it('recalc button click → startGroupRecalculation called', async () => {
+    const { wrapper, store } = await mountView([MEMBER_SELF])
+    const spy = vi.spyOn(store, 'startGroupRecalculation').mockResolvedValue()
+    await wrapper.find('[data-testid="tab-settings"]').trigger('click')
+    await wrapper.vm.$nextTick()
+    await wrapper.find('[data-testid="group-recalculate-btn"]').trigger('click')
+    await flushPromises()
+    expect(spy).toHaveBeenCalledWith('group-uuid-1')
+  })
+
+  it('recalc button disabled while running', async () => {
+    const { wrapper, store } = await mountView([MEMBER_SELF])
+    store.groupRecalcState = { 'group-uuid-1': 'running' }
+    await wrapper.find('[data-testid="tab-settings"]').trigger('click')
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find('[data-testid="group-recalculate-btn"]').attributes('disabled')).toBeDefined()
   })
 
   // ─── My predictions tab – scorer columns (UX-036) ─────────────────────────────

@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { supabase } from '../lib/supabase.js'
 import { api } from '../api/index.js'
-import type { Group, GroupInput, GroupMember, JoinGroupInput, Match, ScoringConfigFull, ScoringConfigInput, ScoringConfigWithImpact, ScoringOverrideInput, SpecialPredictionType, SpecialTypeInput, SpecialPredictionWithType, SpecialPredictionInput, GlobalTypeWithSubscription, GroupMyPredictionsResult } from '../types/index.js'
+import type { Group, GroupInput, GroupMember, JoinGroupInput, Match, ScoringConfigFull, ScoringConfigInput, ScoringConfigWithImpact, ScoringOverrideInput, SpecialPredictionType, SpecialTypeInput, SpecialPredictionWithType, SpecialPredictionInput, GlobalTypeWithSubscription, GroupMyPredictionsResult, RecalcStatus } from '../types/index.js'
 
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
 
@@ -43,6 +43,11 @@ export const useGroupsStore = defineStore('groups', () => {
   const myGroupPredictionsMap = ref<Record<string, GroupMyPredictionsResult>>({})
   const myGroupPredictionsLoading = ref(false)
   const myGroupPredictionsError = ref<string | null>(null)
+
+  // Per-group recalculation (US-956)
+  const groupRecalcState = ref<Record<string, 'idle' | 'starting' | 'running' | 'error'>>({})
+  const groupRecalcStatus = ref<Record<string, RecalcStatus>>({})
+  const groupRecalcConflict = ref<Record<string, string | null>>({})
 
   async function fetchMyGroups(): Promise<void> {
     isLoading.value = true
@@ -118,7 +123,7 @@ export const useGroupsStore = defineStore('groups', () => {
     groups.value = groups.value.map((g) => g.id === groupId ? updated : g)
   }
 
-  async function updateGroupSettings(groupId: string, settings: { favoriteTeamDoublePoints: boolean }): Promise<void> {
+  async function updateGroupSettings(groupId: string, settings: { favoriteTeamDoublePoints?: boolean; scoringEnabled?: boolean }): Promise<void> {
     const token = await getAccessToken()
     const updated = await api.groups.updateSettings(token, groupId, settings)
     groups.value = groups.value.map((g) => g.id === groupId ? updated : g)
@@ -323,6 +328,44 @@ export const useGroupsStore = defineStore('groups', () => {
     }
   }
 
+  async function updateGroupScoringEnabled(groupId: string, enabled: boolean): Promise<void> {
+    await updateGroupSettings(groupId, { scoringEnabled: enabled })
+  }
+
+  async function getRecalcStatus(groupId: string): Promise<void> {
+    const token = await getAccessToken()
+    const status = await api.groups.recalculateStatus(token, groupId)
+    groupRecalcStatus.value = { ...groupRecalcStatus.value, [groupId]: status }
+    if (status.status === 'idle') {
+      groupRecalcState.value = { ...groupRecalcState.value, [groupId]: 'idle' }
+    }
+  }
+
+  async function startGroupRecalculation(groupId: string): Promise<void> {
+    groupRecalcConflict.value = { ...groupRecalcConflict.value, [groupId]: null }
+    groupRecalcState.value = { ...groupRecalcState.value, [groupId]: 'starting' }
+    try {
+      const token = await getAccessToken()
+      await api.groups.recalculate(token, groupId)
+      groupRecalcState.value = { ...groupRecalcState.value, [groupId]: 'running' }
+      await pollGroupRecalc(groupId)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Ismeretlen hiba'
+      groupRecalcConflict.value = { ...groupRecalcConflict.value, [groupId]: message }
+      groupRecalcState.value = { ...groupRecalcState.value, [groupId]: 'error' }
+    }
+  }
+
+  async function pollGroupRecalc(groupId: string): Promise<void> {
+    for (let i = 0; i < 10; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 2000))
+      await getRecalcStatus(groupId)
+      if (groupRecalcStatus.value[groupId]?.status === 'idle') return
+    }
+    // Timed out — surface an error state so the button re-enables.
+    groupRecalcState.value = { ...groupRecalcState.value, [groupId]: 'error' }
+  }
+
   return {
     groups,
     isLoading,
@@ -376,5 +419,11 @@ export const useGroupsStore = defineStore('groups', () => {
     myGroupPredictionsLoading,
     myGroupPredictionsError,
     fetchMyGroupPredictions,
+    groupRecalcState,
+    groupRecalcStatus,
+    groupRecalcConflict,
+    updateGroupScoringEnabled,
+    startGroupRecalculation,
+    getRecalcStatus,
   }
 })

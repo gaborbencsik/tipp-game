@@ -228,6 +228,19 @@
       "remove": "Remove match",
       "handPickedBadge": "Individual match"
     },
+    "scoring": {
+      "title": "Scoring",
+      "desc": "Disable scoring for the group, or recalculate the points of all matches.",
+      "enabled": "Scoring enabled",
+      "disabled": "Scoring disabled"
+    },
+    "recalc": {
+      "button": "Recalculate all match points",
+      "inProgress": "Recalculation in progress…",
+      "success": "{count} predictions updated, {matches} matches.",
+      "conflict": "A scoring update is already in progress.",
+      "error": "Error during recalculation: {error}"
+    },
     "memberCount": "{count} members",
     "inviteInactive": "Invite inactive",
     "emptyState": "You haven't joined any groups yet.",

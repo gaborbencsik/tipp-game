@@ -64,6 +64,7 @@ function toApiGroup(
     isAdmin,
     userRank,
     favoriteTeamDoublePoints: row.favoriteTeamDoublePoints,
+    scoringEnabled: row.scoringEnabled,
     leagues: groupLeaguesList,
     handPickedMatchIds,
     createdAt: row.createdAt.toISOString(),
@@ -515,6 +516,7 @@ export async function deleteGroup(groupId: string, requesterId: string, isGlobal
 
 export interface GroupSettings {
   readonly favoriteTeamDoublePoints?: boolean
+  readonly scoringEnabled?: boolean
 }
 
 export async function updateGroupSettings(
@@ -539,6 +541,9 @@ export async function updateGroupSettings(
   const updateData: Record<string, unknown> = { updatedAt: new Date() }
   if (settings.favoriteTeamDoublePoints !== undefined) {
     updateData.favoriteTeamDoublePoints = settings.favoriteTeamDoublePoints
+  }
+  if (settings.scoringEnabled !== undefined) {
+    updateData.scoringEnabled = settings.scoringEnabled
   }
 
   const updated = await db
@@ -577,7 +582,7 @@ async function recalcGroupSpecialDeadlines(groupId: string): Promise<void> {
     .where(eq(groupGlobalTypeSubscriptions.groupId, groupId))
 }
 
-async function assertGroupAdmin(groupId: string, userId: string): Promise<typeof groups.$inferSelect> {
+export async function assertGroupAdmin(groupId: string, userId: string): Promise<typeof groups.$inferSelect> {
   const groupRows = await db
     .select()
     .from(groups)

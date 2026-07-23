@@ -24,6 +24,8 @@ const {
   mockSpecialTypesDeactivate,
   mockGlobalSubsUnsubscribe,
   mockGroupsMyPredictions,
+  mockGroupsRecalculate,
+  mockGroupsRecalculateStatus,
 } = vi.hoisted(() => ({
   mockGetSession: vi.fn().mockResolvedValue({
     data: { session: { access_token: 'mock-token' } },
@@ -44,6 +46,8 @@ const {
   mockSpecialTypesDeactivate: vi.fn(),
   mockGlobalSubsUnsubscribe: vi.fn(),
   mockGroupsMyPredictions: vi.fn(),
+  mockGroupsRecalculate: vi.fn(),
+  mockGroupsRecalculateStatus: vi.fn(),
 }))
 
 vi.mock('@/lib/supabase', () => ({
@@ -72,6 +76,8 @@ vi.mock('@/api/index', () => ({
       getScoringConfig: mockGroupsGetScoringConfig,
       setScoringConfig: mockGroupsSetScoringConfig,
       updateSettings: mockGroupsUpdateSettings,
+      recalculate: mockGroupsRecalculate,
+      recalculateStatus: mockGroupsRecalculateStatus,
       specialTypes: {
         list: mockSpecialTypesList,
         deactivate: mockSpecialTypesDeactivate,
@@ -100,6 +106,7 @@ const GROUP_A: Group = {
   isAdmin: true,
   userRank: null,
   favoriteTeamDoublePoints: false,
+  scoringEnabled: true,
   leagues: [{ id: 'l-1', name: 'VB 2026', shortName: 'VB', status: 'active', type: 'league' }],
   createdAt: '2026-01-01T00:00:00.000Z',
 }
@@ -115,6 +122,7 @@ const GROUP_B: Group = {
   isAdmin: false,
   userRank: null,
   favoriteTeamDoublePoints: false,
+  scoringEnabled: true,
   leagues: [{ id: 'l-1', name: 'VB 2026', shortName: 'VB', status: 'active', type: 'league' }],
   createdAt: '2026-02-01T00:00:00.000Z',
 }
@@ -507,5 +515,50 @@ describe('groups.store', () => {
     await store.fetchMyGroupPredictions('g1')
     expect(store.myGroupPredictionsError).toBe('Not a member')
     expect(store.myGroupPredictionsMap['g1']).toBeUndefined()
+  })
+
+  // ─── US-956: scoring toggle + per-group recalc ─────────────────────────────────
+
+  it('updateGroupScoringEnabled → PATCH with scoringEnabled payload', async () => {
+    const updatedGroup = { ...GROUP_A, scoringEnabled: false }
+    mockGroupsUpdateSettings.mockResolvedValue(updatedGroup)
+    mockGroupsMine.mockResolvedValue([GROUP_A, GROUP_B])
+
+    const store = useGroupsStore()
+    await store.fetchMyGroups()
+    await store.updateGroupScoringEnabled(GROUP_A.id, false)
+
+    expect(mockGroupsUpdateSettings).toHaveBeenCalledWith('mock-token', GROUP_A.id, { scoringEnabled: false })
+    expect(store.groups.find(g => g.id === GROUP_A.id)?.scoringEnabled).toBe(false)
+  })
+
+  it('startGroupRecalculation → POST recalculate then polls until idle', async () => {
+    vi.useFakeTimers()
+    mockGroupsRecalculate.mockResolvedValue({ status: 'started' })
+    mockGroupsRecalculateStatus
+      .mockResolvedValueOnce({ status: 'running', lastResult: null })
+      .mockResolvedValueOnce({ status: 'idle', lastResult: { matchesRecalculated: 3, predictionsUpdated: 7, durationMs: 1, groupId: 'g1', finishedAt: 'x' } })
+
+    const store = useGroupsStore()
+    const promise = store.startGroupRecalculation('g1')
+    await vi.advanceTimersByTimeAsync(2000)
+    await vi.advanceTimersByTimeAsync(2000)
+    await promise
+
+    expect(mockGroupsRecalculate).toHaveBeenCalledWith('mock-token', 'g1')
+    expect(mockGroupsRecalculateStatus).toHaveBeenCalledTimes(2)
+    expect(store.groupRecalcState['g1']).toBe('idle')
+    expect(store.groupRecalcStatus['g1']?.lastResult?.predictionsUpdated).toBe(7)
+    vi.useRealTimers()
+  })
+
+  it('startGroupRecalculation → 409 conflict sets error state + conflict message', async () => {
+    mockGroupsRecalculate.mockRejectedValue(new Error('Recalculation already in progress'))
+
+    const store = useGroupsStore()
+    await store.startGroupRecalculation('g1')
+
+    expect(store.groupRecalcState['g1']).toBe('error')
+    expect(store.groupRecalcConflict['g1']).toContain('in progress')
   })
 })

@@ -345,4 +345,36 @@ describe('calculateAndSaveGroupPoints', () => {
     expect(insertedValues.groupId).toBe('group-uuid-1')
     expect(insertedValues.points).toBe(5)
   })
+
+  // ─── US-956: per-group scoring toggle ───────────────────────────────────────
+
+  it('US-956: group with scoringEnabled=false is SKIPPED (no insert)', async () => {
+    setupParallelSelect([PREDICTIONS[0]], MATCH_ROW)
+    setupFavoritesSelect([])
+    setupGlobalConfigSelect(DEFAULT_CONFIG_ROW)
+    setupGroupLeaguesSelect([])
+    setupGroupMatchesSelect([])
+    setupUserGroupsSelect([
+      { groupId: 'group-uuid-1', scoringConfigId: 'cfg-1', favoriteTeamDoublePoints: false, scoringEnabled: false, config: GROUP_CONFIG_ROW },
+    ])
+
+    await calculateAndSaveGroupPoints(MATCH_ID, RESULT)
+
+    expect(mockInsert).not.toHaveBeenCalled()
+  })
+
+  it('US-956: group with scoringEnabled=true still gets points', async () => {
+    setupParallelSelect([PREDICTIONS[0]], MATCH_ROW)
+    setupFavoritesSelect([])
+    setupGlobalConfigSelect(DEFAULT_CONFIG_ROW)
+    setupGroupLeaguesSelect([])
+    setupGroupMatchesSelect([])
+    setupUserGroupsSelect([
+      { groupId: 'group-uuid-1', scoringConfigId: 'cfg-1', favoriteTeamDoublePoints: false, scoringEnabled: true, config: GROUP_CONFIG_ROW },
+    ])
+
+    await calculateAndSaveGroupPoints(MATCH_ID, RESULT)
+
+    expect(mockInsert).toHaveBeenCalledTimes(1)
+  })
 })

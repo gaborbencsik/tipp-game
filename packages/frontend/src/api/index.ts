@@ -225,10 +225,19 @@ export const api = {
         body: JSON.stringify(input),
         headers: { Authorization: `Bearer ${token}` },
       }),
-    updateSettings: (token: string, groupId: string, settings: { favoriteTeamDoublePoints: boolean }) =>
+    updateSettings: (token: string, groupId: string, settings: { favoriteTeamDoublePoints?: boolean; scoringEnabled?: boolean }) =>
       request<Group>(`/groups/${groupId}/settings`, {
         method: 'PATCH',
         body: JSON.stringify(settings),
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+    recalculate: (token: string, groupId: string) =>
+      request<{ status: string }>(`/groups/${groupId}/recalculate`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+    recalculateStatus: (token: string, groupId: string) =>
+      request<RecalcStatus>(`/groups/${groupId}/recalculate-status`, {
         headers: { Authorization: `Bearer ${token}` },
       }),
     addLeague: (token: string, groupId: string, leagueId: string) =>

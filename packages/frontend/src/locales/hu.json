@@ -228,6 +228,19 @@
       "remove": "Meccs eltávolítása",
       "handPickedBadge": "Egyedi meccs"
     },
+    "scoring": {
+      "title": "Pontozás",
+      "desc": "Kapcsold ki a pontozást a csoportban, vagy számítsd újra az összes meccs pontjait.",
+      "enabled": "Pontozás engedélyezett",
+      "disabled": "Pontozás letiltva"
+    },
+    "recalc": {
+      "button": "Összes meccs pontjainak újraszámítása",
+      "inProgress": "Újraszámítás folyamatban…",
+      "success": "{count} predikció frissítve, {matches} meccs.",
+      "conflict": "Pontozás frissítés már folyamatban van.",
+      "error": "Hiba az újraszámítás során: {error}"
+    },
     "memberCount": "{count} tag",
     "inviteInactive": "Meghívó inaktív",
     "emptyState": "Még nem vagy egyetlen csoport tagja sem.",

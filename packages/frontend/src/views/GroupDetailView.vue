@@ -391,6 +391,52 @@
         </div>
       </div>
 
+      <!-- US-956: Pontozás ki/be + csoportos recalc -->
+      <div v-if="canManageSettings" class="mt-8 max-w-md">
+        <h3 class="text-base font-semibold text-gray-800 mb-1">{{ $t('groups.scoring.title') }}</h3>
+        <p class="text-sm text-gray-500 mb-3">{{ $t('groups.scoring.desc') }}</p>
+        <div class="flex items-center justify-between border rounded-lg p-3 bg-white mb-3">
+          <span class="text-sm font-medium text-gray-800">
+            {{ currentGroup?.scoringEnabled ? $t('groups.scoring.enabled') : $t('groups.scoring.disabled') }}
+          </span>
+          <label class="inline-flex items-center gap-2 shrink-0 cursor-pointer">
+            <button
+              type="button"
+              role="switch"
+              data-testid="group-scoring-toggle"
+              :aria-checked="currentGroup?.scoringEnabled"
+              class="relative w-9 h-5 rounded-full transition-colors duration-150"
+              :class="currentGroup?.scoringEnabled ? 'bg-green-500' : 'bg-gray-300'"
+              @click="toggleScoringEnabled"
+            >
+              <span
+                class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-150"
+                :class="currentGroup?.scoringEnabled ? 'translate-x-4' : 'translate-x-0'"
+              />
+            </button>
+          </label>
+        </div>
+
+        <button
+          type="button"
+          data-testid="group-recalculate-btn"
+          class="w-full px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          :disabled="recalcInProgress"
+          @click="triggerGroupRecalc"
+        >
+          <span v-if="recalcInProgress">{{ $t('groups.recalc.inProgress') }}</span>
+          <span v-else>{{ $t('groups.recalc.button') }}</span>
+        </button>
+        <p
+          v-if="recalcMessage"
+          data-testid="group-recalc-status"
+          class="text-xs mt-2"
+          :class="recalcMessageError ? 'text-red-600' : 'text-green-700'"
+        >
+          {{ recalcMessage }}
+        </p>
+      </div>
+
       <!-- Liga szűrő -->
       <div class="mt-8 max-w-md">
         <h3 class="text-base font-semibold text-gray-800 mb-1">{{ $t('groupDetail.leagueTitle') }}</h3>
@@ -1278,6 +1324,40 @@ async function onToggleInvite(): Promise<void> {
 async function toggleFavDoublePoints(): Promise<void> {
   const current = currentGroup.value?.favoriteTeamDoublePoints ?? false
   await groupsStore.updateGroupSettings(groupId, { favoriteTeamDoublePoints: !current })
+}
+
+// ─── US-956: per-group scoring toggle + recalc ─────────────────────────────────
+async function toggleScoringEnabled(): Promise<void> {
+  const current = currentGroup.value?.scoringEnabled ?? true
+  await groupsStore.updateGroupScoringEnabled(groupId, !current)
+}
+
+const recalcInProgress = computed(() => {
+  const state = groupsStore.groupRecalcState[groupId]
+  return state === 'starting' || state === 'running'
+})
+
+const recalcMessageError = computed(() => {
+  if (groupsStore.groupRecalcConflict[groupId]) return true
+  return groupsStore.groupRecalcState[groupId] === 'error'
+})
+
+const recalcMessage = computed<string | null>(() => {
+  const conflict = groupsStore.groupRecalcConflict[groupId]
+  if (conflict) {
+    return conflict.includes('in progress') ? t('groups.recalc.conflict') : t('groups.recalc.error', { error: conflict })
+  }
+  const state = groupsStore.groupRecalcState[groupId]
+  if (state === 'error') return t('groups.recalc.error', { error: t('common.unknownError') })
+  const result = groupsStore.groupRecalcStatus[groupId]?.lastResult
+  if (state === 'idle' && result && !result.error) {
+    return t('groups.recalc.success', { count: result.predictionsUpdated, matches: result.matchesRecalculated })
+  }
+  return null
+})
+
+async function triggerGroupRecalc(): Promise<void> {
+  await groupsStore.startGroupRecalculation(groupId)
 }
 
 // ─── League editing ──────────────────────────────────────────────────────────

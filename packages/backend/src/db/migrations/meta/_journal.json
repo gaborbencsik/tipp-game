@@ -547,6 +547,13 @@
       "when": 1788000000021,
       "tag": "0077_group_matches",
       "breakpoints": true
+    },
+    {
+      "idx": 78,
+      "version": "7",
+      "when": 1788000000022,
+      "tag": "0078_group_scoring_enabled",
+      "breakpoints": true
     }
   ]
 }
