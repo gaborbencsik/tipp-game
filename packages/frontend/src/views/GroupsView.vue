@@ -54,7 +54,7 @@
             maxlength="200"
             class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-          <div v-if="selectableLeagues.length > 1" data-testid="group-leagues-multiselect" class="flex flex-col gap-1">
+          <div v-if="selectableLeagues.length >= 1" data-testid="group-leagues-multiselect" class="flex flex-col gap-1">
             <span class="text-sm font-medium text-gray-700">{{ $t('groups.leagues.label') }}</span>
             <label
               v-for="league in selectableLeagues"
@@ -72,6 +72,13 @@
               {{ league.name }}
             </label>
           </div>
+          <p
+            v-else
+            data-testid="group-no-active-leagues"
+            class="text-sm text-gray-600"
+          >
+            {{ $t('groups.leagues.noneActive') }}
+          </p>
           <p v-if="createError" data-testid="create-error" class="text-red-600 text-xs">{{ createError }}</p>
           <div class="flex gap-2 justify-end">
             <button
@@ -84,7 +91,7 @@
             <button
               type="submit"
               data-testid="create-submit-btn"
-              :disabled="isSubmitting"
+              :disabled="isSubmitting || selectableLeagues.length === 0"
               class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
             >
               {{ $t('groups.create') }}
@@ -216,7 +223,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import AppLayout from '../components/AppLayout.vue'
@@ -254,6 +261,19 @@ const joinError = ref<string | null>(null)
 const copiedState = ref(new Map<string, 'code' | 'url'>())
 
 const selectableLeagues = computed(() => leagueStore.leagues.filter(l => l.status !== 'archived'))
+
+// Preselect every selectable league so the checkbox state is always visible to
+// the user — no silent auto-assignment at submit time. Re-runs when the form
+// opens or once leagues finish loading.
+watch(
+  [showCreateForm, selectableLeagues],
+  ([open]) => {
+    if (open && selectedLeagueIds.value.length === 0) {
+      selectedLeagueIds.value = selectableLeagues.value.map(l => l.id)
+    }
+  },
+  { immediate: true },
+)
 
 function toggleLeague(leagueId: string): void {
   const idx = selectedLeagueIds.value.indexOf(leagueId)
@@ -309,9 +329,7 @@ function closeJoinForm(): void {
 
 async function onCreateSubmit(): Promise<void> {
   createError.value = null
-  const leagueIds = selectableLeagues.value.length === 1
-    ? [selectableLeagues.value[0]!.id]
-    : selectedLeagueIds.value
+  const leagueIds = selectedLeagueIds.value
   if (leagueIds.length === 0) {
     createError.value = t('groups.leagues.minOne')
     return

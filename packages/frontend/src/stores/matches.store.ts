@@ -34,6 +34,13 @@ export const useMatchesStore = defineStore('matches', () => {
   const stageFilter = ref<StageFilterValue | null>(null)
   const statusFilter = ref<MatchStatus | null>(null)
   const leagueFilter = ref<string | null>(null)
+  // US-960: matches hand-picked into a group live outside its leagues, so the
+  // league filter must let them through even when a specific league is selected.
+  const handPickedMatchIds = ref<ReadonlySet<string>>(new Set())
+
+  function setHandPickedMatchIds(ids: readonly string[]): void {
+    handPickedMatchIds.value = new Set(ids)
+  }
 
   const filteredMatches = computed<Match[]>(() => {
     return matches.value
@@ -44,7 +51,7 @@ export const useMatchesStore = defineStore('matches', () => {
         return m.stage === f
       })
       .filter(m => !statusFilter.value || m.status === statusFilter.value)
-      .filter(m => !leagueFilter.value || m.league?.id === leagueFilter.value)
+      .filter(m => !leagueFilter.value || m.league?.id === leagueFilter.value || handPickedMatchIds.value.has(m.id))
   })
 
   const matchesByDate = computed<MatchDateGroup[]>(() => {
@@ -125,6 +132,8 @@ export const useMatchesStore = defineStore('matches', () => {
     stageFilter,
     statusFilter,
     leagueFilter,
+    handPickedMatchIds,
+    setHandPickedMatchIds,
     filteredMatches,
     matchesByDate,
     fetchMatches,

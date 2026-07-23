@@ -676,6 +676,7 @@ onMounted(async () => {
     groupsStore.groups.flatMap(g => g.handPickedMatchIds ?? []),
   )
   const handPickedMatchIds = [...handPickedMatchIdSet]
+  matchesStore.setHandPickedMatchIds(handPickedMatchIds)
 
   if (userLeagueIds.length === 0 && handPickedMatchIds.length === 0) {
     matchesStore.matches = []

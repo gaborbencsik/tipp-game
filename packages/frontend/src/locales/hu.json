@@ -217,7 +217,8 @@
       "add": "Liga hozzáadása",
       "remove": "Liga eltávolítása",
       "minOne": "A csoportnak legalább egy ligája kell legyen.",
-      "lastRemoveError": "Az utolsó ligát nem lehet eltávolítani."
+      "lastRemoveError": "Az utolsó ligát nem lehet eltávolítani.",
+      "noneActive": "Jelenleg nincs elérhető liga, amelyhez csoportot lehetne létrehozni."
     },
     "matches": {
       "addTitle": "Egyedi meccs behúzása",

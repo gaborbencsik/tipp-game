@@ -44,11 +44,12 @@ vi.mock('@/stores/auth.store', async (importOriginal) => {
   }
 })
 
-const { mockFetchMyGroups, mockCreateGroup, mockJoinGroup, mockStoreState } = vi.hoisted(() => ({
+const { mockFetchMyGroups, mockCreateGroup, mockJoinGroup, mockStoreState, mockLeaguesState } = vi.hoisted(() => ({
   mockFetchMyGroups: vi.fn().mockResolvedValue(undefined),
   mockCreateGroup: vi.fn(),
   mockJoinGroup: vi.fn(),
   mockStoreState: { groups: [] as import('@/types/index').Group[], isLoading: false, error: null as string | null },
+  mockLeaguesState: { leagues: [{ id: 'l-1', name: 'VB 2026', shortName: 'VB', status: 'active' }] as Array<{ id: string; name: string; shortName: string; status: string }> },
 }))
 
 vi.mock('@/stores/groups.store', () => ({
@@ -64,7 +65,7 @@ vi.mock('@/stores/groups.store', () => ({
 
 vi.mock('@/stores/league-favorites.store', () => ({
   useLeagueFavoritesStore: () => ({
-    leagues: [{ id: 'l-1', name: 'VB 2026', shortName: 'VB' }],
+    get leagues() { return mockLeaguesState.leagues },
     fetchLeagues: vi.fn().mockResolvedValue(undefined),
   }),
 }))
@@ -102,8 +103,11 @@ describe('GroupsView', () => {
     mockStoreState.error = null
     mockFetchMyGroups.mockReset()
     mockFetchMyGroups.mockResolvedValue(undefined)
+    mockCreateGroup.mockReset()
+    mockJoinGroup.mockReset()
     mockReplace.mockClear()
     mockRouteQuery.value = {}
+    mockLeaguesState.leagues = [{ id: 'l-1', name: 'VB 2026', shortName: 'VB', status: 'active' }]
   })
 
   it('empty state shows the empty-state placeholder', () => {
@@ -229,5 +233,68 @@ describe('GroupsView', () => {
     const wrapper = mountView()
     await wrapper.find('[data-testid="invite-error-dismiss"]').trigger('click')
     expect(mockReplace).toHaveBeenCalledWith({ query: { other: 'keep' } })
+  })
+
+  // ─── league picker (US-959) ────────────────────────────────────────────────
+
+  it('single active league → league multiselect is rendered', async () => {
+    mockLeaguesState.leagues = [{ id: 'l-1', name: 'VB 2026', shortName: 'VB', status: 'active' }]
+    const wrapper = mountView()
+    await wrapper.find('[data-testid="create-group-btn"]').trigger('click')
+    await nextTick()
+    expect(wrapper.find('[data-testid="group-leagues-multiselect"]').exists()).toBe(true)
+    expect(wrapper.findAll('[data-testid="group-league-checkbox"]')).toHaveLength(1)
+  })
+
+  it('single active league → group is created with that league preselected', async () => {
+    mockLeaguesState.leagues = [{ id: 'l-1', name: 'VB 2026', shortName: 'VB', status: 'active' }]
+    mockCreateGroup.mockResolvedValue(SAMPLE_GROUP)
+    const wrapper = mountView()
+    await wrapper.find('[data-testid="create-group-btn"]').trigger('click')
+    await nextTick()
+    const vm = wrapper.vm as unknown as { createName: string; onCreateSubmit: () => Promise<void> }
+    vm.createName = 'Barátok'
+    await vm.onCreateSubmit()
+    expect(mockCreateGroup).toHaveBeenCalledWith({ name: 'Barátok', description: null, leagueIds: ['l-1'] })
+  })
+
+  it('zero active leagues → empty-state shown and submit disabled', async () => {
+    mockLeaguesState.leagues = []
+    const wrapper = mountView()
+    await wrapper.find('[data-testid="create-group-btn"]').trigger('click')
+    await nextTick()
+    expect(wrapper.find('[data-testid="group-no-active-leagues"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="group-leagues-multiselect"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="create-submit-btn"]').attributes('disabled')).toBeDefined()
+  })
+
+  it('archived league is not offered in the picker', async () => {
+    mockLeaguesState.leagues = [
+      { id: 'l-1', name: 'VB 2026', shortName: 'VB', status: 'active' },
+      { id: 'l-2', name: 'NB I 2025/26', shortName: 'NB1', status: 'archived' },
+    ]
+    const wrapper = mountView()
+    await wrapper.find('[data-testid="create-group-btn"]').trigger('click')
+    await nextTick()
+    expect(wrapper.findAll('[data-testid="group-league-checkbox"]')).toHaveLength(1)
+    expect(wrapper.text()).not.toContain('NB I 2025/26')
+  })
+
+  it('multiple active leagues → all preselected, minOne error when all unchecked', async () => {
+    mockLeaguesState.leagues = [
+      { id: 'l-1', name: 'VB 2026', shortName: 'VB', status: 'active' },
+      { id: 'l-2', name: 'Euro 2028', shortName: 'EU', status: 'active' },
+    ]
+    const wrapper = mountView()
+    await wrapper.find('[data-testid="create-group-btn"]').trigger('click')
+    await nextTick()
+    expect(wrapper.findAll('[data-testid="group-league-checkbox"]')).toHaveLength(2)
+    const vm = wrapper.vm as unknown as { createName: string; selectedLeagueIds: string[]; onCreateSubmit: () => Promise<void> }
+    vm.createName = 'Barátok'
+    vm.selectedLeagueIds = []
+    await vm.onCreateSubmit()
+    expect(mockCreateGroup).not.toHaveBeenCalled()
+    await nextTick()
+    expect(wrapper.find('[data-testid="create-error"]').exists()).toBe(true)
   })
 })

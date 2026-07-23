@@ -1,6 +1,6 @@
 # VB Tippjáték – Kész story-k
 
-> 186 story kész (Must Have: 32/32, Should Have: 154/154)
+> 188 story kész (Must Have: 32/32, Should Have: 156/156)
 
 | Story ID | Cím | Prioritás |
 |----------|-----|-----------|
@@ -204,3 +204,5 @@
 | US-952 | Több liga egy csoportban – csoport több ligára is feliratkozhat | Should Have |
 | US-953 | Egyedi meccs behúzása csoportba – admin más ligából is választhat meccset tippelésre | Should Have |
 | US-955 | Ranglista – az „Összesített" (globális) nézet eltávolítása | Should Have |
+| US-959 | Csoport-létrehozás: egyetlen aktív liga is jelenjen meg a liga-választóban (archivált kizárva) | Should Have |
+| US-960 | Mérkőzések oldal: kézzel behúzott (ligán kívüli) meccsek eltűnnek az aktív liga-szűrő miatt | Should Have |

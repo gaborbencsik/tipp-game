@@ -223,4 +223,43 @@ describe('matches.store', () => {
     expect(store.filteredMatches).toHaveLength(1)
     expect(store.filteredMatches[0]?.id).toBe('match-1')
   })
+
+  // ─── hand-picked matches (US-960) ────────────────────────────────────────────
+
+  it('leagueFilter set → hand-picked match from another league still shown', () => {
+    const store = useMatchesStore()
+    store.matches = [MATCH_SCHEDULED, MATCH_LIVE, MATCH_FINISHED]
+    store.leagueFilter = 'league-1'
+    store.setHandPickedMatchIds(['match-2'])
+    const ids = store.filteredMatches.map(m => m.id).sort()
+    // match-1 & match-3 belong to league-1; match-2 (league-2) passes as hand-picked
+    expect(ids).toEqual(['match-1', 'match-2', 'match-3'])
+  })
+
+  it('leagueFilter set → non-hand-picked match from another league still hidden', () => {
+    const store = useMatchesStore()
+    store.matches = [MATCH_SCHEDULED, MATCH_LIVE, MATCH_FINISHED]
+    store.leagueFilter = 'league-1'
+    store.setHandPickedMatchIds([])
+    expect(store.filteredMatches.some(m => m.id === 'match-2')).toBe(false)
+  })
+
+  it('hand-picked match still subject to stage/status filters', () => {
+    const store = useMatchesStore()
+    store.matches = [MATCH_SCHEDULED, MATCH_LIVE, MATCH_FINISHED]
+    store.leagueFilter = 'league-1'
+    store.setHandPickedMatchIds(['match-2'])
+    store.statusFilter = 'finished'
+    // match-2 is hand-picked but 'live' → excluded by status filter
+    const ids = store.filteredMatches.map(m => m.id)
+    expect(ids).toEqual(['match-3'])
+  })
+
+  it('no leagueFilter → hand-picked set does not change result', () => {
+    const store = useMatchesStore()
+    store.matches = [MATCH_SCHEDULED, MATCH_LIVE, MATCH_FINISHED]
+    store.leagueFilter = null
+    store.setHandPickedMatchIds(['match-2'])
+    expect(store.filteredMatches).toHaveLength(3)
+  })
 })
