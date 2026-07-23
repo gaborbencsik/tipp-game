@@ -170,8 +170,9 @@ describe('GroupsView', () => {
     const wrapper = mountView()
     await wrapper.find('[data-testid="create-group-btn"]').trigger('click')
     await nextTick()
-    const vm = wrapper.vm as unknown as { createName: string; onCreateSubmit: () => Promise<void> }
+    const vm = wrapper.vm as unknown as { createName: string; toggleLeague: (id: string) => void; onCreateSubmit: () => Promise<void> }
     vm.createName = 'Barátok'
+    vm.toggleLeague('l-1')
     await vm.onCreateSubmit()
     expect(mockCreateGroup).toHaveBeenCalledWith({ name: 'Barátok', description: null, leagueIds: ['l-1'] })
   })
@@ -246,16 +247,31 @@ describe('GroupsView', () => {
     expect(wrapper.findAll('[data-testid="group-league-checkbox"]')).toHaveLength(1)
   })
 
-  it('single active league → group is created with that league preselected', async () => {
+  it('single active league → group is created with the league the user selects', async () => {
     mockLeaguesState.leagues = [{ id: 'l-1', name: 'VB 2026', shortName: 'VB', status: 'active' }]
     mockCreateGroup.mockResolvedValue(SAMPLE_GROUP)
     const wrapper = mountView()
     await wrapper.find('[data-testid="create-group-btn"]').trigger('click')
     await nextTick()
-    const vm = wrapper.vm as unknown as { createName: string; onCreateSubmit: () => Promise<void> }
+    const vm = wrapper.vm as unknown as { createName: string; toggleLeague: (id: string) => void; onCreateSubmit: () => Promise<void> }
     vm.createName = 'Barátok'
+    vm.toggleLeague('l-1')
     await vm.onCreateSubmit()
     expect(mockCreateGroup).toHaveBeenCalledWith({ name: 'Barátok', description: null, leagueIds: ['l-1'] })
+  })
+
+  it('nothing preselected → minOne error when submitting without a league', async () => {
+    mockLeaguesState.leagues = [{ id: 'l-1', name: 'VB 2026', shortName: 'VB', status: 'active' }]
+    const wrapper = mountView()
+    await wrapper.find('[data-testid="create-group-btn"]').trigger('click')
+    await nextTick()
+    const vm = wrapper.vm as unknown as { createName: string; selectedLeagueIds: string[]; onCreateSubmit: () => Promise<void> }
+    expect(vm.selectedLeagueIds).toEqual([])
+    vm.createName = 'Barátok'
+    await vm.onCreateSubmit()
+    expect(mockCreateGroup).not.toHaveBeenCalled()
+    await nextTick()
+    expect(wrapper.find('[data-testid="create-error"]').exists()).toBe(true)
   })
 
   it('zero active leagues → empty-state shown and submit disabled', async () => {
@@ -280,21 +296,21 @@ describe('GroupsView', () => {
     expect(wrapper.text()).not.toContain('NB I 2025/26')
   })
 
-  it('multiple active leagues → all preselected, minOne error when all unchecked', async () => {
+  it('multiple active leagues → none preselected, user picks then creates', async () => {
     mockLeaguesState.leagues = [
       { id: 'l-1', name: 'VB 2026', shortName: 'VB', status: 'active' },
       { id: 'l-2', name: 'Euro 2028', shortName: 'EU', status: 'active' },
     ]
+    mockCreateGroup.mockResolvedValue(SAMPLE_GROUP)
     const wrapper = mountView()
     await wrapper.find('[data-testid="create-group-btn"]').trigger('click')
     await nextTick()
     expect(wrapper.findAll('[data-testid="group-league-checkbox"]')).toHaveLength(2)
-    const vm = wrapper.vm as unknown as { createName: string; selectedLeagueIds: string[]; onCreateSubmit: () => Promise<void> }
+    const vm = wrapper.vm as unknown as { createName: string; selectedLeagueIds: string[]; toggleLeague: (id: string) => void; onCreateSubmit: () => Promise<void> }
+    expect(vm.selectedLeagueIds).toEqual([])
     vm.createName = 'Barátok'
-    vm.selectedLeagueIds = []
+    vm.toggleLeague('l-2')
     await vm.onCreateSubmit()
-    expect(mockCreateGroup).not.toHaveBeenCalled()
-    await nextTick()
-    expect(wrapper.find('[data-testid="create-error"]').exists()).toBe(true)
+    expect(mockCreateGroup).toHaveBeenCalledWith({ name: 'Barátok', description: null, leagueIds: ['l-2'] })
   })
 })

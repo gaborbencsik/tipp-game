@@ -223,7 +223,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import AppLayout from '../components/AppLayout.vue'
@@ -261,19 +261,6 @@ const joinError = ref<string | null>(null)
 const copiedState = ref(new Map<string, 'code' | 'url'>())
 
 const selectableLeagues = computed(() => leagueStore.leagues.filter(l => l.status !== 'archived'))
-
-// Preselect every selectable league so the checkbox state is always visible to
-// the user — no silent auto-assignment at submit time. Re-runs when the form
-// opens or once leagues finish loading.
-watch(
-  [showCreateForm, selectableLeagues],
-  ([open]) => {
-    if (open && selectedLeagueIds.value.length === 0) {
-      selectedLeagueIds.value = selectableLeagues.value.map(l => l.id)
-    }
-  },
-  { immediate: true },
-)
 
 function toggleLeague(leagueId: string): void {
   const idx = selectedLeagueIds.value.indexOf(leagueId)
