@@ -70,6 +70,7 @@ services:
       VITE_USE_SSE_EVENTS: ${VITE_USE_SSE_EVENTS:-false}
       VITE_VAPID_PUBLIC_KEY: ${VITE_VAPID_PUBLIC_KEY:-}
       VITE_DONATION_URL: https://revolut.me/gaborbencsik?currency={currency}&amount={amount}&note={note}
+      VITE_SCORING_RULES_ENABLED: "true"
     volumes:
       - ./packages/frontend/src:/app/packages/frontend/src
     depends_on:
@@ -152,6 +153,7 @@ services:
       VITE_API_URL: http://backend-e2e:3000
       VITE_USE_SSE_EVENTS: "false"
       VITE_DONATION_URL: https://revolut.me/gaborbencsik?currency={currency}&amount={amount}&note={note}
+      VITE_SCORING_RULES_ENABLED: "true"
     depends_on:
       backend-e2e:
         condition: service_healthy
