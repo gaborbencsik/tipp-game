@@ -284,6 +284,7 @@
           :home-team="match.homeTeam"
           :away-team="match.awayTeam"
           :extra-time-bonus-points="extraTimeBonusPoints"
+          :match="match"
           class="mt-4"
           data-testid="match-predictions-list"
         />

@@ -209,3 +209,4 @@
 | US-954 | Archivált liga esetén a torna tippek ne jelenjenek meg a mostani formában | Should Have |
 | US-956 | Csoport pontozás kikapcsolása és csoportos recalc gomb | Should Have |
 | UX-049 | Pontozási szabályzat feature toggle — config flag-gel elrejtés | Nice to Have |
+| UX-048 | Match Detail oldalon a tippek CSV exportálása | Should Have |

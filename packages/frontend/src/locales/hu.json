@@ -573,6 +573,17 @@
       "incorrectSuffix": "✗",
       "modeExtraTime": "hosszabbítás",
       "modePenalties": "11-esek"
+    },
+    "exportCsv": {
+      "button": "Export CSV",
+      "empty": "(nincs betöltött tipp)",
+      "header": {
+        "username": "Felhasználónév",
+        "prediction": "Tippelt eredmény",
+        "scorer": "Gólszerző",
+        "points": "Meccs pont",
+        "scorerBonus": "Gólszerző bónusz"
+      }
     }
   },
   "playerSelect": {

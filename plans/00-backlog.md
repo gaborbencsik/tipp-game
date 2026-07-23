@@ -1,14 +1,6 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-07-23 (UX-049 lezárva; fókusz: UX-048)
-
-## 🎯 Jelenlegi fókusz
-
-A legutóbb felvett story-k — ezek az aktív munka. Deklarált függőségeik mind KÉSZ, így egymást nem blokkolják, de van egy fájl-szintű koordináció.
-
-| Story ID | Cím | Prioritás | Függőség | Megjegyzés |
-|----------|-----|-----------|----------|------------|
-| UX-048 | Match Detail oldalon a tippek CSV exportálása | Should Have | — | önálló |
+> Utoljára frissítve: 2026-07-23 (UX-048 lezárva)
 
 ## Nyitott story-k
 
@@ -35,11 +27,10 @@ A legutóbb felvett story-k — ezek az aktív munka. Deklarált függőségeik 
 | UX-029 | Pontozási szabályzat modal – polished error state | Nice to Have | ~~UX-028~~ |
 | UX-032 | Torna tippek – lejárt deadline után is mutassa a tippet (read-only lock) | Should Have | — |
 | SEC-002 | HMAC-aláírt meghívó URL-ek | Nice to Have | — |
-| UX-048 | Match Detail oldalon a tippek CSV exportálása | Should Have | — |
 
 > UX-019 felülírva — UX-020 implementálja a frissített, mockup-alapú 5 lépéses onboardingot.
 > US-1307 felülírva — UX-030 a Match Detail oldalon (insights alatt) jeleníti meg a Transfermarkt csapatértékeket, nem a Match Pulse-ban.
 
 ---
 
-**Haladás: 205 / 206 story kész** — Must Have: 33/33, Should Have: 171/171, Nice to Have: 1/6
+**Haladás: 206 / 206 story kész** — Must Have: 33/33, Should Have: 172/172, Nice to Have: 1/6

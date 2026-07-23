@@ -3,7 +3,8 @@ import { computed } from 'vue'
 import SupporterBadge from './SupporterBadge.vue'
 import OutcomeAfterDrawBadge from './OutcomeAfterDrawBadge.vue'
 import { resolveOutcomeAfterDrawStatus, isKnockoutStage } from '../lib/outcomeAfterDrawStatus.js'
-import type { MatchPrediction, MatchResult, MatchStage, MatchTeam } from '../types/index.js'
+import { buildPredictionsCsv, predictionsCsvFilename } from '../lib/predictionsCsv.js'
+import type { Match, MatchPrediction, MatchResult, MatchStage, MatchTeam } from '../types/index.js'
 
 const props = defineProps<{
   predictions: MatchPrediction[]
@@ -16,6 +17,8 @@ const props = defineProps<{
   homeTeam?: MatchTeam
   awayTeam?: MatchTeam
   extraTimeBonusPoints?: number
+  // UX-048: a CSV export gomb csak akkor jelenik meg, ha a meccs is át van adva.
+  match?: Match
 }>()
 
 function isExactMatch(p: MatchPrediction): boolean {
@@ -55,11 +58,37 @@ function bonusForRow(p: MatchPrediction): number | null {
   // Fallback: ha a pointsResult ismert, jelezzük csak hogy "+pont" — konkrét érték nélkül a 1 ésszerű alapérték.
   return p.pointsResult !== null && p.pointsResult > 0 ? 1 : null
 }
+
+function exportCsv(): void {
+  const match = props.match
+  if (match === undefined || props.predictions.length === 0) return
+  const csv = buildPredictionsCsv(props.predictions, match)
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = predictionsCsvFilename(match)
+  link.click()
+  URL.revokeObjectURL(url)
+}
 </script>
 
 <template>
   <section class="bg-white rounded-lg shadow-sm border p-4">
-    <h2 class="text-lg font-semibold mb-3">{{ $t('matchPredictions.title') }}</h2>
+    <div class="flex items-center justify-between gap-2 mb-3">
+      <h2 class="text-lg font-semibold">{{ $t('matchPredictions.title') }}</h2>
+      <button
+        v-if="match"
+        type="button"
+        :disabled="predictions.length === 0"
+        data-testid="match-predictions-export-csv"
+        class="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+        :title="predictions.length === 0 ? $t('matchPredictions.exportCsv.empty') : $t('matchPredictions.exportCsv.button')"
+        @click="exportCsv"
+      >
+        ⬇️ {{ $t('matchPredictions.exportCsv.button') }}
+      </button>
+    </div>
     <ul class="space-y-1">
       <li
         v-for="p in predictions"

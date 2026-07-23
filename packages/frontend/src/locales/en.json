@@ -573,6 +573,17 @@
       "incorrectSuffix": "✗",
       "modeExtraTime": "extra time",
       "modePenalties": "penalties"
+    },
+    "exportCsv": {
+      "button": "Export CSV",
+      "empty": "(no predictions loaded)",
+      "header": {
+        "username": "Username",
+        "prediction": "Predicted score",
+        "scorer": "Scorer",
+        "points": "Match points",
+        "scorerBonus": "Scorer bonus"
+      }
     }
   },
   "playerSelect": {

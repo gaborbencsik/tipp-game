@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import MatchPredictionsList from '../MatchPredictionsList.vue'
-import type { MatchPrediction, MatchResult, MatchStage, MatchTeam } from '../../types/index.js'
+import type { Match, MatchPrediction, MatchResult, MatchStage, MatchTeam } from '../../types/index.js'
 
 const SCORER_DEFAULTS = {
   scorerPickPlayerId: null,
@@ -22,7 +22,7 @@ const PREDICTIONS: MatchPrediction[] = [
 function mountComponent(
   predictions: MatchPrediction[] = PREDICTIONS,
   currentUserId = 'u2',
-  extra: Partial<{ stage: MatchStage; result: MatchResult | null; homeTeam: MatchTeam; awayTeam: MatchTeam; extraTimeBonusPoints: number }> = {},
+  extra: Partial<{ stage: MatchStage; result: MatchResult | null; homeTeam: MatchTeam; awayTeam: MatchTeam; extraTimeBonusPoints: number; match: Match }> = {},
 ) {
   return mount(MatchPredictionsList, {
     props: { predictions, currentUserId, ...extra },
@@ -219,5 +219,64 @@ describe('MatchPredictionsList — outcomeAfterDraw (UX-043)', () => {
   it('does not show outcome badges when stage/match-context props are omitted (backwards compatibility)', () => {
     const wrapper = mountComponent(KNOCKOUT_PREDICTIONS, 'u1')
     expect(wrapper.find('[data-testid="outcome-after-draw-badge"]').exists()).toBe(false)
+  })
+})
+
+// UX-048: tippek CSV exportálása
+describe('MatchPredictionsList — CSV export (UX-048)', () => {
+  const MATCH = {
+    id: 'm1',
+    homeTeam: { id: 'h', name: 'Magyarország', shortCode: 'HUN', flagUrl: null, teamType: 'national', countryCode: 'hu', marketValueEur: null, transfermarktId: null },
+    awayTeam: { id: 'a', name: 'Németország', shortCode: 'GER', flagUrl: null, teamType: 'national', countryCode: 'de', marketValueEur: null, transfermarktId: null },
+    venue: null, league: null, stage: 'final', groupName: null, matchNumber: null,
+    scheduledAt: '2026-07-23T18:00:00.000Z', status: 'finished', result: null,
+  } as unknown as Match
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('does not render the export button without the match prop (backwards compatibility)', () => {
+    const wrapper = mountComponent()
+    expect(wrapper.find('[data-testid="match-predictions-export-csv"]').exists()).toBe(false)
+  })
+
+  it('renders an enabled export button when there are predictions', () => {
+    const wrapper = mountComponent(PREDICTIONS, 'u2', { match: MATCH })
+    const btn = wrapper.find('[data-testid="match-predictions-export-csv"]')
+    expect(btn.exists()).toBe(true)
+    expect(btn.attributes('disabled')).toBeUndefined()
+  })
+
+  it('disables the export button when the prediction list is empty', () => {
+    const wrapper = mountComponent([], 'u2', { match: MATCH })
+    const btn = wrapper.find('[data-testid="match-predictions-export-csv"]')
+    expect(btn.attributes('disabled')).toBeDefined()
+    expect(btn.classes()).toContain('disabled:cursor-not-allowed')
+  })
+
+  it('triggers a CSV download with the expected filename on click', async () => {
+    const createObjectURL = vi.fn(() => 'blob:mock')
+    const revokeObjectURL = vi.fn()
+    vi.stubGlobal('URL', { ...URL, createObjectURL, revokeObjectURL })
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+
+    const wrapper = mountComponent(PREDICTIONS, 'u2', { match: MATCH })
+    const anchors: HTMLAnchorElement[] = []
+    const origCreate = document.createElement.bind(document)
+    vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
+      const el = origCreate(tag)
+      if (tag === 'a') anchors.push(el as HTMLAnchorElement)
+      return el
+    })
+
+    await wrapper.find('[data-testid="match-predictions-export-csv"]').trigger('click')
+
+    expect(createObjectURL).toHaveBeenCalledOnce()
+    expect(clickSpy).toHaveBeenCalledOnce()
+    expect(anchors[0].download).toBe('tippek-HUN-GER-2026-07-23.csv')
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:mock')
+
+    vi.unstubAllGlobals()
   })
 })
