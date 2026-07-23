@@ -39,6 +39,18 @@ vi.mock('@/lib/supabase', () => ({
   },
 }))
 
+const { mockFetchAccess, mockTournamentHasAccess } = vi.hoisted(() => ({
+  mockFetchAccess: vi.fn().mockResolvedValue(undefined),
+  mockTournamentHasAccess: { value: null as boolean | null },
+}))
+
+vi.mock('@/stores/tournamentTips.store', () => ({
+  useTournamentTipsStore: () => ({
+    get hasAccess() { return mockTournamentHasAccess.value },
+    fetchAccess: mockFetchAccess,
+  }),
+}))
+
 const MOCK_USER: User = {
   id: '00000000-0000-0000-0000-000000000001',
   supabaseId: 'supabase-uuid-001',
@@ -338,5 +350,38 @@ describe('router beforeEach guard', () => {
     })
     await testRouter.push('/admin')
     expect(testRouter.currentRoute.value.name).toBe('admin')
+  })
+})
+
+// ─── US-954: tournament-tips access guard (beforeEnter) ──────────────────────
+
+describe('router tournament-tips beforeEnter guard (US-954)', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    setAuthReady(true)
+    mockFetchAccess.mockClear().mockResolvedValue(undefined)
+    mockTournamentHasAccess.value = null
+    vi.resetModules()
+  })
+
+  it('redirects to /app/matches when the user has no tournament access', async () => {
+    mockTournamentHasAccess.value = false
+    const { router } = await import('@/router/index')
+    await router.push('/app/tournament-tips')
+    expect(router.currentRoute.value.path).toBe('/app/matches')
+  })
+
+  it('allows /app/tournament-tips when the user has tournament access', async () => {
+    mockTournamentHasAccess.value = true
+    const { router } = await import('@/router/index')
+    await router.push('/app/tournament-tips')
+    expect(router.currentRoute.value.name).toBe('tournament-tips')
+  })
+
+  it('calls fetchAccess before deciding', async () => {
+    mockTournamentHasAccess.value = true
+    const { router } = await import('@/router/index')
+    await router.push('/app/tournament-tips')
+    expect(mockFetchAccess).toHaveBeenCalled()
   })
 })

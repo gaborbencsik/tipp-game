@@ -63,6 +63,7 @@
 
           <!-- Torna tippek -->
           <router-link
+            v-if="tournamentTipsStore.hasAccess === true"
             to="/app/tournament-tips"
             data-testid="nav-tournament-tips"
             class="flex items-center gap-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors"
@@ -161,19 +162,25 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import UserMenuButton from './UserMenuButton.vue'
 import OnboardingOverlay from './OnboardingOverlay.vue'
 import DonationButton from './DonationButton.vue'
 import { useAuthStore } from '../stores/auth.store.js'
 import { useScoringExplainerStore } from '../stores/scoring-explainer.store.js'
+import { useTournamentTipsStore } from '../stores/tournamentTips.store.js'
 import { usePendingTodayCount } from '../composables/usePendingTodayCount.js'
 
 const authStore = useAuthStore()
 const scoringExplainerStore = useScoringExplainerStore()
+const tournamentTipsStore = useTournamentTipsStore()
 const sidebarOpen = ref(false)
 const sidebarHover = ref(false)
 let hoverTimeout: ReturnType<typeof setTimeout> | null = null
+
+onMounted(() => {
+  void tournamentTipsStore.fetchAccess()
+})
 
 function onSidebarMouseEnter(): void {
   if (window.innerWidth < 768) return

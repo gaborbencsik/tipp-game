@@ -41,6 +41,7 @@ export async function userHasTournamentAccess(userId: string): Promise<boolean> 
     .where(and(
       eq(groupMembers.userId, userId),
       eq(leagues.shortName, TOURNAMENT_LEAGUE_SHORT_NAME),
+      eq(leagues.status, 'active'),
       isNull(groups.deletedAt),
     ))
     .limit(1)

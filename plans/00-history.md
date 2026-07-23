@@ -206,3 +206,4 @@
 | US-955 | Ranglista – az „Összesített" (globális) nézet eltávolítása | Should Have |
 | US-959 | Csoport-létrehozás: egyetlen aktív liga is jelenjen meg a liga-választóban (archivált kizárva) | Should Have |
 | US-960 | Mérkőzések oldal: kézzel behúzott (ligán kívüli) meccsek eltűnnek az aktív liga-szűrő miatt | Should Have |
+| US-954 | Archivált liga esetén a torna tippek ne jelenjenek meg a mostani formában | Should Have |

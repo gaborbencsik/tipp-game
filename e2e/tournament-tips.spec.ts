@@ -36,19 +36,24 @@ test.describe('Tournament tips', () => {
     if (typeId) await deactivateGlobalSpecialType(typeId)
   })
 
-  test('nav link is always visible', async ({ page }) => {
+  test('nav link is visible when user has a WC group', async ({ page }) => {
+    await ensureGroupInLeague(`E2E WC Group ${Date.now()}`, wcLeagueId)
+
     await injectSession(page)
     await page.goto('/app/matches')
     await expect(page.getByTestId('nav-tournament-tips')).toBeVisible()
   })
 
-  test('shows no-access state when user has no WC group', async ({ page }) => {
+  test('US-954: hides nav link and redirects to matches when user has no WC group', async ({ page }) => {
     await deleteMyGroupsByLeagueShortName('VB')
 
     await injectSession(page)
-    await page.goto('/app/tournament-tips')
+    await page.goto('/app/matches')
 
-    await expect(page.getByTestId('tournament-tips-no-access')).toBeVisible({ timeout: 5000 })
+    await expect(page.getByTestId('nav-tournament-tips')).toHaveCount(0)
+
+    await page.goto('/app/tournament-tips')
+    await expect(page).toHaveURL(/\/app\/matches$/, { timeout: 5000 })
     await expect(page.getByTestId('tournament-tips-list')).toHaveCount(0)
   })
 

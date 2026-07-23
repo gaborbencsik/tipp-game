@@ -1,16 +1,32 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-const { mockSelect, mockInsert, mockUpdate, mockTransaction } = vi.hoisted(() => ({
+const { mockSelect, mockInsert, mockUpdate, mockTransaction, eqCalls } = vi.hoisted(() => ({
   mockSelect: vi.fn(),
   mockInsert: vi.fn(),
   mockUpdate: vi.fn(),
   mockTransaction: vi.fn(),
+  eqCalls: [] as Array<readonly [unknown, unknown]>,
 }))
 
 vi.mock('../src/db/client.js', () => ({
   db: { select: mockSelect, insert: mockInsert, update: mockUpdate, transaction: mockTransaction },
 }))
 
+// Record every eq(column, value) so we can assert the access gate's WHERE
+// filters on leagues.status = 'active' (US-954) — the select mock is
+// WHERE-independent, so a behavioural true/false test can't catch this.
+vi.mock('drizzle-orm', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('drizzle-orm')>()
+  return {
+    ...actual,
+    eq: (col: unknown, val: unknown) => {
+      eqCalls.push([col, val])
+      return actual.eq(col as never, val as never)
+    },
+  }
+})
+
+import { leagues } from '../src/db/schema/index.js'
 import { listGlobalTypesWithPredictions, upsertGlobalPrediction, userHasTournamentAccess } from '../src/services/tournament-tips.service.js'
 
 const NOW = new Date('2026-01-01T00:00:00.000Z')
@@ -540,7 +556,7 @@ describe('upsertGlobalPrediction', () => {
 })
 
 describe('userHasTournamentAccess', () => {
-  beforeEach(() => { vi.resetAllMocks() })
+  beforeEach(() => { vi.resetAllMocks(); eqCalls.length = 0 })
 
   it('returns true when user is in a group linked to the WC league', async () => {
     setupSelectSequence([ACCESS_GRANTED])
@@ -550,5 +566,12 @@ describe('userHasTournamentAccess', () => {
   it('returns false when user has no group linked to the WC league', async () => {
     setupSelectSequence([ACCESS_DENIED])
     expect(await userHasTournamentAccess(USER_ID)).toBe(false)
+  })
+
+  it('US-954: filters the access gate on leagues.status = active (archived leagues excluded)', async () => {
+    setupSelectSequence([ACCESS_GRANTED])
+    await userHasTournamentAccess(USER_ID)
+    const matched = eqCalls.some(([col, val]) => col === leagues.status && val === 'active')
+    expect(matched).toBe(true)
   })
 })

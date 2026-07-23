@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth.store.js'
+import { useTournamentTipsStore } from '../stores/tournamentTips.store.js'
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -35,6 +36,13 @@ export const router = createRouter({
       name: 'tournament-tips',
       component: () => import('../views/TournamentTipsView.vue'),
       meta: { requiresAuth: true },
+      beforeEnter: async () => {
+        const tournamentTipsStore = useTournamentTipsStore()
+        await tournamentTipsStore.fetchAccess()
+        if (tournamentTipsStore.hasAccess !== true) {
+          return { name: 'home' }
+        }
+      },
     },
     {
       path: '/app/groups',
