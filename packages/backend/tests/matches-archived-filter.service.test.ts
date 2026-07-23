@@ -64,4 +64,22 @@ describe('getMatches archived-league filter', () => {
 
     expect(orCalls).toHaveLength(0)
   })
+
+  // US-953 fix: hand-picked matches may live in ANY (incl. archived) league, so
+  // when matchIds is supplied the default archived filter must let them through.
+  it('matchIds → archived or-condition gains the matchIds operand (3 operands)', async () => {
+    await getMatches({ matchIds: ['m-1', 'm-2'] })
+
+    expect(orCalls).toHaveLength(1)
+    expect(orCalls[0] as unknown[]).toHaveLength(3)
+  })
+
+  it('leagueIds + matchIds → builds a scope or() with two operands', async () => {
+    await getMatches({ leagueIds: ['l-1'], matchIds: ['m-1'] })
+
+    // one or() for the (league ∪ match) scope, one for the archived filter
+    expect(orCalls).toHaveLength(2)
+    const scope = orCalls.find((c) => c.length === 2)
+    expect(scope).toBeDefined()
+  })
 })

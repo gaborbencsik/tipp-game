@@ -1,6 +1,6 @@
 import { eq, and, or, isNotNull, isNull } from 'drizzle-orm'
 import { db } from '../db/client.js'
-import { predictions, scoringConfigs, groupMembers, groups, groupPredictionPoints, userLeagueFavorites, matches, matchResults, groupLeagues } from '../db/schema/index.js'
+import { predictions, scoringConfigs, groupMembers, groups, groupPredictionPoints, userLeagueFavorites, matches, matchResults, groupLeagues, groupMatches } from '../db/schema/index.js'
 import type { ScoringConfig, ScoreLine, MatchOutcome } from '../types/index.js'
 
 export interface PredictionScore {
@@ -197,6 +197,13 @@ export async function calculateAndSaveGroupPoints(
     set.add(row.leagueId)
   }
 
+  // US-953: groups that hand-picked THIS match bypass the league gate below.
+  const handPickedRows = await db
+    .select({ groupId: groupMatches.groupId })
+    .from(groupMatches)
+    .where(eq(groupMatches.matchId, matchId))
+  const handPickedGroupIds = new Set(handPickedRows.map((r) => r.groupId))
+
   await Promise.all(
     matchPredictions.map(async (pred) => {
       const userGroups = await db
@@ -220,7 +227,7 @@ export async function calculateAndSaveGroupPoints(
       await Promise.all(
         userGroups.map(({ groupId, scoringConfigId, favoriteTeamDoublePoints, config }) => {
           const allowedLeagues = groupLeagueMap.get(groupId)
-          if (allowedLeagues && allowedLeagues.size > 0) {
+          if (allowedLeagues && allowedLeagues.size > 0 && !handPickedGroupIds.has(groupId)) {
             if (!matchRow.leagueId || !allowedLeagues.has(matchRow.leagueId)) return Promise.resolve()
           }
 

@@ -103,6 +103,9 @@ export const api = {
       if (filters?.leagueIds) {
         for (const id of filters.leagueIds) params.append('leagueIds', id)
       }
+      if (filters?.matchIds) {
+        for (const id of filters.matchIds) params.append('matchIds', id)
+      }
       const query = params.toString() ? `?${params.toString()}` : ''
       return request<Match[]>(`/matches${query}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -236,6 +239,21 @@ export const api = {
       }),
     removeLeague: (token: string, groupId: string, leagueId: string) =>
       request<Group>(`/groups/${groupId}/leagues/${leagueId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+    matches: (token: string, groupId: string) =>
+      request<Match[]>(`/groups/${groupId}/matches`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+    addMatch: (token: string, groupId: string, matchId: string) =>
+      request<{ ok: boolean }>(`/groups/${groupId}/matches`, {
+        method: 'POST',
+        body: JSON.stringify({ matchId }),
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+    removeMatch: (token: string, groupId: string, matchId: string) =>
+      request<{ ok: boolean }>(`/groups/${groupId}/matches/${matchId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       }),

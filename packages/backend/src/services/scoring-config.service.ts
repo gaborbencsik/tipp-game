@@ -1,4 +1,4 @@
-import { eq, sql, inArray } from 'drizzle-orm'
+import { asc, eq, sql, inArray } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import {
   scoringConfigs,
@@ -75,6 +75,7 @@ async function loadGlobalConfigRow(): Promise<typeof scoringConfigs.$inferSelect
     .select()
     .from(scoringConfigs)
     .where(eq(scoringConfigs.isGlobalDefault, true))
+    .orderBy(asc(scoringConfigs.createdAt), asc(scoringConfigs.id))
     .limit(1)
   if (!rows[0]) throw new AppError(404, 'Global scoring config not found')
   return rows[0]

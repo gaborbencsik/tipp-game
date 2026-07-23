@@ -22,13 +22,28 @@ export async function getMatches(filters: MatchesFilters = {}): Promise<Match[]>
   if (filters.stage) conditions.push(eq(matches.stage, filters.stage))
   if (filters.status) conditions.push(eq(matches.status, filters.status))
   if (filters.leagueId) conditions.push(eq(matches.leagueId, filters.leagueId))
-  if (filters.leagueIds && filters.leagueIds.length > 0) {
-    conditions.push(inArray(matches.leagueId, [...filters.leagueIds]))
+
+  const scopeLeagueIds = filters.leagueIds && filters.leagueIds.length > 0 ? [...filters.leagueIds] : []
+  const scopeMatchIds = filters.matchIds && filters.matchIds.length > 0 ? [...filters.matchIds] : []
+
+  // US-953: hand-picked matches live outside the group's leagues, so the scope
+  // is (league ∈ leagueIds) ∪ (match ∈ matchIds), not two ANDed filters.
+  if (scopeLeagueIds.length > 0 && scopeMatchIds.length > 0) {
+    const scope = or(inArray(matches.leagueId, scopeLeagueIds), inArray(matches.id, scopeMatchIds))
+    if (scope) conditions.push(scope)
+  } else if (scopeLeagueIds.length > 0) {
+    conditions.push(inArray(matches.leagueId, scopeLeagueIds))
+  } else if (scopeMatchIds.length > 0) {
+    conditions.push(inArray(matches.id, scopeMatchIds))
   }
+
   if (!filters.includeArchivedLeagues) {
     // Hide archived leagues' matches by default; matches without a league
-    // (leagueId IS NULL) must not be excluded by the join filter.
-    const archivedFilter = or(isNull(matches.leagueId), eq(leagues.status, 'active'))
+    // (leagueId IS NULL) must not be excluded by the join filter. Hand-picked
+    // matches may sit in an archived league, so allow them through by id.
+    const archivedFilter = scopeMatchIds.length > 0
+      ? or(isNull(matches.leagueId), eq(leagues.status, 'active'), inArray(matches.id, scopeMatchIds))
+      : or(isNull(matches.leagueId), eq(leagues.status, 'active'))
     if (archivedFilter) conditions.push(archivedFilter)
   }
 

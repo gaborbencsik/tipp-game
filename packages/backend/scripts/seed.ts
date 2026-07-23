@@ -6,13 +6,23 @@ async function seed(): Promise<void> {
   console.log('Seeding base data...')
 
   // ─── Scoring config ──────────────────────────────────────────────────────
-  await db.insert(scoringConfigs).values({
-    name: 'Global Default',
-    isGlobalDefault: true,
-    correctOutcomePoints: 1,
-    exactBonusPoints: 1,
-    extraTimeBonusPoints: 1,
-  }).onConflictDoNothing()
+  // Guard against duplicate global-default rows: onConflictDoNothing can't dedupe
+  // here (no unique constraint on is_global_default), so re-running the seed would
+  // otherwise insert a second global default and make loadGlobalConfigRow ambiguous.
+  const existingGlobal = await db
+    .select({ id: scoringConfigs.id })
+    .from(scoringConfigs)
+    .where(eq(scoringConfigs.isGlobalDefault, true))
+    .limit(1)
+  if (existingGlobal.length === 0) {
+    await db.insert(scoringConfigs).values({
+      name: 'Global Default',
+      isGlobalDefault: true,
+      correctOutcomePoints: 1,
+      exactBonusPoints: 1,
+      extraTimeBonusPoints: 1,
+    })
+  }
 
   // ─── Venues (FIFA 2026) ──────────────────────────────────────────────────
   const venueData = [

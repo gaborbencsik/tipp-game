@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { supabase } from '../lib/supabase.js'
 import { api } from '../api/index.js'
-import type { Group, GroupInput, GroupMember, JoinGroupInput, ScoringConfigFull, ScoringConfigInput, ScoringConfigWithImpact, ScoringOverrideInput, SpecialPredictionType, SpecialTypeInput, SpecialPredictionWithType, SpecialPredictionInput, GlobalTypeWithSubscription, GroupMyPredictionsResult } from '../types/index.js'
+import type { Group, GroupInput, GroupMember, JoinGroupInput, Match, ScoringConfigFull, ScoringConfigInput, ScoringConfigWithImpact, ScoringOverrideInput, SpecialPredictionType, SpecialTypeInput, SpecialPredictionWithType, SpecialPredictionInput, GlobalTypeWithSubscription, GroupMyPredictionsResult } from '../types/index.js'
 
 const DEV_AUTH_BYPASS = import.meta.env.VITE_DEV_AUTH_BYPASS === 'true'
 
@@ -134,6 +134,21 @@ export const useGroupsStore = defineStore('groups', () => {
     const token = await getAccessToken()
     const updated = await api.groups.removeLeague(token, groupId, leagueId)
     groups.value = groups.value.map((g) => g.id === groupId ? updated : g)
+  }
+
+  async function fetchGroupMatches(groupId: string): Promise<Match[]> {
+    const token = await getAccessToken()
+    return api.groups.matches(token, groupId)
+  }
+
+  async function addGroupMatch(groupId: string, matchId: string): Promise<void> {
+    const token = await getAccessToken()
+    await api.groups.addMatch(token, groupId, matchId)
+  }
+
+  async function removeGroupMatch(groupId: string, matchId: string): Promise<void> {
+    const token = await getAccessToken()
+    await api.groups.removeMatch(token, groupId, matchId)
   }
 
   async function deleteGroup(groupId: string): Promise<void> {
@@ -340,6 +355,9 @@ export const useGroupsStore = defineStore('groups', () => {
     updateGroupSettings,
     addGroupLeague,
     removeGroupLeague,
+    fetchGroupMatches,
+    addGroupMatch,
+    removeGroupMatch,
     deleteGroup,
     fetchGroupScoringConfig,
     setGroupScoringConfig,

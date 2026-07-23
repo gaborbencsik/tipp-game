@@ -34,7 +34,7 @@ export const specialPredictionInputTypeEnum = pgEnum(
 )
 
 export const auditActionEnum = pgEnum('audit_action', [
-  'create', 'update', 'delete', 'result_set', 'ban', 'role_change', 'push_send', 'group_member_paid_set', 'user_supporter_set', 'league_archive', 'league_restore', 'league_sync_run'
+  'create', 'update', 'delete', 'result_set', 'ban', 'role_change', 'push_send', 'group_member_paid_set', 'user_supporter_set', 'league_archive', 'league_restore', 'league_sync_run', 'group_match_add', 'group_match_remove'
 ])
 
 export const pushNotificationTypeEnum = pgEnum('push_notification_type', [
@@ -450,6 +450,20 @@ export const groupLeagues = pgTable('group_leagues', {
   leagueIdx:         index('group_leagues_league_idx').on(t.leagueId),
 }))
 
+// ─── GROUP MATCHES (hand-picked, US-953) ──────────────────────────────────────
+
+export const groupMatches = pgTable('group_matches', {
+  id:      uuid('id').primaryKey().defaultRandom(),
+  groupId: uuid('group_id').notNull().references(() => groups.id, { onDelete: 'cascade' }),
+  matchId: uuid('match_id').notNull().references(() => matches.id, { onDelete: 'cascade' }),
+  addedAt: timestamp('added_at', { withTimezone: true }).notNull().defaultNow(),
+  addedBy: uuid('added_by').references(() => users.id),
+}, (t) => ({
+  uniqueGroupMatch: uniqueIndex('group_matches_group_match_idx').on(t.groupId, t.matchId),
+  groupIdx:         index('group_matches_group_idx').on(t.groupId),
+  matchIdx:         index('group_matches_match_idx').on(t.matchId),
+}))
+
 // ─── AUDIT LOGS ───────────────────────────────────────────────────────────────
 
 export const auditLogs = pgTable('audit_logs', {
@@ -556,6 +570,7 @@ export const matchesRelations = relations(matches, ({ one, many }) => ({
   result: one(matchResults, { fields: [matches.id], references: [matchResults.matchId] }),
   liveState: one(liveMatchStates, { fields: [matches.id], references: [liveMatchStates.matchId] }),
   predictions: many(predictions),
+  groupMatches: many(groupMatches),
 }))
 
 export const leaguesRelations = relations(leagues, ({ many }) => ({
@@ -587,6 +602,7 @@ export const groupsRelations = relations(groups, ({ one, many }) => ({
   specialTypes: many(specialPredictionTypes),
   globalTypeSubscriptions: many(groupGlobalTypeSubscriptions),
   leagues: many(groupLeagues),
+  handPickedMatches: many(groupMatches),
 }))
 
 export const groupMembersRelations = relations(groupMembers, ({ one }) => ({
@@ -620,6 +636,12 @@ export const userLeagueFavoritesRelations = relations(userLeagueFavorites, ({ on
 export const groupLeaguesRelations = relations(groupLeagues, ({ one }) => ({
   group: one(groups, { fields: [groupLeagues.groupId], references: [groups.id] }),
   league: one(leagues, { fields: [groupLeagues.leagueId], references: [leagues.id] }),
+}))
+
+export const groupMatchesRelations = relations(groupMatches, ({ one }) => ({
+  group: one(groups, { fields: [groupMatches.groupId], references: [groups.id] }),
+  match: one(matches, { fields: [groupMatches.matchId], references: [matches.id] }),
+  addedByUser: one(users, { fields: [groupMatches.addedBy], references: [users.id] }),
 }))
 
 // ─── SYNC STATE ──────────────────────────────────────────────────────────────

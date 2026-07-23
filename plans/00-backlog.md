@@ -1,6 +1,6 @@
 # VB Tippjáték – Backlog
 
-> Utoljára frissítve: 2026-07-22 (US-952 kész: több liga egy csoportban)
+> Utoljára frissítve: 2026-07-23 (UX-049 hozzáadva: pontozási szabályzat feature toggle)
 
 ## Nyitott story-k
 
@@ -27,14 +27,15 @@
 | UX-029 | Pontozási szabályzat modal – polished error state | Nice to Have | ~~UX-028~~ |
 | UX-032 | Torna tippek – lejárt deadline után is mutassa a tippet (read-only lock) | Should Have | — |
 | SEC-002 | HMAC-aláírt meghívó URL-ek | Nice to Have | — |
-| US-953 | Egyedi meccs behúzása csoportba – admin más ligából is választhat meccset tippelésre | Should Have | ~~US-952~~ |
 | US-954 | Archivált liga esetén a torna tippek ne jelenjenek meg a mostani formában | Should Have | ~~US-940~~ |
 | US-955 | Ranglista – az „Összesített" (globális) nézet eltávolítása | Should Have | — |
 | US-956 | Csoport pontozás kikapcsolása és csoportos recalc gomb | Should Have | ~~US-952~~ |
+| UX-048 | Match Detail oldalon a tippek CSV exportálása | Should Have | — |
+| UX-049 | Pontozási szabályzat feature toggle — config flag-gel elrejtés | Nice to Have | ~~UX-028~~ |
 
 > UX-019 felülírva — UX-020 implementálja a frissített, mockup-alapú 5 lépéses onboardingot.
 > US-1307 felülírva — UX-030 a Match Detail oldalon (insights alatt) jeleníti meg a Transfermarkt csapatértékeket, nem a Match Pulse-ban.
 
 ---
 
-**Haladás: 200 / 203 story nyitott** — Must Have: 33/33, Should Have: 166/166, Nice to Have: 0/5
+**Haladás: 201 / 204 story nyitott** — Must Have: 33/33, Should Have: 166/167, Nice to Have: 0/6

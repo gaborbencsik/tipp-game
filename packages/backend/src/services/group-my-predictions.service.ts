@@ -1,7 +1,7 @@
-import { eq, and, isNull, desc, sql, inArray } from 'drizzle-orm'
+import { eq, and, isNull, desc, sql, inArray, or } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/pg-core'
 import { db } from '../db/client.js'
-import { predictions, matches, matchResults, teams, players, groups, groupMembers, groupPredictionPoints, userLeagueFavorites, groupLeagues } from '../db/schema/index.js'
+import { predictions, matches, matchResults, teams, players, groups, groupMembers, groupPredictionPoints, userLeagueFavorites, groupLeagues, groupMatches } from '../db/schema/index.js'
 import type { GroupMatchPrediction } from '../types/index.js'
 
 class AppError extends Error {
@@ -52,12 +52,28 @@ export async function getMyGroupPredictions(
     .where(eq(groupLeagues.groupId, groupId))
   const allowedLeagueIds = allowedLeagueRows.map(r => r.leagueId)
 
+  // US-953: hand-picked matches count too, independent of the group's leagues.
+  const handPickedRows = await db
+    .select({ matchId: groupMatches.matchId })
+    .from(groupMatches)
+    .where(eq(groupMatches.groupId, groupId))
+  const groupMatchIds = handPickedRows.map(r => r.matchId)
+
   const homeTeam = alias(teams, 'home_team')
   const awayTeam = alias(teams, 'away_team')
 
   const whereConditions = [eq(predictions.userId, userId)]
+  const scopeConditions = []
   if (allowedLeagueIds.length > 0) {
-    whereConditions.push(inArray(matches.leagueId, allowedLeagueIds))
+    scopeConditions.push(inArray(matches.leagueId, allowedLeagueIds))
+  }
+  if (groupMatchIds.length > 0) {
+    scopeConditions.push(inArray(matches.id, groupMatchIds))
+  }
+  if (scopeConditions.length === 1) {
+    whereConditions.push(scopeConditions[0]!)
+  } else if (scopeConditions.length > 1) {
+    whereConditions.push(or(...scopeConditions)!)
   }
 
   const rows = await db

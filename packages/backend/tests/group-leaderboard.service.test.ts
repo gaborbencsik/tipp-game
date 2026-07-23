@@ -54,6 +54,7 @@ vi.mock('../src/db/schema/index.js', () => ({
   specialPredictionTypes: { id: 'spt.id', groupId: 'spt.groupId', isGlobal: 'spt.isGlobal' },
   groupGlobalTypeSubscriptions: { globalTypeId: 'ggts.globalTypeId', groupId: 'ggts.groupId' },
   groupLeagues: { groupId: 'gl.groupId', leagueId: 'gl.leagueId' },
+  groupMatches: { groupId: 'gm.groupId', matchId: 'gm.matchId' },
   matches: { id: 'matches.id', leagueId: 'matches.leagueId', deletedAt: 'matches.deletedAt' },
   userLeagueFavorites: { userId: 'ulf.userId', leagueId: 'ulf.leagueId', teamId: 'ulf.teamId' },
   teams: { id: 'teams.id', countryCode: 'teams.countryCode', name: 'teams.name' },
@@ -127,6 +128,10 @@ function setupLeaderboardSelectChain(
   mockLeagueWhere.mockResolvedValueOnce(leagueRows)
   mockLeagueFrom.mockReturnValue({ where: mockLeagueWhere })
 
+  // US-953: hand-picked group_matches → select().from().where()
+  const mockGroupMatchWhere = vi.fn().mockResolvedValueOnce([])
+  const mockGroupMatchFrom = vi.fn().mockReturnValue({ where: mockGroupMatchWhere })
+
   mockOrderBy.mockResolvedValueOnce(leaderboardRows)
   mockGroupBy.mockReturnValue({ orderBy: mockOrderBy })
   mockLeaderboardWhere.mockReturnValue({ groupBy: mockGroupBy })
@@ -157,6 +162,7 @@ function setupLeaderboardSelectChain(
     { from: mockGroupFrom },
     { from: mockMemberFrom },
     { from: mockLeagueFrom },
+    { from: mockGroupMatchFrom },
     { from: mockLeaderboardFrom },
     { from: mockStatFrom },
     { from: mockTournamentMaxFrom },

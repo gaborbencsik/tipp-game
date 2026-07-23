@@ -208,6 +208,12 @@ describe('calculateAndSaveGroupPoints', () => {
     mockSelect.mockReturnValueOnce({ from: mockGLFrom })
   }
 
+  function setupGroupMatchesSelect(rows: Array<{ groupId: string }> = []) {
+    const mockGMWhere = vi.fn().mockResolvedValue(rows)
+    const mockGMFrom = vi.fn().mockReturnValue({ where: mockGMWhere })
+    mockSelect.mockReturnValueOnce({ from: mockGMFrom })
+  }
+
   function setupUserGroupsSelect(groups: unknown[]) {
     const mockGroupWhere = vi.fn().mockResolvedValue(groups)
     const mockLeftJoin = vi.fn().mockReturnValue({ where: mockGroupWhere })
@@ -239,6 +245,7 @@ describe('calculateAndSaveGroupPoints', () => {
     setupFavoritesSelect([])
     setupGlobalConfigSelect(DEFAULT_CONFIG_ROW)
     setupGroupLeaguesSelect([])
+    setupGroupMatchesSelect([])
 
     // User's groups query
     setupUserGroupsSelect([
@@ -258,6 +265,7 @@ describe('calculateAndSaveGroupPoints', () => {
     setupFavoritesSelect([])
     setupGlobalConfigSelect(DEFAULT_CONFIG_ROW)
     setupGroupLeaguesSelect([])
+    setupGroupMatchesSelect([])
     setupUserGroupsSelect([])
 
     await calculateAndSaveGroupPoints(MATCH_ID, RESULT)
@@ -270,6 +278,7 @@ describe('calculateAndSaveGroupPoints', () => {
     setupFavoritesSelect([{ userId: 'user-1', leagueId: 'league-1', teamId: 'team-home' }])
     setupGlobalConfigSelect(DEFAULT_CONFIG_ROW)
     setupGroupLeaguesSelect([])
+    setupGroupMatchesSelect([])
 
     setupUserGroupsSelect([
       { groupId: 'group-uuid-1', scoringConfigId: null, favoriteTeamDoublePoints: true, config: null },
@@ -287,6 +296,7 @@ describe('calculateAndSaveGroupPoints', () => {
     setupFavoritesSelect([{ userId: 'user-1', leagueId: 'league-1', teamId: 'team-other' }])
     setupGlobalConfigSelect(DEFAULT_CONFIG_ROW)
     setupGroupLeaguesSelect([])
+    setupGroupMatchesSelect([])
 
     setupUserGroupsSelect([
       { groupId: 'group-uuid-1', scoringConfigId: null, favoriteTeamDoublePoints: true, config: null },
@@ -297,5 +307,42 @@ describe('calculateAndSaveGroupPoints', () => {
     expect(mockInsert).toHaveBeenCalledTimes(1)
     const insertedValues = mockInsertValues.mock.calls[0]![0] as { groupId: string; points: number }
     expect(insertedValues.points).toBe(2) // exact 2-1 default cfg: 2 × 1 (fav not playing)
+  })
+
+  // ─── US-953: hand-picked matches bypass the league gate ─────────────────────
+
+  it('US-953: match outside the group leagues is SKIPPED without a hand-pick', async () => {
+    // Match belongs to league-OTHER; group only subscribes to league-1 and did
+    // not hand-pick the match → league gate excludes it.
+    setupParallelSelect([PREDICTIONS[0]], { homeTeamId: 'team-home', awayTeamId: 'team-away', leagueId: 'league-OTHER' })
+    setupFavoritesSelect([])
+    setupGlobalConfigSelect(DEFAULT_CONFIG_ROW)
+    setupGroupLeaguesSelect([{ groupId: 'group-uuid-1', leagueId: 'league-1' }])
+    setupGroupMatchesSelect([]) // not hand-picked
+    setupUserGroupsSelect([
+      { groupId: 'group-uuid-1', scoringConfigId: 'cfg-1', favoriteTeamDoublePoints: false, config: GROUP_CONFIG_ROW },
+    ])
+
+    await calculateAndSaveGroupPoints(MATCH_ID, RESULT)
+
+    expect(mockInsert).not.toHaveBeenCalled()
+  })
+
+  it('US-953: hand-picked match outside the group leagues STILL gets group points', async () => {
+    setupParallelSelect([PREDICTIONS[0]], { homeTeamId: 'team-home', awayTeamId: 'team-away', leagueId: 'league-OTHER' })
+    setupFavoritesSelect([])
+    setupGlobalConfigSelect(DEFAULT_CONFIG_ROW)
+    setupGroupLeaguesSelect([{ groupId: 'group-uuid-1', leagueId: 'league-1' }])
+    setupGroupMatchesSelect([{ groupId: 'group-uuid-1' }]) // hand-picked → bypass gate
+    setupUserGroupsSelect([
+      { groupId: 'group-uuid-1', scoringConfigId: 'cfg-1', favoriteTeamDoublePoints: false, config: GROUP_CONFIG_ROW },
+    ])
+
+    await calculateAndSaveGroupPoints(MATCH_ID, RESULT)
+
+    expect(mockInsert).toHaveBeenCalledTimes(1)
+    const insertedValues = mockInsertValues.mock.calls[0]![0] as { groupId: string; points: number }
+    expect(insertedValues.groupId).toBe('group-uuid-1')
+    expect(insertedValues.points).toBe(5)
   })
 })

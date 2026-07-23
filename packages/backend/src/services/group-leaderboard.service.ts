@@ -1,6 +1,6 @@
 import { eq, sql, and, or, inArray, isNull, isNotNull } from 'drizzle-orm'
 import { db } from '../db/client.js'
-import { users, predictions, groupMembers, groups, groupPredictionPoints, specialPredictions, specialPredictionTypes, groupGlobalTypeSubscriptions, groupLeagues, matches, userLeagueFavorites, teams } from '../db/schema/index.js'
+import { users, predictions, groupMembers, groups, groupPredictionPoints, specialPredictions, specialPredictionTypes, groupGlobalTypeSubscriptions, groupLeagues, groupMatches, matches, userLeagueFavorites, teams } from '../db/schema/index.js'
 import type { LeaderboardEntry } from './leaderboard.service.js'
 import { computeTypeMaxPoints } from './tournament-max.service.js'
 
@@ -37,6 +37,13 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
     .where(eq(groupLeagues.groupId, groupId))
   const leagueIds = leagueRows.map(r => r.leagueId)
 
+  // US-953: hand-picked matches count too, regardless of the subscribed leagues.
+  const handPickedRows = await db
+    .select({ matchId: groupMatches.matchId })
+    .from(groupMatches)
+    .where(eq(groupMatches.groupId, groupId))
+  const groupMatchIds = handPickedRows.map(r => r.matchId)
+
   const useGroupPoints = group[0].scoringConfigId !== null || group[0].favoriteTeamDoublePoints
 
   let rows: Array<{
@@ -55,9 +62,19 @@ export async function getGroupLeaderboard(groupId: string, requesterId: string):
   // League / soft-delete filter goes into the matches JOIN ON clause — keeping it
   // in WHERE would turn the LEFT JOIN into an inner join for any member whose
   // predictions all belong to other leagues, dropping that member entirely.
-  // Multi-league groups: include matches from ANY subscribed league.
-  const matchesJoinOn = leagueIds.length > 0
-    ? sql`${matches.id} = ${predictions.matchId} AND ${matches.deletedAt} IS NULL AND ${matches.leagueId} IN (${sql.join(leagueIds.map(id => sql`${id}::uuid`), sql`, `)})`
+  // Multi-league groups: include matches from ANY subscribed league OR any
+  // hand-picked match (US-953).
+  const leagueClause = leagueIds.length > 0
+    ? sql`${matches.leagueId} IN (${sql.join(leagueIds.map(id => sql`${id}::uuid`), sql`, `)})`
+    : null
+  const matchClause = groupMatchIds.length > 0
+    ? sql`${matches.id} IN (${sql.join(groupMatchIds.map(id => sql`${id}::uuid`), sql`, `)})`
+    : null
+  const scopeClause = leagueClause && matchClause
+    ? sql`(${leagueClause} OR ${matchClause})`
+    : (leagueClause ?? matchClause)
+  const matchesJoinOn = scopeClause
+    ? sql`${matches.id} = ${predictions.matchId} AND ${matches.deletedAt} IS NULL AND ${scopeClause}`
     : sql`${matches.id} = ${predictions.matchId} AND ${matches.deletedAt} IS NULL`
 
   if (useGroupPoints) {

@@ -670,7 +670,14 @@ onMounted(async () => {
   )
   const userLeagueIds = [...userLeagueIdSet]
 
-  if (userLeagueIds.length === 0) {
+  // US-953: matches hand-picked into a group live outside the group's leagues,
+  // so pull them in explicitly or they never show up on the tipp page.
+  const handPickedMatchIdSet = new Set(
+    groupsStore.groups.flatMap(g => g.handPickedMatchIds ?? []),
+  )
+  const handPickedMatchIds = [...handPickedMatchIdSet]
+
+  if (userLeagueIds.length === 0 && handPickedMatchIds.length === 0) {
     matchesStore.matches = []
     initialDataLoaded.value = true
     return
@@ -680,7 +687,7 @@ onMounted(async () => {
   // render the "missed tip" / no-prediction state before predictions hydrate.
   try {
     await Promise.all([
-      matchesStore.fetchMatches(userLeagueIds),
+      matchesStore.fetchMatches(userLeagueIds, handPickedMatchIds),
       predictionsStore.fetchMyPredictions(),
       loadExtraTimeBonusPoints(),
     ])

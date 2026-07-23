@@ -219,6 +219,14 @@
       "minOne": "A csoportnak legalább egy ligája kell legyen.",
       "lastRemoveError": "Az utolsó ligát nem lehet eltávolítani."
     },
+    "matches": {
+      "addTitle": "Egyedi meccs behúzása",
+      "desc": "Bármely liga egy-egy meccsét behúzhatod a csoportba, függetlenül a feliratkozott ligáktól.",
+      "searchPlaceholder": "Meccs keresése ligától függetlenül…",
+      "add": "Meccs behúzása",
+      "remove": "Meccs eltávolítása",
+      "handPickedBadge": "Egyedi meccs"
+    },
     "memberCount": "{count} tag",
     "inviteInactive": "Meghívó inaktív",
     "emptyState": "Még nem vagy egyetlen csoport tagja sem.",

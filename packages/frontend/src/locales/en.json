@@ -219,6 +219,14 @@
       "minOne": "A group must have at least one league.",
       "lastRemoveError": "The last league cannot be removed."
     },
+    "matches": {
+      "addTitle": "Add individual match",
+      "desc": "Pull individual matches from any league into the group, independent of the subscribed leagues.",
+      "searchPlaceholder": "Search matches across leagues…",
+      "add": "Add match",
+      "remove": "Remove match",
+      "handPickedBadge": "Individual match"
+    },
     "memberCount": "{count} members",
     "inviteInactive": "Invite inactive",
     "emptyState": "You haven't joined any groups yet.",

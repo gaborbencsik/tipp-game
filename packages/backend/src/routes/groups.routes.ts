@@ -6,6 +6,7 @@ import { upsertUser } from '../services/user.service.js'
 import { getMyGroups, createGroup, joinGroup, getGroupMembers, removeMember, setMemberAdmin, regenerateInviteCode, setInviteActive, deleteGroup, updateGroupSettings, addGroupLeague, removeGroupLeague } from '../services/groups.service.js'
 import { getGroupLeaderboard } from '../services/group-leaderboard.service.js'
 import { getMyGroupPredictions } from '../services/group-my-predictions.service.js'
+import { addGroupMatch, removeGroupMatch, getGroupEffectiveMatches } from '../services/group-matches.service.js'
 import { getGroupConfigWithImpact, setGroupConfig, overrideGroupConfig } from '../services/scoring-config.service.js'
 import { startRecalculation } from '../services/recalculate.service.js'
 import type { GroupInput, JoinGroupInput, ScoringConfigInput } from '../types/index.js'
@@ -211,6 +212,25 @@ router.post('/api/groups/:groupId/leagues', authMiddleware, async (ctx) => {
 router.delete('/api/groups/:groupId/leagues/:leagueId', authMiddleware, async (ctx) => {
   const dbUser = await upsertUser(ctx.state.user)
   ctx.body = await removeGroupLeague(ctx.params.groupId, ctx.params.leagueId, dbUser.id)
+})
+
+router.get('/api/groups/:groupId/matches', authMiddleware, withHttpCache({ maxAge: 0, swr: 30 }), async (ctx) => {
+  ctx.body = await getGroupEffectiveMatches(ctx.params.groupId)
+})
+
+router.post('/api/groups/:groupId/matches', authMiddleware, async (ctx) => {
+  const dbUser = await upsertUser(ctx.state.user)
+  const body = ctx.request.body as { matchId?: unknown }
+  const matchId = typeof body.matchId === 'string' ? body.matchId : ''
+  await addGroupMatch(ctx.params.groupId, matchId, dbUser.id)
+  ctx.status = 201
+  ctx.body = { ok: true }
+})
+
+router.delete('/api/groups/:groupId/matches/:matchId', authMiddleware, async (ctx) => {
+  const dbUser = await upsertUser(ctx.state.user)
+  await removeGroupMatch(ctx.params.groupId, ctx.params.matchId, dbUser.id)
+  ctx.body = { ok: true }
 })
 
 export { router as groupsRouter }

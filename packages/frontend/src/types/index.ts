@@ -63,6 +63,7 @@ export interface Match {
   readonly scheduledAt: string
   readonly status: MatchStatus
   readonly result: MatchResult | null
+  readonly handPicked?: boolean
 }
 
 export interface MatchesFilters {
@@ -70,6 +71,7 @@ export interface MatchesFilters {
   readonly status?: MatchStatus
   readonly leagueId?: string
   readonly leagueIds?: readonly string[]
+  readonly matchIds?: readonly string[]
 }
 
 export interface VirtualPointEntry {
@@ -275,6 +277,7 @@ export interface Group {
   readonly userRank: number | null
   readonly favoriteTeamDoublePoints: boolean
   readonly leagues: ReadonlyArray<{ readonly id: string; readonly name: string; readonly shortName: string; readonly status: 'active' | 'archived'; readonly type: LeagueType }>
+  readonly handPickedMatchIds?: ReadonlyArray<string>
   readonly createdAt: string
 }
 

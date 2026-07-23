@@ -21,9 +21,9 @@ test.describe('Groups', () => {
     const groupName = `Test Group ${Date.now()}`
     await page.getByTestId('create-name-input').fill(groupName)
 
-    const leagueSelect = page.getByTestId('league-select').locator('select')
-    if (await leagueSelect.isVisible()) {
-      await leagueSelect.selectOption({ index: 1 })
+    const leagueCheckboxes = page.getByTestId('group-league-checkbox')
+    if (await leagueCheckboxes.count() > 0) {
+      await leagueCheckboxes.first().check()
     }
 
     await page.getByTestId('create-submit-btn').click()

@@ -28,11 +28,18 @@ router.get('/api/matches', authMiddleware, withHttpCache({ maxAge: 0, swr: 15 })
     : typeof rawLeagueIds === 'string' && rawLeagueIds.length > 0
       ? [rawLeagueIds]
       : undefined
+  const rawMatchIds = ctx.query['matchIds']
+  const matchIds = Array.isArray(rawMatchIds)
+    ? rawMatchIds.filter((v): v is string => typeof v === 'string' && v.length > 0)
+    : typeof rawMatchIds === 'string' && rawMatchIds.length > 0
+      ? [rawMatchIds]
+      : undefined
   const filters: MatchesFilters = {
     ...(stage ? { stage: stage as MatchStage } : {}),
     ...(status ? { status: status as MatchStatus } : {}),
     ...(leagueId ? { leagueId } : {}),
     ...(leagueIds && leagueIds.length > 0 ? { leagueIds } : {}),
+    ...(matchIds && matchIds.length > 0 ? { matchIds } : {}),
     ...(ctx.query['includeArchivedLeagues'] === 'true' ? { includeArchivedLeagues: true } : {}),
   }
   ctx.body = await getMatches(filters)

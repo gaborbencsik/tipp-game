@@ -29,6 +29,7 @@ vi.mock('../src/db/schema/index.js', () => ({
   groupPredictionPoints: { predictionId: 'gpp.predictionId', groupId: 'gpp.groupId', points: 'gpp.points' },
   userLeagueFavorites: { userId: 'ulf.userId', leagueId: 'ulf.leagueId', teamId: 'ulf.teamId' },
   groupLeagues: { groupId: 'gl.groupId', leagueId: 'gl.leagueId' },
+  groupMatches: { groupId: 'gm.groupId', matchId: 'gm.matchId' },
 }))
 
 vi.mock('drizzle-orm', () => ({
@@ -94,6 +95,11 @@ function setupCalls(options: {
   const leagueWhere = vi.fn().mockResolvedValue([])
   const leagueFrom = vi.fn().mockReturnValue({ where: leagueWhere })
   mockSelect.mockReturnValueOnce({ from: leagueFrom })
+
+  // Call 4b (US-953): hand-picked group_matches → select().from().where()
+  const gmWhere = vi.fn().mockResolvedValue([])
+  const gmFrom = vi.fn().mockReturnValue({ where: gmWhere })
+  mockSelect.mockReturnValueOnce({ from: gmFrom })
 
   // Call 5: main predictions query → select().from().innerJoin()...orderBy()
   const predsLimit = vi.fn().mockResolvedValue(predictionRows)

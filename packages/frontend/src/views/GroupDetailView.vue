@@ -443,6 +443,69 @@
         </div>
       </div>
 
+      <!-- US-953: Egyedi (kézzel behúzott) meccsek kezelése (admin) -->
+      <div v-if="currentUserIsGroupAdmin" class="mt-8 max-w-md">
+        <h3 class="text-base font-semibold text-gray-800 mb-1">{{ $t('groups.matches.addTitle') }}</h3>
+        <p class="text-sm text-gray-500 mb-3">{{ $t('groups.matches.desc') }}</p>
+
+        <div class="flex items-center gap-2 mb-3">
+          <input
+            v-model="matchSearchQuery"
+            type="text"
+            data-testid="group-match-search"
+            :placeholder="$t('groups.matches.searchPlaceholder')"
+            class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            @input="onMatchSearch"
+          />
+        </div>
+
+        <ul v-if="matchSearchResults.length > 0" class="flex flex-col gap-1 mb-4">
+          <li
+            v-for="m in matchSearchResults"
+            :key="m.id"
+            class="flex items-center justify-between gap-2 px-3 py-2 border border-gray-200 rounded-lg text-sm"
+          >
+            <span class="text-gray-900">{{ m.homeTeam.name }} – {{ m.awayTeam.name }}</span>
+            <button
+              type="button"
+              data-testid="group-match-add-btn"
+              class="px-3 py-1 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              :disabled="matchSaveStatus === 'saving'"
+              @click="addMatch(m.id)"
+            >
+              {{ $t('groups.matches.add') }}
+            </button>
+          </li>
+        </ul>
+
+        <div class="flex flex-col gap-2">
+          <div
+            v-for="m in handPickedMatches"
+            :key="m.id"
+            data-testid="group-match-handpicked-row"
+            class="flex items-center justify-between gap-2 px-3 py-2 border border-gray-200 rounded-lg text-sm"
+          >
+            <span class="flex items-center gap-2 text-gray-900">
+              {{ m.homeTeam.name }} – {{ m.awayTeam.name }}
+              <span
+                data-testid="group-match-handpicked-badge"
+                class="px-2 py-0.5 text-xs rounded-full bg-amber-100 text-amber-800"
+              >{{ $t('groups.matches.handPickedBadge') }}</span>
+            </span>
+            <button
+              type="button"
+              data-testid="group-match-remove-btn"
+              class="text-xs text-red-600 hover:text-red-700 disabled:opacity-50"
+              :disabled="matchSaveStatus === 'saving'"
+              @click="removeMatch(m.id)"
+            >
+              {{ $t('groups.matches.remove') }}
+            </button>
+          </div>
+        </div>
+        <span v-if="matchSaveStatus === 'error'" class="text-sm text-red-600">{{ $t('groupDetail.leagueSaveError') }}</span>
+      </div>
+
       <!-- Hivatalos speciális tippek kezelése (admin) -->
       <div v-if="SHOW_SPECIAL_TIPS" class="mt-8 max-w-lg">
         <h3 class="text-base font-semibold text-gray-800 mb-1">{{ $t('groupDetail.globalTypesTitle') }}</h3>
@@ -965,7 +1028,7 @@ import { hasAnyLiveMatch } from '../composables/useLiveMatchPolling.js'
 import { useMatchEvents, type MatchUpdateEvent } from '../composables/useMatchEvents.js'
 import { api } from '../api/index.js'
 import { supabase } from '../lib/supabase.js'
-import type { GroupMember, GroupMatchPrediction, LeaderboardEntry, ScoringConfigInput, SpecialPredictionOptions, SpecialTypeInput, StatPredictionTemplate, GlobalTypeWithSubscription, VirtualPointEntry } from '../types/index.js'
+import type { GroupMember, GroupMatchPrediction, LeaderboardEntry, Match, ScoringConfigInput, SpecialPredictionOptions, SpecialTypeInput, StatPredictionTemplate, GlobalTypeWithSubscription, VirtualPointEntry } from '../types/index.js'
 import { getDateLocale } from '../lib/dateLocale.js'
 
 type Tab = 'leaderboard' | 'my-predictions' | 'members' | 'settings' | 'special'
@@ -1250,6 +1313,66 @@ async function removeLeague(leagueId: string): Promise<void> {
   }
 }
 
+// ─── US-953: hand-picked matches ─────────────────────────────────────────────
+const matchSearchQuery = ref('')
+const matchSearchResults = ref<Match[]>([])
+const effectiveMatches = ref<Match[]>([])
+const matchSaveStatus = ref<'idle' | 'saving' | 'error'>('idle')
+let matchSearchTimer: ReturnType<typeof setTimeout> | undefined
+
+const handPickedMatches = computed(() => effectiveMatches.value.filter(m => m.handPicked))
+
+async function loadEffectiveMatches(): Promise<void> {
+  try {
+    effectiveMatches.value = await groupsStore.fetchGroupMatches(groupId)
+  } catch {
+    effectiveMatches.value = []
+  }
+}
+
+async function onMatchSearch(): Promise<void> {
+  if (matchSearchTimer) clearTimeout(matchSearchTimer)
+  const q = matchSearchQuery.value.trim().toLowerCase()
+  if (q.length < 2) { matchSearchResults.value = []; return }
+  matchSearchTimer = setTimeout(async () => {
+    try {
+      const token = await getAccessToken()
+      const all = await api.matches.list(token)
+      const existing = new Set(effectiveMatches.value.map(m => m.id))
+      matchSearchResults.value = all
+        .filter(m => !existing.has(m.id))
+        .filter(m => `${m.homeTeam.name} ${m.awayTeam.name}`.toLowerCase().includes(q))
+        .slice(0, 20)
+    } catch {
+      matchSearchResults.value = []
+    }
+  }, 300)
+}
+
+async function addMatch(matchId: string): Promise<void> {
+  matchSaveStatus.value = 'saving'
+  try {
+    await groupsStore.addGroupMatch(groupId, matchId)
+    matchSearchQuery.value = ''
+    matchSearchResults.value = []
+    await loadEffectiveMatches()
+    matchSaveStatus.value = 'idle'
+  } catch {
+    matchSaveStatus.value = 'error'
+  }
+}
+
+async function removeMatch(matchId: string): Promise<void> {
+  matchSaveStatus.value = 'saving'
+  try {
+    await groupsStore.removeGroupMatch(groupId, matchId)
+    await loadEffectiveMatches()
+    matchSaveStatus.value = 'idle'
+  } catch {
+    matchSaveStatus.value = 'error'
+  }
+}
+
 async function onConfirmRegenerate(): Promise<void> {
   showInviteConfirm.value = false
   await groupsStore.regenerateInvite(groupId)
@@ -1528,6 +1651,10 @@ onMounted(async () => {
     error.value = err instanceof Error ? err.message : t('common.unknownError')
   } finally {
     isLoading.value = false
+  }
+
+  if (canManageSettings.value) {
+    await loadEffectiveMatches()
   }
 
   if (route.query.tab === 'special' && SHOW_SPECIAL_TIPS) {

@@ -42,7 +42,7 @@ export interface TestUser {
 export interface UserGroupSummary {
   id: string
   name: string
-  league: { id: string; name: string; shortName: string } | null
+  leagues: ReadonlyArray<{ id: string; name: string; shortName: string }>
 }
 
 export interface TestLeague {
@@ -173,7 +173,7 @@ export async function deleteAllMyGroups(): Promise<void> {
 export async function deleteMyGroupsByLeagueShortName(shortName: string): Promise<void> {
   const groups = await getMyGroups()
   for (const g of groups) {
-    if (g.league?.shortName === shortName) {
+    if (g.leagues.some(l => l.shortName === shortName)) {
       await del(`/api/groups/${g.id}`)
     }
   }
@@ -181,7 +181,7 @@ export async function deleteMyGroupsByLeagueShortName(shortName: string): Promis
 
 export async function ensureGroupInLeague(name: string, leagueId: string): Promise<void> {
   const groups = await getMyGroups()
-  if (groups.some(g => g.league?.id === leagueId)) return
+  if (groups.some(g => g.leagues.some(l => l.id === leagueId))) return
   try {
     await createGroup(name, leagueId)
   } catch (err) {

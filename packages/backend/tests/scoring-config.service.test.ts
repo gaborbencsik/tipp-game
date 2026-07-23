@@ -95,10 +95,11 @@ const SCORING_INPUT = {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/** select(...).from(...).where(...).limit(...) — used for single-row lookups */
+/** select(...).from(...).where(...)[.orderBy(...)].limit(...) — used for single-row lookups */
 function queueSelectLimit(rows: unknown[]) {
   mockLimit.mockResolvedValueOnce(rows)
-  mockSelectWhere.mockReturnValueOnce({ limit: mockLimit })
+  const afterWhere = { orderBy: vi.fn().mockReturnValue({ limit: mockLimit }), limit: mockLimit }
+  mockSelectWhere.mockReturnValueOnce(afterWhere)
   mockFrom.mockReturnValueOnce({ where: mockSelectWhere })
   mockSelect.mockReturnValueOnce({ from: mockFrom })
 }

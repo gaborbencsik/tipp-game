@@ -147,6 +147,7 @@ describe('getMyGroups', () => {
       .mockReturnValueOnce(makeSelectChain(membership))
       .mockReturnValueOnce(makeSelectChain([{ count: 2 }]))
       .mockReturnValueOnce(makeSelectChain([]))
+      .mockReturnValueOnce(makeSelectChain([]))
     mockGetGroupLeaderboard.mockResolvedValueOnce([
       { rank: 1, userId: USER_ID, displayName: 'Alice', avatarUrl: null, totalPoints: 10, predictionCount: 3, correctCount: 2 },
     ])
@@ -169,11 +170,25 @@ describe('getMyGroups', () => {
     expect(result).toEqual([])
   })
 
+  it('exposes hand-picked match ids on the group payload', async () => {
+    const membership = [{ group: GROUP_ROW, isAdmin: true }]
+    mockSelect
+      .mockReturnValueOnce(makeSelectChain(membership))
+      .mockReturnValueOnce(makeSelectChain([{ count: 2 }]))
+      .mockReturnValueOnce(makeSelectChain([]))                              // leagues
+      .mockReturnValueOnce(makeSelectChain([{ matchId: 'm-7' }, { matchId: 'm-9' }])) // hand-picked
+    mockGetGroupLeaderboard.mockResolvedValueOnce([])
+
+    const result = await getMyGroups(USER_ID)
+    expect(result[0]?.handPickedMatchIds).toEqual(['m-7', 'm-9'])
+  })
+
   it('returns userRank from leaderboard', async () => {
     const membership = [{ group: GROUP_ROW, isAdmin: false }]
     mockSelect
       .mockReturnValueOnce(makeSelectChain(membership))
       .mockReturnValueOnce(makeSelectChain([{ count: 3 }]))
+      .mockReturnValueOnce(makeSelectChain([]))
       .mockReturnValueOnce(makeSelectChain([]))
     mockGetGroupLeaderboard.mockResolvedValueOnce([
       { rank: 1, userId: 'someone-else', displayName: 'Bob', avatarUrl: null, totalPoints: 15, predictionCount: 5, correctCount: 4 },
@@ -191,6 +206,7 @@ describe('getMyGroups', () => {
       .mockReturnValueOnce(makeSelectChain(membership))
       .mockReturnValueOnce(makeSelectChain([{ count: 1 }]))
       .mockReturnValueOnce(makeSelectChain([]))
+      .mockReturnValueOnce(makeSelectChain([]))
     mockGetGroupLeaderboard.mockResolvedValueOnce([])
 
     const result = await getMyGroups(USER_ID)
@@ -203,6 +219,7 @@ describe('getMyGroups', () => {
     mockSelect
       .mockReturnValueOnce(makeSelectChain(membership))
       .mockReturnValueOnce(makeSelectChain([{ count: 1 }]))
+      .mockReturnValueOnce(makeSelectChain([]))
       .mockReturnValueOnce(makeSelectChain([]))
     mockGetGroupLeaderboard.mockRejectedValueOnce(new Error('DB error'))
 
@@ -785,6 +802,7 @@ describe('addGroupLeague', () => {
       .mockReturnValueOnce(makeSelectChain([]))                    // existing groupLeagues (none)
       .mockReturnValueOnce(makeSelectChain([{ leagueId: 'league-new' }])) // recalc: leagueRows
       .mockReturnValueOnce(makeSelectChain([{ first: null }]))     // recalc: firstMatch
+      .mockReturnValueOnce(makeSelectChain([]))                    // US-953: delete subquery (matches in league)
       .mockReturnValueOnce(makeSelectChain([{ id: 'league-new', name: 'VB 2026', shortName: 'VB', status: 'active' }])) // fetchGroupLeagues
       .mockReturnValueOnce(makeSelectChain([{ count: 3 }]))        // member count
 
@@ -792,6 +810,7 @@ describe('addGroupLeague', () => {
     mockInsert.mockReturnValueOnce({ values: leagueValuesFn })
     const { setFn } = makeUpdateChain([])
     mockUpdate.mockReturnValueOnce({ set: setFn })
+    mockDelete.mockReturnValueOnce(makeDeleteChain())  // US-953: redundant group_matches cleanup
 
     const result = await addGroupLeague('group-uuid-1', 'league-new', USER_ID)
     expect(mockInsert).toHaveBeenCalledOnce()

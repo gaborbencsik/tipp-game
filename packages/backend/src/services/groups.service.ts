@@ -1,6 +1,6 @@
 import { and, eq, isNull, sql, min, inArray } from 'drizzle-orm'
 import { db } from '../db/client.js'
-import { groups, groupMembers, users, specialPredictionTypes, groupGlobalTypeSubscriptions, groupLeagues, leagues, matches, auditLogs } from '../db/schema/index.js'
+import { groups, groupMembers, users, specialPredictionTypes, groupGlobalTypeSubscriptions, groupLeagues, groupMatches, leagues, matches, auditLogs } from '../db/schema/index.js'
 import type { Group, GroupInput, GroupMember, LeagueType } from '../types/index.js'
 import { getGroupLeaderboard } from './group-leaderboard.service.js'
 import { replicateUserTipsToGroup } from './tournament-tips-replication.service.js'
@@ -37,12 +37,21 @@ async function fetchGroupLeagues(groupId: string): Promise<GroupLeague[]> {
     .where(eq(groupLeagues.groupId, groupId))
 }
 
+async function fetchGroupMatchIds(groupId: string): Promise<string[]> {
+  const rows = await db
+    .select({ matchId: groupMatches.matchId })
+    .from(groupMatches)
+    .where(eq(groupMatches.groupId, groupId))
+  return rows.map((r) => r.matchId)
+}
+
 function toApiGroup(
   row: typeof groups.$inferSelect,
   memberCount: number,
   isAdmin: boolean,
   userRank: number | null = null,
   groupLeaguesList: GroupLeague[] = [],
+  handPickedMatchIds: string[] = [],
 ): Group {
   return {
     id: row.id,
@@ -56,6 +65,7 @@ function toApiGroup(
     userRank,
     favoriteTeamDoublePoints: row.favoriteTeamDoublePoints,
     leagues: groupLeaguesList,
+    handPickedMatchIds,
     createdAt: row.createdAt.toISOString(),
   }
 }
@@ -81,6 +91,7 @@ export async function getMyGroups(userId: string): Promise<Group[]> {
     const memberCount = countRows[0]?.count ?? 0
 
     const league = await fetchGroupLeagues(group.id)
+    const handPickedMatchIds = await fetchGroupMatchIds(group.id)
 
     let userRank: number | null = null
     try {
@@ -91,7 +102,7 @@ export async function getMyGroups(userId: string): Promise<Group[]> {
       // If leaderboard fails (e.g. no predictions yet), rank stays null
     }
 
-    result.push(toApiGroup(group, memberCount, isAdmin, userRank, league))
+    result.push(toApiGroup(group, memberCount, isAdmin, userRank, league, handPickedMatchIds))
   }
   return result
 }
@@ -619,6 +630,18 @@ export async function addGroupLeague(
   if (existing.length === 0) {
     await db.insert(groupLeagues).values({ groupId, leagueId })
     await recalcGroupSpecialDeadlines(groupId)
+    // US-953: a match now covered by this league no longer needs a hand-pick.
+    // Drop the redundant group_matches rows ONLY — predictions and
+    // group_prediction_points stay intact, the match simply becomes league-based.
+    await db
+      .delete(groupMatches)
+      .where(and(
+        eq(groupMatches.groupId, groupId),
+        inArray(
+          groupMatches.matchId,
+          db.select({ id: matches.id }).from(matches).where(eq(matches.leagueId, leagueId)),
+        ),
+      ))
   }
 
   return buildGroupResponse(group)

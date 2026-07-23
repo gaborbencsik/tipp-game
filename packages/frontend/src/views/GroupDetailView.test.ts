@@ -3,7 +3,7 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import GroupDetailView from '@/views/GroupDetailView.vue'
 import { useGroupsStore } from '@/stores/groups.store'
-import type { Group, GroupMember, LeaderboardEntry } from '@/types/index'
+import type { Group, GroupMember, LeaderboardEntry, Match } from '@/types/index'
 import { buildTestRouter } from '@/test-utils/router'
 
 vi.mock('vue-router', async (importOriginal) => {
@@ -24,6 +24,10 @@ const {
   mockGroupsRegenerateInvite,
   mockGroupsSetInviteActive,
   mockGroupsDelete,
+  mockGroupsMatches,
+  mockGroupsAddMatch,
+  mockGroupsRemoveMatch,
+  mockMatchesList,
 } = vi.hoisted(() => ({
   mockGroupsLeaderboard: vi.fn().mockResolvedValue([]),
   mockGroupsMembers: vi.fn().mockResolvedValue([]),
@@ -33,6 +37,10 @@ const {
   mockGroupsRegenerateInvite: vi.fn().mockResolvedValue(undefined),
   mockGroupsSetInviteActive: vi.fn().mockResolvedValue(undefined),
   mockGroupsDelete: vi.fn().mockResolvedValue(undefined),
+  mockGroupsMatches: vi.fn().mockResolvedValue([]),
+  mockGroupsAddMatch: vi.fn().mockResolvedValue({ ok: true }),
+  mockGroupsRemoveMatch: vi.fn().mockResolvedValue({ ok: true }),
+  mockMatchesList: vi.fn().mockResolvedValue([]),
 }))
 
 vi.mock('@/lib/supabase', () => ({
@@ -57,9 +65,12 @@ vi.mock('@/api/index', () => ({
       regenerateInvite: mockGroupsRegenerateInvite,
       setInviteActive: mockGroupsSetInviteActive,
       delete: mockGroupsDelete,
+      matches: mockGroupsMatches,
+      addMatch: mockGroupsAddMatch,
+      removeMatch: mockGroupsRemoveMatch,
     },
     predictions: { mine: vi.fn(), upsert: vi.fn() },
-    matches: { list: vi.fn() },
+    matches: { list: mockMatchesList },
   },
 }))
 
@@ -164,6 +175,10 @@ describe('GroupDetailView', () => {
     mockGroupsSetInviteActive.mockReset().mockResolvedValue(undefined)
     mockGroupsDelete.mockReset().mockResolvedValue(undefined)
     mockGroupsMine.mockReset().mockResolvedValue([GROUP])
+    mockGroupsMatches.mockReset().mockResolvedValue([])
+    mockGroupsAddMatch.mockReset().mockResolvedValue({ ok: true })
+    mockGroupsRemoveMatch.mockReset().mockResolvedValue({ ok: true })
+    mockMatchesList.mockReset().mockResolvedValue([])
     setActivePinia(createPinia())
   })
 
@@ -622,5 +637,80 @@ describe('GroupDetailView', () => {
     const cell = wrapper.find('[data-testid="my-pred-scorer-name"]')
     expect(cell.classes()).toContain('text-gray-500')
     expect(cell.classes()).toContain('line-through')
+  })
+
+  // ─── US-953: hand-picked matches (admin, settings tab) ────────────────────────
+
+  function makeMatch(id: string, home: string, away: string, handPicked = false): Match {
+    return {
+      id,
+      homeTeam: { id: `${id}-h`, name: home, shortCode: home.slice(0, 3), flagUrl: null, teamType: 'national', countryCode: null, marketValueEur: null, transfermarktId: null },
+      awayTeam: { id: `${id}-a`, name: away, shortCode: away.slice(0, 3), flagUrl: null, teamType: 'national', countryCode: null, marketValueEur: null, transfermarktId: null },
+      venue: null,
+      league: { id: 'l-9', name: 'Other', shortName: 'OTH', type: 'league' },
+      stage: 'group',
+      groupName: null,
+      matchNumber: null,
+      scheduledAt: '2026-06-14T18:00:00.000Z',
+      status: 'scheduled',
+      result: null,
+      handPicked,
+    }
+  }
+
+  it('hand-picked match shows in the list with the badge', async () => {
+    mockGroupsMatches.mockResolvedValue([makeMatch('m-1', 'Brazil', 'Argentina', true)])
+    const { wrapper } = await mountView([MEMBER_SELF])
+    await wrapper.find('[data-testid="tab-settings"]').trigger('click')
+    await flushPromises()
+    expect(wrapper.find('[data-testid="group-match-handpicked-badge"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="group-match-handpicked-row"]').text()).toContain('Brazil')
+  })
+
+  it('search + add → store.addGroupMatch called with the match id', async () => {
+    mockMatchesList.mockResolvedValue([makeMatch('m-2', 'Spain', 'Italy')])
+    const { wrapper } = await mountView([MEMBER_SELF])
+    await wrapper.find('[data-testid="tab-settings"]').trigger('click')
+    await flushPromises()
+
+    const search = wrapper.find('[data-testid="group-match-search"]')
+    await search.setValue('spain')
+    await new Promise(r => setTimeout(r, 350))
+    await flushPromises()
+
+    const addBtn = wrapper.find('[data-testid="group-match-add-btn"]')
+    expect(addBtn.exists()).toBe(true)
+    await addBtn.trigger('click')
+    await flushPromises()
+    expect(mockGroupsAddMatch).toHaveBeenCalledWith('tok', 'group-uuid-1', 'm-2')
+  })
+
+  it('remove button → store.removeGroupMatch called', async () => {
+    mockGroupsMatches.mockResolvedValue([makeMatch('m-3', 'Germany', 'France', true)])
+    const { wrapper } = await mountView([MEMBER_SELF])
+    await wrapper.find('[data-testid="tab-settings"]').trigger('click')
+    await flushPromises()
+    await wrapper.find('[data-testid="group-match-remove-btn"]').trigger('click')
+    await flushPromises()
+    expect(mockGroupsRemoveMatch).toHaveBeenCalledWith('tok', 'group-uuid-1', 'm-3')
+  })
+
+  it('non-admin does not see the hand-picked match section', async () => {
+    const { wrapper } = await mountView([{ ...MEMBER_SELF, isAdmin: false }], [], [{ ...GROUP, isAdmin: false }])
+    expect(wrapper.find('[data-testid="group-match-search"]').exists()).toBe(false)
+  })
+
+  it('renders hand-picked matches in the order returned by the store (most recent first)', async () => {
+    mockGroupsMatches.mockResolvedValue([
+      makeMatch('m-new', 'Newest', 'Team', true),
+      makeMatch('m-old', 'Oldest', 'Team', true),
+    ])
+    const { wrapper } = await mountView([MEMBER_SELF])
+    await wrapper.find('[data-testid="tab-settings"]').trigger('click')
+    await flushPromises()
+    const rows = wrapper.findAll('[data-testid="group-match-handpicked-row"]')
+    expect(rows).toHaveLength(2)
+    expect(rows[0]!.text()).toContain('Newest')
+    expect(rows[1]!.text()).toContain('Oldest')
   })
 })
